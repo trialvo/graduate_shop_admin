@@ -21,6 +21,7 @@
     "apexcharts": "^5.3.6",
     "clsx": "^2.1.1",
     "flatpickr": "^4.6.13",
+    "lucide-react": "^0.561.0",
     "react": "^19.2.3",
     "react-apexcharts": "^1.9.0",
     "react-dnd": "^16.0.1",

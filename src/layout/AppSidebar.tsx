@@ -1,22 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
-// Assume these icons are imported from an icon library
 import {
-  BoxCubeIcon,
-  CalenderIcon,
+  LayoutDashboard,
+  ShoppingCart,
+  ClipboardList,
+  Package,
+  BarChart3,
+  Users,
+  Star,
+  Shield,
+  Settings,
+  PanelsTopLeft,
+  UserCircle,
+  Box,
   ChevronDownIcon,
-  GridIcon,
-  HorizontaLDots,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
-  UserCircleIcon,
-} from "../icons";
+} from "lucide-react";
+
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
+import { HorizontaLDots } from "../icons";
 
 type NavItem = {
   name: string;
@@ -27,68 +29,97 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <LayoutDashboard />,
     name: "Dashboard",
-    path: "/",
+    path: "/dashboard",
   },
   {
-    icon: <CalenderIcon />,
+    icon: <ShoppingCart />,
     name: "New Sale",
     path: "/new-sale",
   },
   {
-    icon: <UserCircleIcon />,
+    icon: <ClipboardList />,
     name: "Orders",
-    path: "/profile",
-  },
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
     subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
+      { name: "All Orders", path: "/all-orders", pro: false },
+      { name: "Refund Order", path: "/refund-orders", pro: false },
+      { name: "Guest Orders", path: "/guest-orders", pro: false },
     ],
+  },
+  {
+    name: "Products",
+    icon: <Package />,
+    subItems: [
+      { name: "All Products", path: "/all-products", pro: false },
+      { name: "Create Product", path: "/create-product", pro: false },
+      { name: "Product Attributes", path: "/product-attributes", pro: false },
+      { name: "Units", path: "/product-units", pro: false },
+    ],
+  },
+  {
+    name: "Report",
+    icon: <BarChart3 />,
+    subItems: [
+      { name: "Product Reports", path: "/product-reports", pro: false },
+      { name: "Order Report", path: "/order-report", pro: false },
+      { name: "Transaction Report", path: "/transaction-report", pro: false },
+      { name: "Visitor Report", path: "/visitor-report", pro: false },
+    ],
+  },
+  {
+    name: "Customer",
+    icon: <Users />,
+    subItems: [
+      { name: "List of customers", path: "/customers-list", pro: false },
+      { name: "Create Customer", path: "/create-customer", pro: false },
+      { name: "Blocked Customer", path: "/blocked-customer", pro: false },
+    ],
+  },
+  {
+    icon: <Star />,
+    name: "Customer review",
+    path: "/customer-review",
   },
 ];
 
 const othersItems: NavItem[] = [
   {
-    icon: <PieChartIcon />,
-    name: "Charts",
+    icon: <Shield />,
+    name: "Admin & Permission",
     subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
+      { name: "List of Admins", path: "/admins-list", pro: false },
+      { name: "Create Admin", path: "/create-admin", pro: false },
     ],
   },
   {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
+    icon: <Settings />,
+    name: "Business Setting",
     subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
+      { name: "Payment", path: "/payment-settings", pro: false },
+      { name: "Delivery", path: "/delivery-settings", pro: false },
+      { name: "Currier", path: "/currier-settings", pro: false },
+      { name: "Coupon Code", path: "/coupon-code", pro: false },
     ],
   },
   {
-    icon: <PlugInIcon />,
-    name: "Authentication",
+    icon: <PanelsTopLeft />,
+    name: "Website Settings",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
+      { name: "Banners", path: "/banners-settings", pro: false },
+      {
+        name: "Header category",
+        path: "/header-category-settings",
+        pro: false,
+      },
+      { name: "Footer", path: "/footer-settings", pro: false },
+      { name: "Contact Page", path: "/contact-page", pro: false },
     ],
+  },
+  {
+    icon: <UserCircle />,
+    name: "My Profile",
+    path: "/my-profile",
   },
 ];
 
@@ -368,7 +399,6 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
       </div>
     </aside>
   );
