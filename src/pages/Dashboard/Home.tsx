@@ -5,6 +5,8 @@ import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 import OrderStatusGrid from "@/components/dashboard/OrderStatusGrid";
 import TopViewProductsCard from "@/components/dashboard/TopViewProductsCard";
 import TopSellingDistrictCard from "@/components/dashboard/TopSellingDistrictCard";
+import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard";
+import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCard";
 
 export default function Home() {
   return (
@@ -40,6 +42,17 @@ export default function Home() {
 
         <div className="col-span-12 xl:col-span-6 flex">
           <TopSellingDistrictCard />
+        </div>
+      </div>
+
+      {/* Section 5 */}
+      <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
+        <div className="col-span-12 xl:col-span-6 flex">
+          <TopSellingProductsCard />
+        </div>
+
+        <div className="col-span-12 xl:col-span-6 flex">
+          <StockAlertProductsCard />
         </div>
       </div>
 
