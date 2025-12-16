@@ -13,7 +13,6 @@ import {
   Settings,
   PanelsTopLeft,
   UserCircle,
-  Box,
   ChevronDownIcon,
 } from "lucide-react";
 

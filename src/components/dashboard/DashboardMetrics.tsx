@@ -2,16 +2,11 @@ import { useState } from "react";
 import { ShoppingCart, DollarSign, XCircle, Users } from "lucide-react";
 
 import MetricsFilter from "./MetricsFilter";
-import {
-  MetricsRange,
-  metricsByRange,
-} from "../../pages/Dashboard/dashboardMetricsData";
+import { MetricsRange } from "../../pages/Dashboard/dashboardMetricsData";
 import MetricCard from "./MetricCard";
 
 const DashboardMetrics = () => {
   const [range, setRange] = useState<MetricsRange>("month");
-
-  const data = metricsByRange[range];
 
   return (
     <section className="mb-6">
@@ -65,10 +60,5 @@ const DashboardMetrics = () => {
     </section>
   );
 };
-
-interface CardProps {
-  title: string;
-  value: string;
-}
 
 export default DashboardMetrics;
