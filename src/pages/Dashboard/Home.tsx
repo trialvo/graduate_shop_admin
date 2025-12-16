@@ -8,6 +8,8 @@ import PageMeta from "../../components/common/PageMeta";
 import QuickAccess from "../../components/dashboard/QuickAccess";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 import OrderStatusGrid from "@/components/dashboard/OrderStatusGrid";
+import TopViewProductsCard from "@/components/dashboard/TopViewProductsCard";
+import TopSellingDistrictCard from "@/components/dashboard/TopSellingDistrictCard";
 
 export default function Home() {
   return (
@@ -16,9 +18,9 @@ export default function Home() {
         title="React.js Ecommerce Dashboard | Trialvo - React.js Admin Dashboard Template"
         description="This is React.js Ecommerce Dashboard page for Trialvo - React.js Tailwind CSS Admin Dashboard Template"
       />
+      
       {/* Section 1 */}
       <QuickAccess />
-
       {/* Section 2 */}
       <DashboardMetrics />
 
@@ -35,6 +37,16 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Section 4 */}
+      <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
+        <div className="col-span-12 xl:col-span-6">
+          <TopViewProductsCard />
+        </div>
+
+        <div className="col-span-12 xl:col-span-6">
+          <TopSellingDistrictCard />
+        </div>
+      </div>
       {/* <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12">
           <StatisticsChart />
