@@ -1,9 +1,4 @@
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
-import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
-import RecentOrders from "../../components/ecommerce/RecentOrders";
-import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
 import QuickAccess from "../../components/dashboard/QuickAccess";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
@@ -18,7 +13,7 @@ export default function Home() {
         title="React.js Ecommerce Dashboard | Trialvo - React.js Admin Dashboard Template"
         description="This is React.js Ecommerce Dashboard page for Trialvo - React.js Tailwind CSS Admin Dashboard Template"
       />
-      
+
       {/* Section 1 */}
       <QuickAccess />
       {/* Section 2 */}
@@ -39,14 +34,15 @@ export default function Home() {
 
       {/* Section 4 */}
       <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-6">
+        <div className="col-span-12 xl:col-span-6 flex">
           <TopViewProductsCard />
         </div>
 
-        <div className="col-span-12 xl:col-span-6">
+        <div className="col-span-12 xl:col-span-6 flex">
           <TopSellingDistrictCard />
         </div>
       </div>
+
       {/* <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12">
           <StatisticsChart />
