@@ -1,25 +1,20 @@
 import { useMemo, useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { stockAlertProducts } from "../../pages/Dashboard/dashboardSection5Data";
-import StockAlertProductsModal from "./StockAlertProductsModal";
+import StockUpdateModal from "./StockUpdateModal";
 
 const PAGE_SIZE = 10;
 
 const StockAlertProductsCard = () => {
   const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // local editable state (ready for API hookup later)
+  // Local editable state (ready for API later)
   const [rows, setRows] = useState(stockAlertProducts);
 
   const preview = useMemo(() => rows.slice(0, PAGE_SIZE), [rows]);
 
-  const updateStock = (id: string, delta: number) => {
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, stock: Math.max(0, r.stock + delta) } : r
-      )
-    );
-  };
+  const selectedProduct = rows.find((r) => r.id === selectedId) ?? null;
 
   return (
     <div className="h-full w-full rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 flex flex-col">
@@ -74,21 +69,16 @@ const StockAlertProductsCard = () => {
                 {p.price}
               </div>
 
-              <div className="col-span-2 flex items-center justify-end gap-2">
-                <button
-                  onClick={() => updateStock(p.id, -1)}
-                  disabled={p.stock <= 0}
-                  className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.04]"
-                >
-                  <Minus size={14} />
-                </button>
-
-                <span className="min-w-[24px] text-right text-sm font-medium text-gray-700 dark:text-gray-200">
+              <div className="col-span-2 flex items-center justify-end gap-3">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   {p.stock}
                 </span>
 
                 <button
-                  onClick={() => updateStock(p.id, 1)}
+                  onClick={() => {
+                    setSelectedId(p.id);
+                    setOpen(true);
+                  }}
                   className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-500 text-white hover:bg-brand-600"
                 >
                   <Plus size={14} />
@@ -99,12 +89,26 @@ const StockAlertProductsCard = () => {
         </div>
       </div>
 
-      <StockAlertProductsModal
-        open={open}
-        onClose={() => setOpen(false)}
-        rows={rows}
-        setRows={setRows}
-      />
+      {/* Stock Update Modal */}
+      {selectedProduct && (
+        <StockUpdateModal
+          open={open}
+          onClose={() => {
+            setOpen(false);
+            setSelectedId(null);
+          }}
+          product={selectedProduct}
+          onUpdate={(newStock) =>
+            setRows((prev) =>
+              prev.map((r) =>
+                r.id === selectedProduct.id
+                  ? { ...r, stock: newStock }
+                  : r
+              )
+            )
+          }
+        />
+      )}
     </div>
   );
 };
