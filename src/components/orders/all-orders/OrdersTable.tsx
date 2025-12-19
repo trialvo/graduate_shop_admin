@@ -7,9 +7,9 @@ import {
   Pencil,
   Printer,
   MoreVertical,
-  Send,
 } from "lucide-react";
-import type { OrderRow } from "./types";
+import type { CourierProviderId, OrderRow } from "./types";
+import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
 
@@ -43,7 +43,6 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export default function OrdersTable({ rows }: Props) {
-  // UI-only dropdown state (until API)
   const [paymentOverride, setPaymentOverride] = useState<
     Record<string, "paid" | "unpaid">
   >({});
@@ -51,7 +50,10 @@ export default function OrdersTable({ rows }: Props) {
     Record<string, OrderRow["status"]>
   >({});
 
-  // ✅ View modal state
+  const [courierOverride, setCourierOverride] = useState<
+    Record<string, { providerId?: CourierProviderId; memoNo?: string }>
+  >({});
+
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
 
@@ -68,6 +70,24 @@ export default function OrdersTable({ rows }: Props) {
     setViewOpen(true);
   };
 
+  const updateCourier = (orderId: string, providerId: CourierProviderId, memoNo: string) => {
+    setCourierOverride((prev) => ({
+      ...prev,
+      [orderId]: { providerId, memoNo },
+    }));
+  };
+
+  const requestCourier = async (
+    orderId: string,
+    providerId: Exclude<CourierProviderId, "select">
+  ) => {
+    // TODO: Replace with real API call
+    // eslint-disable-next-line no-console
+    console.log("Request courier for:", orderId, "provider:", providerId);
+
+    // After success you can update state from API response (tracking no etc.)
+  };
+
   return (
     <>
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
@@ -78,43 +98,33 @@ export default function OrdersTable({ rows }: Props) {
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Customer
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Order Info
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Product
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Payment
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Status
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Date Time
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Send Currier
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Order Note
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Shipping Location
                 </th>
-
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Action
                 </th>
@@ -180,7 +190,6 @@ export default function OrdersTable({ rows }: Props) {
                       </p>
 
                       <div className="mt-2 flex items-center gap-2">
-                        {/* ✅ VIEW -> OPEN MODAL */}
                         <button
                           type="button"
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
@@ -217,7 +226,7 @@ export default function OrdersTable({ rows }: Props) {
                     </div>
                   </td>
 
-                  {/* Payment (Dropdown) */}
+                  {/* Payment */}
                   <td className="px-4 py-4">
                     <OrderSelectDropdown
                       value={r.paymentStatus}
@@ -232,7 +241,7 @@ export default function OrdersTable({ rows }: Props) {
                     />
                   </td>
 
-                  {/* Status (Dropdown) */}
+                  {/* Status */}
                   <td className="px-4 py-4">
                     <OrderSelectDropdown
                       value={r.status}
@@ -259,12 +268,12 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Send Currier */}
                   <td className="px-4 py-4">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 rounded-full bg-success-600 px-4 py-2 text-xs font-semibold text-white hover:bg-success-700"
-                    >
-                      SEND <Send size={14} />
-                    </button>
+                    <SendCourierCell
+                      order={r}
+                      courierOverride={courierOverride[r.id]}
+                      onUpdateCourier={updateCourier}
+                      onRequestCourier={requestCourier}
+                    />
                   </td>
 
                   {/* Order Note */}
@@ -323,7 +332,6 @@ export default function OrdersTable({ rows }: Props) {
         </div>
       </div>
 
-      {/* ✅ View Modal */}
       <OrderInfoModal
         open={viewOpen}
         onClose={() => setViewOpen(false)}

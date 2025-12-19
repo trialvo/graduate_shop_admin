@@ -22,20 +22,16 @@ export const ALL_ORDERS: OrderRow[] = [
     customerPhone: "01711123456",
     customerImage: "",
     fraudLevel: "safe",
-
     paymentMethod: "COD",
     paymentStatus: "unpaid",
     status: "new",
-
     itemsAmount: 1,
     totalItems: 1,
     total: 12999,
     currencySymbol: "৳",
-
     orderDateLabel: "14/11/2025",
     orderTimeLabel: "2:30PM",
     relativeTimeLabel: "2m ago",
-
     orderNote: "Please check the product before delivery.",
     shippingLocation: "Inside Dhaka",
 
@@ -45,13 +41,11 @@ export const ALL_ORDERS: OrderRow[] = [
     shippingAddress: "House 12, Road 5, Mirpur DOHS, Dhaka",
     shippingArea: "Inside Dhaka",
     qrValue: "ORDER-95101",
-
-    // Product details (table)
     products: [
       {
         id: "it-1",
-        name: "Walton Primo H10 4GB/64GB",
-        image: "/images/product/product-01.jpg",
+        name: "Premium Winter Collection",
+        image: "/images/product/product-04.jpg",
         size: "XXL",
         code: "1552",
         qty: 1,
@@ -59,10 +53,33 @@ export const ALL_ORDERS: OrderRow[] = [
         total: 12999,
       },
     ],
-
     discount: 0,
     paidAmount: 0,
     shippingCost: 60,
+
+    courier: {
+      apiConfigured: true,
+      apiConnected: true,
+      availableAutoCouriers: [
+        { providerId: "pathao", providerName: "Pathao", connected: true, isDefault: true },
+        { providerId: "redx", providerName: "RedX", connected: true },
+        { providerId: "steadfast", providerName: "Steadfast", connected: true },
+      ],
+      autoDetected: true,
+      providerId: "pathao",
+      providerName: "Pathao",
+      trackingNo: "PX-TRK-95101",
+      memoNo: "MEMO-95101",
+      lastMessage: "Auto ready — select courier and request.",
+      preview: {
+        receiverName: "Rahim Sheikh",
+        receiverPhone: "01711123456",
+        address: "House 12, Road 5, Mirpur DOHS, Dhaka",
+        area: "Inside Dhaka",
+        codAmount: 12999,
+        weightKg: 1,
+      },
+    },
   },
 
   {
@@ -71,20 +88,16 @@ export const ALL_ORDERS: OrderRow[] = [
     customerPhone: "01819234567",
     customerImage: "",
     fraudLevel: "medium",
-
     paymentMethod: "BKASH",
     paymentStatus: "paid",
     status: "new",
-
     itemsAmount: 2,
     totalItems: 2,
     total: 3800,
     currencySymbol: "৳",
-
     orderDateLabel: "14/11/2025",
     orderTimeLabel: "2:27PM",
     relativeTimeLabel: "5m ago",
-
     orderNote: "Urgent delivery please.",
     shippingLocation: "Outside Dhaka",
 
@@ -94,7 +107,6 @@ export const ALL_ORDERS: OrderRow[] = [
     shippingAddress: "Kashimpur, Gazipur",
     shippingArea: "Outside Dhaka",
     qrValue: "ORDER-95102",
-
     products: [
       {
         id: "it-1",
@@ -117,10 +129,24 @@ export const ALL_ORDERS: OrderRow[] = [
         total: 1900,
       },
     ],
-
     discount: 0,
     paidAmount: 0,
     shippingCost: 60,
+
+    // manual
+    courier: {
+      apiConfigured: false,
+      apiConnected: false,
+      lastMessage: "Use manual tab: select courier + memo.",
+      preview: {
+        receiverName: "Karim Biswas",
+        receiverPhone: "01819234567",
+        address: "Kashimpur, Gazipur",
+        area: "Outside Dhaka",
+        codAmount: 0,
+        weightKg: 1,
+      },
+    },
   },
 
   {
@@ -129,20 +155,16 @@ export const ALL_ORDERS: OrderRow[] = [
     customerPhone: "01912345678",
     customerImage: "",
     fraudLevel: "safe",
-
     paymentMethod: "NAGAD",
     paymentStatus: "paid",
     status: "new",
-
     itemsAmount: 1,
     totalItems: 1,
     total: 2800,
     currencySymbol: "৳",
-
     orderDateLabel: "14/11/2025",
     orderTimeLabel: "2:22PM",
     relativeTimeLabel: "10m ago",
-
     orderNote: "",
     shippingLocation: "Inside Dhaka",
 
@@ -152,7 +174,6 @@ export const ALL_ORDERS: OrderRow[] = [
     shippingAddress: "Mohakhali, Dhaka",
     shippingArea: "Inside Dhaka",
     qrValue: "ORDER-95103",
-
     products: [
       {
         id: "it-1",
@@ -165,10 +186,14 @@ export const ALL_ORDERS: OrderRow[] = [
         total: 2800,
       },
     ],
-
     discount: 0,
     paidAmount: 0,
     shippingCost: 60,
+    courier: {
+      apiConfigured: true,
+      apiConnected: false,
+      lastMessage: "API configured but not connected yet (manual tab).",
+    },
   },
 
   {
@@ -177,20 +202,16 @@ export const ALL_ORDERS: OrderRow[] = [
     customerPhone: "01678901234",
     customerImage: "",
     fraudLevel: "high",
-
     paymentMethod: "COD",
     paymentStatus: "unpaid",
     status: "new",
-
-    itemsAmount: 2,
+    itemsAmount: 1,
     totalItems: 1,
     total: 3850,
     currencySymbol: "৳",
-
     orderDateLabel: "14/11/2025",
     orderTimeLabel: "2:20PM",
     relativeTimeLabel: "12m ago",
-
     orderNote: "Call before coming.",
     shippingLocation: "Outside Dhaka",
 
@@ -200,7 +221,6 @@ export const ALL_ORDERS: OrderRow[] = [
     shippingAddress: "Kushtia Sadar, Kushtia",
     shippingArea: "Outside Dhaka",
     qrValue: "ORDER-95104",
-
     products: [
       {
         id: "it-1",
@@ -213,10 +233,10 @@ export const ALL_ORDERS: OrderRow[] = [
         total: 3850,
       },
     ],
-
     discount: 0,
     paidAmount: 0,
     shippingCost: 60,
+    courier: { apiConfigured: false, apiConnected: false },
   },
 
   {
@@ -225,20 +245,16 @@ export const ALL_ORDERS: OrderRow[] = [
     customerPhone: "01551234567",
     customerImage: "",
     fraudLevel: "safe",
-
     paymentMethod: "COD",
     paymentStatus: "unpaid",
     status: "approved",
-
     itemsAmount: 1,
     totalItems: 1,
     total: 2100,
     currencySymbol: "৳",
-
     orderDateLabel: "14/11/2025",
     orderTimeLabel: "2:17PM",
     relativeTimeLabel: "15m ago",
-
     orderNote: "Need original product.",
     shippingLocation: "Inside Dhaka",
 
@@ -248,7 +264,6 @@ export const ALL_ORDERS: OrderRow[] = [
     shippingAddress: "Uttara, Dhaka",
     shippingArea: "Inside Dhaka",
     qrValue: "ORDER-95105",
-
     products: [
       {
         id: "it-1",
@@ -261,9 +276,17 @@ export const ALL_ORDERS: OrderRow[] = [
         total: 2100,
       },
     ],
-
     discount: 0,
     paidAmount: 0,
     shippingCost: 60,
+    courier: {
+      apiConfigured: true,
+      apiConnected: true,
+      availableAutoCouriers: [
+        { providerId: "redx", providerName: "RedX", connected: true, isDefault: true },
+        { providerId: "pathao", providerName: "Pathao", connected: true },
+      ],
+      lastMessage: "Auto available — pick courier & request.",
+    },
   },
 ];

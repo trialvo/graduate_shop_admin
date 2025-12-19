@@ -18,22 +18,65 @@ export type OrderStatus =
 
 export type FraudLevel = "safe" | "medium" | "high";
 
+export type CourierProviderId =
+  | "select"
+  | "sa_paribahan"
+  | "pathao"
+  | "redx"
+  | "delivery_tiger"
+  | "sundarban"
+  | "steadfast";
+
+export type CourierPreview = {
+  receiverName?: string;
+  receiverPhone?: string;
+  address?: string;
+  area?: string;
+  codAmount?: number;
+  weightKg?: number;
+};
+
+export type AutoCourierItem = {
+  providerId: Exclude<CourierProviderId, "select">;
+  providerName: string;
+  connected: boolean;
+  // optional: set as "default"
+  isDefault?: boolean;
+};
+
+export type CourierInfo = {
+  providerId?: CourierProviderId;
+  providerName?: string;
+
+  memoNo?: string;
+  trackingNo?: string;
+  requestedAt?: string;
+
+  apiConfigured?: boolean;
+  apiConnected?: boolean;
+
+  // API connected courier list (for Auto tab)
+  availableAutoCouriers?: AutoCourierItem[];
+
+  autoDetected?: boolean;
+  lastMessage?: string;
+
+  preview?: CourierPreview;
+};
+
 export type OrderItemRow = {
   id: string;
-
-  // ✅ Product details table fields
   name: string;
   image?: string;
-  size?: string; // e.g. XL, XXL
-  code?: string; // e.g. 1552
-
+  size?: string;
+  code?: string;
   qty: number;
-  price: number; // unit price
-  total: number; // line total (qty * price)
+  price: number;
+  total: number;
 };
 
 export type OrderRow = {
-  id: string; // e.g. #95101
+  id: string;
   customerName: string;
   customerPhone: string;
   customerImage?: string;
@@ -45,19 +88,18 @@ export type OrderRow = {
 
   status: Exclude<OrderStatus, "all">;
 
-  itemsAmount: number; // distinct products
-  totalItems: number; // total qty
-  total: number; // numeric total
-  currencySymbol: string; // "৳"
+  itemsAmount: number;
+  totalItems: number;
+  total: number;
+  currencySymbol: string;
 
-  orderDateLabel: string; // "14/11/2025"
-  orderTimeLabel: string; // "2:30PM"
-  relativeTimeLabel: string; // "2m ago"
+  orderDateLabel: string;
+  orderTimeLabel: string;
+  relativeTimeLabel: string;
 
   orderNote?: string;
-  shippingLocation: string; // "Inside Dhaka" etc.
+  shippingLocation: string;
 
-  // For View Modal
   email?: string;
   billingName?: string;
   billingPhone?: string;
@@ -68,8 +110,9 @@ export type OrderRow = {
   qrValue?: string;
   products?: OrderItemRow[];
 
-  // Optional totals (future)
   discount?: number;
   paidAmount?: number;
   shippingCost?: number;
+
+  courier?: CourierInfo;
 };
