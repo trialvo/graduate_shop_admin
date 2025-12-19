@@ -22,6 +22,7 @@ import NewSale from "./pages/Sales/NewSale";
 import AllOrders from "./pages/Orders/AllOrders";
 import GuestOrders from "./pages/Orders/GuestOrders";
 import AllProducts from "./pages/Products/AllProducts";
+import OrderEditor from "./pages/Orders/OrderEditor";
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
 
             {/* Orders */}
             <Route path="/all-orders" element={<AllOrders />} />
+            <Route path="/order-editor" element={<OrderEditor />} />
             <Route path="/guest-orders" element={<GuestOrders />} />
 
             {/* ✅ Products */}
