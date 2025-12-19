@@ -4,7 +4,10 @@ import React from "react";
 import { Plus } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
-import StockUpdateModal, { StockUpdateModalProduct } from "./StockUpdateModal";
+import StockUpdateModal, {
+  StockUpdateModalProduct,
+  StockUpdatePayload,
+} from "./StockUpdateModal";
 
 type StockAlertItem = {
   id: string;
@@ -14,8 +17,11 @@ type StockAlertItem = {
 };
 
 type Props = {
+  /** ✅ required: dashboard must pass items */
   items: StockAlertItem[];
-  onApplyStock?: (payload: { productId: string; delta: number }) => void;
+
+  /** ✅ professional payload */
+  onApplyStock?: (payload: StockUpdatePayload) => void;
 };
 
 const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
@@ -31,12 +37,12 @@ const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
     setOpen(true);
   };
 
-  const onApply = (payload: { productId: string; delta: number }) => {
+  const onApply = (payload: StockUpdatePayload) => {
     onApplyStock?.(payload);
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 w-full">
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
           Stock Alert Products
@@ -56,7 +62,7 @@ const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
         {items.map((it) => (
           <div
             key={it.id}
-            className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-800 px-3 py-3"
+            className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-3 py-3"
           >
             <div className="min-w-0">
               <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
@@ -75,7 +81,8 @@ const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
               size="sm"
               onClick={() => openModal(it)}
               startIcon={<Plus className="h-4 w-4" />}
-              className="bg-brand-500 hover:bg-brand-600"
+              className="bg-brand-500 hover:bg-brand-600 shrink-0"
+              type="button"
             >
               Update
             </Button>

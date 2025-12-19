@@ -9,12 +9,13 @@ import AllProductsTable from "./AllProductsTable";
 
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
-import StockUpdateModal, { StockUpdateModalProduct } from "@/components/dashboard/StockUpdateModal";
-
+import StockUpdateModal, {
+  StockUpdateModalProduct,
+  StockUpdatePayload,
+} from "@/components/dashboard/StockUpdateModal";
 
 const AllProductsPage: React.FC = () => {
   const [products, setProducts] = React.useState<Product[]>(demoProducts);
-
   const [query, setQuery] = React.useState<string>("");
 
   // ✅ common modal state
@@ -49,14 +50,30 @@ const AllProductsPage: React.FC = () => {
     setStockModalOpen(true);
   };
 
-  const applyStockUpdate = ({ productId, delta }: { productId: string; delta: number }) => {
+  /** ✅ professional payload handler (history + server-ready) */
+  const applyStockUpdate = (payload: StockUpdatePayload) => {
+    const { productId, type, qty } = payload;
+
     setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId
-          ? { ...p, stockQty: Math.max(0, p.stockQty + delta) }
-          : p
-      )
+      prev.map((p) => {
+        if (p.id !== productId) return p;
+
+        const current = p.stockQty;
+
+        const next =
+          type === "increase"
+            ? current + Math.max(0, qty)
+            : type === "decrease"
+              ? current - Math.max(0, qty)
+              : Math.max(0, qty); // set
+
+        return { ...p, stockQty: Math.max(0, next) };
+      })
     );
+
+    // ✅ send to server + store history
+    // await fetch("/api/stock/update", { method:"POST", body: JSON.stringify(payload) })
+    console.log("Stock update request:", payload);
   };
 
   const toggleStatus = (productId: string, next: Product["status"]) => {
@@ -83,7 +100,9 @@ const AllProductsPage: React.FC = () => {
             <div className="relative w-full">
               <Input
                 value={query}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setQuery(e.target.value)
+                }
                 placeholder="Ex : search item by name"
                 className="h-11 rounded-l-xl rounded-r-none border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
               />
@@ -91,7 +110,7 @@ const AllProductsPage: React.FC = () => {
 
             <Button
               variant="primary"
-              className="h-11 rounded-l-none rounded-r-xl px-4"
+              className="h-11 rounded-l-none rounded-r-xl px-4 bg-brand-500 hover:bg-brand-600"
               startIcon={<Search className="h-4 w-4" />}
               onClick={() => {}}
               type="button"

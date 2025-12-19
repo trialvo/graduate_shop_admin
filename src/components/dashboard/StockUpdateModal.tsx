@@ -2,6 +2,31 @@
 
 import React from "react";
 import Button from "@/components/ui/button/Button";
+import Input from "@/components/form/input/InputField";
+
+export type StockActionType = "increase" | "decrease" | "set";
+
+export type StockUpdatePayload = {
+  productId: string;
+
+  /** stock operation */
+  type: StockActionType;
+
+  /** qty used for increase/decrease, or new qty for set */
+  qty: number;
+
+  /** business reason: e.g. "purchase", "damage", "return", "adjustment" */
+  reason: string;
+
+  /** optional note for audit/history */
+  note?: string;
+
+  /** for server-side idempotency / tracing */
+  clientRequestId?: string;
+
+  /** ISO timestamp (client side); server can override */
+  occurredAt?: string;
+};
 
 export type StockUpdateModalProduct = {
   id: string;
@@ -12,136 +37,244 @@ export type StockUpdateModalProduct = {
 type Props = {
   open: boolean;
   product: StockUpdateModalProduct | null;
-
-  title?: string;
-  description?: string;
-
   onClose: () => void;
 
-  /**
-   * delta: positive = add stock, negative = remove stock
-   */
-  onApply: (payload: { productId: string; delta: number }) => void;
+  /** ✅ professional payload */
+  onApply: (payload: StockUpdatePayload) => void;
 
-  /**
-   * optional guard (example: prevent removing more than available)
-   */
-  minStockAfterUpdate?: number; // default 0
+  /** optional validation guard */
+  minStockAfterUpdate?: number;
 };
+
+const REASONS = [
+  { label: "Purchase / Stock In", value: "purchase" },
+  { label: "Sale / Stock Out", value: "sale" },
+  { label: "Return", value: "return" },
+  { label: "Damage / Lost", value: "damage" },
+  { label: "Adjustment", value: "adjustment" },
+];
 
 const StockUpdateModal: React.FC<Props> = ({
   open,
   product,
-  title = "Update Stock",
-  description = "Add or remove stock using a positive or negative number.",
   onClose,
   onApply,
   minStockAfterUpdate = 0,
 }) => {
-  const [value, setValue] = React.useState<string>("");
+  const [type, setType] = React.useState<StockActionType>("increase");
+  const [qty, setQty] = React.useState<number>(1);
+  const [reason, setReason] = React.useState<string>(REASONS[0].value);
+  const [note, setNote] = React.useState<string>("");
 
   React.useEffect(() => {
-    if (open) setValue("");
+    if (!open) return;
+    // reset per open to avoid stale values
+    setType("increase");
+    setQty(1);
+    setReason(REASONS[0].value);
+    setNote("");
   }, [open]);
 
-  const parsed = Number(value);
-  const hasValidNumber = Number.isFinite(parsed);
-  const delta = hasValidNumber ? parsed : 0;
+  if (!open || !product) return null;
 
-  const current = product?.currentStock ?? 0;
-  const nextStock = current + delta;
+  const current = product.currentStock;
 
-  const isValid =
-    open &&
-    !!product &&
-    hasValidNumber &&
-    delta !== 0 &&
-    nextStock >= minStockAfterUpdate;
+  const nextStockPreview = (() => {
+    if (type === "increase") return current + Math.max(0, qty);
+    if (type === "decrease") return current - Math.max(0, qty);
+    return Math.max(0, qty); // set
+  })();
 
-  if (!open) return null;
+  const stockAfter = Math.max(0, nextStockPreview);
+  const violatesMin = stockAfter < minStockAfterUpdate;
+
+  const canApply =
+    Number.isFinite(qty) &&
+    qty >= 0 &&
+    reason.trim().length > 0 &&
+    !violatesMin;
+
+  const handleApply = () => {
+    if (!canApply) return;
+
+    onApply({
+      productId: product.id,
+      type,
+      qty: Math.floor(qty),
+      reason: reason.trim(),
+      note: note.trim() ? note.trim() : undefined,
+      clientRequestId:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `req_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      occurredAt: new Date().toISOString(),
+    });
+
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-3">
-      {/* Backdrop */}
-      <button
-        onClick={onClose}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* overlay */}
+      <div
         className="absolute inset-0 bg-black/40"
-        aria-label="Close stock update modal"
+        onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
-        <div className="p-5">
+      {/* modal */}
+      <div className="relative w-[94%] max-w-xl rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {title}
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
+                Update Stock
               </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {description}
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {product.name} • Current:{" "}
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {current}
+                </span>
               </p>
             </div>
 
-            <Button variant="outline" size="icon" onClick={onClose} className="h-9 w-9">
-              ✕
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={onClose}
+              className="rounded-xl"
+            >
+              Close
             </Button>
           </div>
+        </div>
 
-          <div className="mt-4 space-y-1">
-            <p className="text-sm text-gray-700 dark:text-gray-200">
-              Product:{" "}
-              <span className="font-semibold">{product?.name ?? "—"}</span>
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Current Stock: <span className="font-semibold">{current}</span>
-            </p>
+        <div className="p-4 space-y-4">
+          {/* type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              Action
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setType("increase")}
+                className={[
+                  "h-11 rounded-xl border text-sm font-semibold",
+                  type === "increase"
+                    ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-gray-800"
+                    : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
+                ].join(" ")}
+              >
+                Increase
+              </button>
+              <button
+                type="button"
+                onClick={() => setType("decrease")}
+                className={[
+                  "h-11 rounded-xl border text-sm font-semibold",
+                  type === "decrease"
+                    ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-gray-800"
+                    : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
+                ].join(" ")}
+              >
+                Decrease
+              </button>
+              <button
+                type="button"
+                onClick={() => setType("set")}
+                className={[
+                  "h-11 rounded-xl border text-sm font-semibold",
+                  type === "set"
+                    ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-gray-800"
+                    : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
+                ].join(" ")}
+              >
+                Set
+              </button>
+            </div>
           </div>
 
-          <div className="mt-4">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Stock Change (use negative to remove)
+          {/* qty */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              {type === "set" ? "New Stock Qty" : "Qty"}
             </label>
-
-            <input
-              value={value}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
-              placeholder="e.g. 10 or -5"
-              className="mt-2 h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-brand-500/30"
+            <Input
+              value={String(qty)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setQty(Number(e.target.value))
+              }
+              className="h-11 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
+              placeholder={type === "set" ? "e.g. 120" : "e.g. 10"}
+              type="number"
+              min={0}
             />
 
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-gray-500 dark:text-gray-400">
-                Next Stock:{" "}
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {hasValidNumber ? nextStock : "—"}
-                </span>
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Preview:{" "}
+              <span
+                className={[
+                  "font-semibold",
+                  violatesMin ? "text-red-600 dark:text-red-300" : "text-gray-900 dark:text-gray-100",
+                ].join(" ")}
+              >
+                {stockAfter}
               </span>
-
-              {hasValidNumber && nextStock < minStockAfterUpdate && (
-                <span className="text-red-600 dark:text-red-300">
-                  Stock can’t go below {minStockAfterUpdate}
+              {violatesMin && (
+                <span className="ml-2 text-xs text-red-600 dark:text-red-300">
+                  (Must be ≥ {minStockAfterUpdate})
                 </span>
               )}
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-
-            <Button
-              variant="primary"
-              disabled={!isValid}
-              onClick={() => {
-                if (!product) return;
-                onApply({ productId: product.id, delta });
-                onClose();
-              }}
+          {/* reason */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              Reason
+            </label>
+            <select
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 text-sm text-gray-900 dark:text-gray-100"
             >
-              Apply
-            </Button>
+              {REASONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {/* note */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              Note (optional)
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="min-h-[96px] w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+              placeholder="Add details for audit/history..."
+            />
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-end gap-2">
+          <Button variant="outline" type="button" onClick={onClose} className="rounded-xl">
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleApply}
+            disabled={!canApply}
+            className="rounded-xl bg-brand-500 hover:bg-brand-600"
+          >
+            Apply Update
+          </Button>
         </div>
       </div>
     </div>
