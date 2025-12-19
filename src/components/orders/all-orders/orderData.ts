@@ -1,0 +1,269 @@
+import type { OrderRow, OrderStatus } from "./types";
+
+export const STATUS_OPTIONS: { id: OrderStatus; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "new", label: "New" },
+  { id: "approved", label: "Approved" },
+  { id: "processing", label: "Processing" },
+  { id: "packaging", label: "Packaging" },
+  { id: "shipped", label: "Shipped" },
+  { id: "out_of_delivery", label: "Out of Delivery" },
+  { id: "delivered", label: "Delivered" },
+  { id: "returned", label: "Returned" },
+  { id: "cancelled", label: "Cancelled" },
+  { id: "on_hold", label: "On Hold" },
+  { id: "trash", label: "Trash" },
+];
+
+export const ALL_ORDERS: OrderRow[] = [
+  {
+    id: "#95101",
+    customerName: "Rahim Sheikh",
+    customerPhone: "01711123456",
+    customerImage: "",
+    fraudLevel: "safe",
+
+    paymentMethod: "COD",
+    paymentStatus: "unpaid",
+    status: "new",
+
+    itemsAmount: 1,
+    totalItems: 1,
+    total: 12999,
+    currencySymbol: "৳",
+
+    orderDateLabel: "14/11/2025",
+    orderTimeLabel: "2:30PM",
+    relativeTimeLabel: "2m ago",
+
+    orderNote: "Please check the product before delivery.",
+    shippingLocation: "Inside Dhaka",
+
+    email: "rahim.sheikh@example.com",
+    billingName: "Rahim Sheikh",
+    billingPhone: "01711123456",
+    shippingAddress: "House 12, Road 5, Mirpur DOHS, Dhaka",
+    shippingArea: "Inside Dhaka",
+    qrValue: "ORDER-95101",
+
+    // Product details (table)
+    products: [
+      {
+        id: "it-1",
+        name: "Walton Primo H10 4GB/64GB",
+        image: "/images/product/product-01.jpg",
+        size: "XXL",
+        code: "1552",
+        qty: 1,
+        price: 12999,
+        total: 12999,
+      },
+    ],
+
+    discount: 0,
+    paidAmount: 0,
+    shippingCost: 60,
+  },
+
+  {
+    id: "#95102",
+    customerName: "Karim Biswas",
+    customerPhone: "01819234567",
+    customerImage: "",
+    fraudLevel: "medium",
+
+    paymentMethod: "BKASH",
+    paymentStatus: "paid",
+    status: "new",
+
+    itemsAmount: 2,
+    totalItems: 2,
+    total: 3800,
+    currencySymbol: "৳",
+
+    orderDateLabel: "14/11/2025",
+    orderTimeLabel: "2:27PM",
+    relativeTimeLabel: "5m ago",
+
+    orderNote: "Urgent delivery please.",
+    shippingLocation: "Outside Dhaka",
+
+    email: "karim.biswas@example.com",
+    billingName: "Karim Biswas",
+    billingPhone: "01819234567",
+    shippingAddress: "Kashimpur, Gazipur",
+    shippingArea: "Outside Dhaka",
+    qrValue: "ORDER-95102",
+
+    products: [
+      {
+        id: "it-1",
+        name: "Premium Winter Collection",
+        image: "/images/product/product-04.jpg",
+        size: "XXL",
+        code: "1552",
+        qty: 1,
+        price: 1900,
+        total: 1900,
+      },
+      {
+        id: "it-2",
+        name: "Premium Winter Collection",
+        image: "/images/product/product-05.jpg",
+        size: "XL",
+        code: "1555",
+        qty: 1,
+        price: 1900,
+        total: 1900,
+      },
+    ],
+
+    discount: 0,
+    paidAmount: 0,
+    shippingCost: 60,
+  },
+
+  {
+    id: "#95103",
+    customerName: "Foisal Ahmed",
+    customerPhone: "01912345678",
+    customerImage: "",
+    fraudLevel: "safe",
+
+    paymentMethod: "NAGAD",
+    paymentStatus: "paid",
+    status: "new",
+
+    itemsAmount: 1,
+    totalItems: 1,
+    total: 2800,
+    currencySymbol: "৳",
+
+    orderDateLabel: "14/11/2025",
+    orderTimeLabel: "2:22PM",
+    relativeTimeLabel: "10m ago",
+
+    orderNote: "",
+    shippingLocation: "Inside Dhaka",
+
+    email: "foisal.ahmed@example.com",
+    billingName: "Foisal Ahmed",
+    billingPhone: "01912345678",
+    shippingAddress: "Mohakhali, Dhaka",
+    shippingArea: "Inside Dhaka",
+    qrValue: "ORDER-95103",
+
+    products: [
+      {
+        id: "it-1",
+        name: "Power Bank 10,000mAh",
+        image: "/images/product/product-02.jpg",
+        size: "M",
+        code: "PB-10000",
+        qty: 1,
+        price: 2800,
+        total: 2800,
+      },
+    ],
+
+    discount: 0,
+    paidAmount: 0,
+    shippingCost: 60,
+  },
+
+  {
+    id: "#95104",
+    customerName: "Jamil Chowdhury",
+    customerPhone: "01678901234",
+    customerImage: "",
+    fraudLevel: "high",
+
+    paymentMethod: "COD",
+    paymentStatus: "unpaid",
+    status: "new",
+
+    itemsAmount: 2,
+    totalItems: 1,
+    total: 3850,
+    currencySymbol: "৳",
+
+    orderDateLabel: "14/11/2025",
+    orderTimeLabel: "2:20PM",
+    relativeTimeLabel: "12m ago",
+
+    orderNote: "Call before coming.",
+    shippingLocation: "Outside Dhaka",
+
+    email: "jamil.chowdhury@example.com",
+    billingName: "Jamil Chowdhury",
+    billingPhone: "01678901234",
+    shippingAddress: "Kushtia Sadar, Kushtia",
+    shippingArea: "Outside Dhaka",
+    qrValue: "ORDER-95104",
+
+    products: [
+      {
+        id: "it-1",
+        name: "Shoes Runner",
+        image: "/images/product/product-03.jpg",
+        size: "42",
+        code: "SH-42",
+        qty: 1,
+        price: 3850,
+        total: 3850,
+      },
+    ],
+
+    discount: 0,
+    paidAmount: 0,
+    shippingCost: 60,
+  },
+
+  {
+    id: "#95105",
+    customerName: "Tanvir Hasan",
+    customerPhone: "01551234567",
+    customerImage: "",
+    fraudLevel: "safe",
+
+    paymentMethod: "COD",
+    paymentStatus: "unpaid",
+    status: "approved",
+
+    itemsAmount: 1,
+    totalItems: 1,
+    total: 2100,
+    currencySymbol: "৳",
+
+    orderDateLabel: "14/11/2025",
+    orderTimeLabel: "2:17PM",
+    relativeTimeLabel: "15m ago",
+
+    orderNote: "Need original product.",
+    shippingLocation: "Inside Dhaka",
+
+    email: "tanvir.hasan@example.com",
+    billingName: "Tanvir Hasan",
+    billingPhone: "01551234567",
+    shippingAddress: "Uttara, Dhaka",
+    shippingArea: "Inside Dhaka",
+    qrValue: "ORDER-95105",
+
+    products: [
+      {
+        id: "it-1",
+        name: "Smart Watch Series",
+        image: "/images/product/product-01.jpg",
+        size: "L",
+        code: "SW-L",
+        qty: 1,
+        price: 2100,
+        total: 2100,
+      },
+    ],
+
+    discount: 0,
+    paidAmount: 0,
+    shippingCost: 60,
+  },
+];
