@@ -1,27 +1,26 @@
 import React, { ReactNode } from "react";
 
 export interface ButtonProps {
-  children: ReactNode;
+  children?: ReactNode; // ✅ optional now (supports icon-only buttons)
 
-  // sizes
   size?: "sm" | "md" | "icon";
-
-  // variants (extended)
   variant?: "primary" | "outline" | "ghost" | "danger";
 
-  // icons
   startIcon?: ReactNode;
   endIcon?: ReactNode;
 
-  // behavior
   onClick?: () => void;
   disabled?: boolean;
 
-  // html button type support
   type?: "button" | "submit" | "reset";
 
-  // styles
   className?: string;
+
+  /**
+   * ✅ For icon-only buttons (accessibility)
+   * Example: ariaLabel="Search"
+   */
+  ariaLabel?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -34,15 +33,14 @@ const Button: React.FC<ButtonProps> = ({
   className = "",
   disabled = false,
   type = "button",
+  ariaLabel,
 }) => {
-  // Size Classes
   const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {
     sm: "px-4 py-3 text-sm",
     md: "px-5 py-3.5 text-sm",
-    icon: "h-9 w-9 p-0", // icon-only buttons (tables/actions)
+    icon: "h-9 w-9 p-0",
   };
 
-  // Variant Classes (using your theme & dark mode)
   const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
     primary:
       "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300",
@@ -57,6 +55,7 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       type={type}
+      aria-label={ariaLabel}
       className={[
         "inline-flex items-center justify-center gap-2 rounded-lg transition",
         sizeClasses[size],
@@ -68,6 +67,7 @@ const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
     >
       {startIcon && <span className="flex items-center">{startIcon}</span>}
+      {/* ✅ children optional */}
       {children}
       {endIcon && <span className="flex items-center">{endIcon}</span>}
     </button>

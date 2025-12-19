@@ -1,114 +1,96 @@
-import { useMemo, useState } from "react";
+"use client";
+
+import React from "react";
 import { Plus } from "lucide-react";
-import { stockAlertProducts } from "../../pages/Dashboard/dashboardSection5Data";
-import StockUpdateModal from "./StockUpdateModal";
 
-const PAGE_SIZE = 10;
+import Button from "@/components/ui/button/Button";
+import StockUpdateModal, { StockUpdateModalProduct } from "./StockUpdateModal";
 
-const StockAlertProductsCard = () => {
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+type StockAlertItem = {
+  id: string;
+  name: string;
+  stockQty: number;
+  sku?: string;
+};
 
-  // Local editable state (ready for API later)
-  const [rows, setRows] = useState(stockAlertProducts);
+type Props = {
+  items: StockAlertItem[];
+  onApplyStock?: (payload: { productId: string; delta: number }) => void;
+};
 
-  const preview = useMemo(() => rows.slice(0, PAGE_SIZE), [rows]);
+const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
+  const [open, setOpen] = React.useState(false);
+  const [product, setProduct] = React.useState<StockUpdateModalProduct | null>(null);
 
-  const selectedProduct = rows.find((r) => r.id === selectedId) ?? null;
+  const openModal = (it: StockAlertItem) => {
+    setProduct({
+      id: it.id,
+      name: it.name,
+      currentStock: it.stockQty,
+    });
+    setOpen(true);
+  };
+
+  const onApply = (payload: { productId: string; delta: number }) => {
+    onApplyStock?.(payload);
+  };
 
   return (
-    <div className="h-full w-full rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 flex flex-col">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
           Stock Alert Products
         </h3>
-
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-        >
-          View All
-        </button>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Quickly update stock for low inventory items.
+        </p>
       </div>
 
-      {/* Table Header */}
-      <div className="grid grid-cols-12 rounded-lg bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-        <div className="col-span-2">Image</div>
-        <div className="col-span-6">Name</div>
-        <div className="col-span-2 text-center">Price</div>
-        <div className="col-span-2 text-right">Stock</div>
-      </div>
+      <div className="p-4 space-y-3">
+        {items.length === 0 && (
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            No low stock products.
+          </div>
+        )}
 
-      {/* Body */}
-      <div className="flex-1">
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
-          {preview.map((p) => (
-            <div
-              key={p.id}
-              className="grid grid-cols-12 items-center px-4 py-4"
-            >
-              <div className="col-span-2">
-                <img
-                  src={p.image}
-                  alt={p.title}
-                  className="h-11 w-11 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-800"
-                />
+        {items.map((it) => (
+          <div
+            key={it.id}
+            className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-800 px-3 py-3"
+          >
+            <div className="min-w-0">
+              <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {it.name}
               </div>
-
-              <div className="col-span-6 min-w-0">
-                <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {p.title}
-                </p>
-                <p className="text-xs text-gray-400">
-                  Order: {p.id} • SKU: {p.sku}
-                </p>
-              </div>
-
-              <div className="col-span-2 text-center text-sm text-gray-600 dark:text-gray-300">
-                {p.price}
-              </div>
-
-              <div className="col-span-2 flex items-center justify-end gap-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {p.stock}
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {it.sku ? it.sku : it.id} • Stock:{" "}
+                <span className="font-semibold text-red-600 dark:text-red-300">
+                  {it.stockQty}
                 </span>
-
-                <button
-                  onClick={() => {
-                    setSelectedId(p.id);
-                    setOpen(true);
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-500 text-white hover:bg-brand-600"
-                >
-                  <Plus size={14} />
-                </button>
               </div>
             </div>
-          ))}
-        </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => openModal(it)}
+              startIcon={<Plus className="h-4 w-4" />}
+              className="bg-brand-500 hover:bg-brand-600"
+            >
+              Update
+            </Button>
+          </div>
+        ))}
       </div>
 
-      {/* Stock Update Modal */}
-      {selectedProduct && (
-        <StockUpdateModal
-          open={open}
-          onClose={() => {
-            setOpen(false);
-            setSelectedId(null);
-          }}
-          product={selectedProduct}
-          onUpdate={(newStock) =>
-            setRows((prev) =>
-              prev.map((r) =>
-                r.id === selectedProduct.id
-                  ? { ...r, stock: newStock }
-                  : r
-              )
-            )
-          }
-        />
-      )}
+      {/* ✅ Common Stock Modal */}
+      <StockUpdateModal
+        open={open}
+        product={product}
+        onClose={() => setOpen(false)}
+        onApply={onApply}
+        minStockAfterUpdate={0}
+      />
     </div>
   );
 };
