@@ -1,12 +1,13 @@
 import type { Customer, SaleProduct } from "@/components/sales/types";
 
-export const shops = [{ id: "shop-1", name: "Organic Shop" }];
+export type CategoryOption = { id: string; name: string; image: string };
 
-export const categories = [
-  { id: "all", name: "All categories" },
-  { id: "grocery", name: "Grocery" },
-  { id: "fashion", name: "Fashion" },
-  { id: "electronics", name: "Electronics" },
+// Product Section: Category dropdown options (with images)
+export const categories: CategoryOption[] = [
+  { id: "all", name: "All Categories", image: "/images/product/product-02.jpg" },
+  { id: "grocery", name: "Grocery", image: "/images/product/product-01.jpg" },
+  { id: "fashion", name: "Fashion", image: "/images/product/product-04.jpg" },
+  { id: "electronics", name: "Electronics", image: "/images/product/product-05.jpg" },
 ];
 
 export const products: SaleProduct[] = [

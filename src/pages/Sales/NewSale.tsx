@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import PageMeta from "@/components/common/PageMeta";
 import ProductSelectionPanel from "@/components/sales/ProductSelectionPanel";
 import BillingPanel from "@/components/sales/BillingPanel";
 import type { CartItem, Customer } from "@/components/sales/types";
-import { categories, customers as seedCustomers, deliveryMethods, products, shops } from "./newSaleData";
+import { categories, customers as seedCustomers, deliveryMethods, products } from "./newSaleData";
 
 const NewSale = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -31,8 +31,7 @@ const NewSale = () => {
 
   // Fit height on desktop: this ensures panels stretch nicely within viewport.
   // Adjust the 24/28 if your layout header height differs.
-  const containerClass =
-    "grid grid-cols-12 gap-4 md:gap-6 xl:min-h-[calc(100vh-120px)]";
+  const containerClass = "grid grid-cols-12 gap-4 md:gap-6 xl:min-h-[calc(100vh-120px)]";
 
   return (
     <>
@@ -43,7 +42,6 @@ const NewSale = () => {
         <div className="col-span-12 xl:col-span-8">
           <ProductSelectionPanel
             products={products}
-            shops={shops}
             categories={categories}
             onAddToCart={addToCart}
           />
