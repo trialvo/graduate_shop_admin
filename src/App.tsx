@@ -24,6 +24,7 @@ import GuestOrders from "./pages/Orders/GuestOrders";
 import AllProducts from "./pages/Products/AllProducts";
 import OrderEditor from "./pages/Orders/OrderEditor";
 import ProductCategory from "./pages/Products/ProductCategory";
+import ProductAttributes from "./pages/Products/ProductAttributes";
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
             {/* ✅ Products */}
             <Route path="/all-products" element={<AllProducts />} />
             <Route path="/product-category" element={<ProductCategory />} />
+            <Route path="/product-attributes" element={<ProductAttributes />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
