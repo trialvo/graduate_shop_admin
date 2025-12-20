@@ -8,7 +8,17 @@ import TopSellingDistrictCard from "@/components/dashboard/TopSellingDistrictCar
 import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard";
 import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCard";
 
+// ✅ adjust this import to your real data file if different
+import { stockAlertProducts } from "./dashboardSection5Data";
+
 export default function Home() {
+  const stockAlertItems = stockAlertProducts.map((p: any) => ({
+    id: String(p.id),
+    name: p.title ?? p.name ?? "Unnamed",
+    stockQty: Number(p.stock ?? p.stockQty ?? 0),
+    sku: p.sku ? String(p.sku) : undefined,
+  }));
+
   return (
     <>
       <PageMeta
@@ -18,17 +28,16 @@ export default function Home() {
 
       {/* Section 1 */}
       <QuickAccess />
+
       {/* Section 2 */}
       <DashboardMetrics />
 
       {/* Section 3 */}
       <div className="grid grid-cols-12 gap-4 md:gap-6">
-        {/* 70% */}
         <div className="col-span-12 xl:col-span-7">
           <StatisticsChart />
         </div>
 
-        {/* 40% */}
         <div className="col-span-12 xl:col-span-5">
           <OrderStatusGrid />
         </div>
@@ -52,23 +61,15 @@ export default function Home() {
         </div>
 
         <div className="col-span-12 xl:col-span-6 flex">
-          <StockAlertProductsCard />
+          <StockAlertProductsCard
+            items={stockAlertItems}
+            onApplyStock={(payload) => {
+              // ✅ send to server + store history here
+              console.log("Stock update request:", payload);
+            }}
+          />
         </div>
       </div>
-
-      {/* <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12">
-          <StatisticsChart />
-        </div>
-
-        <div className="col-span-12 xl:col-span-5">
-          <DemographicCard />
-        </div>
-
-        <div className="col-span-12 xl:col-span-7">
-          <RecentOrders />
-        </div>
-      </div> */}
     </>
   );
 }
