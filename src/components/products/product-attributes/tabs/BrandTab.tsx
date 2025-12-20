@@ -166,6 +166,7 @@ export default function BrandTab({ brands, onChange }: Props) {
                   </td>
                   <td className="px-4 py-4">
                     <Switch
+                      key={`${row.id}-${row.status}`}
                       label=""
                       defaultChecked={row.status}
                       onChange={(checked) => toggleStatus(row.id, checked)}
@@ -174,6 +175,7 @@ export default function BrandTab({ brands, onChange }: Props) {
                   <td className="px-4 py-4">
                     <div className="max-w-[160px]">
                       <Select
+                        key={`${row.id}-${row.priority}`}
                         options={PRIORITY_OPTIONS}
                         placeholder="Priority"
                         defaultValue={row.priority}

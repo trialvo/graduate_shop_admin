@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 
+import BrandTab from "./tabs/BrandTab";
+import ColorTab from "./tabs/ColorTab";
+import AttributeTab from "./tabs/AttributeTab";
+import VariantTab from "./tabs/VariantTab";
+
 import type {
   AttributeDefinition,
   BrandRow,
@@ -17,11 +22,6 @@ import {
   INITIAL_VARIANTS,
 } from "./mockData";
 
-import BrandTab from "./tabs/BrandTab";
-import ColorTab from "./tabs/ColorTab";
-import AttributeTab from "./tabs/AttributeTab";
-// import VariantTab from "./tabs/VariantTab";
-
 const TABS = ["brand", "color", "attribute", "variant"] as const;
 type TabType = (typeof TABS)[number];
 
@@ -38,6 +38,16 @@ export default function ProductAttributesPage() {
   // productId -> { attributeId -> selected values[] }
   const [productAttributeMap, setProductAttributeMap] = useState<
     Record<number, ProductAttributeSelection>
+  >({});
+
+  // productId -> brandId
+  const [productBrandMap, setProductBrandMap] = useState<Record<number, number>>(
+    {}
+  );
+
+  // productId -> colorIds[]
+  const [productColorMap, setProductColorMap] = useState<
+    Record<number, number[]>
   >({});
 
   const [variants, setVariants] = useState<VariantRow[]>(INITIAL_VARIANTS);
@@ -60,7 +70,7 @@ export default function ProductAttributesPage() {
       </div>
 
       {/* Tabs */}
-      <div className="inline-flex w-full max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="inline-flex w-full max-w-4xl overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {TABS.map((tab) => {
           const label =
             tab === "brand"
@@ -103,7 +113,7 @@ export default function ProductAttributesPage() {
         <AttributeTab attributes={attributes} onChange={setAttributes} />
       )}
 
-      {/* {activeTab === "variant" && (
+      {activeTab === "variant" && (
         <VariantTab
           products={products}
           brands={brands}
@@ -111,10 +121,14 @@ export default function ProductAttributesPage() {
           attributeDefs={activeAttributes}
           productAttributeMap={productAttributeMap}
           onChangeProductAttributeMap={setProductAttributeMap}
+          productBrandMap={productBrandMap}
+          onChangeProductBrandMap={setProductBrandMap}
+          productColorMap={productColorMap}
+          onChangeProductColorMap={setProductColorMap}
           variants={variants}
           onChangeVariants={setVariants}
         />
-      )} */}
+      )}
     </div>
   );
 }

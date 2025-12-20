@@ -1,14 +1,19 @@
 export type ThemeMode = "light" | "dark";
 
 export type SiteConfig = {
-  /** Shown in page titles, login screen, sidebar header etc. */
+  /** Shown in page titles, sidebar header etc. */
   appName: string;
-  /** Shorter name (PWA / compact UI if needed). */
+  /** Optional shorter name (compact UI if needed). */
   appShortName?: string;
 
-  /** Brand assets (public/ path or full URL). */
+  /** Brand assets (public path like /images/... or full URL). */
   logoLightUrl: string;
   logoDarkUrl: string;
+  /** Small mark/icon used in collapsed sidebar etc. */
+  logoIconUrl: string;
+  /** Optional auth page logo. If omitted, logoIconUrl will be used. */
+  authLogoUrl?: string;
+
   faviconUrl: string;
   appleTouchIconUrl?: string;
   defaultOgImageUrl?: string;
@@ -29,25 +34,20 @@ export type SiteConfig = {
 
 /**
  * ✅ Single source of truth for your admin branding + defaults.
- *
- * Change values here to update:
- * - App name
- * - Logo
- * - Favicon
- * - Default theme
- * - Default meta description/OG image (via PageMeta)
+ * Change values here to update the whole dashboard.
  */
 export const siteConfig: SiteConfig = {
   appName: "Trialvo Shop Admin",
   appShortName: "Shop Admin",
 
-  // ✅ Your project already has these assets:
   // public/images/logo/logo.svg
   // public/images/logo/logo-dark.svg
   logoLightUrl: "/images/logo/logo.svg",
   logoDarkUrl: "/images/logo/logo-dark.svg",
+  logoIconUrl: "/images/logo/logo-icon.svg",
+  authLogoUrl: "/images/logo/auth-logo.svg",
 
-  // ✅ Your project already has: public/favicon.png
+  // public/favicon.png
   faviconUrl: "/favicon.png",
 
   // appleTouchIconUrl: "/apple-touch-icon.png",

@@ -1,6 +1,9 @@
 export type Priority = "Low" | "Normal" | "Medium" | "High";
 
-export type Option = { value: string; label: string };
+export type Option = {
+  value: string;
+  label: string;
+};
 
 export interface BrandRow {
   id: number;
@@ -35,10 +38,8 @@ export interface ProductLite {
   sku: string;
 }
 
-/**
- * productId -> { attributeDefinitionId -> selected values[] }
- */
 export type ProductAttributeSelection = Record<number, string[]>;
+// key: attributeDefinitionId, value: selected values for this product
 
 export interface VariantRow {
   id: number;
@@ -48,27 +49,5 @@ export interface VariantRow {
   price: number;
   stock: number;
   active: boolean;
-
-  /**
-   * attributes map in display order.
-   * Example: { Brand: "Nike", Color: "Red", Size: "M" }
-   */
-  attributes: Record<string, string>;
-}
-
-export function safeNumber(input: string, fallback: number): number {
-  const n = Number(input);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-export function makeSkuBase(base: string): string {
-  return base.trim().toUpperCase().replace(/\s+/g, "-");
-}
-
-export function cartesian<T>(arrays: T[][]): T[][] {
-  if (arrays.length === 0) return [[]];
-  return arrays.reduce<T[][]>(
-    (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
-    [[]]
-  );
+  attributes: Record<string, string>; // e.g. { Brand: "Nike", Color: "Red", Size: "M" }
 }

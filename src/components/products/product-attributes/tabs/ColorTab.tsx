@@ -105,9 +105,7 @@ export default function ColorTab({ colors, onChange }: Props) {
               />
             </div>
             {!isHexColor(hex) ? (
-              <p className="text-xs text-error-500">
-                Invalid hex. Example: #EF4444
-              </p>
+              <p className="text-xs text-error-500">Invalid hex. Example: #EF4444</p>
             ) : null}
           </div>
 
@@ -173,23 +171,16 @@ export default function ColorTab({ colors, onChange }: Props) {
           <table className="min-w-[920px] w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
-                {[
-                  "SL",
-                  "Id",
-                  "Color",
-                  "HEX",
-                  "Preview",
-                  "Status",
-                  "Priority",
-                  "Action",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
-                  >
-                    {h}
-                  </th>
-                ))}
+                {["SL", "Id", "Color", "HEX", "Preview", "Status", "Priority", "Action"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                    >
+                      {h}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
 
@@ -220,6 +211,7 @@ export default function ColorTab({ colors, onChange }: Props) {
                   </td>
                   <td className="px-4 py-4">
                     <Switch
+                      key={`${row.id}-${row.status}`}
                       label=""
                       defaultChecked={row.status}
                       onChange={(checked) => toggleStatus(row.id, checked)}
@@ -228,6 +220,7 @@ export default function ColorTab({ colors, onChange }: Props) {
                   <td className="px-4 py-4">
                     <div className="max-w-[160px]">
                       <Select
+                        key={`${row.id}-${row.priority}`}
                         options={PRIORITY_OPTIONS}
                         placeholder="Priority"
                         defaultValue={row.priority}

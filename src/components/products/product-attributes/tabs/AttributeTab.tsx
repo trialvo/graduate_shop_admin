@@ -35,8 +35,10 @@ export default function AttributeTab({ attributes, onChange }: Props) {
   const [valueInput, setValueInput] = useState("");
   const [search, setSearch] = useState("");
 
-  // per-row "add value" input state
-  const [rowValueDraft, setRowValueDraft] = useState<Record<number, string>>({});
+  // per attribute row input
+  const [valueDraftById, setValueDraftById] = useState<Record<number, string>>(
+    {}
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -91,8 +93,8 @@ export default function AttributeTab({ attributes, onChange }: Props) {
     onChange(attributes.map((a) => (a.id === id ? { ...a, priority: p } : a)));
   };
 
-  const addValue = (id: number, v: string) => {
-    const val = v.trim();
+  const addValue = (id: number) => {
+    const val = (valueDraftById[id] ?? "").trim();
     if (!val) return;
 
     onChange(
@@ -101,7 +103,7 @@ export default function AttributeTab({ attributes, onChange }: Props) {
       )
     );
 
-    setRowValueDraft((prev) => ({ ...prev, [id]: "" }));
+    setValueDraftById((prev) => ({ ...prev, [id]: "" }));
   };
 
   const removeValue = (id: number, v: string) => {
@@ -114,11 +116,6 @@ export default function AttributeTab({ attributes, onChange }: Props) {
 
   const removeDefinition = (id: number) => {
     onChange(attributes.filter((a) => a.id !== id));
-    setRowValueDraft((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
   };
 
   return (
@@ -185,6 +182,7 @@ export default function AttributeTab({ attributes, onChange }: Props) {
             </p>
             <div className="h-11 flex items-center">
               <Switch
+                key={`create-required-${required}`}
                 label=""
                 defaultChecked={required}
                 onChange={(checked) => setRequired(checked)}
@@ -239,7 +237,7 @@ export default function AttributeTab({ attributes, onChange }: Props) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-[1100px] w-full border-collapse">
+          <table className="min-w-[1180px] w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                 {[
@@ -264,111 +262,111 @@ export default function AttributeTab({ attributes, onChange }: Props) {
             </thead>
 
             <tbody>
-              {filtered.map((row, idx) => {
-                const draft = rowValueDraft[row.id] ?? "";
-                return (
-                  <tr
-                    key={row.id}
-                    className="border-b border-gray-100 dark:border-gray-800 align-top"
-                  >
-                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {idx + 1}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {row.id}
-                    </td>
-                    <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                      {row.name}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {row.type}
-                    </td>
-                    <td className="px-4 py-4">
-                      <Switch
-                        label=""
-                        defaultChecked={row.required}
-                        onChange={(checked) => toggleRequired(row.id, checked)}
-                      />
-                    </td>
-                    <td className="px-4 py-4">
-                      <Switch
-                        label=""
-                        defaultChecked={row.status}
-                        onChange={(checked) => toggleStatus(row.id, checked)}
-                      />
-                    </td>
+              {filtered.map((row, idx) => (
+                <tr
+                  key={row.id}
+                  className="border-b border-gray-100 dark:border-gray-800 align-top"
+                >
+                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    {idx + 1}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    {row.id}
+                  </td>
+                  <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
+                    {row.name}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    {row.type}
+                  </td>
+                  <td className="px-4 py-4">
+                    <Switch
+                      key={`req-${row.id}-${row.required}`}
+                      label=""
+                      defaultChecked={row.required}
+                      onChange={(checked) => toggleRequired(row.id, checked)}
+                    />
+                  </td>
+                  <td className="px-4 py-4">
+                    <Switch
+                      key={`st-${row.id}-${row.status}`}
+                      label=""
+                      defaultChecked={row.status}
+                      onChange={(checked) => toggleStatus(row.id, checked)}
+                    />
+                  </td>
 
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {row.values.map((v) => (
-                          <span
-                            key={v}
-                            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                          >
-                            {v}
-                            <button
-                              type="button"
-                              className="text-error-500 hover:text-error-600"
-                              onClick={() => removeValue(row.id, v)}
-                              aria-label="Remove value"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-
-                        <div className="flex items-center gap-2">
-                          <div className="w-[160px]">
-                            <Input
-                              placeholder="Add value"
-                              value={draft}
-                              onChange={(e) =>
-                                setRowValueDraft((prev) => ({
-                                  ...prev,
-                                  [row.id]: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") addValue(row.id, draft);
-                              }}
-                            />
-                          </div>
-
+                  <td className="px-4 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {row.values.map((v) => (
+                        <span
+                          key={v}
+                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        >
+                          {v}
                           <button
                             type="button"
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                            onClick={() => addValue(row.id, draft)}
-                            aria-label="Add value"
+                            className="text-error-500 hover:text-error-600"
+                            onClick={() => removeValue(row.id, v)}
+                            aria-label="Remove value"
                           >
-                            <Plus size={16} />
+                            ×
                           </button>
+                        </span>
+                      ))}
+
+                      <div className="flex items-center gap-2">
+                        <div className="w-[180px]">
+                          <Input
+                            placeholder="Add value"
+                            value={valueDraftById[row.id] ?? ""}
+                            onChange={(e) =>
+                              setValueDraftById((prev) => ({
+                                ...prev,
+                                [row.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") addValue(row.id);
+                            }}
+                          />
                         </div>
-                      </div>
-                    </td>
 
-                    <td className="px-4 py-4">
-                      <div className="max-w-[160px]">
-                        <Select
-                          options={PRIORITY_OPTIONS}
-                          placeholder="Priority"
-                          defaultValue={row.priority}
-                          onChange={(v) => updatePriority(row.id, v as Priority)}
-                        />
+                        <button
+                          type="button"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                          onClick={() => addValue(row.id)}
+                          aria-label="Add value"
+                        >
+                          <Plus size={16} />
+                        </button>
                       </div>
-                    </td>
+                    </div>
+                  </td>
 
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        className="inline-flex h-9 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
-                        onClick={() => removeDefinition(row.id)}
-                      >
-                        <Trash2 size={16} className="mr-2" /> Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                  <td className="px-4 py-4">
+                    <div className="max-w-[160px]">
+                      <Select
+                        key={`prio-${row.id}-${row.priority}`}
+                        options={PRIORITY_OPTIONS}
+                        placeholder="Priority"
+                        defaultValue={row.priority}
+                        onChange={(v) => updatePriority(row.id, v as Priority)}
+                      />
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <button
+                      type="button"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                      onClick={() => removeDefinition(row.id)}
+                    >
+                      <Trash2 size={16} className="mr-2" /> Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
 
               {filtered.length === 0 ? (
                 <tr>
