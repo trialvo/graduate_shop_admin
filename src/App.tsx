@@ -26,6 +26,7 @@ import OrderEditor from "./pages/Orders/OrderEditor";
 import ProductCategory from "./pages/Products/ProductCategory";
 import ProductAttributes from "./pages/Products/ProductAttributes";
 import CreateProduct from "./pages/Products/CreateProduct";
+import CustomersList from "./pages/Customers/CustomersList";
 
 export default function App() {
   return (
@@ -48,7 +49,10 @@ export default function App() {
             <Route path="/all-products" element={<AllProducts />} />
             <Route path="/product-category" element={<ProductCategory />} />
             <Route path="/product-attributes" element={<ProductAttributes />} />
-             <Route path="/create-product" element={<CreateProduct />} />
+            <Route path="/create-product" element={<CreateProduct />} />
+
+            {/* Customers */}
+            <Route path="/customers-list" element={<CustomersList />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
