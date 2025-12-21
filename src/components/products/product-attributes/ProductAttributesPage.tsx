@@ -1,25 +1,25 @@
-import { useMemo, useState } from "react";
+import {  useState } from "react";
 
 import BrandTab from "./tabs/BrandTab";
 import ColorTab from "./tabs/ColorTab";
 import AttributeTab from "./tabs/AttributeTab";
-import VariantTab from "./tabs/VariantTab";
+// import VariantTab from "./tabs/VariantTab";
 
 import type {
   AttributeDefinition,
   BrandRow,
   ColorRow,
-  ProductAttributeSelection,
-  ProductLite,
-  VariantRow,
+  // ProductAttributeSelection,
+  // ProductLite,
+  // VariantRow,
 } from "./types";
 
 import {
   INITIAL_ATTRIBUTES,
   INITIAL_BRANDS,
   INITIAL_COLORS,
-  INITIAL_PRODUCTS,
-  INITIAL_VARIANTS,
+  // INITIAL_PRODUCTS,
+  // INITIAL_VARIANTS,
 } from "./mockData";
 
 const TABS = ["brand", "color", "attribute"] as const;
@@ -33,29 +33,29 @@ export default function ProductAttributesPage() {
   const [attributes, setAttributes] =
     useState<AttributeDefinition[]>(INITIAL_ATTRIBUTES);
 
-  const [products] = useState<ProductLite[]>(INITIAL_PRODUCTS);
+  // const [products] = useState<ProductLite[]>(INITIAL_PRODUCTS);
 
   // productId -> { attributeId -> selected values[] }
-  const [productAttributeMap, setProductAttributeMap] = useState<
-    Record<number, ProductAttributeSelection>
-  >({});
+  // const [productAttributeMap, setProductAttributeMap] = useState<
+  //   Record<number, ProductAttributeSelection>
+  // >({});
 
   // productId -> brandId
-  const [productBrandMap, setProductBrandMap] = useState<Record<number, number>>(
-    {}
-  );
+  // const [productBrandMap, setProductBrandMap] = useState<Record<number, number>>(
+  //   {}
+  // );
 
   // productId -> colorIds[]
-  const [productColorMap, setProductColorMap] = useState<
-    Record<number, number[]>
-  >({});
+  // const [productColorMap, setProductColorMap] = useState<
+  //   Record<number, number[]>
+  // >({});
 
-  const [variants, setVariants] = useState<VariantRow[]>(INITIAL_VARIANTS);
+  // const [variants, setVariants] = useState<VariantRow[]>(INITIAL_VARIANTS);
 
-  const activeAttributes = useMemo(
-    () => attributes.filter((a) => a.status),
-    [attributes]
-  );
+  // const activeAttributes = useMemo(
+  //   () => attributes.filter((a) => a.status),
+  //   [attributes]
+  // );
 
   return (
     <div className="space-y-6">
