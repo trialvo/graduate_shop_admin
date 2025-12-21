@@ -57,18 +57,6 @@ export interface AttributeDefinition {
 
 export type ProductAttributeSelection = Record<number, string[]>;
 
-export interface VariantDraft {
-  id: string;
-  name: string;
-  sku: string;
-  buyPrice: number;
-  oldPrice: number;
-  sellPrice: number;
-  stock: number;
-  active: boolean;
-  attributes: Record<string, string>;
-}
-
 export type SeoMeta = {
   metaTitle: string;
   metaDescription: string;
@@ -78,3 +66,16 @@ export type SeoMeta = {
   ogDescription: string;
   robots: string;
 };
+
+export type VariantMatrixKey = string; // `${colorId}__${value}`
+
+export interface VariantMatrixRow {
+  key: VariantMatrixKey;
+  colorId: number;
+  value: string; // e.g. "M"
+  buyPrice: number;
+  oldPrice: number;
+  newPrice: number;
+  stock: number;
+  available: boolean;
+}
