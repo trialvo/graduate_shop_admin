@@ -27,6 +27,7 @@ import ProductCategory from "./pages/Products/ProductCategory";
 import ProductAttributes from "./pages/Products/ProductAttributes";
 import CreateProduct from "./pages/Products/CreateProduct";
 import CustomersList from "./pages/Customers/CustomersList";
+import CreateCustomerPage from "./pages/Customers/CreateCustomerPage";
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
 
             {/* Customers */}
             <Route path="/customers-list" element={<CustomersList />} />
+            <Route path="/create-customer" element={<CreateCustomerPage />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
