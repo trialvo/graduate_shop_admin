@@ -22,7 +22,7 @@ import {
   INITIAL_VARIANTS,
 } from "./mockData";
 
-const TABS = ["brand", "color", "attribute", "variant"] as const;
+const TABS = ["brand", "color", "attribute"] as const;
 type TabType = (typeof TABS)[number];
 
 export default function ProductAttributesPage() {
@@ -113,7 +113,7 @@ export default function ProductAttributesPage() {
         <AttributeTab attributes={attributes} onChange={setAttributes} />
       )}
 
-      {activeTab === "variant" && (
+      {/* {activeTab === "variant" && (
         <VariantTab
           products={products}
           brands={brands}
@@ -128,7 +128,7 @@ export default function ProductAttributesPage() {
           variants={variants}
           onChangeVariants={setVariants}
         />
-      )}
+      )} */}
     </div>
   );
 }
