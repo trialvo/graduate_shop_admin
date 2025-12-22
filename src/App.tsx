@@ -30,6 +30,7 @@ import CustomersList from "./pages/Customers/CustomersList";
 import CreateCustomerPage from "./pages/Customers/CreateCustomerPage";
 import AdminsList from "./pages/Admins/AdminsList";
 import CreateAdmin from "./pages/Admins/CreateAdmin";
+import DeliverySettings from "./pages/BusinessSettings/DeliverySettings";
 
 export default function App() {
   return (
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/admins-list" element={<AdminsList />} />
             <Route path="/create-admin" element={<CreateAdmin />} />
 
+            <Route path="/delivery-settings" element={<DeliverySettings />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
