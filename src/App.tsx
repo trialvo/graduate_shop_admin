@@ -31,6 +31,7 @@ import CreateCustomerPage from "./pages/Customers/CreateCustomerPage";
 import AdminsList from "./pages/Admins/AdminsList";
 import CreateAdmin from "./pages/Admins/CreateAdmin";
 import DeliverySettings from "./pages/BusinessSettings/DeliverySettings";
+import CurrierSettings from "./pages/BusinessSettings/CurrierSettings";
 
 export default function App() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/create-admin" element={<CreateAdmin />} />
 
             <Route path="/delivery-settings" element={<DeliverySettings />} />
+            <Route path="/currier-settings" element={<CurrierSettings />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
