@@ -72,14 +72,14 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "List of customers", path: "/customers-list", pro: false },
       { name: "Create Customer", path: "/create-customer", pro: false },
-      { name: "Blocked Customer", path: "/blocked-customer", pro: false },
+      // { name: "Blocked Customer", path: "/blocked-customer", pro: false },
     ],
   },
-  {
-    icon: <Star />,
-    name: "Customer review",
-    path: "/customer-review",
-  },
+  // {
+  //   icon: <Star />,
+  //   name: "Customer review",
+  //   path: "/customer-review",
+  // },
 ];
 
 const othersItems: NavItem[] = [

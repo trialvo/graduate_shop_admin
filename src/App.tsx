@@ -28,6 +28,8 @@ import ProductAttributes from "./pages/Products/ProductAttributes";
 import CreateProduct from "./pages/Products/CreateProduct";
 import CustomersList from "./pages/Customers/CustomersList";
 import CreateCustomerPage from "./pages/Customers/CreateCustomerPage";
+import AdminsList from "./pages/Admins/AdminsList";
+import CreateAdmin from "./pages/Admins/CreateAdmin";
 
 export default function App() {
   return (
@@ -55,6 +57,11 @@ export default function App() {
             {/* Customers */}
             <Route path="/customers-list" element={<CustomersList />} />
             <Route path="/create-customer" element={<CreateCustomerPage />} />
+
+            {/* Admin & Permission */}
+            <Route path="/admins-list" element={<AdminsList />} />
+            <Route path="/create-admin" element={<CreateAdmin />} />
+
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
