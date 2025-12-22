@@ -33,6 +33,7 @@ import CreateAdmin from "./pages/Admins/CreateAdmin";
 import DeliverySettings from "./pages/BusinessSettings/DeliverySettings";
 import CurrierSettings from "./pages/BusinessSettings/CurrierSettings";
 import CouponCode from "./pages/BusinessSettings/CouponCode";
+import PaymentSettings from "./pages/BusinessSettings/PaymentSettings";
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="/delivery-settings" element={<DeliverySettings />} />
             <Route path="/currier-settings" element={<CurrierSettings />} />
             <Route path="/coupon-code" element={<CouponCode />} />
+            <Route path="/payment-settings" element={<PaymentSettings />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
