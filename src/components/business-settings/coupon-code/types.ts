@@ -1,61 +1,58 @@
-export type CouponLang = "default" | "en" | "ar";
+export type DiscountType = "flat" | "percent";
+export type CouponScope = "all" | "specific";
 
-export type CouponType =
-  | "GENERAL"
-  | "CUSTOMER"
-  | "FREE_DELIVERY"
-  | "CATEGORY"
-  | "PRODUCT";
-
-export type DiscountType = "PERCENT" | "AMOUNT" | "FREE_DELIVERY";
-
-export type CouponStatus = boolean;
-
-export type CouponTarget =
-  | { kind: "ALL" }
-  | { kind: "CUSTOMERS"; customerIds: number[] }
-  | { kind: "CATEGORIES"; categoryIds: number[] }
-  | { kind: "PRODUCTS"; productIds: number[] };
-
-export interface CouponTitles {
-  default: string;
-  en: string;
-  ar: string;
-}
-
-export interface CouponRow {
+export type CouponRow = {
   id: number;
-
-  titles: CouponTitles;
+  title: string;
   code: string;
 
-  type: CouponType;
-
-  target: CouponTarget;
-
   discountType: DiscountType;
-  discountValue: number; // percent or amount (0 for free delivery)
-  maxDiscount: number; // for percent/amount, optional clamp, 0 means none
-  minPurchase: number;
+  discountValue: number;
 
-  usageLimitTotal: number; // 0 = unlimited
-  usageLimitPerUser: number; // 0 = unlimited
-  totalUses: number; // analytics/demo
+  minPurchase: number;
+  maxDiscount: number; // works for percent coupons, can keep 0 if not needed
+  limitPerUser: number;
 
   startDate: string; // yyyy-mm-dd
   expireDate: string; // yyyy-mm-dd
 
-  stackable: boolean; // can combine with other coupons
-  firstOrderOnly: boolean;
-  newCustomerOnly: boolean;
+  status: boolean;
 
-  status: CouponStatus;
+  // NEW:
+  productScope: CouponScope;
+  productIds: number[];
 
-  createdAt: string;
-  updatedAt: string;
-}
+  customerScope: CouponScope;
+  customerIds: number[];
 
-export function safeNumber(input: string, fallback: number): number {
+  totalUses: number;
+};
+
+export type ProductLite = {
+  id: number;
+  name: string;
+  sku: string;
+};
+
+export type CustomerLite = {
+  id: number;
+  name: string;
+  phone: string;
+};
+
+export type Option = { value: string; label: string };
+
+export function safeNumber(input: string, fallback = 0): number {
   const n = Number(input);
   return Number.isFinite(n) ? n : fallback;
+}
+
+export function normalizeCode(input: string): string {
+  return input.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+export function todayISO(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
