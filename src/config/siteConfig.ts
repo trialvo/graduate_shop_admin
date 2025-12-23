@@ -42,8 +42,8 @@ export const siteConfig: SiteConfig = {
 
   // public/images/logo/logo.svg
   // public/images/logo/logo-dark.svg
-  logoLightUrl: "/images/logo/logo.svg",
-  logoDarkUrl: "/images/logo/logo-dark.svg",
+  logoLightUrl: "/images/logo/my_dark_logo.svg",
+  logoDarkUrl: "/images/logo/my_dark_logo.svg",
   logoIconUrl: "/images/logo/logo-icon.svg",
   authLogoUrl: "/images/logo/auth-logo.svg",
 
