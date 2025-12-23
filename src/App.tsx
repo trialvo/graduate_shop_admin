@@ -34,6 +34,7 @@ import DeliverySettings from "./pages/BusinessSettings/DeliverySettings";
 import CurrierSettings from "./pages/BusinessSettings/CurrierSettings";
 import CouponCode from "./pages/BusinessSettings/CouponCode";
 import PaymentSettings from "./pages/BusinessSettings/PaymentSettings";
+import BannersSettings from "./pages/WebsiteSettings/BannersSettings";
 
 export default function App() {
   return (
@@ -61,6 +62,9 @@ export default function App() {
             {/* Customers */}
             <Route path="/customers-list" element={<CustomersList />} />
             <Route path="/create-customer" element={<CreateCustomerPage />} />
+
+            {/* Website Settings */}
+            <Route path="/banners-settings" element={<BannersSettings />} />
 
             {/* Admin & Permission */}
             <Route path="/admins-list" element={<AdminsList />} />
