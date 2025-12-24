@@ -37,6 +37,7 @@ import PaymentSettings from "./pages/BusinessSettings/PaymentSettings";
 import BannersSettings from "./pages/WebsiteSettings/BannersSettings";
 import ContactPage from "./pages/WebsiteSettings/ContactPage";
 import FooterSettings from "./pages/WebsiteSettings/footer-settings";
+import MyProfile from "./pages/MyProfile/MyProfile";
 
 export default function App() {
   return (
@@ -69,6 +70,8 @@ export default function App() {
             <Route path="/banners-settings" element={<BannersSettings />} />
             <Route path="/contact-page" element={<ContactPage />} />
             <Route path="/footer-settings" element={<FooterSettings />} />
+    
+            <Route path="/my-profile" element={<MyProfile />} />
 
             {/* Admin & Permission */}
             <Route path="/admins-list" element={<AdminsList />} />
