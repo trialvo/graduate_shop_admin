@@ -1,100 +1,95 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
-import Button from "@/components/ui/button/Button";
-import Input from "@/components/form/input/InputField";
-
+import { MOCK_CONTACT, MOCK_COUNTS, MOCK_USER } from "./mockData";
 import type { ProfileUser } from "./types";
-import { INITIAL_PROFILE_USER } from "./mockData";
-import ProfileSidePanel from "./components/ProfileSidePanel";
-import ProfileDetailsCard from "./components/ProfileDetailsCard";
+import ProfileOverviewCard from "./components/ProfileOverviewCard";
+import ProfileQuickLinksCard from "./components/ProfileQuickLinksCard";
+import ProfileDetailsForm from "./components/ProfileDetailsForm";
+import ChangePasswordModal from "./components/ChangePasswordModal";
+import ProfileContactCard from "./components/ProfileContactCard";
+
+function formatNow(): string {
+  const d = new Date();
+  const date = d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+  });
+  const time = d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${date} at ${time}`;
+}
 
 export default function MyProfilePage() {
-  const [user, setUser] = useState<ProfileUser>(INITIAL_PROFILE_USER);
-  const [search, setSearch] = useState("");
+  const [refreshedAt, setRefreshedAt] = useState<string>(() => formatNow());
+  const [user, setUser] = useState<ProfileUser>(MOCK_USER);
+  const [pwdOpen, setPwdOpen] = useState(false);
 
-  const refreshedAt = useMemo(() => {
-    // just demo timestamp
-    return new Date().toLocaleString();
-  }, []);
-
-  const onLogout = () => {
-    console.log("LOGOUT");
-  };
-
-  const onUpdateProfile = (next: ProfileUser) => {
-    setUser(next);
-    console.log("PROFILE_UPDATE", next);
-  };
-
-  const onChangePassword = (payload: { current: string; next: string }) => {
-    console.log("CHANGE_PASSWORD", payload);
-  };
+  const counts = useMemo(() => MOCK_COUNTS, []);
+  const contact = useMemo(() => MOCK_CONTACT, []);
 
   return (
     <div className="space-y-6">
-      {/* Header row */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      {/* Header (theme-matching) */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
             Settings
           </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Update your profile details, password and contact preferences.
+          </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <div className="flex items-center gap-2 text-sm text-gray-200">
-            <span>Data Refreshed</span>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-200 hover:bg-white/10"
-              onClick={() => console.log("refresh")}
-              aria-label="Refresh"
-            >
-              <RefreshCw size={16} />
-            </button>
-          </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-200 dark:hover:bg-white/[0.06]"
+            onClick={() => setRefreshedAt(formatNow())}
+          >
+            <span className="text-gray-500 dark:text-gray-400">
+              Data Refreshed
+            </span>
+            <RefreshCw size={16} className="text-brand-500" />
+          </button>
 
-          <div className="inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-gray-100">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-200">
             {refreshedAt}
-          </div>
-
-          <div className="w-full sm:w-[260px]">
-            <div className="rounded-xl border border-white/10 bg-white/5">
-              <Input
-                className="!border-0 !bg-transparent !text-gray-100 placeholder:text-gray-400"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Main grid */}
+      {/* Content */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        {/* LEFT */}
-        <div className="xl:col-span-4 space-y-6">
-          <ProfileSidePanel user={user} onLogout={onLogout} />
+        {/* Left */}
+        <div className="space-y-6 xl:col-span-4">
+          <ProfileOverviewCard
+            user={user}
+            counts={counts}
+            onLogout={() => console.log("logout")}
+          />
+          <ProfileQuickLinksCard counts={counts} />
+          <ProfileContactCard contact={contact} />
         </div>
 
-        {/* RIGHT */}
+        {/* Right */}
         <div className="xl:col-span-8">
-          <ProfileDetailsCard
+          <ProfileDetailsForm
             user={user}
-            onChange={onUpdateProfile}
-            onChangePassword={onChangePassword}
+            onChange={setUser}
+            onOpenChangePassword={() => setPwdOpen(true)}
           />
         </div>
       </div>
 
-      {/* footer divider line like screenshot */}
-      <div className="h-px w-full bg-white/10" />
-
-      <div className="flex items-center justify-between text-sm text-gray-300">
-        <span>Copyright © 2023 By brandlabs. All Rights Reserved</span>
-        <span className="opacity-80">Powered by M</span>
-      </div>
+      <ChangePasswordModal
+        isOpen={pwdOpen}
+        onClose={() => setPwdOpen(false)}
+        onChanged={() => console.log("password updated")}
+      />
     </div>
   );
 }

@@ -1,38 +1,69 @@
 import React from "react";
-import { FileText, Mail, MapPin, PhoneCall } from "lucide-react";
-import type { ProfileUser } from "../types";
+import { FileText, Mail, MapPin, Phone } from "lucide-react";
+
+import type { ProfileContact } from "../types";
+
+type Props = {
+  contact: ProfileContact;
+};
 
 function Item({
   icon,
-  text,
+  title,
+  value,
 }: {
   icon: React.ReactNode;
-  text: string;
+  title: string;
+  value?: string;
 }) {
+  if (!value) return null;
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-brand-300">{icon}</div>
-      <p className="text-sm text-gray-200">{text}</p>
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+          {title}
+        </p>
+        <p className="mt-1 break-words text-sm text-gray-900 dark:text-white">
+          {value}
+        </p>
+      </div>
     </div>
   );
 }
 
-type Props = {
-  user: ProfileUser;
-};
-
-export default function ProfileContactCard({ user }: Props) {
+export default function ProfileContactCard({ contact }: Props) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
-      <Item icon={<Mail size={18} />} text={user.contactEmail} />
-      <Item icon={<MapPin size={18} />} text={user.contactAddress} />
-      <Item icon={<PhoneCall size={18} />} text={user.contactPhone1} />
-      {user.contactPhone2 ? (
-        <Item icon={<PhoneCall size={18} />} text={user.contactPhone2} />
-      ) : null}
-      {user.profileFileName ? (
-        <Item icon={<FileText size={18} />} text={user.profileFileName} />
-      ) : null}
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+      <h4 className="text-base font-semibold text-gray-900 dark:text-white">
+        Contact
+      </h4>
+
+      <div className="mt-5 space-y-4">
+        <Item icon={<Mail size={16} />} title="Email" value={contact.email} />
+        <Item
+          icon={<MapPin size={16} />}
+          title="Address"
+          value={contact.address}
+        />
+        <Item
+          icon={<Phone size={16} />}
+          title="Phone"
+          value={contact.phonePrimary}
+        />
+        <Item
+          icon={<Phone size={16} />}
+          title="Secondary Phone"
+          value={contact.phoneSecondary}
+        />
+        <Item
+          icon={<FileText size={16} />}
+          title="File"
+          value={contact.profileFileLabel}
+        />
+      </div>
     </div>
   );
 }
