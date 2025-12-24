@@ -35,6 +35,8 @@ import CurrierSettings from "./pages/BusinessSettings/CurrierSettings";
 import CouponCode from "./pages/BusinessSettings/CouponCode";
 import PaymentSettings from "./pages/BusinessSettings/PaymentSettings";
 import BannersSettings from "./pages/WebsiteSettings/BannersSettings";
+import ContactPage from "./pages/WebsiteSettings/ContactPage";
+import FooterSettings from "./pages/WebsiteSettings/footer-settings";
 
 export default function App() {
   return (
@@ -65,6 +67,8 @@ export default function App() {
 
             {/* Website Settings */}
             <Route path="/banners-settings" element={<BannersSettings />} />
+            <Route path="/contact-page" element={<ContactPage />} />
+            <Route path="/footer-settings" element={<FooterSettings />} />
 
             {/* Admin & Permission */}
             <Route path="/admins-list" element={<AdminsList />} />
