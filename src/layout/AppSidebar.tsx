@@ -106,11 +106,11 @@ const othersItems: NavItem[] = [
     name: "Website Settings",
     subItems: [
       { name: "Banners", path: "/banners-settings", pro: false },
-      {
-        name: "Header category",
-        path: "/header-category-settings",
-        pro: false,
-      },
+      // {
+      //   name: "Header category",
+      //   path: "/header-category-settings",
+      //   pro: false,
+      // },
       { name: "Footer", path: "/footer-settings", pro: false },
       { name: "Contact Page", path: "/contact-page", pro: false },
     ],

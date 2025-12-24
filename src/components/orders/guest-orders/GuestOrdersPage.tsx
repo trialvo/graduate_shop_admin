@@ -24,17 +24,13 @@ const sortOptions: Array<{ label: string; value: SortBy }> = [
   { label: "by: Total (Low)", value: "total_asc" },
 ];
 
-const formatBanglaTime = () => {
-  const d = new Date();
-  const opts: Intl.DateTimeFormatOptions = {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  return d.toLocaleString(undefined, opts);
-};
+function refreshedLabel(d: Date) {
+  const month = d.toLocaleString(undefined, { month: "long" });
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return `${month} ${day}, ${year} at ${time}`;
+}
 
 const normalize = (v: string) => v.trim().toLowerCase();
 
@@ -82,9 +78,7 @@ const GuestOrdersPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<"all" | GuestOrderStatus>("all");
   const [sortBy, setSortBy] = React.useState<SortBy>("date_desc");
   const [search, setSearch] = React.useState<string>("");
-  const [refreshedAt, setRefreshedAt] = React.useState<string>(formatBanglaTime());
-
-  const onRefresh = () => setRefreshedAt(formatBanglaTime());
+  const [refreshedAt, setRefreshedAt] = React.useState<Date>(new Date());
 
   const onClear = () => {
     setActiveTab("all");
@@ -120,52 +114,54 @@ const GuestOrdersPage: React.FC = () => {
     cancelled: counts.cancelled,
   };
 
+  const refreshedAtText = React.useMemo(() => refreshedLabel(refreshedAt), [refreshedAt]);
+
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full bg-background text-foreground">
-      <div className="w-full px-4 py-6 md:px-8">
-        {/* Header */}
-        <div className="rounded-2xl border border-border bg-gradient-to-b from-background to-background/60 p-4 md:p-6 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <GuestOrdersHeader
-              title="Guest Orders"
-              tabs={statusTabs}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              badgeCounts={tabBadges}
-            />
+    <div className="space-y-4">
+      {/* Title + Tabs + Refresh */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <GuestOrdersHeader
+          title="Guest Orders"
+          tabs={statusTabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          badgeCounts={tabBadges}
+        />
 
-            <div className="flex items-center justify-between gap-3 lg:justify-end">
-              <button
-                onClick={onRefresh}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                Data Refreshed <RefreshCcw className="h-4 w-4" />
-              </button>
-
-              <div className="rounded-lg border border-border bg-background/30 px-3 py-2 text-xs md:text-sm text-foreground">
-                {refreshedAt}
-              </div>
-            </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="hidden sm:inline">Data Refreshed</span>
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+              onClick={() => setRefreshedAt(new Date())}
+              aria-label="Refresh"
+              title="Refresh"
+            >
+              <RefreshCcw size={16} />
+            </button>
           </div>
 
-          {/* Toolbar */}
-          <div className="mt-5">
-            <GuestOrdersToolbar
-              sortOptions={sortOptions}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              search={search}
-              onSearchChange={setSearch}
-              onClear={onClear}
-            />
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+            {refreshedAtText}
           </div>
-        </div>
-
-        {/* Table */}
-        <div className="mt-5">
-          <GuestOrdersTable orders={filtered} />
         </div>
       </div>
+
+      {/* Filters */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <GuestOrdersToolbar
+          sortOptions={sortOptions}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          search={search}
+          onSearchChange={setSearch}
+          onClear={onClear}
+        />
+      </div>
+
+      {/* Table */}
+      <GuestOrdersTable orders={filtered} />
     </div>
   );
 };

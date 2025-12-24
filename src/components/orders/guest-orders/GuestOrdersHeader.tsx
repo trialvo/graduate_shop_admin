@@ -21,23 +21,34 @@ const GuestOrdersHeader: React.FC<Props> = ({
   badgeCounts,
 }) => {
   return (
-    <div className="flex flex-col gap-2">
-      <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{title}</h1>
+    <div className="space-y-3">
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white md:text-3xl">
+          {title}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Guest checkout / inquiry orders
+        </p>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-4 text-sm">
+      {/* Status tabs */}
+      <div className="flex flex-wrap items-center gap-2">
         {tabs.map((t) => {
           const active = activeTab === t.value;
           return (
             <button
               key={t.value}
+              type="button"
               onClick={() => onTabChange(t.value)}
               className={[
-                "inline-flex items-center gap-2 transition",
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition",
+                active
+                  ? "bg-brand-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
               ].join(" ")}
             >
               <span>{t.label}</span>
-              <span className={active ? "text-primary" : "text-muted-foreground"}>
+              <span className={active ? "text-white/90" : "text-gray-500 dark:text-gray-400"}>
                 ({badgeCounts[t.value]})
               </span>
             </button>
