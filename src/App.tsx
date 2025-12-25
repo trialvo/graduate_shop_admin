@@ -41,6 +41,7 @@ import MyProfile from "./pages/MyProfile/MyProfile";
 import ProductReports from "./pages/Reports/ProductReports";
 import OrderReport from "./pages/Reports/OrderReport";
 import StockReport from "./pages/Reports/StockReport";
+import VisitorReport from "./pages/Reports/VisitorReport";
 
 export default function App() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/product-reports" element={<ProductReports />} />
             <Route path="/order-reports" element={<OrderReport />} />
             <Route path="/stock-reports" element={<StockReport />} />
+            <Route path="/visitor-report" element={<VisitorReport />} />
 
             <Route path="/my-profile" element={<MyProfile />} />
 
