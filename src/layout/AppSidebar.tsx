@@ -18,6 +18,7 @@ import {
 
 import { useSidebar } from "../context/SidebarContext";
 import { HorizontaLDots } from "../icons";
+import BrandLogo from "../components/common/BrandLogo";
 
 type NavItem = {
   name: string;
@@ -335,28 +336,13 @@ const AppSidebar: React.FC = () => {
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <img
-                className="dark:hidden"
-                src="/images/logo/my_dark_logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/my_dark_logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
+            <BrandLogo width={150} height={40} className="h-10 w-auto" />
           ) : (
-            <img
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
+            <BrandLogo
+              variant="icon"
               width={32}
               height={32}
+              className="h-8 w-8"
             />
           )}
         </Link>
