@@ -61,7 +61,7 @@ const navItems: NavItem[] = [
     icon: <BarChart3 />,
     subItems: [
       { name: "Product Reports", path: "/product-reports", pro: false },
-      { name: "Order Report", path: "/order-report", pro: false },
+      { name: "Order Report", path: "/order-reports", pro: false },
       { name: "Transaction Report", path: "/transaction-report", pro: false },
       { name: "Visitor Report", path: "/visitor-report", pro: false },
     ],
