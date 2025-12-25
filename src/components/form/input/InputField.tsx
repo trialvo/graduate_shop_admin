@@ -10,6 +10,7 @@ interface InputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   className?: string;
+  autoComplete?: string;
 
   // ✅ allow both number & string (fixes TS error)
   min?: string | number;
@@ -31,6 +32,7 @@ const Input: FC<InputProps> = ({
   onChange,
   onKeyDown,
   className = "",
+  autoComplete,
   min,
   max,
   step,
@@ -75,6 +77,7 @@ const Input: FC<InputProps> = ({
         value={value}
         onChange={onChange}
         onKeyDown={onKeyDown}
+        autoComplete={autoComplete}
         min={min}
         max={max}
         step={step}
