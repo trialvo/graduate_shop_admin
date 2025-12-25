@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, RefreshCcw, Search, Trash2, UserPlus } from "lucide-react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/common/Pagination";
@@ -10,8 +12,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 
 import EditAdminModal from "./EditAdminModal";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
-import { AdminRole, AdminRow } from "../types";
-import { useAdmins } from "@/hooks/useAdmins";
+import { AdminRole, AdminRow, ROLE_ID_BY_LABEL } from "../types";
+import { useAdmins, useUpdateAdmin } from "@/hooks/useAdmins";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -46,6 +48,7 @@ const toJoinDate = (iso: string) => {
 };
 
 export default function AdminsListPage() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<AdminRow[]>([]);
 
   const [search, setSearch] = useState("");
@@ -68,7 +71,9 @@ export default function AdminsListPage() {
     [page, pageSize]
   );
 
-  const { data, isLoading, isFetching, isError, refetch } = useAdmins(params);
+  const { data, isLoading, isError, refetch } = useAdmins(params);
+
+  const updateMutation = useUpdateAdmin();
 
   useEffect(() => {
     if (!data?.data) return;
@@ -141,24 +146,45 @@ export default function AdminsListPage() {
     setEditOpen(true);
   };
 
-  const saveEdit = (next: AdminRow, newPassword?: string, newAvatar?: File | null) => {
-    // demo: password update only affects masked display
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== next.id) return r;
-        return {
-          ...next,
-          passwordMasked: newPassword ? "************" : r.passwordMasked,
-          avatarUrl: next.avatarUrl || r.avatarUrl,
-        };
-      })
-    );
+  const saveEdit = async (next: AdminRow, newPassword?: string, newAvatar?: File | null) => {
+    try {
+      const nameParts = next.name.trim().split(/\s+/).filter(Boolean);
+      const firstName = nameParts[0] ?? "";
+      const lastName = nameParts.slice(1).join(" ") || null;
 
-    // eslint-disable-next-line no-console
-    console.log("Updated admin:", next, { newPassword, newAvatar });
+      await updateMutation.mutateAsync({
+        id: next.id,
+        body: {
+          email: next.email.trim(),
+          first_name: firstName || null,
+          last_name: lastName,
+          phone: next.phone.trim() || null,
+          role_id: ROLE_ID_BY_LABEL[next.role],
+          is_active: next.status === "ACTIVE",
+          password: newPassword || undefined,
+        },
+      });
 
-    setEditOpen(false);
-    setEditTarget(null);
+      setRows((prev) =>
+        prev.map((r) => {
+          if (r.id !== next.id) return r;
+          return {
+            ...next,
+            passwordMasked: newPassword ? "************" : r.passwordMasked,
+            avatarUrl: next.avatarUrl || r.avatarUrl,
+          };
+        })
+      );
+
+      toast.success("Admin updated successfully");
+      setEditOpen(false);
+      setEditTarget(null);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to update admin";
+      toast.error(msg);
+    } finally {
+      void newAvatar;
+    }
   };
 
   return (
@@ -199,7 +225,9 @@ export default function AdminsListPage() {
       {/* Top actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
      
-          <Button startIcon={<UserPlus size={16} />}>Create User</Button>
+          <Button startIcon={<UserPlus size={16} />} onClick={() => navigate("/create-admin")}>
+            Create User
+          </Button>
     
 
         <div className="relative w-full md:max-w-sm">

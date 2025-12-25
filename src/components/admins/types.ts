@@ -9,6 +9,19 @@ export type AdminRole =
   | "Catalog Manager"
   | "Read Only Admin";
 
+// Update these IDs to match your backend role IDs.
+export const ROLE_ID_BY_LABEL: Record<AdminRole, number> = {
+  "Super Admin": 1,
+  Admin: 2,
+  Manager: 3,
+  "Sales Executive": 4,
+  "Employee Currier": 5,
+  "Order Manager": 6,
+  "Product Manager": 7,
+  "Catalog Manager": 8,
+  "Read Only Admin": 9,
+};
+
 export type AdminStatus = "ACTIVE" | "INACTIVE";
 
 export interface AdminRow {

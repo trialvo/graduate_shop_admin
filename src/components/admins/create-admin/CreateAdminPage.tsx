@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Camera, Mail, Phone, ShieldCheck, User2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
-import { AdminRole, AdminStatus, CreateAdminForm } from "../types";
+import { AdminRole, AdminStatus, CreateAdminForm, ROLE_ID_BY_LABEL } from "../types";
+import { useCreateAdmin, useUpdateAdmin } from "@/hooks/useAdmins";
 
 type Option = { value: string; label: string };
 
@@ -58,8 +62,13 @@ const INITIAL_FORM: CreateAdminForm = {
 };
 
 export default function CreateAdminPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<CreateAdminForm>(INITIAL_FORM);
   const [submitState, setSubmitState] = useState<"idle" | "saving" | "success" | "error">("idle");
+
+  const createMutation = useCreateAdmin();
+  const updateMutation = useUpdateAdmin();
 
   useEffect(() => {
     return () => {
@@ -108,11 +117,33 @@ export default function CreateAdminPage() {
     setSubmitState("saving");
 
     try {
-      await new Promise((r) => setTimeout(r, 400));
-      // eslint-disable-next-line no-console
-      console.log("Create Admin payload:", form);
+      const nameParts = form.name.trim().split(/\s+/).filter(Boolean);
+      const firstName = nameParts[0] ?? "";
+      const lastName = nameParts.slice(1).join(" ") || null;
+
+      const created = await createMutation.mutateAsync({
+        email: form.email.trim(),
+        password: form.password,
+        role_id: ROLE_ID_BY_LABEL[form.role],
+        first_name: firstName || null,
+        last_name: lastName,
+        phone: form.phone.trim() || null,
+      });
+
+      if (form.status === "INACTIVE") {
+        await updateMutation.mutateAsync({
+          id: created.id,
+          body: { is_active: false },
+        });
+      }
+
+      toast.success("Admin created successfully");
+      await queryClient.invalidateQueries({ queryKey: ["admins", "list"], exact: false });
+      navigate("/admins-list");
       setSubmitState("success");
-    } catch {
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to create admin";
+      toast.error(msg);
       setSubmitState("error");
     }
   };
@@ -132,7 +163,9 @@ export default function CreateAdminPage() {
         </div>
 
     
-          <Button variant="outline">Back to Admins</Button>
+          <Button variant="outline" onClick={() => navigate("/admins-list")}>
+            Back to Admins
+          </Button>
     
       </div>
 
