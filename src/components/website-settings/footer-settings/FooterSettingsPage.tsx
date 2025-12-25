@@ -66,7 +66,7 @@ function safeCopy(text: string) {
 
 function normalizeCopyright(text: string) {
   const year = new Date().getFullYear();
-  return text.replaceAll("{year}", String(year));
+  return text.replace(/\{year\}/g, String(year));
 }
 
 function sortByPriority<T extends { priority: Priority }>(items: T[]) {

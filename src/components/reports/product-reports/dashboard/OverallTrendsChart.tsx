@@ -48,7 +48,7 @@ const OverallTrendsChart: React.FC<Props> = ({ periodLabel }) => {
       position: "top",
       horizontalAlign: "right",
       labels: { colors: isDark ? "rgba(255,255,255,0.75)" : "rgba(17,24,39,0.85)" },
-      markers: { radius: 12 },
+      markers: { size: 12 },
     },
     tooltip: { theme: isDark ? "dark" : "light" },
   };
