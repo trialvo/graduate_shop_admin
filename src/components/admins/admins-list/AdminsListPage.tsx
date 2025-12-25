@@ -9,9 +9,9 @@ import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 
 import EditAdminModal from "./EditAdminModal";
-import { INITIAL_ADMINS } from "./mockData";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
-import { AdminRow } from "../types";
+import { AdminRole, AdminRow } from "../types";
+import { useAdmins } from "@/hooks/useAdmins";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -20,8 +20,33 @@ function initials(name: string): string {
   return (a + b).toUpperCase();
 }
 
+const ROLE_LABELS: Record<string, AdminRole> = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
+  ORDER_MANAGER: "Order Manager",
+  CATALOG_MANAGER: "Catalog Manager",
+  READ_ONLY_ADMIN: "Read Only Admin",
+};
+
+const normalizeRoleLabel = (role?: string | null): AdminRole => {
+  if (!role) return "Admin";
+  if (ROLE_LABELS[role]) return ROLE_LABELS[role];
+  const label = role
+    .toLowerCase()
+    .split("_")
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
+  return (label as AdminRole) ?? "Admin";
+};
+
+const toJoinDate = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB");
+};
+
 export default function AdminsListPage() {
-  const [rows, setRows] = useState<AdminRow[]>(INITIAL_ADMINS);
+  const [rows, setRows] = useState<AdminRow[]>([]);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -34,6 +59,41 @@ export default function AdminsListPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminRow | null>(null);
+
+  const params = useMemo(
+    () => ({
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
+    [page, pageSize]
+  );
+
+  const { data, isLoading, isFetching, isError, refetch } = useAdmins(params);
+
+  useEffect(() => {
+    if (!data?.data) return;
+    setRows(
+      data.data.map((admin) => {
+        const name =
+          [admin.first_name, admin.last_name].filter(Boolean).join(" ") ||
+          admin.email.split("@")[0] ||
+          "Admin";
+
+        return {
+          id: admin.id,
+          name,
+          email: admin.email,
+          role: normalizeRoleLabel(admin.roles?.[0]),
+          joinDate: toJoinDate(admin.created_at),
+          phone: admin.phone ?? "-",
+          status: admin.is_active ? "ACTIVE" : "INACTIVE",
+          note: "",
+          avatarUrl: admin.profile_img_path ?? undefined,
+          passwordMasked: "************",
+        };
+      })
+    );
+  }, [data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -49,11 +109,7 @@ export default function AdminsListPage() {
     });
   }, [rows, search]);
 
-  const paged = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    return filtered.slice(start, end);
-  }, [filtered, page, pageSize]);
+  const paged = filtered;
 
   useEffect(() => {
     setPage(1);
@@ -123,7 +179,10 @@ export default function AdminsListPage() {
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={() => setRefreshedAt(new Date())}
+              onClick={async () => {
+                await refetch();
+                setRefreshedAt(new Date());
+              }}
               aria-label="Refresh"
               title="Refresh"
             >
@@ -278,13 +337,24 @@ export default function AdminsListPage() {
                 </TableRow>
               ))}
 
-              {paged.length === 0 ? (
+              {paged.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
                     colSpan={10}
                     className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
-                    No admins found.
+                    {isError ? "Failed to load admins." : "No admins found."}
+                  </TableCell>
+                </TableRow>
+              ) : null}
+
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={10}
+                    className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    Loading admins...
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -293,7 +363,7 @@ export default function AdminsListPage() {
         </div>
 
         <Pagination
-          totalItems={filtered.length}
+          totalItems={search ? filtered.length : data?.total ?? filtered.length}
           page={page}
           pageSize={pageSize}
           onPageChange={setPage}

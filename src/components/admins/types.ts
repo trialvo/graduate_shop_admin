@@ -5,7 +5,9 @@ export type AdminRole =
   | "Sales Executive"
   | "Employee Currier"
   | "Order Manager"
-  | "Product Manager";
+  | "Product Manager"
+  | "Catalog Manager"
+  | "Read Only Admin";
 
 export type AdminStatus = "ACTIVE" | "INACTIVE";
 

@@ -19,6 +19,8 @@ const ROLE_OPTIONS: Option[] = [
   { value: "Employee Currier", label: "Employee Currier" },
   { value: "Order Manager", label: "Order Manager" },
   { value: "Product Manager", label: "Product Manager" },
+  { value: "Catalog Manager", label: "Catalog Manager" },
+  { value: "Read Only Admin", label: "Read Only Admin" },
 ];
 
 const STATUS_OPTIONS: Option[] = [
