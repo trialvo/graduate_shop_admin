@@ -14,6 +14,7 @@ import EditAdminModal from "./EditAdminModal";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import { AdminRole, AdminRow, ROLE_ID_BY_LABEL } from "../types";
 import { useAdmins, useUpdateAdmin } from "@/hooks/useAdmins";
+import type { AdminListResponse } from "@/api/admin.api";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -78,7 +79,7 @@ export default function AdminsListPage() {
   useEffect(() => {
     if (!data?.data) return;
     setRows(
-      data.data.map((admin) => {
+      data.data.map((admin: AdminListResponse["data"][number]) => {
         const name =
           [admin.first_name, admin.last_name].filter(Boolean).join(" ") ||
           admin.email.split("@")[0] ||

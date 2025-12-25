@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "@/config/env";
 import { clearAuthStorage, tokenStorage } from "@/lib/storage";
 
@@ -11,7 +11,7 @@ export const api = axios.create({
   timeout: 30_000,
 });
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = tokenStorage.get();
   if (token) {
     config.headers = config.headers ?? {};
@@ -21,8 +21,8 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
-  (err) => {
+  (res: AxiosResponse) => res,
+  (err: AxiosError) => {
     const status = err?.response?.status;
     if (status === 401) {
       clearAuthStorage();
