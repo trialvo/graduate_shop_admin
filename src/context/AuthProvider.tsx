@@ -10,7 +10,7 @@ import {
   type StoragePersistOptions,
   type StoredAdmin,
 } from "@/lib/storage";
-import { getJwtExpMs, isTokenExpired } from "@/lib/jwt";
+import { getJwtExpMs, getJwtPayload, isTokenExpired } from "@/lib/jwt";
 import { AUTH_LOGOUT_EVENT } from "@/api/client";
 
 type AuthContextValue = {
@@ -41,15 +41,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [admin, setAdmin] = useState<StoredAdmin | null>(null);
 
+  const buildAdminFromToken = useCallback((t: string): StoredAdmin | null => {
+    const payload = getJwtPayload(t);
+    if (!payload?.id || !payload.email) return null;
+    return {
+      id: payload.id,
+      email: payload.email,
+      first_name: null,
+      last_name: null,
+      phone: null,
+      address: null,
+      profile_img_path: null,
+      roles: payload.roles ?? [],
+      permissions: payload.permissions ?? [],
+    };
+  }, []);
+
+  const mergeAdminWithToken = useCallback((t: string, a: StoredAdmin): StoredAdmin => {
+    const payload = getJwtPayload(t);
+    if (!payload) return a;
+    return {
+      ...a,
+      id: a.id ?? payload.id ?? 0,
+      email: a.email ?? payload.email ?? "",
+      roles: a.roles?.length ? a.roles : payload.roles ?? [],
+      permissions: a.permissions?.length ? a.permissions : payload.permissions ?? [],
+    };
+  }, []);
+
   // ✅ hydrate from localStorage (no flashing)
   useEffect(() => {
     const t = tokenStorage.get();
     const a = adminStorage.get();
 
-    if (!t || !a) {
-      if (t || a) {
-        clearAuthStorage();
-      }
+    if (!t) {
+      if (a) clearAuthStorage();
       setToken(null);
       setAdmin(null);
       setHydrated(true);
@@ -64,10 +90,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    const resolvedAdmin = a ? mergeAdminWithToken(t, a) : buildAdminFromToken(t);
+    if (!resolvedAdmin?.id || !resolvedAdmin.email) {
+      clearAuthStorage();
+      setToken(null);
+      setAdmin(null);
+      setHydrated(true);
+      return;
+    }
+
     setToken(t);
-    setAdmin(a);
+    setAdmin(resolvedAdmin);
     setHydrated(true);
-  }, []);
+  }, [buildAdminFromToken, mergeAdminWithToken]);
 
   const logout = useCallback(
     (reason?: string) => {
@@ -124,15 +159,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setSession = useCallback(
     (t: string, a: StoredAdmin, options?: SessionOptions) => {
+      const resolvedAdmin = mergeAdminWithToken(t, a);
       tokenStorage.set(t, options);
-      adminStorage.set(a, options);
+      adminStorage.set(resolvedAdmin, options);
       setToken(t);
-      setAdmin(a);
+      setAdmin(resolvedAdmin);
       if (options?.notify) {
         toast.success("Signed in successfully");
       }
     },
-    []
+    [mergeAdminWithToken]
   );
 
   const hasRole = useCallback((role: string) => Boolean(admin?.roles?.includes(role)), [admin]);

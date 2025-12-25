@@ -1,4 +1,10 @@
-type JwtPayload = {
+export type JwtPayload = {
+  id?: number;
+  email?: string;
+  roles?: string[];
+  permissions?: string[];
+  token_version?: number;
+  iat?: number;
   exp?: number; // seconds
 };
 
@@ -8,11 +14,20 @@ const decodeBase64Url = (input: string) => {
   return atob(padded);
 };
 
-export const getJwtExpMs = (token: string): number | null => {
+export const getJwtPayload = (token: string): JwtPayload | null => {
   try {
     const parts = token.split(".");
     if (parts.length < 2) return null;
-    const payload = JSON.parse(decodeBase64Url(parts[1])) as JwtPayload;
+    return JSON.parse(decodeBase64Url(parts[1])) as JwtPayload;
+  } catch {
+    return null;
+  }
+};
+
+export const getJwtExpMs = (token: string): number | null => {
+  try {
+    const payload = getJwtPayload(token);
+    if (!payload) return null;
     if (!payload.exp) return null;
     return payload.exp * 1000;
   } catch {
