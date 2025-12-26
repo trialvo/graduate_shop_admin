@@ -207,6 +207,7 @@ export default function CreateAdminPage() {
       const selectedRole = roles.find(
         (r) => normalizeRoleLabel(r.name) === form.role
       );
+
       if (!selectedRole) {
         toast.error("Selected role not found. Please refresh roles.");
         setSubmitState("error");
@@ -217,25 +218,18 @@ export default function CreateAdminPage() {
       const firstName = nameParts[0] ?? "";
       const lastName = nameParts.slice(1).join(" ") || null;
 
-      const created = await createMutation.mutateAsync({
+      // ✅ send is_active directly
+      const is_active = form.status === "ACTIVE";
+
+      await createMutation.mutateAsync({
         email: form.email.trim(),
         password: form.password,
         role_id: selectedRole.id,
         first_name: firstName || null,
         last_name: lastName,
         phone: form.phone.trim() || null,
+        is_active,
       });
-
-      // ✅ property should be is_active: true/false
-      const is_active = form.status === "ACTIVE";
-
-      // keep your existing update flow (safe even if create does not accept is_active)
-      if (!is_active) {
-        await updateMutation.mutateAsync({
-          id: created.id,
-          body: { is_active: false },
-        });
-      }
 
       toast.success("Admin created successfully");
       await queryClient.invalidateQueries({

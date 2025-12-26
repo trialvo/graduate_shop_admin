@@ -27,6 +27,7 @@ export type CreateAdminBody = {
   last_name?: string | null;
   phone?: string | null;
   address?: string | null;
+  is_active?: boolean;
 };
 
 export type CreateAdminResponse = {
