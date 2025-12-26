@@ -1,12 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-
-import { Modal } from "@/components/ui/modal";
-import Button from "@/components/ui/button/Button";
-import Select, { type Option } from "@/components/form/Select";
 import { cn } from "@/lib/utils";
-import { toPublicUrl } from "@/config/env";
 
 import type {
   CategoryEntity,
@@ -15,9 +10,12 @@ import type {
   MainCategory,
   SubCategory,
   SubCategoryFormValues,
-} from "./types";
+} from "@/components/products/product-category/types";
+
 import { useCategorySingle } from "@/hooks/categories/useCategorySingle";
-import ImagePickerSquare from "./ImagePickerSquare";
+import ImagePickerSquare from "@/components/products/product-category/ImagePickerSquare";
+import Select, { type Option } from "@/components/form/Select";
+import Button from "@/components/ui/button/Button";
 
 export type EditModalState = {
   open: boolean;
@@ -29,9 +27,15 @@ export type EditModalState = {
 type Props = {
   state: EditModalState;
   onClose: () => void;
-  onSubmit: (entity: CategoryEntity, mode: "create" | "edit", id: number | null, values: any) => Promise<void>;
+  onSubmit: (
+    entity: CategoryEntity,
+    mode: "create" | "edit",
+    id: number | null,
+    values: any,
+  ) => Promise<void>;
   mainOptions: MainCategory[];
   subOptions: SubCategory[];
+  isSaving?: boolean;
 };
 
 const defaultValues: CategoryFormValues = {
@@ -48,102 +52,88 @@ export default function CreateEditCategoryModal({
   onSubmit,
   mainOptions,
   subOptions,
+  isSaving = false,
 }: Props) {
   const { open, entity, mode, id } = state;
 
   const singleQ = useCategorySingle(entity, id, open && mode === "edit");
 
   const [values, setValues] = useState<any>(defaultValues);
-  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [existingImg, setExistingImg] = useState<string | null>(null);
 
   const title = useMemo(() => {
     const name = entity === "main" ? "Main" : entity === "sub" ? "Sub" : "Child";
     return mode === "create" ? `Create ${name} Category` : `Edit ${name} Category`;
   }, [entity, mode]);
 
+  // ✅ options for your Select component
+  const mainSelectOptions: Option[] = useMemo(
+    () => mainOptions.map((m) => ({ value: String(m.id), label: `#${m.id} — ${m.name}` })),
+    [mainOptions],
+  );
+
+  const subSelectOptions: Option[] = useMemo(
+    () => subOptions.map((s) => ({ value: String(s.id), label: `#${s.id} — ${s.name}` })),
+    [subOptions],
+  );
+
   const statusOptions: Option[] = useMemo(
     () => [
-      { label: "Enabled", value: "true" },
-      { label: "Disabled", value: "false" },
+      { value: "true", label: "Enabled" },
+      { value: "false", label: "Disabled" },
     ],
     [],
   );
 
   const featuredOptions: Option[] = useMemo(
     () => [
-      { label: "Yes", value: "true" },
-      { label: "No", value: "false" },
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
     ],
     [],
   );
 
-  const mainSelectOptions: Option[] = useMemo(() => {
-    return mainOptions.map((m) => ({
-      value: String(m.id),
-      label: `#${m.id} - ${m.name}`,
-    }));
-  }, [mainOptions]);
-
-  const subSelectOptions: Option[] = useMemo(() => {
-    return subOptions.map((s) => ({
-      value: String(s.id),
-      label: `#${s.id} - ${s.name}`,
-    }));
-  }, [subOptions]);
-
+  // ✅ reset stale values when opening edit / switching target id
   useEffect(() => {
     if (!open) return;
+    if (mode !== "edit") return;
 
-    if (mode === "create") {
-      setValues(() => {
-        if (entity === "sub") {
-          const v: SubCategoryFormValues = {
-            ...defaultValues,
-            main_category_id: mainOptions[0]?.id ?? 0,
-          };
-          return v;
-        }
-        if (entity === "child") {
-          const v: ChildCategoryFormValues = {
-            ...defaultValues,
-            sub_category_id: subOptions[0]?.id ?? 0,
-          };
-          return v;
-        }
-        return { ...defaultValues };
-      });
-      setExistingImageUrl(null);
-      return;
-    }
+    setValues({ ...defaultValues });
+    setExistingImg(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mode, entity, id]);
 
-    // edit mode: clear any previous form state while loading the new single
+  // create mode defaults
+  useEffect(() => {
+    if (!open) return;
+    if (mode !== "create") return;
+
+    setExistingImg(null);
+
     setValues(() => {
       if (entity === "sub") {
-        const v: SubCategoryFormValues = {
-          ...defaultValues,
-          main_category_id: mainOptions[0]?.id ?? 0,
-        };
+        const first = mainOptions[0]?.id ?? 0;
+        const v: SubCategoryFormValues = { ...defaultValues, main_category_id: first };
         return v;
       }
       if (entity === "child") {
-        const v: ChildCategoryFormValues = {
-          ...defaultValues,
-          sub_category_id: subOptions[0]?.id ?? 0,
-        };
+        const first = subOptions[0]?.id ?? 0;
+        const v: ChildCategoryFormValues = { ...defaultValues, sub_category_id: first };
         return v;
       }
       return { ...defaultValues };
     });
-    setExistingImageUrl(null);
-  }, [entity, mainOptions, mode, open, subOptions, id]);
+  }, [entity, mainOptions, mode, open, subOptions]);
 
+  // edit mode fill
   useEffect(() => {
     if (!open) return;
     if (mode !== "edit") return;
     if (!singleQ.data) return;
 
     const d: any = singleQ.data;
+
+    setExistingImg(d.img_path ?? null);
 
     setValues(() => {
       const base = {
@@ -158,182 +148,186 @@ export default function CreateEditCategoryModal({
       if (entity === "child") return { ...base, sub_category_id: Number(d.sub_category_id ?? 0) };
       return base;
     });
-
-    setExistingImageUrl(d.img_path ? toPublicUrl(d.img_path) : null);
   }, [entity, mode, open, singleQ.data]);
 
+  if (!open) return null;
+
+  const isBusy = singleQ.isFetching || singleQ.isLoading || isSaving;
+
   const submitDisabled =
-    isSaving ||
+    isBusy ||
     !values?.name?.trim() ||
     (entity === "sub" && !values?.main_category_id) ||
     (entity === "child" && !values?.sub_category_id);
 
-  const busyText = mode === "create" ? "Creating..." : "Updating...";
+  const inputClass = cn(
+    "h-10 w-full rounded-lg px-3 text-sm outline-none",
+    "bg-white text-gray-900 ring-1 ring-inset ring-gray-200 focus:ring-[3px] focus:ring-brand-500/30",
+    "dark:bg-gray-950 dark:text-white dark:ring-gray-800 dark:focus:ring-brand-500/20",
+    isBusy && "opacity-70",
+  );
 
-  const onSave = async () => {
-    if (submitDisabled) return;
-    setIsSaving(true);
-    try {
-      await onSubmit(entity, mode, id, values);
-    } catch {
-      // toast + message handled in parent
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const closeDisabled = isBusy; // keep like your UI
 
   return (
-    <Modal isOpen={open} onClose={onClose} className="flex h-full items-center justify-center p-4">
-      <div className="w-full max-w-[860px] overflow-hidden rounded-[4px] bg-white shadow-theme-lg dark:bg-gray-900">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4">
+      <div className="relative w-full max-w-[820px] overflow-hidden rounded-2xl bg-white shadow-theme-xs ring-1 ring-inset ring-gray-200 dark:bg-gray-950 dark:ring-gray-800">
+        {/* header */}
+        <div className="flex items-start justify-between gap-3 border-b border-gray-100 p-4 dark:border-gray-800">
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {mode === "edit" ? "Single item loads from TanStack query (cached)." : "Create category using form-data."}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {mode === "edit" ? "Loaded via TanStack Query (single fetch + cache)" : "Create with multipart/form-data"}
             </p>
           </div>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+
+          <Button variant="outline" size="sm" onClick={onClose} disabled={closeDisabled}>
             Close
           </Button>
         </div>
 
-        {/* Body */}
-        <div className="p-5">
-          {mode === "edit" && singleQ.isFetching ? (
-            <div className="mb-4 rounded-[4px] border border-brand-200 bg-brand-50 p-3 text-sm text-brand-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-200">
-              Loading category details...
-            </div>
-          ) : null}
-
-          {mode === "edit" && singleQ.isError ? (
-            <div className="mb-4 rounded-[4px] border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
-              Failed to load category details.
-            </div>
-          ) : null}
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-12">
-            {/* Image */}
+        {/* body */}
+        <div className="p-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            {/* Left: image */}
             <div className="md:col-span-4">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl bg-gray-50 p-3 ring-1 ring-inset ring-gray-200 dark:bg-gray-900/40 dark:ring-gray-800">
                 <ImagePickerSquare
-                  label="Category image"
-                  hint="(optional)"
+                  label="Category Image"
+                  hint="png/jpg recommended"
                   value={values.category_img ?? null}
-                  existingUrl={existingImageUrl}
+                  existingUrl={existingImg}
                   onChange={(file) => setValues((p: any) => ({ ...p, category_img: file }))}
                 />
                 <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                  If you don&apos;t upload a new image, the existing image will remain.
+                  Upload a new image to replace. If empty, backend may keep the previous image.
                 </p>
               </div>
             </div>
 
-            {/* Form */}
+            {/* Right: form */}
             <div className="md:col-span-8">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
                 <div className="md:col-span-12">
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Name
+                  </label>
                   <input
                     value={values.name}
                     onChange={(e) => setValues((p: any) => ({ ...p, name: e.target.value }))}
+                    className={inputClass}
                     placeholder="Category name"
-                    className={cn(
-                      "h-11 w-full rounded-[4px] border bg-white px-3 text-sm text-gray-900 outline-none",
-                      "border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20",
-                      "dark:border-gray-800 dark:bg-gray-900 dark:text-white",
-                    )}
+                    disabled={isBusy}
                   />
                 </div>
 
-                {entity === "sub" ? (
+                {entity === "sub" && (
                   <div className="md:col-span-12">
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                       Main category
                     </label>
+
                     <Select
-                      value={String(values.main_category_id ?? "")}
                       options={mainSelectOptions}
+                      placeholder={mainSelectOptions.length ? "Select main category" : "No main categories"}
+                      value={values.main_category_id ? String(values.main_category_id) : ""}
                       onChange={(v) => setValues((p: any) => ({ ...p, main_category_id: Number(v) }))}
+                      disabled={isBusy || mainSelectOptions.length === 0}
                     />
                   </div>
-                ) : null}
+                )}
 
-                {entity === "child" ? (
+                {entity === "child" && (
                   <div className="md:col-span-12">
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                       Sub category
                     </label>
+
                     <Select
-                      value={String(values.sub_category_id ?? "")}
                       options={subSelectOptions}
+                      placeholder={subSelectOptions.length ? "Select sub category" : "No sub categories"}
+                      value={values.sub_category_id ? String(values.sub_category_id) : ""}
                       onChange={(v) => setValues((p: any) => ({ ...p, sub_category_id: Number(v) }))}
+                      disabled={isBusy || subSelectOptions.length === 0}
                     />
                   </div>
-                ) : null}
+                )}
 
                 <div className="md:col-span-4">
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Priority
+                  </label>
                   <input
                     type="number"
                     min={1}
-                    value={String(values.priority ?? 1)}
+                    value={String(values.priority)}
                     onChange={(e) =>
-                      setValues((p: any) => ({
-                        ...p,
-                        priority: Number(e.target.value || 1),
-                      }))
+                      setValues((p: any) => ({ ...p, priority: Number(e.target.value || 1) }))
                     }
-                    className={cn(
-                      "h-11 w-full rounded-[4px] border bg-white px-3 text-sm text-gray-900 outline-none",
-                      "border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20",
-                      "dark:border-gray-800 dark:bg-gray-900 dark:text-white",
-                    )}
+                    className={inputClass}
+                    disabled={isBusy}
                   />
                 </div>
 
                 <div className="md:col-span-4">
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                     Status
                   </label>
                   <Select
-                    value={values.status ? "true" : "false"}
                     options={statusOptions}
+                    value={values.status ? "true" : "false"}
                     onChange={(v) => setValues((p: any) => ({ ...p, status: v === "true" }))}
+                    disabled={isBusy}
                   />
                 </div>
 
                 <div className="md:col-span-4">
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                     Featured
                   </label>
                   <Select
-                    value={values.featured ? "true" : "false"}
                     options={featuredOptions}
+                    value={values.featured ? "true" : "false"}
                     onChange={(v) => setValues((p: any) => ({ ...p, featured: v === "true" }))}
+                    disabled={isBusy}
                   />
                 </div>
               </div>
+
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <Button variant="outline" onClick={onClose} disabled={isBusy}>
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="primary"
+                  onClick={() => onSubmit(entity, mode, id, values)}
+                  disabled={submitDisabled}
+                  isLoading={isSaving}
+                  loadingText="Saving..."
+                >
+                  {mode === "create" ? "Create" : "Update"}
+                </Button>
+              </div>
+
+              {mode === "edit" && singleQ.isError ? (
+                <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 ring-1 ring-inset ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20">
+                  Failed to load category. Try again.
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={onSave}
-            disabled={submitDisabled}
-            isLoading={isSaving}
-            loadingText={busyText}
-          >
-            {mode === "create" ? "Create" : "Update"}
-          </Button>
-        </div>
+        {/* ✅ overlay loader (prevents click while fetching/saving) */}
+        {isBusy ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] dark:bg-black/40">
+            <div className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs ring-1 ring-inset ring-gray-200 dark:bg-gray-950 dark:text-gray-200 dark:ring-gray-800">
+              Loading...
+            </div>
+          </div>
+        ) : null}
       </div>
-    </Modal>
+    </div>
   );
 }

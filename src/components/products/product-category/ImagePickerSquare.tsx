@@ -1,44 +1,66 @@
-import { useEffect, useMemo, useRef } from "react";
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toPublicUrl } from "@/config/env";
 
 type Props = {
   label: string;
   hint?: string;
+
+  /** new selected file */
   value?: File | null;
+
+  /** existing backend image path (e.g. "/uploads/...") */
   existingUrl?: string | null;
+
   onChange: (file: File | null) => void;
 };
 
-export default function ImagePickerSquare({ label, hint, value, existingUrl, onChange }: Props) {
+export default function ImagePickerSquare({
+  label,
+  hint,
+  value,
+  existingUrl,
+  onChange,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const previewUrl = useMemo(() => {
-    if (!value) return "";
-    return URL.createObjectURL(value);
-  }, [value]);
+  const [blobUrl, setBlobUrl] = useState<string>("");
 
   useEffect(() => {
+    if (!value) {
+      setBlobUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(value);
+    setBlobUrl(url);
+
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      URL.revokeObjectURL(url);
     };
-  }, [previewUrl]);
+  }, [value]);
+
+  const existingPublic = useMemo(() => toPublicUrl(existingUrl) ?? "", [existingUrl]);
+  const displayUrl = blobUrl || existingPublic;
 
   const open = () => inputRef.current?.click();
-
-  const shownUrl = previewUrl || existingUrl || "";
 
   return (
     <div className="w-full">
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}{" "}
+          {label} <span className="text-error-500">*</span>{" "}
           {hint ? <span className="text-xs text-gray-400">{hint}</span> : null}
         </p>
       </div>
 
       <div className="flex justify-center md:justify-end">
         <div
-          className="relative h-32 w-32 overflow-hidden rounded-[4px] border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
+          className={cn(
+            "relative h-32 w-32 overflow-hidden rounded-[4px] border-2 border-dashed",
+            "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900",
+          )}
           role="button"
           tabIndex={0}
           onClick={open}
@@ -46,9 +68,9 @@ export default function ImagePickerSquare({ label, hint, value, existingUrl, onC
             if (e.key === "Enter" || e.key === " ") open();
           }}
         >
-          {shownUrl ? (
+          {displayUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={shownUrl} alt="Selected" className="h-full w-full object-cover" />
+            <img src={displayUrl} alt="Selected" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-gray-400">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
@@ -81,7 +103,11 @@ export default function ImagePickerSquare({ label, hint, value, existingUrl, onC
               e.stopPropagation();
               open();
             }}
-            className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md bg-white shadow-theme-xs ring-1 ring-inset ring-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:ring-gray-700 dark:hover:bg-white/[0.03]"
+            className={cn(
+              "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md",
+              "bg-white shadow-theme-xs ring-1 ring-inset ring-gray-200 hover:bg-gray-50",
+              "dark:bg-gray-800 dark:ring-gray-700 dark:hover:bg-white/[0.03]",
+            )}
             aria-label="Change image"
           >
             <Pencil size={14} className="text-gray-700 dark:text-gray-300" />
@@ -106,7 +132,7 @@ export default function ImagePickerSquare({ label, hint, value, existingUrl, onC
           className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           onClick={() => onChange(null)}
         >
-          Remove
+          Remove selected
         </button>
       </div>
     </div>
