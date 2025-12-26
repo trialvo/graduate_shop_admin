@@ -1,14 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Camera, Mail, Phone, ShieldCheck, User2 } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Camera, Mail, Phone, ShieldCheck, UploadCloud, User2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
+import { cn } from "@/lib/utils";
+
 import { AdminRole, AdminStatus, CreateAdminForm, ROLE_ID_BY_LABEL } from "../types";
 import { useCreateAdmin, useUpdateAdmin } from "@/hooks/useAdmins";
 
@@ -70,6 +71,10 @@ export default function CreateAdminPage() {
   const createMutation = useCreateAdmin();
   const updateMutation = useUpdateAdmin();
 
+  // Avatar uploader state
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   useEffect(() => {
     return () => {
       if (form.avatarPreviewUrl.startsWith("blob:")) {
@@ -84,16 +89,15 @@ export default function CreateAdminPage() {
     const emailErr = !form.email.trim()
       ? "Email is required."
       : !isValidEmail(form.email)
-      ? "Invalid email address."
-      : "";
+        ? "Invalid email address."
+        : "";
     const phoneErr = !form.phone.trim()
       ? "Phone is required."
       : !isValidBDPhone(form.phone)
-      ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
-      : "";
+        ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
+        : "";
     const passErr = form.password.length < 6 ? "Password must be at least 6 characters." : "";
-    const confirmErr =
-      form.password !== form.confirmPassword ? "Passwords do not match." : "";
+    const confirmErr = form.password !== form.confirmPassword ? "Passwords do not match." : "";
 
     return { nameErr, emailErr, phoneErr, passErr, confirmErr };
   }, [form]);
@@ -110,6 +114,35 @@ export default function CreateAdminPage() {
     }
     setForm(INITIAL_FORM);
     setSubmitState("idle");
+    setIsDragging(false);
+  };
+
+  const setAvatarFile = (f: File | null) => {
+    if (!f) return;
+
+    // basic validation
+    if (!f.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG/PNG/WebP).");
+      return;
+    }
+    const maxMb = 3;
+    if (f.size > maxMb * 1024 * 1024) {
+      toast.error(`Image too large. Max ${maxMb}MB allowed.`);
+      return;
+    }
+
+    if (form.avatarPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(form.avatarPreviewUrl);
+    }
+    const url = URL.createObjectURL(f);
+    setForm({ ...form, avatarFile: f, avatarPreviewUrl: url });
+  };
+
+  const removeAvatar = () => {
+    if (form.avatarPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(form.avatarPreviewUrl);
+    }
+    setForm({ ...form, avatarFile: null, avatarPreviewUrl: "" });
   };
 
   const submit = async () => {
@@ -151,10 +184,8 @@ export default function CreateAdminPage() {
   const statusColor = form.status === "ACTIVE" ? "success" : "error";
 
   return (
-    <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Create Admin" />
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Admin</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -162,87 +193,133 @@ export default function CreateAdminPage() {
           </p>
         </div>
 
-    
-          <Button variant="outline" onClick={() => navigate("/admins-list")}>
-            Back to Admins
-          </Button>
-    
+        <Button variant="outline" onClick={() => navigate("/admins-list")}>
+          Back to Admins
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* LEFT form */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-5">
           {/* Profile */}
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Admin image & basic contact info.
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Admin image & basic contact info.</p>
             </div>
 
-            <div className="p-5">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                {/* image */}
+            <div className="p-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Admin Image (advanced) */}
                 <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Admin Image
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Image</p>
 
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
-                      {form.avatarPreviewUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={form.avatarPreviewUrl}
-                          alt="Admin avatar"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-                          {avatarLetter}
+                    {form.avatarPreviewUrl ? (
+                      <button
+                        type="button"
+                        onClick={removeAvatar}
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                      >
+                        <X size={14} />
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div
+                    className={cn(
+                      "mt-2 grid grid-cols-1 gap-4 rounded-2xl border bg-gray-50 p-4 dark:bg-gray-800/40",
+                      isDragging ? "border-brand-500" : "border-gray-200 dark:border-gray-800",
+                    )}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragging(true);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragging(false);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragging(false);
+                      const f = e.dataTransfer.files?.[0] ?? null;
+                      if (f) setAvatarFile(f);
+                    }}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      {/* preview */}
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                          {form.avatarPreviewUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={form.avatarPreviewUrl}
+                              alt="Admin avatar"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+                              {avatarLetter}
+                            </div>
+                          )}
+
+                          <div className="absolute bottom-1 right-1 rounded-[10px] border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                            <Camera size={14} />
+                          </div>
                         </div>
-                      )}
 
-                      <div className="absolute bottom-1 right-1 rounded-lg border border-gray-200 bg-white p-1 text-gray-700 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                        <Camera size={14} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {form.avatarPreviewUrl ? "Image selected" : "Upload an avatar"}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Drag & drop or choose a file. Max 3MB.
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                      <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
-                        Upload
+                      {/* actions */}
+                      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="gap-2"
+                        >
+                          <UploadCloud size={16} />
+                          {form.avatarPreviewUrl ? "Replace" : "Upload"}
+                        </Button>
+
                         <input
+                          ref={fileInputRef}
                           type="file"
                           accept="image/*"
                           className="hidden"
                           onChange={(e) => {
                             const f = e.target.files?.[0] ?? null;
-                            if (!f) return;
-
-                            if (form.avatarPreviewUrl.startsWith("blob:")) {
-                              URL.revokeObjectURL(form.avatarPreviewUrl);
-                            }
-                            const url = URL.createObjectURL(f);
-                            setForm({ ...form, avatarFile: f, avatarPreviewUrl: url });
+                            if (f) setAvatarFile(f);
+                            // allow re-select same file
+                            e.currentTarget.value = "";
                           }}
                         />
-                      </label>
+                      </div>
+                    </div>
 
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          if (form.avatarPreviewUrl.startsWith("blob:")) {
-                            URL.revokeObjectURL(form.avatarPreviewUrl);
-                          }
-                          setForm({ ...form, avatarFile: null, avatarPreviewUrl: "" });
-                        }}
-                      >
-                        Remove
-                      </Button>
-
+                    {/* subtle helper row */}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        JPG/PNG recommended. Square image looks best.
+                        Recommended: 1:1 square image (PNG/JPG/WebP).
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {form.avatarFile ? `Selected: ${form.avatarFile.name}` : "No file selected"}
                       </p>
                     </div>
                   </div>
@@ -253,18 +330,14 @@ export default function CreateAdminPage() {
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Name <span className="text-error-500">*</span>
                   </p>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <User2 size={16} />
-                    </div>
-                    <Input
-                      className="pl-9"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: String(e.target.value) })}
-                      placeholder="Admin name"
-                    />
-                  </div>
-                  {errors.nameErr ? <p className="text-xs text-error-500">{errors.nameErr}</p> : null}
+                  <Input
+                    startIcon={<User2 size={16} />}
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: String(e.target.value) })}
+                    placeholder="Admin name"
+                    error={Boolean(errors.nameErr)}
+                    hint={errors.nameErr || ""}
+                  />
                 </div>
 
                 {/* email */}
@@ -272,18 +345,14 @@ export default function CreateAdminPage() {
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email <span className="text-error-500">*</span>
                   </p>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Mail size={16} />
-                    </div>
-                    <Input
-                      className="pl-9"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: String(e.target.value) })}
-                      placeholder="admin@email.com"
-                    />
-                  </div>
-                  {errors.emailErr ? <p className="text-xs text-error-500">{errors.emailErr}</p> : null}
+                  <Input
+                    startIcon={<Mail size={16} />}
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: String(e.target.value) })}
+                    placeholder="admin@email.com"
+                    error={Boolean(errors.emailErr)}
+                    hint={errors.emailErr || ""}
+                  />
                 </div>
 
                 {/* phone */}
@@ -291,25 +360,19 @@ export default function CreateAdminPage() {
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Phone <span className="text-error-500">*</span>
                   </p>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Phone size={16} />
-                    </div>
-                    <Input
-                      className="pl-9"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: String(e.target.value) })}
-                      placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
-                    />
-                  </div>
-                  {errors.phoneErr ? <p className="text-xs text-error-500">{errors.phoneErr}</p> : null}
+                  <Input
+                    startIcon={<Phone size={16} />}
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: String(e.target.value) })}
+                    placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
+                    error={Boolean(errors.phoneErr)}
+                    hint={errors.phoneErr || ""}
+                  />
                 </div>
 
                 {/* join date */}
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Joining Date
-                  </p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Date</p>
                   <Input
                     value={form.joinDate}
                     onChange={(e) => setForm({ ...form, joinDate: String(e.target.value) })}
@@ -332,15 +395,13 @@ export default function CreateAdminPage() {
 
           {/* Role & Status */}
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Access</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Choose admin role and account status.
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Choose admin role and account status.</p>
             </div>
 
-            <div className="p-5">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="p-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Role</p>
                   <Select
@@ -369,9 +430,7 @@ export default function CreateAdminPage() {
                       <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Status Preview
-                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Status Preview</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         ACTIVE admins can login. INACTIVE admins cannot.
                       </p>
@@ -389,15 +448,13 @@ export default function CreateAdminPage() {
 
           {/* Password */}
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Password</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Set initial password for this admin.
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Set initial password for this admin.</p>
             </div>
 
-            <div className="p-5">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="p-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password <span className="text-error-500">*</span>
@@ -407,8 +464,9 @@ export default function CreateAdminPage() {
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: String(e.target.value) })}
                     placeholder="Minimum 6 characters"
+                    error={Boolean(errors.passErr)}
+                    hint={errors.passErr || ""}
                   />
-                  {errors.passErr ? <p className="text-xs text-error-500">{errors.passErr}</p> : null}
                 </div>
 
                 <div className="space-y-2">
@@ -418,12 +476,11 @@ export default function CreateAdminPage() {
                   <Input
                     type="password"
                     value={form.confirmPassword}
-                    onChange={(e) =>
-                      setForm({ ...form, confirmPassword: String(e.target.value) })
-                    }
+                    onChange={(e) => setForm({ ...form, confirmPassword: String(e.target.value) })}
                     placeholder="Re-enter password"
+                    error={Boolean(errors.confirmErr)}
+                    hint={errors.confirmErr || ""}
                   />
-                  {errors.confirmErr ? <p className="text-xs text-error-500">{errors.confirmErr}</p> : null}
                 </div>
               </div>
             </div>
@@ -453,16 +510,14 @@ export default function CreateAdminPage() {
         </div>
 
         {/* RIGHT preview */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-5">
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                How this admin will appear in the list.
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">How this admin will appear in the list.</p>
             </div>
 
-            <div className="p-5">
+            <div className="p-4">
               <div className="flex items-start gap-4">
                 <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
                   {form.avatarPreviewUrl ? (
@@ -503,14 +558,14 @@ export default function CreateAdminPage() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
                 <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
                 <p className="line-clamp-3">{form.note || "—"}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>• Assign roles carefully to avoid permission risks.</li>
