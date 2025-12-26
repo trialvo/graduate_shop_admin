@@ -275,7 +275,7 @@ export default function CreateAdminPage() {
         {/* LEFT */}
         <div className="lg:col-span-8 space-y-5">
           {/* Profile */}
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className=" rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Profile
@@ -338,7 +338,7 @@ export default function CreateAdminPage() {
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
-                        <div className="relative h-16 w-16 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                        <div className="relative h-16 w-16 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                           {form.avatarPreviewUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -467,7 +467,6 @@ export default function CreateAdminPage() {
                     value={form.joinDate}
                     onChange={(v) => setForm({ ...form, joinDate: v })}
                     placeholder="Joining Date"
-                    withIcon={true}
                     className="rounded-[4px]"
                   />
                 </div>
@@ -647,7 +646,7 @@ export default function CreateAdminPage() {
 
         {/* RIGHT preview */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className=" rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Live Preview
@@ -659,7 +658,7 @@ export default function CreateAdminPage() {
 
             <div className="p-4">
               <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 overflow-hidden rounded-[4px] bg-gray-100 dark:bg-gray-800">
+                <div className="relative h-14 w-14 rounded-[4px] bg-gray-100 dark:bg-gray-800">
                   {form.avatarPreviewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
