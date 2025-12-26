@@ -1,3 +1,4 @@
+// src/components/products/product-create/utils.ts
 export function safeNumber(input: string, fallback: number): number {
   const n = Number(input);
   return Number.isFinite(n) ? n : fallback;
@@ -13,27 +14,15 @@ export function slugify(input: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function makeSkuBase(base: string): string {
-  return base.trim().toUpperCase().replace(/\s+/g, "-");
-}
-
-export function cartesian<T>(arrays: T[][]): T[][] {
-  if (arrays.length === 0) return [[]];
-  return arrays.reduce<T[][]>(
-    (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
-    [[]]
-  );
+export function makeKey(colorId: number, variantId: number) {
+  return `${colorId}__${variantId}`;
 }
 
 export function genSkuFromParts(parts: string[]): string {
   const cleaned = parts
-    .map((p) => makeSkuBase(p))
+    .map((p) => p.trim().toUpperCase().replace(/\s+/g, "-"))
     .filter(Boolean)
-    .slice(0, 10);
+    .slice(0, 8);
   const rand = Math.floor(1000 + Math.random() * 9000);
   return [...cleaned, String(rand)].join("-");
-}
-
-export function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n));
 }

@@ -1,6 +1,5 @@
+// src/components/products/product-create/types.ts
 export type Option = { value: string; label: string };
-
-export type Priority = "Low" | "Normal" | "Medium" | "High";
 
 export type DiscountType = "percent" | "flat";
 
@@ -10,52 +9,6 @@ export type ProductStatusFlags = {
   freeDelivery: boolean;
   bestDeal: boolean;
 };
-
-export interface Category {
-  id: number;
-  name: string;
-}
-
-export interface SubCategory {
-  id: number;
-  categoryId: number;
-  name: string;
-}
-
-export interface ChildCategory {
-  id: number;
-  subCategoryId: number;
-  name: string;
-}
-
-export interface BrandRow {
-  id: number;
-  name: string;
-  status: boolean;
-  priority: Priority;
-}
-
-export interface ColorRow {
-  id: number;
-  name: string;
-  hex: string;
-  status: boolean;
-  priority: Priority;
-}
-
-export type AttributeType = "text" | "size" | "material" | "custom";
-
-export interface AttributeDefinition {
-  id: number;
-  name: string;
-  type: AttributeType;
-  required: boolean;
-  status: boolean;
-  priority: Priority;
-  values: string[];
-}
-
-export type ProductAttributeSelection = Record<number, string[]>;
 
 export type SeoMeta = {
   metaTitle: string;
@@ -67,15 +20,21 @@ export type SeoMeta = {
   robots: string;
 };
 
-export type VariantMatrixKey = string; // `${colorId}__${value}`
-
-export interface VariantMatrixRow {
-  key: VariantMatrixKey;
+export type VariantMatrixRow = {
+  key: string; // `${colorId}__${variantId}`
   colorId: number;
-  value: string; // e.g. "M"
-  buyPrice: number;
-  oldPrice: number;
-  newPrice: number;
+  variantId: number;
+
+  buyingPrice: number;
+  sellingPrice: number;
+  discount: number;
   stock: number;
-  available: boolean;
-}
+
+  sku: string;
+  active: boolean;
+};
+
+export type ExistingImage = {
+  id: number;
+  path: string; // backend path
+};
