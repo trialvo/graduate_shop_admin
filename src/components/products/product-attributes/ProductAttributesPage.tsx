@@ -1,37 +1,18 @@
+// src/components/products/product-attributes/ProductAttributesPage.tsx
+"use client";
+
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 import BrandTab from "./tabs/BrandTab";
 import ColorTab from "./tabs/ColorTab";
 import AttributeTab from "./tabs/AttributeTab";
-// import VariantTab from "./tabs/VariantTab";
-
-import type {
-  AttributeDefinition,
-  BrandRow,
-  ColorRow,
-  // ProductAttributeSelection,
-  // ProductLite,
-  // VariantRow,
-} from "./types";
-
-import {
-  INITIAL_ATTRIBUTES,
-  INITIAL_BRANDS,
-  INITIAL_COLORS,
-  // INITIAL_PRODUCTS,
-  // INITIAL_VARIANTS,
-} from "./mockData";
 
 const TABS = ["brand", "color", "attribute"] as const;
 type TabType = (typeof TABS)[number];
 
 export default function ProductAttributesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("brand");
-
-  const [brands, setBrands] = useState<BrandRow[]>(INITIAL_BRANDS);
-  const [colors, setColors] = useState<ColorRow[]>(INITIAL_COLORS);
-  const [attributes, setAttributes] =
-    useState<AttributeDefinition[]>(INITIAL_ATTRIBUTES);
 
   return (
     <div className="space-y-6">
@@ -53,9 +34,7 @@ export default function ProductAttributesPage() {
               ? "Product Brand"
               : tab === "color"
               ? "Product Color"
-              : tab === "attribute"
-              ? "Attribute / Size"
-              : "Variant";
+              : "Attribute / Variant";
 
           const active = activeTab === tab;
 
@@ -63,12 +42,12 @@ export default function ProductAttributesPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={[
+              className={cn(
                 "flex-1 px-4 py-3 text-sm font-semibold transition",
                 active
                   ? "bg-brand-500 text-white"
-                  : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]",
-              ].join(" ")}
+                  : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+              )}
             >
               {label}
             </button>
@@ -77,17 +56,9 @@ export default function ProductAttributesPage() {
       </div>
 
       {/* Content */}
-      {activeTab === "brand" && (
-        <BrandTab brands={brands} onChange={setBrands} />
-      )}
-
-      {activeTab === "color" && (
-        <ColorTab colors={colors} onChange={setColors} />
-      )}
-
-      {activeTab === "attribute" && (
-        <AttributeTab attributes={attributes} onChange={setAttributes} />
-      )}
+      {activeTab === "brand" ? <BrandTab /> : null}
+      {activeTab === "color" ? <ColorTab /> : null}
+      {activeTab === "attribute" ? <AttributeTab /> : null}
     </div>
   );
 }
