@@ -1,36 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Mail, Phone, ShieldCheck, UploadCloud, User2, X } from "lucide-react";
+import {
+  Camera,
+  Mail,
+  Phone,
+  ShieldCheck,
+  UploadCloud,
+  User2,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import Input from "@/components/form/input/InputField";
-import Select from "@/components/form/Select";
+import Select, { type Option } from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
+import ActiveInactiveSwitch from "@/components/ui/toggles/ActiveInactiveSwitch";
 import { cn } from "@/lib/utils";
 
-import { AdminRole, AdminStatus, CreateAdminForm, ROLE_ID_BY_LABEL } from "../types";
+import { AdminRole, CreateAdminForm } from "../types";
 import { useCreateAdmin, useUpdateAdmin } from "@/hooks/useAdmins";
-
-type Option = { value: string; label: string };
-
-const ROLE_OPTIONS: Option[] = [
-  { value: "Super Admin", label: "Super Admin" },
-  { value: "Admin", label: "Admin" },
-  { value: "Manager", label: "Manager" },
-  { value: "Sales Executive", label: "Sales Executive" },
-  { value: "Employee Currier", label: "Employee Currier" },
-  { value: "Order Manager", label: "Order Manager" },
-  { value: "Product Manager", label: "Product Manager" },
-  { value: "Catalog Manager", label: "Catalog Manager" },
-  { value: "Read Only Admin", label: "Read Only Admin" },
-];
-
-const STATUS_OPTIONS: Option[] = [
-  { value: "ACTIVE", label: "ACTIVE" },
-  { value: "INACTIVE", label: "INACTIVE" },
-];
+import { useAdminRoles } from "@/hooks/useAdminRoles";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -48,13 +39,33 @@ function isValidBDPhone(v: string): boolean {
   return /^(\+8801\d{9}|01\d{9})$/.test(p);
 }
 
+const ROLE_LABELS: Record<string, AdminRole> = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
+  ORDER_MANAGER: "Order Manager",
+  CATALOG_MANAGER: "Catalog Manager",
+  READ_ONLY_ADMIN: "Read Only Admin",
+};
+
+// "SUPER_ADMIN" -> "Super Admin"
+function normalizeRoleLabel(name?: string | null): AdminRole {
+  if (!name) return "Admin";
+  if (ROLE_LABELS[name]) return ROLE_LABELS[name];
+  const label = name
+    .toLowerCase()
+    .split("_")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+  return (label as AdminRole) ?? "Admin";
+}
+
 const INITIAL_FORM: CreateAdminForm = {
   name: "",
   email: "",
-  role: "Admin",
+  role: "Admin", // will auto-set from API if exists
   joinDate: "",
   phone: "",
-  status: "ACTIVE",
+  status: "ACTIVE", // keep for compatibility, switch will control it
   note: "",
   password: "",
   confirmPassword: "",
@@ -66,12 +77,40 @@ export default function CreateAdminPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CreateAdminForm>(INITIAL_FORM);
-  const [submitState, setSubmitState] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const [submitState, setSubmitState] = useState<
+    "idle" | "saving" | "success" | "error"
+  >("idle");
 
   const createMutation = useCreateAdmin();
   const updateMutation = useUpdateAdmin();
 
-  // Avatar uploader state
+  // roles
+  const rolesQuery = useAdminRoles();
+  const roles = rolesQuery.data ?? [];
+
+  const roleOptions: Option[] = useMemo(() => {
+    return roles.map((r) => {
+      const label = normalizeRoleLabel(r.name);
+      return { value: label, label };
+    });
+  }, [roles]);
+
+  // set default role from API
+  useEffect(() => {
+    if (!roles.length) return;
+
+    // prefer "Admin" if available, else first
+    const hasAdmin = roles.some((r) => normalizeRoleLabel(r.name) === "Admin");
+    if (hasAdmin) {
+      setForm((prev) => (prev.role ? prev : { ...prev, role: "Admin" }));
+      return;
+    }
+
+    const first = normalizeRoleLabel(roles[0].name);
+    setForm((prev) => (prev.role ? prev : { ...prev, role: first }));
+  }, [roles]);
+
+  // Avatar uploader
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -89,24 +128,39 @@ export default function CreateAdminPage() {
     const emailErr = !form.email.trim()
       ? "Email is required."
       : !isValidEmail(form.email)
-        ? "Invalid email address."
-        : "";
+      ? "Invalid email address."
+      : "";
     const phoneErr = !form.phone.trim()
       ? "Phone is required."
       : !isValidBDPhone(form.phone)
-        ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
-        : "";
-    const passErr = form.password.length < 6 ? "Password must be at least 6 characters." : "";
-    const confirmErr = form.password !== form.confirmPassword ? "Passwords do not match." : "";
+      ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
+      : "";
+    const passErr =
+      form.password.length < 6 ? "Password must be at least 6 characters." : "";
+    const confirmErr =
+      form.password !== form.confirmPassword ? "Passwords do not match." : "";
 
-    return { nameErr, emailErr, phoneErr, passErr, confirmErr };
+    // role required (from API)
+    const roleErr = !form.role ? "Role is required." : "";
+
+    return { nameErr, emailErr, phoneErr, passErr, confirmErr, roleErr };
   }, [form]);
 
   const canSubmit = useMemo(() => {
-    return !errors.nameErr && !errors.emailErr && !errors.phoneErr && !errors.passErr && !errors.confirmErr;
+    return (
+      !errors.nameErr &&
+      !errors.emailErr &&
+      !errors.phoneErr &&
+      !errors.passErr &&
+      !errors.confirmErr &&
+      !errors.roleErr
+    );
   }, [errors]);
 
-  const avatarLetter = useMemo(() => initials(form.name || "Admin"), [form.name]);
+  const avatarLetter = useMemo(
+    () => initials(form.name || "Admin"),
+    [form.name]
+  );
 
   const reset = () => {
     if (form.avatarPreviewUrl.startsWith("blob:")) {
@@ -120,7 +174,6 @@ export default function CreateAdminPage() {
   const setAvatarFile = (f: File | null) => {
     if (!f) return;
 
-    // basic validation
     if (!f.type.startsWith("image/")) {
       toast.error("Please upload an image file (JPG/PNG/WebP).");
       return;
@@ -150,6 +203,15 @@ export default function CreateAdminPage() {
     setSubmitState("saving");
 
     try {
+      const selectedRole = roles.find(
+        (r) => normalizeRoleLabel(r.name) === form.role
+      );
+      if (!selectedRole) {
+        toast.error("Selected role not found. Please refresh roles.");
+        setSubmitState("error");
+        return;
+      }
+
       const nameParts = form.name.trim().split(/\s+/).filter(Boolean);
       const firstName = nameParts[0] ?? "";
       const lastName = nameParts.slice(1).join(" ") || null;
@@ -157,13 +219,17 @@ export default function CreateAdminPage() {
       const created = await createMutation.mutateAsync({
         email: form.email.trim(),
         password: form.password,
-        role_id: ROLE_ID_BY_LABEL[form.role],
+        role_id: selectedRole.id,
         first_name: firstName || null,
         last_name: lastName,
         phone: form.phone.trim() || null,
       });
 
-      if (form.status === "INACTIVE") {
+      // ✅ property should be is_active: true/false
+      const is_active = form.status === "ACTIVE";
+
+      // keep your existing update flow (safe even if create does not accept is_active)
+      if (!is_active) {
         await updateMutation.mutateAsync({
           id: created.id,
           body: { is_active: false },
@@ -171,7 +237,10 @@ export default function CreateAdminPage() {
       }
 
       toast.success("Admin created successfully");
-      await queryClient.invalidateQueries({ queryKey: ["admins", "list"], exact: false });
+      await queryClient.invalidateQueries({
+        queryKey: ["admins", "list"],
+        exact: false,
+      });
       navigate("/admins-list");
       setSubmitState("success");
     } catch (err: any) {
@@ -181,13 +250,16 @@ export default function CreateAdminPage() {
     }
   };
 
-  const statusColor = form.status === "ACTIVE" ? "success" : "error";
+  const isActive = form.status === "ACTIVE";
+  const statusColor = isActive ? "success" : "error";
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Admin</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Create Admin
+          </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Create new admin account by role with secure password.
           </p>
@@ -199,13 +271,17 @@ export default function CreateAdminPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* LEFT form */}
+        {/* LEFT */}
         <div className="lg:col-span-8 space-y-5">
           {/* Profile */}
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Admin image & basic contact info.</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Profile
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Admin image & basic contact info.
+              </p>
             </div>
 
             <div className="p-4">
@@ -213,7 +289,9 @@ export default function CreateAdminPage() {
                 {/* Admin Image (advanced) */}
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Image</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Admin Image
+                    </p>
 
                     {form.avatarPreviewUrl ? (
                       <button
@@ -230,7 +308,9 @@ export default function CreateAdminPage() {
                   <div
                     className={cn(
                       "mt-2 grid grid-cols-1 gap-4 rounded-2xl border bg-gray-50 p-4 dark:bg-gray-800/40",
-                      isDragging ? "border-brand-500" : "border-gray-200 dark:border-gray-800",
+                      isDragging
+                        ? "border-brand-500"
+                        : "border-gray-200 dark:border-gray-800"
                     )}
                     onDragEnter={(e) => {
                       e.preventDefault();
@@ -256,7 +336,6 @@ export default function CreateAdminPage() {
                     }}
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      {/* preview */}
                       <div className="flex items-center gap-3">
                         <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                           {form.avatarPreviewUrl ? (
@@ -272,14 +351,16 @@ export default function CreateAdminPage() {
                             </div>
                           )}
 
-                          <div className="absolute bottom-1 right-1 rounded-[10px] border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                          <div className="absolute bottom-1 right-1 rounded-[4px] border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
                             <Camera size={14} />
                           </div>
                         </div>
 
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {form.avatarPreviewUrl ? "Image selected" : "Upload an avatar"}
+                            {form.avatarPreviewUrl
+                              ? "Image selected"
+                              : "Upload an avatar"}
                           </p>
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Drag & drop or choose a file. Max 3MB.
@@ -287,7 +368,6 @@ export default function CreateAdminPage() {
                         </div>
                       </div>
 
-                      {/* actions */}
                       <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                         <Button
                           variant="outline"
@@ -306,20 +386,20 @@ export default function CreateAdminPage() {
                           onChange={(e) => {
                             const f = e.target.files?.[0] ?? null;
                             if (f) setAvatarFile(f);
-                            // allow re-select same file
                             e.currentTarget.value = "";
                           }}
                         />
                       </div>
                     </div>
 
-                    {/* subtle helper row */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Recommended: 1:1 square image (PNG/JPG/WebP).
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {form.avatarFile ? `Selected: ${form.avatarFile.name}` : "No file selected"}
+                        {form.avatarFile
+                          ? `Selected: ${form.avatarFile.name}`
+                          : "No file selected"}
                       </p>
                     </div>
                   </div>
@@ -333,7 +413,9 @@ export default function CreateAdminPage() {
                   <Input
                     startIcon={<User2 size={16} />}
                     value={form.name}
-                    onChange={(e) => setForm({ ...form, name: String(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, name: String(e.target.value) })
+                    }
                     placeholder="Admin name"
                     error={Boolean(errors.nameErr)}
                     hint={errors.nameErr || ""}
@@ -348,7 +430,9 @@ export default function CreateAdminPage() {
                   <Input
                     startIcon={<Mail size={16} />}
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: String(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, email: String(e.target.value) })
+                    }
                     placeholder="admin@email.com"
                     error={Boolean(errors.emailErr)}
                     hint={errors.emailErr || ""}
@@ -363,7 +447,9 @@ export default function CreateAdminPage() {
                   <Input
                     startIcon={<Phone size={16} />}
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: String(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: String(e.target.value) })
+                    }
                     placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
                     error={Boolean(errors.phoneErr)}
                     hint={errors.phoneErr || ""}
@@ -372,20 +458,28 @@ export default function CreateAdminPage() {
 
                 {/* join date */}
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Date</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Joining Date
+                  </p>
                   <Input
                     value={form.joinDate}
-                    onChange={(e) => setForm({ ...form, joinDate: String(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, joinDate: String(e.target.value) })
+                    }
                     placeholder="DD/MM/YYYY"
                   />
                 </div>
 
                 {/* note */}
                 <div className="space-y-2 md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Note</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Note
+                  </p>
                   <Input
                     value={form.note}
-                    onChange={(e) => setForm({ ...form, note: String(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, note: String(e.target.value) })
+                    }
                     placeholder="Write note (optional)"
                   />
                 </div>
@@ -393,105 +487,135 @@ export default function CreateAdminPage() {
             </div>
           </div>
 
-          {/* Role & Status */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Access</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Choose admin role and account status.</p>
-            </div>
+        {/* Access */}
+<div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+  <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+    <p className="text-sm font-semibold text-gray-900 dark:text-white">Access</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">
+      Choose admin role and account status.
+    </p>
+  </div>
 
-            <div className="p-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Role</p>
-                  <Select
-                    key={`role-${form.role}`}
-                    options={ROLE_OPTIONS}
-                    placeholder="Select role"
-                    defaultValue={form.role}
-                    onChange={(v) => setForm({ ...form, role: v as AdminRole })}
-                  />
-                </div>
+  <div className="p-4">
+    {/* Top row: Role + Status */}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+      {/* Role */}
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Role <span className="text-error-500">*</span>
+        </p>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
-                  <Select
-                    key={`status-${form.status}`}
-                    options={STATUS_OPTIONS}
-                    placeholder="Select status"
-                    defaultValue={form.status}
-                    onChange={(v) => setForm({ ...form, status: v as AdminStatus })}
-                  />
-                </div>
+        <Select
+          options={roleOptions}
+          placeholder="Select role"
+          value={form.role}
+          onChange={(v) => setForm({ ...form, role: v as AdminRole })}
+          isLoading={rolesQuery.isLoading}
+          disabled={rolesQuery.isLoading || rolesQuery.isError}
+          className="rounded-[4px]"
+        />
 
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40 md:col-span-2">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Status Preview</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        ACTIVE admins can login. INACTIVE admins cannot.
-                      </p>
-                      <div className="mt-3">
-                        <Badge variant="solid" color={statusColor} size="sm">
-                          {form.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {errors.roleErr ? (
+          <p className="text-xs text-error-500">{errors.roleErr}</p>
+        ) : null}
+
+        {rolesQuery.isError ? (
+          <p className="text-xs text-error-500">Failed to load roles.</p>
+        ) : null}
+      </div>
+
+      {/* Status */}
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+
+        <ActiveInactiveSwitch
+          className="max-w-full"
+          value={isActive}
+          onChange={(next) => setForm({ ...form, status: next ? "ACTIVE" : "INACTIVE" })}
+          disabled={submitState === "saving"}
+        />
+
+      </div>
+    </div>
+
+    {/* Divider */}
+    <div className="my-4 h-px w-full bg-gray-200 dark:bg-gray-800" />
+
+    {/* Password row */}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Password <span className="text-error-500">*</span>
+        </p>
+        <Input
+          type="password"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: String(e.target.value) })}
+          placeholder="Minimum 6 characters"
+          error={Boolean(errors.passErr)}
+          hint={errors.passErr || ""}
+          className="rounded-[4px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Confirm Password <span className="text-error-500">*</span>
+        </p>
+        <Input
+          type="password"
+          value={form.confirmPassword}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              confirmPassword: String(e.target.value),
+            })
+          }
+          placeholder="Re-enter password"
+          error={Boolean(errors.confirmErr)}
+          hint={errors.confirmErr || ""}
+          className="rounded-[4px]"
+        />
+      </div>
+    </div>
+
+    {/* Status preview card */}
+    <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+          <ShieldCheck size={18} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Status Preview</p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            ACTIVE admins can login. INACTIVE admins cannot.
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Badge variant="solid" color={statusColor} size="sm">
+              {isActive ? "ACTIVE" : "INACTIVE"}
+            </Badge>
+            <Badge variant="solid" color="primary" size="sm">
+              {form.role || "—"}
+            </Badge>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-          {/* Password */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Password</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Set initial password for this admin.</p>
-            </div>
-
-            <div className="p-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: String(e.target.value) })}
-                    placeholder="Minimum 6 characters"
-                    error={Boolean(errors.passErr)}
-                    hint={errors.passErr || ""}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Confirm Password <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    type="password"
-                    value={form.confirmPassword}
-                    onChange={(e) => setForm({ ...form, confirmPassword: String(e.target.value) })}
-                    placeholder="Re-enter password"
-                    error={Boolean(errors.confirmErr)}
-                    hint={errors.confirmErr || ""}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={reset}>
               Reset
             </Button>
-            <Button onClick={submit} disabled={!canSubmit || submitState === "saving"}>
+            <Button
+              onClick={submit}
+              disabled={!canSubmit || submitState === "saving"}
+            >
               {submitState === "saving" ? "Saving..." : "Create Admin"}
             </Button>
           </div>
@@ -513,8 +637,12 @@ export default function CreateAdminPage() {
         <div className="lg:col-span-4 space-y-5">
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">How this admin will appear in the list.</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Live Preview
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                How this admin will appear in the list.
+              </p>
             </div>
 
             <div className="p-4">
@@ -549,24 +677,28 @@ export default function CreateAdminPage() {
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Badge variant="solid" color={statusColor} size="sm">
-                      {form.status}
+                      {isActive ? "ACTIVE" : "INACTIVE"}
                     </Badge>
                     <Badge variant="solid" color="primary" size="sm">
-                      {form.role}
+                      {form.role || "—"}
                     </Badge>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
-                <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
+                <p className="font-semibold text-gray-900 dark:text-white mb-1">
+                  Note
+                </p>
                 <p className="line-clamp-3">{form.note || "—"}</p>
               </div>
             </div>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              Tips
+            </p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>• Assign roles carefully to avoid permission risks.</li>
               <li>• Use strong passwords (6+ chars recommended).</li>
