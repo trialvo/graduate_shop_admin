@@ -1,14 +1,15 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Pencil } from "lucide-react";
 
 type Props = {
   label: string;
   hint?: string;
   value?: File | null;
+  existingUrl?: string | null;
   onChange: (file: File | null) => void;
 };
 
-export default function ImagePickerSquare({ label, hint, value, onChange }: Props) {
+export default function ImagePickerSquare({ label, hint, value, existingUrl, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const previewUrl = useMemo(() => {
@@ -16,20 +17,28 @@ export default function ImagePickerSquare({ label, hint, value, onChange }: Prop
     return URL.createObjectURL(value);
   }, [value]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const open = () => inputRef.current?.click();
+
+  const shownUrl = previewUrl || existingUrl || "";
 
   return (
     <div className="w-full">
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label} <span className="text-error-500">*</span>{" "}
+          {label}{" "}
           {hint ? <span className="text-xs text-gray-400">{hint}</span> : null}
         </p>
       </div>
 
       <div className="flex justify-center md:justify-end">
         <div
-          className="relative h-32 w-32 rounded-[4px] border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 overflow-hidden"
+          className="relative h-32 w-32 overflow-hidden rounded-[4px] border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
           role="button"
           tabIndex={0}
           onClick={open}
@@ -37,13 +46,9 @@ export default function ImagePickerSquare({ label, hint, value, onChange }: Prop
             if (e.key === "Enter" || e.key === " ") open();
           }}
         >
-          {previewUrl ? (
+          {shownUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewUrl}
-              alt="Selected"
-              className="h-full w-full object-cover"
-            />
+            <img src={shownUrl} alt="Selected" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-gray-400">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
