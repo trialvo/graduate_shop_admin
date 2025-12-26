@@ -13,7 +13,7 @@ import type {
   Option,
   ProductAttributeSelection,
   ProductLite,
-  VariantRow,
+  ProductVariantRow,
 } from "../types";
 import { cartesian, makeSkuBase, safeNumber } from "../utils";
 
@@ -34,8 +34,8 @@ type Props = {
   productColorMap: Record<number, number[]>;
   onChangeProductColorMap: (next: Record<number, number[]>) => void;
 
-  variants: VariantRow[];
-  onChangeVariants: (next: VariantRow[]) => void;
+  variants: ProductVariantRow[];
+  onChangeVariants: (next: ProductVariantRow[]) => void;
 };
 
 const PRICE_DEFAULT = 0;
@@ -174,7 +174,7 @@ export default function VariantTab({
     const nextIdStart = Math.max(0, ...variants.map((v) => v.id)) + 1;
     let idCounter = nextIdStart;
 
-    const nextVariants: VariantRow[] = [];
+    const nextVariants: ProductVariantRow[] = [];
 
     const ensureOne = combos.length > 0 ? combos : [[]];
 
@@ -232,7 +232,7 @@ export default function VariantTab({
     );
   }, [variants, activeProductId, search]);
 
-  const updateVariant = (id: number, patch: Partial<VariantRow>) => {
+  const updateVariant = (id: number, patch: Partial<ProductVariantRow>) => {
     onChangeVariants(variants.map((v) => (v.id === id ? { ...v, ...patch } : v)));
   };
 

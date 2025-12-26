@@ -40,7 +40,7 @@ function PasswordField({
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="••••••••"
+          placeholder="********"
         />
         <button
           type="button"
@@ -94,18 +94,15 @@ export default function ChangePasswordModal({ isOpen, onClose, onChanged }: Prop
   };
 
   return (
-    <Modal open={isOpen} onClose={onClose} size="sm">
-      <div className="p-6">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Change Password
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Use a strong password (min 8 chars) and keep it private.
-          </p>
-        </div>
-
-        <div className="mt-6 space-y-4">
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      size="sm"
+      title="Change Password"
+      description="Use a strong password (min 8 chars) and keep it private."
+    >
+      <div className="space-y-6">
+        <div className="space-y-4">
           <PasswordField
             label="Current Password"
             value={current}
@@ -135,7 +132,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onChanged }: Prop
           ) : null}
         </div>
 
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={() => {

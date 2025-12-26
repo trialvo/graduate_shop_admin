@@ -39,6 +39,14 @@ export type AttributeDefinition = {
   values: string[];
 };
 
+export type ProductLite = {
+  id: number;
+  name: string;
+  sku: string;
+};
+
+export type ProductAttributeSelection = Record<number, string[]>;
+
 export function safeNumber(input: string, fallback: number): number {
   const n = Number(input);
   return Number.isFinite(n) ? n : fallback;
@@ -65,6 +73,17 @@ export interface VariantRow {
   status: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface ProductVariantRow {
+  id: number;
+  productId: number;
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+  active: boolean;
+  attributes: Record<string, string>;
 }
 
 /** Attribute */
