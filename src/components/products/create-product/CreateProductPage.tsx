@@ -267,13 +267,13 @@ export default function CreateProductPage() {
       </div>
 
       {validationError ? (
-        <div className="rounded-2xl border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+        <div className="rounded-[4px] border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
           {validationError}
         </div>
       ) : null}
 
       {submitMessage ? (
-        <div className="rounded-2xl border border-success-200 bg-success-50 px-4 py-3 text-sm font-medium text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
+        <div className="rounded-[4px] border border-success-200 bg-success-50 px-4 py-3 text-sm font-medium text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={16} />
             {submitMessage}
@@ -282,7 +282,7 @@ export default function CreateProductPage() {
       ) : null}
 
       {/* Basic Info */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -381,7 +381,7 @@ export default function CreateProductPage() {
                 SKU / Barcode <span className="text-error-500">*</span>
               </p>
 
-              <div className="inline-flex overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="inline-flex overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <button
                   type="button"
                   onClick={() => setSkuMode("auto")}
@@ -446,7 +446,7 @@ export default function CreateProductPage() {
       </div>
 
       {/* Pricing */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Pricing</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -506,7 +506,7 @@ export default function CreateProductPage() {
       </div>
 
       {/* ✅ NEW Attributes & Variants Concept */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Product Attributes & Variants</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -536,7 +536,7 @@ export default function CreateProductPage() {
       </div>
 
       {/* Media */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Media</h2>
         <ImageMultiUploader
           label="Product Images"
@@ -554,7 +554,7 @@ export default function CreateProductPage() {
       </div>
 
       {/* Descriptions */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Descriptions</h2>
         <RichTextEditor
           label="Short Description"
@@ -575,7 +575,7 @@ export default function CreateProductPage() {
       </div>
 
       {/* SEO */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">SEO Meta</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -649,7 +649,7 @@ export default function CreateProductPage() {
       </div>
 
       {/* Flags */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Product Flags</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -661,7 +661,7 @@ export default function CreateProductPage() {
               { key: "bestDeal", label: "Best Deal" },
             ] as const
           ).map((item) => (
-            <div key={item.key} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div key={item.key} className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
                 <Switch

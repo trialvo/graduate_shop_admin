@@ -269,7 +269,7 @@ export default function CustomersListPage() {
             </button>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
             {headerTime}
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function CustomersListPage() {
               type="button"
               onClick={() => setActiveTab(t.key)}
               className={[
-                "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition",
+                "inline-flex items-center gap-2 rounded-[4px] px-4 py-2 text-sm font-semibold transition",
                 active
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
@@ -335,7 +335,7 @@ export default function CustomersListPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
           <Table className="min-w-[1400px] border-collapse">
             <TableHeader>
@@ -442,7 +442,7 @@ export default function CustomersListPage() {
                       <button
                         type="button"
                         className={[
-                          "inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-theme-xs transition",
+                          "inline-flex h-10 items-center justify-center gap-2 rounded-[4px] px-4 text-sm font-semibold shadow-theme-xs transition",
                           row.ipBlocked
                             ? "border border-success-200 bg-success-50 text-success-700 hover:bg-success-100 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300 dark:hover:bg-success-500/20"
                             : "border border-error-200 bg-error-50 text-error-700 hover:bg-error-100 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300 dark:hover:bg-error-500/20",
@@ -458,7 +458,7 @@ export default function CustomersListPage() {
                       {/* ✅ Edit icon */}
                       <button
                         type="button"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                         onClick={() => openEdit(row)}
                         aria-label="Edit"
                         title="Edit"
@@ -469,7 +469,7 @@ export default function CustomersListPage() {
                       {/* ✅ Delete icon */}
                       <button
                         type="button"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
                         onClick={() => openDelete(row)}
                         aria-label="Delete"
                         title="Delete"

@@ -20,7 +20,7 @@ export default function ProductCategoryPage() {
         </p>
       </div>
 
-      <div className="inline-flex w-full max-w-xl overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="inline-flex w-full max-w-xl overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {TABS.map((tab) => {
           const label =
             tab === "category"

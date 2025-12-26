@@ -193,7 +193,7 @@ export default function EditCustomerModal({
         {/* LEFT: Form */}
         <div className="lg:col-span-8 space-y-6">
           {/* Section: Profile */}
-          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
             <div className="flex items-center justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -311,7 +311,7 @@ export default function EditCustomerModal({
           </div>
 
           {/* Section: Classification */}
-          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Classification
@@ -372,7 +372,7 @@ export default function EditCustomerModal({
           </div>
 
           {/* Section: Orders & Location */}
-          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Orders & Location
@@ -502,7 +502,7 @@ export default function EditCustomerModal({
         {/* RIGHT: Preview + Security */}
         <div className="lg:col-span-4 space-y-6">
           {/* Preview Card */}
-          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Live Preview
@@ -514,7 +514,7 @@ export default function EditCustomerModal({
 
             <div className="p-5">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[4px] bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                   {draft.avatarLetter || (draft.name.trim().slice(0, 1).toUpperCase() || "C")}
                 </div>
 
@@ -549,13 +549,13 @@ export default function EditCustomerModal({
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Total Orders</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                     {draft.totalOrders}
                   </p>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Accepted</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                     {draft.acceptedOrders}
@@ -568,7 +568,7 @@ export default function EditCustomerModal({
           {/* Security / IP Controls */}
           <div
             className={[
-              "rounded-2xl border overflow-hidden",
+              "rounded-[4px] border overflow-hidden",
               blockedTone
                 ? "border-error-200 bg-error-50 dark:border-error-900/40 dark:bg-error-500/10"
                 : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",
@@ -615,7 +615,7 @@ export default function EditCustomerModal({
               <div className="flex items-start gap-3">
                 <div
                   className={[
-                    "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border",
+                    "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border",
                     blockedTone
                       ? "border-error-200 bg-white text-error-600 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300"
                       : "border-success-200 bg-white text-success-600 dark:border-success-900/40 dark:bg-gray-900 dark:text-success-300",
@@ -666,7 +666,7 @@ export default function EditCustomerModal({
           </div>
 
           {/* Small helper card */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Tips
             </p>

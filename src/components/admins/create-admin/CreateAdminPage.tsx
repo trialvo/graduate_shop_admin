@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { AdminRole, CreateAdminForm } from "../types";
 import { useCreateAdmin, useUpdateAdmin } from "@/hooks/useAdmins";
 import { useAdminRoles } from "@/hooks/useAdminRoles";
+import DatePicker from "@/components/form/date-picker";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -274,7 +275,7 @@ export default function CreateAdminPage() {
         {/* LEFT */}
         <div className="lg:col-span-8 space-y-5">
           {/* Profile */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Profile
@@ -307,7 +308,7 @@ export default function CreateAdminPage() {
 
                   <div
                     className={cn(
-                      "mt-2 grid grid-cols-1 gap-4 rounded-2xl border bg-gray-50 p-4 dark:bg-gray-800/40",
+                      "mt-2 grid grid-cols-1 gap-4 rounded-[4px] border bg-gray-50 p-4 dark:bg-gray-800/40",
                       isDragging
                         ? "border-brand-500"
                         : "border-gray-200 dark:border-gray-800"
@@ -337,7 +338,7 @@ export default function CreateAdminPage() {
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
-                        <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                        <div className="relative h-16 w-16 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                           {form.avatarPreviewUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -461,12 +462,13 @@ export default function CreateAdminPage() {
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Joining Date
                   </p>
-                  <Input
+
+                  <DatePicker
                     value={form.joinDate}
-                    onChange={(e) =>
-                      setForm({ ...form, joinDate: String(e.target.value) })
-                    }
-                    placeholder="DD/MM/YYYY"
+                    onChange={(v) => setForm({ ...form, joinDate: v })}
+                    placeholder="Joining Date"
+                    withIcon={true}
+                    className="rounded-[4px]"
                   />
                 </div>
 
@@ -487,125 +489,135 @@ export default function CreateAdminPage() {
             </div>
           </div>
 
-        {/* Access */}
-<div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-  <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-    <p className="text-sm font-semibold text-gray-900 dark:text-white">Access</p>
-    <p className="text-xs text-gray-500 dark:text-gray-400">
-      Choose admin role and account status.
-    </p>
-  </div>
+          {/* Access */}
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Access
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Choose admin role and account status.
+              </p>
+            </div>
 
-  <div className="p-4">
-    {/* Top row: Role + Status */}
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
-      {/* Role */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Role <span className="text-error-500">*</span>
-        </p>
+            <div className="p-4">
+              {/* Top row: Role + Status */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+                {/* Role */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Role <span className="text-error-500">*</span>
+                  </p>
 
-        <Select
-          options={roleOptions}
-          placeholder="Select role"
-          value={form.role}
-          onChange={(v) => setForm({ ...form, role: v as AdminRole })}
-          isLoading={rolesQuery.isLoading}
-          disabled={rolesQuery.isLoading || rolesQuery.isError}
-          className="rounded-[4px]"
-        />
+                  <Select
+                    options={roleOptions}
+                    placeholder="Select role"
+                    value={form.role}
+                    onChange={(v) => setForm({ ...form, role: v as AdminRole })}
+                    isLoading={rolesQuery.isLoading}
+                    disabled={rolesQuery.isLoading || rolesQuery.isError}
+                    className="rounded-[4px]"
+                  />
 
-        {errors.roleErr ? (
-          <p className="text-xs text-error-500">{errors.roleErr}</p>
-        ) : null}
+                  {errors.roleErr ? (
+                    <p className="text-xs text-error-500">{errors.roleErr}</p>
+                  ) : null}
 
-        {rolesQuery.isError ? (
-          <p className="text-xs text-error-500">Failed to load roles.</p>
-        ) : null}
-      </div>
+                  {rolesQuery.isError ? (
+                    <p className="text-xs text-error-500">
+                      Failed to load roles.
+                    </p>
+                  ) : null}
+                </div>
 
-      {/* Status */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+                {/* Status */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Status
+                  </p>
 
-        <ActiveInactiveSwitch
-          className="max-w-full"
-          value={isActive}
-          onChange={(next) => setForm({ ...form, status: next ? "ACTIVE" : "INACTIVE" })}
-          disabled={submitState === "saving"}
-        />
+                  <ActiveInactiveSwitch
+                    className="max-w-full"
+                    value={isActive}
+                    onChange={(next) =>
+                      setForm({ ...form, status: next ? "ACTIVE" : "INACTIVE" })
+                    }
+                    disabled={submitState === "saving"}
+                  />
+                </div>
+              </div>
 
-      </div>
-    </div>
+              {/* Divider */}
+              <div className="my-4 h-px w-full bg-gray-200 dark:bg-gray-800" />
 
-    {/* Divider */}
-    <div className="my-4 h-px w-full bg-gray-200 dark:bg-gray-800" />
+              {/* Password row */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Password <span className="text-error-500">*</span>
+                  </p>
+                  <Input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: String(e.target.value) })
+                    }
+                    placeholder="Minimum 6 characters"
+                    error={Boolean(errors.passErr)}
+                    hint={errors.passErr || ""}
+                    className="rounded-[4px]"
+                  />
+                </div>
 
-    {/* Password row */}
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Password <span className="text-error-500">*</span>
-        </p>
-        <Input
-          type="password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: String(e.target.value) })}
-          placeholder="Minimum 6 characters"
-          error={Boolean(errors.passErr)}
-          hint={errors.passErr || ""}
-          className="rounded-[4px]"
-        />
-      </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Confirm Password <span className="text-error-500">*</span>
+                  </p>
+                  <Input
+                    type="password"
+                    value={form.confirmPassword}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        confirmPassword: String(e.target.value),
+                      })
+                    }
+                    placeholder="Re-enter password"
+                    error={Boolean(errors.confirmErr)}
+                    hint={errors.confirmErr || ""}
+                    className="rounded-[4px]"
+                  />
+                </div>
+              </div>
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Confirm Password <span className="text-error-500">*</span>
-        </p>
-        <Input
-          type="password"
-          value={form.confirmPassword}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              confirmPassword: String(e.target.value),
-            })
-          }
-          placeholder="Re-enter password"
-          error={Boolean(errors.confirmErr)}
-          hint={errors.confirmErr || ""}
-          className="rounded-[4px]"
-        />
-      </div>
-    </div>
+              {/* Status preview card */}
+              <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                    <ShieldCheck size={18} />
+                  </div>
 
-    {/* Status preview card */}
-    <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-          <ShieldCheck size={18} />
-        </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Status Preview
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      ACTIVE admins can login. INACTIVE admins cannot.
+                    </p>
 
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">Status Preview</p>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            ACTIVE admins can login. INACTIVE admins cannot.
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="solid" color={statusColor} size="sm">
-              {isActive ? "ACTIVE" : "INACTIVE"}
-            </Badge>
-            <Badge variant="solid" color="primary" size="sm">
-              {form.role || "—"}
-            </Badge>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Badge variant="solid" color={statusColor} size="sm">
+                        {isActive ? "ACTIVE" : "INACTIVE"}
+                      </Badge>
+                      <Badge variant="solid" color="primary" size="sm">
+                        {form.role || "—"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 
           {/* Actions */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -621,13 +633,13 @@ export default function CreateAdminPage() {
           </div>
 
           {submitState === "success" ? (
-            <div className="rounded-2xl border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
+            <div className="rounded-[4px] border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
               Admin created successfully (demo).
             </div>
           ) : null}
 
           {submitState === "error" ? (
-            <div className="rounded-2xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+            <div className="rounded-[4px] border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
               Failed to create admin. Try again.
             </div>
           ) : null}
@@ -635,7 +647,7 @@ export default function CreateAdminPage() {
 
         {/* RIGHT preview */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Live Preview
@@ -647,7 +659,7 @@ export default function CreateAdminPage() {
 
             <div className="p-4">
               <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
+                <div className="relative h-14 w-14 overflow-hidden rounded-[4px] bg-gray-100 dark:bg-gray-800">
                   {form.avatarPreviewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -686,7 +698,7 @@ export default function CreateAdminPage() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+              <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
                 <p className="font-semibold text-gray-900 dark:text-white mb-1">
                   Note
                 </p>
@@ -695,7 +707,7 @@ export default function CreateAdminPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Tips
             </p>

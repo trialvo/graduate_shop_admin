@@ -140,7 +140,7 @@ export default function AddCourierModal({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Currier Info
             </p>
@@ -222,7 +222,7 @@ export default function AddCourierModal({
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Availability
                 </p>
-                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="flex items-center justify-between rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {active ? "Enabled" : "Disabled"}
@@ -244,7 +244,7 @@ export default function AddCourierModal({
 
         {/* Right */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Currier Logo
             </p>
@@ -254,7 +254,7 @@ export default function AddCourierModal({
 
             <div className="mt-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
+                <div className="h-14 w-14 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
                   {logoPreviewUrl ? (
                     <img
                       src={logoPreviewUrl}
@@ -267,7 +267,7 @@ export default function AddCourierModal({
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
                     Upload
                     <input
                       type="file"
@@ -303,7 +303,7 @@ export default function AddCourierModal({
               </div>
 
               {/* Preview */}
-              <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="mt-5 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
                 <p className="text-xs text-gray-500 dark:text-gray-400">Preview</p>
 
                 <p className="mt-2 text-base font-semibold text-gray-900 dark:text-white">
@@ -332,7 +332,7 @@ export default function AddCourierModal({
           </div>
 
           {logoFile ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+            <div className="rounded-[4px] border border-gray-200 bg-white p-5 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               Selected file: <span className="font-semibold">{logoFile.name}</span>
             </div>
           ) : null}

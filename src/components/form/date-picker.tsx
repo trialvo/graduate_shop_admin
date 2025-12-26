@@ -1,60 +1,91 @@
-import { useEffect } from "react";
-import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.css";
-import Label from "./Label";
-import { CalenderIcon } from "../../icons";
-import Hook = flatpickr.Options.Hook;
-import DateOption = flatpickr.Options.DateOption;
+import React from "react";
+import { Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type PropsType = {
-  id: string;
-  mode?: "single" | "multiple" | "range" | "time";
-  onChange?: Hook | Hook[];
-  defaultDate?: DateOption;
-  label?: string;
-  placeholder?: string;
+type Props = {
+  value?: string; // expected format: YYYY-MM-DD (native date input)
+  onChange?: (value: string) => void;
+
+  placeholder?: string; // used only as label-like hint (native date input doesn't show placeholder reliably)
+  id?: string;
+  name?: string;
+
+  disabled?: boolean;
+  error?: boolean;
+  hint?: string;
+
+  className?: string;
+
+  /** show calendar icon on left */
+  withIcon?: boolean;
+
+  /** min/max date in YYYY-MM-DD */
+  min?: string;
+  max?: string;
 };
 
 export default function DatePicker({
-  id,
-  mode,
+  value,
   onChange,
-  label,
-  defaultDate,
-  placeholder,
-}: PropsType) {
-  useEffect(() => {
-    const flatPickr = flatpickr(`#${id}`, {
-      mode: mode || "single",
-      static: true,
-      monthSelectorType: "static",
-      dateFormat: "Y-m-d",
-      defaultDate,
-      onChange,
-    });
-
-    return () => {
-      if (!Array.isArray(flatPickr)) {
-        flatPickr.destroy();
-      }
-    };
-  }, [mode, onChange, id, defaultDate]);
-
+  placeholder = "Select date",
+  id,
+  name,
+  disabled = false,
+  error = false,
+  hint,
+  className,
+  withIcon = true,
+  min,
+  max,
+}: Props) {
   return (
-    <div>
-      {label && <Label htmlFor={id}>{label}</Label>}
+    <div className="relative">
+      {withIcon ? (
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <Calendar size={16} />
+        </div>
+      ) : null}
 
-      <div className="relative">
-        <input
-          id={id}
-          placeholder={placeholder}
-          className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30  bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700  dark:focus:border-brand-800"
-        />
+      <input
+        type="date"
+        id={id}
+        name={name}
+        value={value ?? ""}
+        min={min}
+        max={max}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e.target.value)}
+        className={cn(
+          // ✅ fixed height
+          "h-10 w-full rounded-[4px] border bg-white px-3 text-sm text-gray-900",
+          // ✅ left icon spacing
+          withIcon ? "pl-9" : "pl-3",
+          // ✅ no ring / no shadow; border-only focus
+          "outline-none focus-visible:outline-none focus-visible:border-brand-500",
+          "transition-colors duration-150",
+          // states
+          disabled
+            ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500 opacity-70 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+            : error
+              ? "border-error-500 dark:border-error-500"
+              : "border-gray-200 dark:border-gray-700",
+          "dark:bg-gray-900 dark:text-white/90",
+          className,
+        )}
+        aria-invalid={error ? "true" : "false"}
+        aria-label={placeholder}
+      />
 
-        <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
-          <CalenderIcon className="size-6" />
-        </span>
-      </div>
+      {hint ? (
+        <p
+          className={cn(
+            "mt-1.5 text-xs",
+            error ? "text-error-500" : "text-gray-500 dark:text-gray-400",
+          )}
+        >
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

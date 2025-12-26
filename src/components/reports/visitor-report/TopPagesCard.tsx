@@ -16,7 +16,7 @@ const TopPagesCard: React.FC<Props> = ({ rows }) => {
   return (
     <div
       className={cn(
-        "h-full rounded-2xl border border-gray-200 dark:border-gray-800",
+        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -40,7 +40,7 @@ const TopPagesCard: React.FC<Props> = ({ rows }) => {
         {rows.map((r) => (
           <div
             key={r.path}
-            className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
+            className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">

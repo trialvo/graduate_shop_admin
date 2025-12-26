@@ -42,7 +42,7 @@ const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 w-full">
+    <div className="rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 w-full">
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
           Stock Alert Products
@@ -62,7 +62,7 @@ const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
         {items.map((it) => (
           <div
             key={it.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-3 py-3"
+            className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 dark:border-gray-800 px-3 py-3"
           >
             <div className="min-w-0">
               <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">

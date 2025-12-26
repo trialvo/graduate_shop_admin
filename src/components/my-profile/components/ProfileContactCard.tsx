@@ -19,7 +19,7 @@ function Item({
   if (!value) return null;
   return (
     <div className="flex items-start gap-3">
-      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-[4px] bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
         {icon}
       </span>
       <div className="min-w-0">
@@ -36,7 +36,7 @@ function Item({
 
 export default function ProfileContactCard({ contact }: Props) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <h4 className="text-base font-semibold text-gray-900 dark:text-white">
         Contact
       </h4>

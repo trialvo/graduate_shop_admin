@@ -165,7 +165,7 @@ export default function RichTextEditor({
     <div className="space-y-2">
       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
 
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
           {toolbarItems.map((item) => (
             <button

@@ -35,7 +35,7 @@ export default function OrderFiltersBar({
   onClear,
 }: Props) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       {/* Status strip */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
         {statusOptions.map((opt) => {

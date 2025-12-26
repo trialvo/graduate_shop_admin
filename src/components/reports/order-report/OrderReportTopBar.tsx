@@ -26,7 +26,7 @@ const OrderReportTopBar: React.FC<Props> = ({ activeTab, onTabChange, period, on
           Order Report
         </h1>
 
-        <div className="mt-4 inline-flex rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-1">
+        <div className="mt-4 inline-flex rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-1">
           <button
             type="button"
             onClick={() => onTabChange("dashboard")}
@@ -61,7 +61,7 @@ const OrderReportTopBar: React.FC<Props> = ({ activeTab, onTabChange, period, on
           value={period}
           onChange={(e) => onPeriodChange(e.target.value as TimePeriodKey)}
           className={cn(
-            "h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800",
+            "h-11 w-full rounded-[4px] border border-gray-200 dark:border-gray-800",
             "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
             "outline-none focus:ring-2 focus:ring-brand-500/30"
           )}

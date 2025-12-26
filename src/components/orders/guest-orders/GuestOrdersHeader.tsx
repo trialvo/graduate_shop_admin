@@ -41,7 +41,7 @@ const GuestOrdersHeader: React.FC<Props> = ({
               type="button"
               onClick={() => onTabChange(t.value)}
               className={[
-                "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition",
+                "inline-flex items-center gap-2 rounded-[4px] px-4 py-2 text-sm font-semibold transition",
                 active
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",

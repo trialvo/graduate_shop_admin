@@ -233,7 +233,7 @@ export default function CouponModal({
         aria-label="Close overlay"
       />
 
-      <div className="relative w-[95vw] max-w-5xl rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="relative w-[95vw] max-w-5xl rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
@@ -248,7 +248,7 @@ export default function CouponModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
             aria-label="Close"
           >
             <X size={18} />
@@ -258,7 +258,7 @@ export default function CouponModal({
         {/* Body scroll */}
         <div className="max-h-[800px] overflow-y-auto px-6 py-5">
           {/* Main form */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
               <div className="space-y-2 lg:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -386,7 +386,7 @@ export default function CouponModal({
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Status
                 </p>
-                <div className="h-11 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {status ? "Active" : "Inactive"}
                   </p>
@@ -397,7 +397,7 @@ export default function CouponModal({
           </div>
 
           {/* Product scope */}
-          <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -444,7 +444,7 @@ export default function CouponModal({
                   </div>
                 </div>
 
-                <div className="mt-4 max-h-[240px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                <div className="mt-4 max-h-[240px] overflow-y-auto rounded-[4px] border border-gray-200 dark:border-gray-800">
                   {filteredProducts.map((p) => {
                     const checked = productIds.includes(p.id);
                     return (
@@ -482,7 +482,7 @@ export default function CouponModal({
           </div>
 
           {/* Customer scope */}
-          <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -529,7 +529,7 @@ export default function CouponModal({
                   </div>
                 </div>
 
-                <div className="mt-4 max-h-[240px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                <div className="mt-4 max-h-[240px] overflow-y-auto rounded-[4px] border border-gray-200 dark:border-gray-800">
                   {filteredCustomers.map((c) => {
                     const checked = customerIds.includes(c.id);
                     return (

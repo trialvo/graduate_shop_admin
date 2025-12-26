@@ -91,7 +91,7 @@ export default function DeliverySettingsPage() {
             </button>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
             {formatHeaderTime(refreshedAt)}
           </div>
         </div>
@@ -121,12 +121,12 @@ export default function DeliverySettingsPage() {
         {filtered.map((card) => (
           <div
             key={card.id}
-            className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden"
+            className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden"
           >
             <div className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
+                  <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
                     {card.logoUrl ? (
                       <img
                         src={card.logoUrl}
@@ -194,7 +194,7 @@ export default function DeliverySettingsPage() {
 
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
                 onClick={() => openDelete(card)}
                 aria-label="Delete"
               >
@@ -205,14 +205,14 @@ export default function DeliverySettingsPage() {
         ))}
 
         {filtered.length === 0 ? (
-          <div className="md:col-span-2 xl:col-span-4 rounded-2xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <div className="md:col-span-2 xl:col-span-4 rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             No delivery charge cards found.
           </div>
         ) : null}
       </div>
 
       {/* Bottom Name Table */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
             Delivery Names

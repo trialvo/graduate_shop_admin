@@ -39,7 +39,7 @@ const ProductReportsTopBar: React.FC<Props> = ({
         </p>
 
         {/* Tabs */}
-        <div className="mt-4 inline-flex rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-1">
+        <div className="mt-4 inline-flex rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-1">
           {([
             { key: "dashboard", label: "Dashboard" },
             { key: "report", label: "Report" },
@@ -71,7 +71,7 @@ const ProductReportsTopBar: React.FC<Props> = ({
           options={PERIOD_OPTIONS}
           defaultValue={period}
           onChange={(v) => onPeriodChange(v as TimePeriodKey)}
-          className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
+          className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
         />
       </div>
     </div>

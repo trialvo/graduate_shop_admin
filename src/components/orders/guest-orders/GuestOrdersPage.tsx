@@ -142,14 +142,14 @@ const GuestOrdersPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
             {refreshedAtText}
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <GuestOrdersToolbar
           sortOptions={sortOptions}
           sortBy={sortBy}

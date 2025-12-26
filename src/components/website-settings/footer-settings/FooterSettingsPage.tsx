@@ -353,7 +353,7 @@ export default function FooterSettingsPage() {
         {/* LEFT CONFIG */}
         <div className="space-y-6">
           {/* Layout */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Layout
             </h2>
@@ -384,7 +384,7 @@ export default function FooterSettingsPage() {
               </div>
 
               <div className="space-y-2 md:col-span-3">
-                <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       Divider line (top border)
@@ -404,7 +404,7 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Branding */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -434,7 +434,7 @@ export default function FooterSettingsPage() {
                   />
                   <button
                     type="button"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                     onClick={() => safeCopy(data.branding.logoUrl)}
                     aria-label="Copy"
                   >
@@ -468,7 +468,7 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Footer Columns */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -492,7 +492,7 @@ export default function FooterSettingsPage() {
               {data.columns.map((col) => (
                 <div
                   key={col.id}
-                  className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
@@ -670,7 +670,7 @@ export default function FooterSettingsPage() {
                                           />
                                           <button
                                             type="button"
-                                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                                            className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                                             onClick={() => {
                                               if (!l.href) return;
                                               window.open(
@@ -779,7 +779,7 @@ export default function FooterSettingsPage() {
               ))}
 
               {data.columns.length === 0 ? (
-                <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                <div className="rounded-[4px] border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   No columns created.
                 </div>
               ) : null}
@@ -787,7 +787,7 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Newsletter */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -852,7 +852,7 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Social Links */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Social Links
             </h2>
@@ -864,7 +864,7 @@ export default function FooterSettingsPage() {
               {data.socials.map((s) => (
                 <div
                   key={s.key}
-                  className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -902,7 +902,7 @@ export default function FooterSettingsPage() {
                     />
                     <button
                       type="button"
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                       onClick={() => {
                         if (!s.url) return;
                         window.open(s.url, "_blank", "noreferrer");
@@ -918,7 +918,7 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Payments */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -953,7 +953,7 @@ export default function FooterSettingsPage() {
                 {data.payments.icons.map((p) => (
                   <div
                     key={p.id}
-                    className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                    className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -977,7 +977,7 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Legal */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -1019,7 +1019,7 @@ export default function FooterSettingsPage() {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     Show Policy Links
@@ -1092,7 +1092,7 @@ export default function FooterSettingsPage() {
                                 />
                                 <button
                                   type="button"
-                                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                                  className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                                   onClick={() => {
                                     if (!p.href) return;
                                     window.open(p.href, "_blank", "noreferrer");
@@ -1167,7 +1167,7 @@ export default function FooterSettingsPage() {
 
         {/* RIGHT PREVIEW */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -1189,7 +1189,7 @@ export default function FooterSettingsPage() {
 
             <div
               className={[
-                "mt-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden",
+                "mt-6 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden",
               ].join(" ")}
             >
               <div className={["mx-auto w-full px-6 py-8", containerWidthClass].join(" ")}>
@@ -1203,7 +1203,7 @@ export default function FooterSettingsPage() {
                     {data.branding.enabled ? (
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200">
+                          <div className="h-10 w-10 rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200">
                             Logo
                           </div>
                           <div>
@@ -1219,7 +1219,7 @@ export default function FooterSettingsPage() {
                     ) : null}
 
                     {data.newsletter.enabled ? (
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {data.newsletter.title}
                         </p>
@@ -1235,7 +1235,7 @@ export default function FooterSettingsPage() {
                     ) : null}
 
                     {enabledSocials.length ? (
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           Follow Us
                         </p>
@@ -1246,7 +1246,7 @@ export default function FooterSettingsPage() {
                               href={s.url || "#"}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                              className="inline-flex items-center rounded-[4px] border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                             >
                               {SOCIAL_LABELS[s.key]}
                             </a>
@@ -1314,7 +1314,7 @@ export default function FooterSettingsPage() {
                           {enabledPaymentIcons.map((p) => (
                             <span
                               key={p.id}
-                              className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                              className="inline-flex items-center rounded-[4px] border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
                             >
                               {p.label}
                             </span>
@@ -1349,14 +1349,14 @@ export default function FooterSettingsPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="mt-4 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 ✅ Backend ready: You can store this settings JSON in DB and render footer on storefront.
               </p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Export / Integration
             </p>

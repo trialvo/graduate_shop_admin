@@ -90,7 +90,7 @@ export default function OrdersTable({ rows }: Props) {
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-[1200px] w-full border-collapse">
             <thead>

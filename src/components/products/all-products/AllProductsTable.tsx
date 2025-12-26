@@ -34,7 +34,7 @@ const AllProductsTable: React.FC<Props> = ({
   onDelete,
 }) => {
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
       {/* ✅ Scroll ONLY inside table area */}
       <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
         <Table className="min-w-[1100px] border-collapse">
@@ -114,7 +114,7 @@ const AllProductsTable: React.FC<Props> = ({
                   {/* Product (image + name + sku) */}
                   <TableCell className="px-4 py-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                      <div className="h-10 w-10 shrink-0 rounded-[4px] bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-700">
                         {p.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />

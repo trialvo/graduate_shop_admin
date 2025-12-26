@@ -29,7 +29,7 @@ const DeviceShareCard: React.FC<Props> = ({ rows }) => {
   return (
     <div
       className={cn(
-        "h-full rounded-2xl border border-gray-200 dark:border-gray-800",
+        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}

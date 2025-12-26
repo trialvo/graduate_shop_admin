@@ -56,7 +56,7 @@ export default function Modal({
       <div className="relative flex min-h-full items-center justify-center p-4">
         <div
           className={cn(
-            "w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-xl dark:border-gray-800 dark:bg-gray-900",
+            "w-full overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xl dark:border-gray-800 dark:bg-gray-900",
             SIZE_CLASS[size]
           )}
           role="dialog"
@@ -79,7 +79,7 @@ export default function Modal({
 
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                 onClick={onClose}
                 aria-label="Close"
               >

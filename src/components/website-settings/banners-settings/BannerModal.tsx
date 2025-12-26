@@ -232,7 +232,7 @@ export default function BannerModal({
         aria-label="Close overlay"
       />
 
-      <div className="relative w-[96vw] max-w-6xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="relative w-[96vw] max-w-6xl overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
@@ -247,7 +247,7 @@ export default function BannerModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
             aria-label="Close"
           >
             <X size={18} />
@@ -259,7 +259,7 @@ export default function BannerModal({
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left: Form */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                   Banner Information
                 </h4>
@@ -346,7 +346,7 @@ export default function BannerModal({
                 ) : null}
 
                 <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -364,7 +364,7 @@ export default function BannerModal({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -387,7 +387,7 @@ export default function BannerModal({
 
             {/* Right: Advanced Upload */}
             <div className="space-y-6">
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -411,7 +411,7 @@ export default function BannerModal({
                 {/* Drag & Drop Upload + Proper 3:1 preview */}
                 <div
                   className={[
-                    "mt-4 overflow-hidden rounded-2xl border transition",
+                    "mt-4 overflow-hidden rounded-[4px] border transition",
                     dragOver
                       ? "border-brand-500"
                       : "border-gray-200 dark:border-gray-800",
@@ -459,7 +459,7 @@ export default function BannerModal({
                           className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-500 dark:text-gray-400"
                           onClick={pickImage}
                         >
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-300 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-300 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
                             <UploadCloud size={20} />
                           </div>
                           <div className="text-center">
@@ -528,7 +528,7 @@ export default function BannerModal({
               </div>
 
               {/* small pro panel */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                   Best practice
                 </h4>

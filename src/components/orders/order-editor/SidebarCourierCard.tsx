@@ -25,7 +25,7 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
   onDownloadInvoice,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
       <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
         Currier:
       </div>

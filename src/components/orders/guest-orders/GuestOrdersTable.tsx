@@ -43,7 +43,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
   };
 
   return (
-    <div className="w-full max-w-full min-w-0 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+    <div className="w-full max-w-full min-w-0 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
       {/* ✅ Mobile / Small screens: Card list */}
       <div className="block md:hidden">
         {orders.length === 0 ? (
@@ -58,7 +58,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
               return (
                 <div
                   key={o.id}
-                  className="rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
                 >
                   {/* Top row */}
                   <div className="flex items-start justify-between gap-3">
@@ -87,7 +87,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                   {/* Details */}
                   <div className="mt-4 space-y-3">
                     {/* Email */}
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                       <div className="flex items-center gap-2 min-w-0">
                         <Mail className="h-4 w-4 text-gray-400 shrink-0" />
                         <span className="truncate text-sm text-gray-700 dark:text-gray-200">
@@ -106,7 +106,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                     </div>
 
                     {/* Phone */}
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                       <div className="flex items-center gap-2 min-w-0">
                         <Phone className="h-4 w-4 text-gray-400 shrink-0" />
                         <span className="text-sm text-gray-700 dark:text-gray-200">{o.phone}</span>
@@ -124,7 +124,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
 
                     {/* Date + Time + Total */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+                      <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <CalendarDays className="h-4 w-4" />
                           Date
@@ -134,7 +134,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+                      <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <Clock className="h-4 w-4" />
                           Time
@@ -144,7 +144,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                         </div>
                       </div>
 
-                      <div className="col-span-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+                      <div className="col-span-2 rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                         <div className="text-xs text-gray-500 dark:text-gray-400">Cart Total</div>
                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
                           {o.cartTotal}
@@ -153,7 +153,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                     </div>
 
                     {/* Tour preference */}
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <MapPin className="h-4 w-4" />
                         Tour Preference

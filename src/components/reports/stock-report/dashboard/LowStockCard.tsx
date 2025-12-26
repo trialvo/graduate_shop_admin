@@ -10,7 +10,7 @@ const LowStockCard: React.FC<Props> = ({ items }) => {
   return (
     <div
       className={cn(
-        "h-full rounded-2xl border border-gray-200 dark:border-gray-800",
+        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -34,7 +34,7 @@ const LowStockCard: React.FC<Props> = ({ items }) => {
         {items.map((p) => {
           const ratio = Math.max(0, Math.min(100, Math.round((p.stockQty / Math.max(1, p.reorderLevel)) * 100)));
           return (
-            <div key={p.id} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-3">
+            <div key={p.id} className="rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">

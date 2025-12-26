@@ -212,7 +212,7 @@ export default function CreateCustomerPage() {
         {/* LEFT: Form */}
         <div className="lg:col-span-8 space-y-6">
           {/* Profile */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Profile
@@ -330,7 +330,7 @@ export default function CreateCustomerPage() {
           </div>
 
           {/* Classification */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Classification
@@ -395,7 +395,7 @@ export default function CreateCustomerPage() {
           </div>
 
           {/* Orders & Location */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Orders & Location
@@ -526,13 +526,13 @@ export default function CreateCustomerPage() {
           </div>
 
           {submitState === "success" ? (
-            <div className="rounded-2xl border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
+            <div className="rounded-[4px] border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
               Customer created successfully (demo).
             </div>
           ) : null}
 
           {submitState === "error" ? (
-            <div className="rounded-2xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+            <div className="rounded-[4px] border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
               Failed to create customer. Try again.
             </div>
           ) : null}
@@ -541,7 +541,7 @@ export default function CreateCustomerPage() {
         {/* RIGHT: Preview + Security */}
         <div className="lg:col-span-4 space-y-6">
           {/* Live Preview */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Live Preview
@@ -553,7 +553,7 @@ export default function CreateCustomerPage() {
 
             <div className="p-5">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[4px] bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                   {avatarLetter}
                 </div>
 
@@ -584,13 +584,13 @@ export default function CreateCustomerPage() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Total Orders</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                     {form.totalOrders}
                   </p>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/40">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Accepted</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                     {form.acceptedOrders}
@@ -603,7 +603,7 @@ export default function CreateCustomerPage() {
           {/* Security / IP Controls */}
           <div
             className={[
-              "overflow-hidden rounded-2xl border",
+              "overflow-hidden rounded-[4px] border",
               blockedTone
                 ? "border-error-200 bg-error-50 dark:border-error-900/40 dark:bg-error-500/10"
                 : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",
@@ -650,7 +650,7 @@ export default function CreateCustomerPage() {
               <div className="flex items-start gap-3">
                 <div
                   className={[
-                    "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border",
+                    "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border",
                     blockedTone
                       ? "border-error-200 bg-white text-error-600 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300"
                       : "border-success-200 bg-white text-success-600 dark:border-success-900/40 dark:bg-gray-900 dark:text-success-300",
@@ -701,7 +701,7 @@ export default function CreateCustomerPage() {
           </div>
 
           {/* Tips */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Tips
             </p>

@@ -52,7 +52,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
   onSubmit,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
           Product Calculations:
@@ -123,7 +123,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
 
                   <td className="py-4 pr-3 align-top">
                     <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-800">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-800">
                         {p.imageUrl ? (
                           <img
                             src={p.imageUrl}
@@ -230,7 +230,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                     <button
                       type="button"
                       onClick={() => onDeleteLine(p.id)}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-red-600 transition hover:bg-red-50 dark:border-gray-800 dark:text-red-400 dark:hover:bg-red-500/10"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 text-red-600 transition hover:bg-red-50 dark:border-gray-800 dark:text-red-400 dark:hover:bg-red-500/10"
                       aria-label="Delete line item"
                       title="Delete"
                     >
@@ -319,7 +319,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="text-gray-500 dark:text-gray-400">Items</div>
             <div className="text-right font-semibold text-gray-900 dark:text-white">

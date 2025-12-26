@@ -74,9 +74,9 @@ export default function ImageMultiUploader({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-dashed border-gray-300 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
         <div className="flex flex-col items-center justify-center gap-3 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-[4px] bg-brand-500/10 text-brand-600 dark:text-brand-400">
             <ImagePlus size={22} />
           </div>
           <div>
@@ -110,7 +110,7 @@ export default function ImageMultiUploader({
             {previews.map((img) => (
               <div
                 key={img.id}
-                className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
+                className="group relative overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
               >
                 <img src={img.url} alt={img.file.name} className="h-28 w-full object-cover" />
                 <button

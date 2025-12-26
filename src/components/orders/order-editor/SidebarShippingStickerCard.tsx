@@ -9,7 +9,7 @@ const SidebarShippingStickerCard: React.FC<SidebarShippingStickerCardProps> = ({
   onOpenGenerator,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
       <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
         Generate Shipping Sticker
       </div>
@@ -26,7 +26,7 @@ const SidebarShippingStickerCard: React.FC<SidebarShippingStickerCardProps> = ({
             Sticker Generator
           </Button>
 
-          <div className="ml-auto rounded-xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+          <div className="ml-auto rounded-[4px] border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center gap-2">
               <div className="grid h-[72px] w-[72px] grid-cols-9 gap-[2px] rounded-lg bg-gray-900/5 p-2 dark:bg-white/5">
                 {Array.from({ length: 81 }).map((_, i) => (

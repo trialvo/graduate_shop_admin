@@ -304,7 +304,7 @@ export default function ContactPageSettingsPage() {
         {/* LEFT: SETTINGS */}
         <div className="space-y-6">
           {/* Page Intro */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Page Intro
             </h2>
@@ -335,14 +335,14 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Contact Information */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Contact Information
             </h2>
 
             <div className="mt-5 space-y-5">
               {/* Address */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-brand-500" />
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -391,7 +391,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Phone */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Phone size={16} className="text-brand-500" />
@@ -431,7 +431,7 @@ export default function ContactPageSettingsPage() {
                       />
                       <button
                         type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
                         onClick={() => removePhone(idx)}
                         aria-label="Remove phone"
                       >
@@ -454,7 +454,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Email */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Mail size={16} className="text-brand-500" />
@@ -492,7 +492,7 @@ export default function ContactPageSettingsPage() {
                       />
                       <button
                         type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
                         onClick={() => removeEmail(idx)}
                         aria-label="Remove email"
                       >
@@ -504,7 +504,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Business hours */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -541,7 +541,7 @@ export default function ContactPageSettingsPage() {
                   {settings.contactInfo.businessRows.map((r) => (
                     <div
                       key={r.id}
-                      className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                      className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
@@ -613,7 +613,7 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Social Links */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Follow Us
             </h2>
@@ -625,11 +625,11 @@ export default function ContactPageSettingsPage() {
               {settings.socialLinks.map((s) => (
                 <div
                   key={s.key}
-                  className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200">
                         {SOCIAL_ICONS[s.key]}
                       </div>
                       <div>
@@ -697,7 +697,7 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Map */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Map
             </h2>
@@ -753,7 +753,7 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Contact Form */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Contact Form
             </h2>
@@ -785,7 +785,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Fields */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   Fields
                 </p>
@@ -796,7 +796,7 @@ export default function ContactPageSettingsPage() {
                     return (
                       <div
                         key={key}
-                        className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                        className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div>
@@ -871,7 +871,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Recipient Emails */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -900,7 +900,7 @@ export default function ContactPageSettingsPage() {
                       />
                       <button
                         type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
                         onClick={() => removeRecipient(idx)}
                         aria-label="Remove recipient"
                       >
@@ -916,7 +916,7 @@ export default function ContactPageSettingsPage() {
 
         {/* RIGHT: LIVE PREVIEW */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -936,7 +936,7 @@ export default function ContactPageSettingsPage() {
               </Button>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <div>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {settings.contactInfo.heading}
@@ -948,7 +948,7 @@ export default function ContactPageSettingsPage() {
 
               <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Contact form preview */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                   <p className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
                     <Mail size={18} className="text-brand-500" /> {settings.contactForm.title}
                   </p>
@@ -1007,13 +1007,13 @@ export default function ContactPageSettingsPage() {
                 </div>
 
                 {/* Contact info preview */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                   <p className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
                     <MapPin size={18} className="text-brand-500" /> Contact Information
                   </p>
 
                   <div className="mt-5 space-y-4">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.addressTitle}
                       </p>
@@ -1027,7 +1027,7 @@ export default function ContactPageSettingsPage() {
                       ) : null}
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.callTitle}
                       </p>
@@ -1045,7 +1045,7 @@ export default function ContactPageSettingsPage() {
                       ) : null}
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.mailTitle}
                       </p>
@@ -1058,7 +1058,7 @@ export default function ContactPageSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.businessTitle}
                       </p>
@@ -1088,7 +1088,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Social Preview */}
-              <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
                   Follow Us
                 </p>
@@ -1100,7 +1100,7 @@ export default function ContactPageSettingsPage() {
                         href={s.url || "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                        className="inline-flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                       >
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                           {SOCIAL_ICONS[s.key]}
@@ -1117,7 +1117,7 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Map Preview */}
-              <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-base font-semibold text-gray-900 dark:text-white">
@@ -1141,7 +1141,7 @@ export default function ContactPageSettingsPage() {
                   </Button>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
+                <div className="mt-4 overflow-hidden rounded-[4px] border border-gray-200 dark:border-gray-800">
                   <iframe
                     title="map"
                     src={settings.contactInfo.mapEmbedUrl}
@@ -1155,7 +1155,7 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Helper */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm text-gray-600 dark:text-gray-300">
               ✅ Backend ready: Save the settings in DB and load them in your storefront Contact page.
             </p>

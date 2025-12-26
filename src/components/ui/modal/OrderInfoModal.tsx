@@ -155,7 +155,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
               </p>
 
               {/* QR (themed card) */}
-              <div className="mt-4 inline-flex rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
+              <div className="mt-4 inline-flex rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
                 <div className="h-[120px] w-[120px] bg-white text-gray-900 flex items-center justify-center rounded-lg ring-1 ring-gray-200 dark:bg-gray-950 dark:text-white dark:ring-gray-800">
                   <div className="text-center">
                     <div className="text-xs font-semibold text-brand-500">QR</div>
@@ -169,7 +169,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
           </div>
 
           {/* Product Details Table (like your image) */}
-          <div className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+          <div className="mt-6 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
             <div className="overflow-x-auto">
               <table className="min-w-[980px] w-full border-collapse">
                 <thead>

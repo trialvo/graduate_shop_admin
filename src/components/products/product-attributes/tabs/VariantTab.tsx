@@ -247,7 +247,7 @@ export default function VariantTab({
   return (
     <div className="space-y-6">
       {/* Product Selector */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           <div className="md:col-span-2 space-y-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -305,14 +305,14 @@ export default function VariantTab({
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+          <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
             {error}
           </div>
         ) : null}
       </div>
 
       {/* Color + Attributes selections */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
         {/* Colors */}
         <div>
           <div className="flex items-center justify-between gap-3">
@@ -335,7 +335,7 @@ export default function VariantTab({
                     key={c.id}
                     onClick={() => toggleColor(c.id)}
                     className={[
-                      "flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
+                      "flex items-center gap-2 rounded-[4px] border px-3 py-2 text-left text-sm font-semibold transition",
                       active
                         ? "border-brand-500 bg-brand-500/10 text-gray-900 dark:text-white"
                         : "border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03] text-gray-700 dark:text-gray-300",
@@ -371,7 +371,7 @@ export default function VariantTab({
                   <div
                     key={a.id}
                     className={[
-                      "rounded-2xl border p-4",
+                      "rounded-[4px] border p-4",
                       missing
                         ? "border-error-200 bg-error-50 dark:border-error-900/40 dark:bg-error-500/10"
                         : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",
@@ -454,7 +454,7 @@ export default function VariantTab({
       </div>
 
       {/* Variants List */}
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">

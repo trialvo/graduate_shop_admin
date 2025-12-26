@@ -18,7 +18,7 @@ export default function ProfileOverviewCard({ user, onLogout }: Props) {
   const name = useMemo(() => `${user.firstName} ${user.lastName}`, [user]);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="flex flex-col items-center text-center">
         {/* Avatar */}
         <div className="relative">

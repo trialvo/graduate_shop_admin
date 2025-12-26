@@ -41,9 +41,9 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+        <div className="rounded-[4px] border border-dashed border-gray-300 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex flex-col items-center justify-center gap-3 text-center">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-[4px] bg-brand-500/10 text-brand-600 dark:text-brand-400">
               <UploadCloud size={22} />
             </div>
             <div>
@@ -71,7 +71,7 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">Or use a video URL</p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Example: YouTube / CDN / MP4 URL
@@ -99,7 +99,7 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
       </div>
 
       {value.kind !== "none" ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Preview</p>
             <button
@@ -112,7 +112,7 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
             </button>
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
+          <div className="mt-4 overflow-hidden rounded-[4px] border border-gray-200 dark:border-gray-800">
             {value.kind === "file" ? (
               <video controls className="w-full" src={value.url} />
             ) : (

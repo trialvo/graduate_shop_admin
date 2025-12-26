@@ -80,7 +80,7 @@ export default function ProfileDetailsForm({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
         My Profile Details
       </h3>

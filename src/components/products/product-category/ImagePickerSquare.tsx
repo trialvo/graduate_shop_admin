@@ -29,7 +29,7 @@ export default function ImagePickerSquare({ label, hint, value, onChange }: Prop
 
       <div className="flex justify-center md:justify-end">
         <div
-          className="relative h-32 w-32 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 overflow-hidden"
+          className="relative h-32 w-32 rounded-[4px] border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 overflow-hidden"
           role="button"
           tabIndex={0}
           onClick={open}

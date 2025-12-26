@@ -13,7 +13,7 @@ const QuickAccessCard = ({ name, icon, color, path }: Props) => {
   return (
     <button
       onClick={() => navigate(path)}
-      className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-white px-4 py-6 shadow-theme-xs transition hover:shadow-theme-md dark:bg-gray-800"
+      className="flex flex-col items-center justify-center gap-3 rounded-[4px] bg-white px-4 py-6 shadow-theme-xs transition hover:shadow-theme-md dark:bg-gray-800"
     >
       <div
         className={`flex h-12 w-12 items-center justify-center rounded-full text-white ${color}`}

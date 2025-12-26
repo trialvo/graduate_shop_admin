@@ -70,7 +70,7 @@ const ProductSelectionPanel = ({ products, categories, onAddToCart }: Props) => 
   };
 
   return (
-    <div className="h-full rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 flex flex-col">
+    <div className="h-full rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 flex flex-col">
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
           Product Section

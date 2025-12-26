@@ -18,7 +18,7 @@ const BestProductsCard: React.FC<Props> = ({ items }) => {
           {items.map((p) => (
             <div
               key={p.id}
-              className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-3"
+              className="rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-3"
             >
               <div className="h-[150px] w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-hidden flex items-center justify-center">
                 {p.imageUrl ? (
