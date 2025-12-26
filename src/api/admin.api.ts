@@ -27,7 +27,11 @@ export type CreateAdminBody = {
   last_name?: string | null;
   phone?: string | null;
   address?: string | null;
-  is_active?: boolean;
+  is_active?: boolean; // default true
+};
+
+export type CreateAdminPayload = CreateAdminBody & {
+  profile?: File | null; // ✅ file key must be "profile"
 };
 
 export type CreateAdminResponse = {
@@ -38,6 +42,8 @@ export type CreateAdminResponse = {
   last_name: string | null;
   phone: string | null;
   address: string | null;
+  is_active: boolean;
+  profile_img_path: string | null;
 };
 
 export type UpdateAdminBody = {
@@ -65,16 +71,53 @@ export const getAdmins = async (params: {
   limit?: number;
   offset?: number;
 }) => {
-  const { data } = await api.get<AdminListResponse>("/admin/getAdmins", { params });
+  const { data } = await api.get<AdminListResponse>("/admin/getAdmins", {
+    params,
+  });
   return data;
 };
 
-export const createAdmin = async (body: CreateAdminBody) => {
-  const { data } = await api.post<CreateAdminResponse>("/admin/createAdmin", body);
+function appendIfPresent(fd: FormData, key: string, v: unknown) {
+  if (v === undefined || v === null) return;
+  if (typeof v === "string" && v.trim() === "") return;
+  fd.append(key, String(v));
+}
+
+export const createAdmin = async (payload: CreateAdminPayload) => {
+  const fd = new FormData();
+
+  // file key must be "profile"
+  if (payload.profile) {
+    fd.append("profile", payload.profile);
+  }
+
+  // required
+  fd.append("email", payload.email);
+  fd.append("password", payload.password);
+  fd.append("role_id", String(payload.role_id));
+
+  // optional
+  appendIfPresent(fd, "first_name", payload.first_name);
+  appendIfPresent(fd, "last_name", payload.last_name);
+  appendIfPresent(fd, "phone", payload.phone);
+  appendIfPresent(fd, "address", payload.address);
+
+  // boolean -> form-data text (backend usually accepts "true"/"false")
+  if (payload.is_active !== undefined) {
+    fd.append("is_active", payload.is_active ? "true" : "false");
+  }
+
+  const { data } = await api.post<CreateAdminResponse>(
+    "/admin/createAdmin",
+    fd
+  );
   return data;
 };
 
 export const updateAdmin = async (id: number, body: UpdateAdminBody) => {
-  const { data } = await api.put<UpdateAdminResponse>(`/admin/update/${id}`, body);
+  const { data } = await api.put<UpdateAdminResponse>(
+    `/admin/update/${id}`,
+    body
+  );
   return data;
 };

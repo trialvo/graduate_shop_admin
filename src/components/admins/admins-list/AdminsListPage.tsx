@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import EditAdminModal from "./EditAdminModal";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import { AdminRole, AdminRow, ROLE_ID_BY_LABEL } from "../types";
+import { toPublicUrl } from "@/config/env";
 import { useAdmins, useUpdateAdmin } from "@/hooks/useAdmins";
 import type { AdminListResponse } from "@/api/admin.api";
 
@@ -94,7 +95,7 @@ export default function AdminsListPage() {
           phone: admin.phone ?? "-",
           status: admin.is_active ? "ACTIVE" : "INACTIVE",
           note: "",
-          avatarUrl: admin.profile_img_path ?? undefined,
+          avatarUrl: toPublicUrl(admin.profile_img_path) ?? undefined,
           passwordMasked: "************",
         };
       })
