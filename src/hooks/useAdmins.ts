@@ -4,11 +4,13 @@ import {
   createAdmin,
   getAdminById,
   getAdmins,
+  uploadProfileImage,
   updateAdmin,
   type CreateAdminPayload,
   type CreateAdminResponse,
   type AdminByIdResponse,
   type AdminListResponse,
+  type UploadProfileImageResponse,
   type UpdateAdminBody,
   type UpdateAdminResponse,
 } from "@/api/admin.api";
@@ -62,6 +64,19 @@ export const useUpdateAdmin = (
 ) => {
   return useMutation<UpdateAdminResponse, unknown, { id: number; body: UpdateAdminBody }>({
     mutationFn: ({ id, body }) => updateAdmin(id, body),
+    ...options,
+  });
+};
+
+export const useUploadAdminProfile = (
+  options?: UseMutationOptions<
+    UploadProfileImageResponse,
+    unknown,
+    { id: number; file: File }
+  >,
+) => {
+  return useMutation<UploadProfileImageResponse, unknown, { id: number; file: File }>({
+    mutationFn: ({ id, file }) => uploadProfileImage(id, file),
     ...options,
   });
 };

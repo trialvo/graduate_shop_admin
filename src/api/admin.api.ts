@@ -78,6 +78,11 @@ export type UpdateAdminResponse = {
   changes?: Record<string, unknown>;
 };
 
+export type UploadProfileImageResponse = {
+  admin_id: number;
+  profile_img_path: string;
+};
+
 export const getAdmins = async (params: {
   role?: string;
   email?: string;
@@ -137,6 +142,17 @@ export const updateAdmin = async (id: number, body: UpdateAdminBody) => {
   const { data } = await api.put<UpdateAdminResponse>(
     `/admin/update/${id}`,
     body
+  );
+  return data;
+};
+
+export const uploadProfileImage = async (id: number, file: File) => {
+  const fd = new FormData();
+  fd.append("profile", file);
+  const { data } = await api.post<UploadProfileImageResponse>(
+    `/admin/uploadProfileImage/${id}`,
+    fd,
+    { headers: { "Content-Type": "multipart/form-data" } }
   );
   return data;
 };

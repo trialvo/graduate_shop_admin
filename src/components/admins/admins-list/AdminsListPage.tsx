@@ -14,7 +14,12 @@ import EditAdminModal from "./EditAdminModal";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import { AdminRole, AdminListRow, ROLE_ID_BY_LABEL } from "../types";
 import { toPublicUrl } from "@/config/env";
-import { useAdminById, useAdmins, useUpdateAdmin } from "@/hooks/useAdmins";
+import {
+  useAdminById,
+  useAdmins,
+  useUpdateAdmin,
+  useUploadAdminProfile,
+} from "@/hooks/useAdmins";
 import type { AdminByIdResponse, AdminListResponse } from "@/api/admin.api";
 
 function initials(name: string): string {
@@ -78,6 +83,7 @@ export default function AdminsListPage() {
   const { data: editAdmin, isError: isEditError } = useAdminById(editId);
 
   const updateMutation = useUpdateAdmin();
+  const uploadProfileMutation = useUploadAdminProfile();
 
   const toListRow = (
     admin: AdminListResponse["data"][number] | AdminByIdResponse
@@ -164,17 +170,13 @@ export default function AdminsListPage() {
     setEditOpen(true);
   };
 
-  const saveEdit = async (
-    next: AdminListRow,
-    newPassword?: string,
-    newAvatar?: File | null
-  ) => {
+  const handleUpdateDetails = async (next: AdminListRow) => {
     try {
       const nameParts = next.name.trim().split(/\s+/).filter(Boolean);
       const firstName = nameParts[0] ?? "";
       const lastName = nameParts.slice(1).join(" ") || null;
 
-      await updateMutation.mutateAsync({
+      const res = await updateMutation.mutateAsync({
         id: next.id,
         body: {
           email: next.email.trim(),
@@ -183,31 +185,95 @@ export default function AdminsListPage() {
           phone: next.phone.trim() || null,
           address: next.address.trim() || null,
           role_id: ROLE_ID_BY_LABEL[next.role],
-          is_active: next.status === "ACTIVE",
-          password: newPassword || undefined,
         },
       });
+      if (res?.success === false) {
+        throw new Error("Update failed");
+      }
 
       setRows((prev) =>
-        prev.map((r) => {
-          if (r.id !== next.id) return r;
-          return {
-            ...next,
-            passwordMasked: newPassword ? "************" : r.passwordMasked,
-            avatarUrl: next.avatarUrl || r.avatarUrl,
-          };
-        })
+        prev.map((r) =>
+          r.id === next.id
+            ? {
+                ...r,
+                name: next.name.trim(),
+                email: next.email.trim(),
+                phone: next.phone.trim(),
+                address: next.address.trim(),
+                role: next.role,
+              }
+            : r
+        )
       );
 
-      toast.success("Admin updated successfully");
-      setEditOpen(false);
-      setEditTarget(null);
-      setEditId(null);
+      toast.success("Admin details updated");
     } catch (err: any) {
       const msg = err?.response?.data?.error || "Failed to update admin";
       toast.error(msg);
-    } finally {
-      void newAvatar;
+      throw err;
+    }
+  };
+
+  const handleUpdateStatus = async (id: number, isActive: boolean) => {
+    try {
+      const res = await updateMutation.mutateAsync({
+        id,
+        body: { is_active: isActive },
+      });
+      if (res?.success === false) {
+        throw new Error("Update failed");
+      }
+
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, status: isActive ? "ACTIVE" : "INACTIVE" } : r
+        )
+      );
+
+      toast.success("Admin status updated");
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to update status";
+      toast.error(msg);
+      throw err;
+    }
+  };
+
+  const handleUpdatePassword = async (id: number, password: string) => {
+    try {
+      const res = await updateMutation.mutateAsync({
+        id,
+        body: { password },
+      });
+      if (res?.success === false) {
+        throw new Error("Update failed");
+      }
+
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, passwordMasked: "************" } : r))
+      );
+
+      toast.success("Password updated");
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to update password";
+      toast.error(msg);
+      throw err;
+    }
+  };
+
+  const handleUpdateAvatar = async (id: number, file: File) => {
+    try {
+      const res = await uploadProfileMutation.mutateAsync({ id, file });
+      const avatarUrl = toPublicUrl(res.profile_img_path) ?? undefined;
+
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, avatarUrl } : r))
+      );
+
+      toast.success("Profile image updated");
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to update profile image";
+      toast.error(msg);
+      throw err;
     }
   };
 
@@ -455,7 +521,10 @@ export default function AdminsListPage() {
           setEditTarget(null);
           setEditId(null);
         }}
-        onSave={saveEdit}
+        onUpdateDetails={handleUpdateDetails}
+        onUpdateStatus={handleUpdateStatus}
+        onUpdatePassword={handleUpdatePassword}
+        onUpdateAvatar={handleUpdateAvatar}
       />
     </div>
   );

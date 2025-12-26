@@ -57,15 +57,27 @@ export default function EditAdminModal({
   admin,
   loading = false,
   onClose,
-  onSave,
+  onUpdateDetails,
+  onUpdateStatus,
+  onUpdatePassword,
+  onUpdateAvatar,
 }: {
   open: boolean;
   admin: AdminListRow | null;
   loading?: boolean;
   onClose: () => void;
-  onSave: (next: AdminListRow, newPassword?: string, newAvatar?: File | null) => void;
+  onUpdateDetails: (next: AdminListRow) => Promise<void>;
+  onUpdateStatus: (id: number, isActive: boolean) => Promise<void>;
+  onUpdatePassword: (id: number, password: string) => Promise<void>;
+  onUpdateAvatar: (id: number, file: File) => Promise<void>;
 }) {
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [saving, setSaving] = useState({
+    details: false,
+    status: false,
+    password: false,
+    avatar: false,
+  });
 
   useEffect(() => {
     if (!admin) {
@@ -117,9 +129,9 @@ export default function EditAdminModal({
     return { name: nameErr, email: emailErr, phone: phoneErr, pass: passErr };
   }, [draft]);
 
-  const canSave = useMemo(() => {
+  const canUpdateDetails = useMemo(() => {
     if (!draft) return false;
-    return !errors.name && !errors.email && !errors.phone && !errors.pass;
+    return !errors.name && !errors.email && !errors.phone;
   }, [draft, errors]);
 
   if (!draft) {
@@ -133,6 +145,73 @@ export default function EditAdminModal({
   }
 
   const active = draft.status === "ACTIVE";
+  const canUpdatePassword = draft.changePassword && !errors.pass && draft.newPassword;
+
+  const handleUpdateDetails = async () => {
+    if (!draft || !canUpdateDetails) return;
+    setSaving((prev) => ({ ...prev, details: true }));
+    try {
+      await onUpdateDetails({
+        ...draft,
+        name: draft.name.trim(),
+        email: draft.email.trim(),
+        phone: draft.phone.trim(),
+        address: draft.address.trim(),
+        avatarUrl: draft.avatarPreviewUrl || undefined,
+      });
+    } catch {
+      // errors are surfaced via parent toast handlers
+    } finally {
+      setSaving((prev) => ({ ...prev, details: false }));
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!draft) return;
+    setSaving((prev) => ({ ...prev, status: true }));
+    try {
+      await onUpdateStatus(draft.id, draft.status === "ACTIVE");
+    } catch {
+      // errors are surfaced via parent toast handlers
+    } finally {
+      setSaving((prev) => ({ ...prev, status: false }));
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!draft || !canUpdatePassword) return;
+    setSaving((prev) => ({ ...prev, password: true }));
+    try {
+      await onUpdatePassword(draft.id, draft.newPassword);
+      setDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              changePassword: false,
+              newPassword: "",
+              confirmNewPassword: "",
+            }
+          : prev
+      );
+    } catch {
+      // errors are surfaced via parent toast handlers
+    } finally {
+      setSaving((prev) => ({ ...prev, password: false }));
+    }
+  };
+
+  const handleUpdateAvatar = async () => {
+    if (!draft?.avatarFile) return;
+    setSaving((prev) => ({ ...prev, avatar: true }));
+    try {
+      await onUpdateAvatar(draft.id, draft.avatarFile);
+      setDraft((prev) => (prev ? { ...prev, avatarFile: null } : prev));
+    } catch {
+      // errors are surfaced via parent toast handlers
+    } finally {
+      setSaving((prev) => ({ ...prev, avatar: false }));
+    }
+  };
 
   return (
     <Modal
@@ -141,37 +220,7 @@ export default function EditAdminModal({
       description="Update admin profile, role, status and password."
       onClose={onClose}
       size="xl"
-      contentClassName="rounded-[6px]" 
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() =>
-              onSave(
-                {
-                  id: draft.id,
-                  name: draft.name.trim(),
-                  email: draft.email.trim(),
-                  role: draft.role,
-                  joinDate: draft.joinDate,
-                  phone: draft.phone.trim(),
-                  status: draft.status,
-                  address: draft.address.trim(),
-                  avatarUrl: draft.avatarPreviewUrl || undefined,
-                  passwordMasked: draft.passwordMasked,
-                },
-                draft.changePassword ? draft.newPassword : undefined,
-                draft.avatarFile
-              )
-            }
-            disabled={!canSave}
-          >
-            Update Admin
-          </Button>
-        </>
-      }
+      contentClassName="rounded-[6px]"
     >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left */}
@@ -249,6 +298,13 @@ export default function EditAdminModal({
                         }
                       >
                         Remove
+                      </Button>
+
+                      <Button
+                        onClick={handleUpdateAvatar}
+                        disabled={!draft.avatarFile || saving.avatar}
+                      >
+                        {saving.avatar ? "Updating..." : "Update Image"}
                       </Button>
 
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -347,6 +403,15 @@ export default function EditAdminModal({
                   />
                 </div>
               </div>
+
+              <div className="mt-5 flex justify-end">
+                <Button
+                  onClick={handleUpdateDetails}
+                  disabled={!canUpdateDetails || saving.details}
+                >
+                  {saving.details ? "Updating..." : "Update Details"}
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -410,6 +475,12 @@ export default function EditAdminModal({
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-5 flex justify-end">
+                <Button onClick={handleUpdateStatus} disabled={saving.status}>
+                  {saving.status ? "Updating..." : "Update Status"}
+                </Button>
               </div>
             </div>
           </div>
@@ -486,6 +557,15 @@ export default function EditAdminModal({
                   ) : null}
                 </div>
               )}
+
+              <div className="mt-5 flex justify-end">
+                <Button
+                  onClick={handleUpdatePassword}
+                  disabled={!canUpdatePassword || saving.password}
+                >
+                  {saving.password ? "Updating..." : "Update Password"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

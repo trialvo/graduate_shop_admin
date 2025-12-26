@@ -67,7 +67,7 @@ const INITIAL_FORM: CreateAdminForm = {
   role: "Admin",
   joinDate: "",
   phone: "",
-  address: "", // ✅ new
+  address: "",
   status: "ACTIVE",
   note: "",
   password: "",
@@ -553,7 +553,7 @@ export default function CreateAdminPage() {
                         {isActive ? "ACTIVE" : "INACTIVE"}
                       </Badge>
                       <Badge variant="solid" color="primary" size="sm">
-                        {form.role || "—"}
+                        {form.role || "-"}
                       </Badge>
                     </div>
                   </div>
@@ -574,7 +574,7 @@ export default function CreateAdminPage() {
 
           {submitState === "success" ? (
             <div className="rounded-[4px] border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
-              Admin created successfully (demo).
+              Admin created successfully.
             </div>
           ) : null}
 
@@ -609,19 +609,19 @@ export default function CreateAdminPage() {
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                    {form.name || "—"}
+                    {form.name || "-"}
                   </p>
                   <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <Mail size={14} />
-                    <span className="truncate">{form.email || "—"}</span>
+                    <span className="truncate">{form.email || "-"}</span>
                   </p>
                   <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <Phone size={14} />
-                    <span className="truncate">{form.phone || "—"}</span>
+                    <span className="truncate">{form.phone || "-"}</span>
                   </p>
                   <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <MapPin size={14} />
-                    <span className="truncate">{form.address || "—"}</span>
+                    <span className="truncate">{form.address || "-"}</span>
                   </p>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -629,7 +629,7 @@ export default function CreateAdminPage() {
                       {isActive ? "ACTIVE" : "INACTIVE"}
                     </Badge>
                     <Badge variant="solid" color="primary" size="sm">
-                      {form.role || "—"}
+                      {form.role || "-"}
                     </Badge>
                   </div>
                 </div>
@@ -637,7 +637,7 @@ export default function CreateAdminPage() {
 
               <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
                 <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
-                <p className="line-clamp-3">{form.note || "—"}</p>
+                <p className="line-clamp-3">{form.note || "-"}</p>
               </div>
             </div>
           </div>
@@ -645,9 +645,9 @@ export default function CreateAdminPage() {
           <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
-              <li>• Assign roles carefully to avoid permission risks.</li>
-              <li>• Use strong passwords (6+ chars recommended).</li>
-              <li>• Keep INACTIVE for suspended admins.</li>
+              <li>- Assign roles carefully to avoid permission risks.</li>
+              <li>- Use strong passwords (6+ chars recommended).</li>
+              <li>- Keep INACTIVE for suspended admins.</li>
             </ul>
           </div>
         </div>
