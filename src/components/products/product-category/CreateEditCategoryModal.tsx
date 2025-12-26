@@ -81,14 +81,14 @@ export default function CreateEditCategoryModal({
   const mainSelectOptions: Option[] = useMemo(() => {
     return mainOptions.map((m) => ({
       value: String(m.id),
-      label: `#${m.id} — ${m.name}`,
+      label: `#${m.id} - ${m.name}`,
     }));
   }, [mainOptions]);
 
   const subSelectOptions: Option[] = useMemo(() => {
     return subOptions.map((s) => ({
       value: String(s.id),
-      label: `#${s.id} — ${s.name}`,
+      label: `#${s.id} - ${s.name}`,
     }));
   }, [subOptions]);
 
@@ -202,7 +202,7 @@ export default function CreateEditCategoryModal({
         <div className="p-5">
           {mode === "edit" && singleQ.isFetching ? (
             <div className="mb-4 rounded-[4px] border border-brand-200 bg-brand-50 p-3 text-sm text-brand-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-200">
-              Loading category details…
+              Loading category details...
             </div>
           ) : null}
 
@@ -248,8 +248,10 @@ export default function CreateEditCategoryModal({
 
                 {entity === "sub" ? (
                   <div className="md:col-span-12">
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Main category
+                    </label>
                     <Select
-                      label="Main category"
                       value={String(values.main_category_id ?? "")}
                       options={mainSelectOptions}
                       onChange={(v) => setValues((p: any) => ({ ...p, main_category_id: Number(v) }))}
@@ -259,8 +261,10 @@ export default function CreateEditCategoryModal({
 
                 {entity === "child" ? (
                   <div className="md:col-span-12">
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Sub category
+                    </label>
                     <Select
-                      label="Sub category"
                       value={String(values.sub_category_id ?? "")}
                       options={subSelectOptions}
                       onChange={(v) => setValues((p: any) => ({ ...p, sub_category_id: Number(v) }))}
@@ -289,8 +293,10 @@ export default function CreateEditCategoryModal({
                 </div>
 
                 <div className="md:col-span-4">
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Status
+                  </label>
                   <Select
-                    label="Status"
                     value={values.status ? "true" : "false"}
                     options={statusOptions}
                     onChange={(v) => setValues((p: any) => ({ ...p, status: v === "true" }))}
@@ -298,8 +304,10 @@ export default function CreateEditCategoryModal({
                 </div>
 
                 <div className="md:col-span-4">
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Featured
+                  </label>
                   <Select
-                    label="Featured"
                     value={values.featured ? "true" : "false"}
                     options={featuredOptions}
                     onChange={(v) => setValues((p: any) => ({ ...p, featured: v === "true" }))}

@@ -94,12 +94,12 @@ export default function CategoryFiltersBar({
 
   const mainSelectOptions: Option[] = [
     { label: loadingMainOptions ? "Loading..." : "All main categories", value: "all" },
-    ...mainOptions.map((m) => ({ label: `#${m.id} — ${m.name}`, value: String(m.id) })),
+    ...mainOptions.map((m) => ({ label: `#${m.id} - ${m.name}`, value: String(m.id) })),
   ];
 
   const subSelectOptions: Option[] = [
     { label: loadingSubOptions ? "Loading..." : "All sub categories", value: "all" },
-    ...subOptions.map((s) => ({ label: `#${s.id} — ${s.name}`, value: String(s.id) })),
+    ...subOptions.map((s) => ({ label: `#${s.id} - ${s.name}`, value: String(s.id) })),
   ];
 
   return (
@@ -125,8 +125,10 @@ export default function CategoryFiltersBar({
 
         {tab === "sub" ? (
           <div className="md:col-span-3">
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Main category
+            </label>
             <Select
-              label="Main category"
               value={mainCategoryId === "all" ? "all" : String(mainCategoryId)}
               options={mainSelectOptions}
               onChange={(v) => {
@@ -139,8 +141,10 @@ export default function CategoryFiltersBar({
 
         {tab === "child" ? (
           <div className="md:col-span-3">
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Sub category
+            </label>
             <Select
-              label="Sub category"
               value={subCategoryId === "all" ? "all" : String(subCategoryId)}
               options={subSelectOptions}
               onChange={(v) => {
@@ -152,8 +156,10 @@ export default function CategoryFiltersBar({
         ) : null}
 
         <div className="md:col-span-2">
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Status
+          </label>
           <Select
-            label="Status"
             value={status === "all" ? "all" : status ? "true" : "false"}
             options={statusSelectOptions}
             onChange={(v) => {
@@ -164,8 +170,10 @@ export default function CategoryFiltersBar({
         </div>
 
         <div className="md:col-span-2">
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Featured
+          </label>
           <Select
-            label="Featured"
             value={featured === "all" ? "all" : featured ? "true" : "false"}
             options={featuredSelectOptions}
             onChange={(v) => {
@@ -176,8 +184,10 @@ export default function CategoryFiltersBar({
         </div>
 
         <div className="md:col-span-1">
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Priority
+          </label>
           <Select
-            label="Priority"
             value={priority === "all" ? "all" : String(priority)}
             options={prioritySelectOptions}
             onChange={(v) => {
@@ -188,8 +198,10 @@ export default function CategoryFiltersBar({
         </div>
 
         <div className="md:col-span-2">
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Per page
+          </label>
           <Select
-            label="Per page"
             value={String(limit)}
             options={limitSelectOptions}
             onChange={(v) => {
@@ -202,8 +214,8 @@ export default function CategoryFiltersBar({
 
       <div className="mt-3 flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-300 md:flex-row md:items-center md:justify-between">
         <div>
-          Showing <span className="font-semibold text-gray-900 dark:text-white">{pageFrom}</span>–{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{pageTo}</span> of{" "}
+          Showing <span className="font-semibold text-gray-900 dark:text-white">{pageFrom}</span>{" "}
+          - <span className="font-semibold text-gray-900 dark:text-white">{pageTo}</span> of{" "}
           <span className="font-semibold text-gray-900 dark:text-white">{total}</span>
         </div>
 
