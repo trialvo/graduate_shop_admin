@@ -1,32 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Camera, KeyRound, Mail, Phone, ShieldCheck, User2 } from "lucide-react";
+import { Camera, KeyRound, Mail, Phone, User2, MapPin, Calendar } from "lucide-react";
 
 import Input from "@/components/form/input/InputField";
-import Select from "@/components/form/Select";
+import Select, { type Option } from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import Switch from "@/components/form/switch/Switch";
-import { AdminRole, AdminListRow, AdminStatus } from "../types";
+import { AdminRole, AdminListRow } from "../types";
 import Modal from "@/components/ui/modal/Modal";
 import Badge from "@/components/ui/badge/Badge";
+import ActiveInactiveSwitch from "@/components/ui/toggles/ActiveInactiveSwitch";
+import { useAdminRoles } from "@/hooks/useAdminRoles";
 
-type Option = { value: string; label: string };
+const ROLE_LABELS: Record<string, AdminRole> = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
+  ORDER_MANAGER: "Order Manager",
+  CATALOG_MANAGER: "Catalog Manager",
+  READ_ONLY_ADMIN: "Read Only Admin",
+};
 
-const ROLE_OPTIONS: Option[] = [
-  { value: "Super Admin", label: "Super Admin" },
-  { value: "Admin", label: "Admin" },
-  { value: "Manager", label: "Manager" },
-  { value: "Sales Executive", label: "Sales Executive" },
-  { value: "Employee Currier", label: "Employee Currier" },
-  { value: "Order Manager", label: "Order Manager" },
-  { value: "Product Manager", label: "Product Manager" },
-  { value: "Catalog Manager", label: "Catalog Manager" },
-  { value: "Read Only Admin", label: "Read Only Admin" },
-];
-
-const STATUS_OPTIONS: Option[] = [
-  { value: "ACTIVE", label: "ACTIVE" },
-  { value: "INACTIVE", label: "INACTIVE" },
-];
+function normalizeRoleLabel(name?: string | null): AdminRole {
+  if (!name) return "Admin";
+  if (ROLE_LABELS[name]) return ROLE_LABELS[name];
+  const label = name
+    .toLowerCase()
+    .split("_")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+  return (label as AdminRole) ?? "Admin";
+}
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -78,6 +80,15 @@ export default function EditAdminModal({
     password: false,
     avatar: false,
   });
+  const rolesQuery = useAdminRoles();
+  const roles = rolesQuery.data ?? [];
+
+  const roleOptions: Option[] = useMemo(() => {
+    return roles.map((r) => {
+      const label = normalizeRoleLabel(r.name);
+      return { value: label, label };
+    });
+  }, [roles]);
 
   useEffect(() => {
     if (!admin) {
@@ -226,7 +237,7 @@ export default function EditAdminModal({
         {/* Left */}
         <div className="lg:col-span-8 space-y-6">
           {/* Profile */}
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -243,7 +254,7 @@ export default function EditAdminModal({
                   </p>
 
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="relative h-16 w-16 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                    <div className="relative h-16 w-16 rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
                       {draft.avatarPreviewUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -324,7 +335,7 @@ export default function EditAdminModal({
                       <User2 size={16} />
                     </div>
                     <Input
-                      className="pl-9"
+                      startIcon={<User2 size={16} />}
                       value={draft.name}
                       onChange={(e) => setDraft({ ...draft, name: String(e.target.value) })}
                       placeholder="Admin name"
@@ -343,7 +354,7 @@ export default function EditAdminModal({
                       <Mail size={16} />
                     </div>
                     <Input
-                      className="pl-9"
+                      startIcon={<Mail size={16} />}
                       value={draft.email}
                       onChange={(e) => setDraft({ ...draft, email: String(e.target.value) })}
                       placeholder="admin@email.com"
@@ -364,7 +375,7 @@ export default function EditAdminModal({
                       <Phone size={16} />
                     </div>
                     <Input
-                      className="pl-9"
+                      startIcon={<Phone size={16} />}
                       value={draft.phone}
                       onChange={(e) => setDraft({ ...draft, phone: String(e.target.value) })}
                       placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
@@ -381,6 +392,7 @@ export default function EditAdminModal({
                     Joining Date
                   </p>
                   <Input
+                    startIcon={<Calendar size={16} />}
                     value={draft.joinDate}
                     onChange={(e) =>
                       setDraft({ ...draft, joinDate: String(e.target.value) })
@@ -395,6 +407,7 @@ export default function EditAdminModal({
                     Address
                   </p>
                   <Input
+                    startIcon={<MapPin size={16} />}
                     value={draft.address}
                     onChange={(e) =>
                       setDraft({ ...draft, address: String(e.target.value) })
@@ -416,7 +429,7 @@ export default function EditAdminModal({
           </div>
 
           {/* Role & Status */}
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Access & Status
@@ -432,48 +445,28 @@ export default function EditAdminModal({
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Role</p>
                   <Select
                     key={`role-${draft.id}-${draft.role}`}
-                    options={ROLE_OPTIONS}
+                    options={roleOptions}
                     placeholder="Select role"
                     defaultValue={draft.role}
                     onChange={(v) => setDraft({ ...draft, role: v as AdminRole })}
+                    isLoading={rolesQuery.isLoading}
+                    disabled={rolesQuery.isLoading || rolesQuery.isError}
                   />
+                  {rolesQuery.isError ? (
+                    <p className="text-xs text-error-500">Failed to load roles.</p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
-                  <Select
-                    key={`status-${draft.id}-${draft.status}`}
-                    options={STATUS_OPTIONS}
-                    placeholder="Select status"
-                    defaultValue={draft.status}
-                    onChange={(v) => setDraft({ ...draft, status: v as AdminStatus })}
+                  <ActiveInactiveSwitch
+                    className="max-w-full"
+                    value={active}
+                    onChange={(next) =>
+                      setDraft({ ...draft, status: next ? "ACTIVE" : "INACTIVE" })
+                    }
+                    disabled={saving.status}
                   />
-                </div>
-
-                <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40 md:col-span-2">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                        <ShieldCheck size={18} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Quick Status Toggle
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Disable admin to restrict access immediately.
-                        </p>
-                      </div>
-                    </div>
-
-                    <Switch
-                      label=""
-                      defaultChecked={active}
-                      onChange={(checked) =>
-                        setDraft({ ...draft, status: checked ? "ACTIVE" : "INACTIVE" })
-                      }
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -486,7 +479,7 @@ export default function EditAdminModal({
           </div>
 
           {/* Password */}
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -572,7 +565,7 @@ export default function EditAdminModal({
 
         {/* Right Preview */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -582,7 +575,7 @@ export default function EditAdminModal({
 
             <div className="p-5">
               <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 overflow-hidden rounded-[4px] bg-gray-100 dark:bg-gray-800">
+                <div className="relative h-14 w-14 rounded-[4px] bg-gray-100 dark:bg-gray-800">
                   {draft.avatarPreviewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img

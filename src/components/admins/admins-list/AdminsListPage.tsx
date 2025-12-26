@@ -279,39 +279,6 @@ export default function AdminsListPage() {
 
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Admins List" />
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            Role Management
-          </h1>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>Data Refreshed</span>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={async () => {
-                await refetch();
-                setRefreshedAt(new Date());
-              }}
-              aria-label="Refresh"
-              title="Refresh"
-            >
-              <RefreshCcw size={16} />
-            </button>
-          </div>
-
-          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-            {headerTime}
-          </div>
-        </div>
-      </div>
-
       {/* Top actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
      
