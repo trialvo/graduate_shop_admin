@@ -19,6 +19,20 @@ export type AdminListResponse = {
   total: number;
 };
 
+export type AdminByIdResponse = {
+  id: number;
+  email: string;
+  is_active: boolean;
+  roles: string[];
+  created_at: string;
+  last_login_at: string | null;
+  profile_img_path: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  address: string | null;
+};
+
 export type CreateAdminBody = {
   email: string;
   password: string;
@@ -74,6 +88,11 @@ export const getAdmins = async (params: {
   const { data } = await api.get<AdminListResponse>("/admin/getAdmins", {
     params,
   });
+  return data;
+};
+
+export const getAdminById = async (id: number) => {
+  const { data } = await api.get<AdminByIdResponse>(`/admin/getAdminById/${id}`);
   return data;
 };
 

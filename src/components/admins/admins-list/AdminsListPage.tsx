@@ -12,10 +12,10 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 
 import EditAdminModal from "./EditAdminModal";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
-import { AdminRole, AdminRow, ROLE_ID_BY_LABEL } from "../types";
+import { AdminRole, AdminListRow, ROLE_ID_BY_LABEL } from "../types";
 import { toPublicUrl } from "@/config/env";
-import { useAdmins, useUpdateAdmin } from "@/hooks/useAdmins";
-import type { AdminListResponse } from "@/api/admin.api";
+import { useAdminById, useAdmins, useUpdateAdmin } from "@/hooks/useAdmins";
+import type { AdminByIdResponse, AdminListResponse } from "@/api/admin.api";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -51,7 +51,7 @@ const toJoinDate = (iso: string) => {
 
 export default function AdminsListPage() {
   const navigate = useNavigate();
-  const [rows, setRows] = useState<AdminRow[]>([]);
+  const [rows, setRows] = useState<AdminListRow[]>([]);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -60,10 +60,11 @@ export default function AdminsListPage() {
   const [refreshedAt, setRefreshedAt] = useState<Date>(new Date());
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<AdminRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminListRow | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<AdminRow | null>(null);
+  const [editTarget, setEditTarget] = useState<AdminListRow | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
 
   const params = useMemo(
     () => ({
@@ -74,33 +75,46 @@ export default function AdminsListPage() {
   );
 
   const { data, isLoading, isError, refetch } = useAdmins(params);
+  const { data: editAdmin, isError: isEditError } = useAdminById(editId);
 
   const updateMutation = useUpdateAdmin();
 
+  const toListRow = (
+    admin: AdminListResponse["data"][number] | AdminByIdResponse
+  ): AdminListRow => {
+    const name =
+      [admin.first_name, admin.last_name].filter(Boolean).join(" ") ||
+      admin.email.split("@")[0] ||
+      "Admin";
+
+    return {
+      id: admin.id,
+      name,
+      email: admin.email,
+      role: normalizeRoleLabel(admin.roles?.[0]),
+      joinDate: toJoinDate(admin.created_at),
+      phone: admin.phone ?? "",
+      status: admin.is_active ? "ACTIVE" : "INACTIVE",
+      address: admin.address ?? "",
+      avatarUrl: toPublicUrl(admin.profile_img_path) ?? undefined,
+      passwordMasked: "************",
+    };
+  };
+
   useEffect(() => {
     if (!data?.data) return;
-    setRows(
-      data.data.map((admin: AdminListResponse["data"][number]) => {
-        const name =
-          [admin.first_name, admin.last_name].filter(Boolean).join(" ") ||
-          admin.email.split("@")[0] ||
-          "Admin";
-
-        return {
-          id: admin.id,
-          name,
-          email: admin.email,
-          role: normalizeRoleLabel(admin.roles?.[0]),
-          joinDate: toJoinDate(admin.created_at),
-          phone: admin.phone ?? "-",
-          status: admin.is_active ? "ACTIVE" : "INACTIVE",
-          note: "",
-          avatarUrl: toPublicUrl(admin.profile_img_path) ?? undefined,
-          passwordMasked: "************",
-        };
-      })
-    );
+    setRows(data.data.map((admin) => toListRow(admin)));
   }, [data]);
+
+  useEffect(() => {
+    if (!editAdmin) return;
+    setEditTarget(toListRow(editAdmin));
+  }, [editAdmin]);
+
+  useEffect(() => {
+    if (!isEditError || !editId) return;
+    toast.error("Failed to load admin details");
+  }, [isEditError, editId]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -111,7 +125,8 @@ export default function AdminsListPage() {
         r.name.toLowerCase().includes(q) ||
         r.email.toLowerCase().includes(q) ||
         r.role.toLowerCase().includes(q) ||
-        r.phone.toLowerCase().includes(q)
+        r.phone.toLowerCase().includes(q) ||
+        r.address.toLowerCase().includes(q)
       );
     });
   }, [rows, search]);
@@ -131,7 +146,7 @@ export default function AdminsListPage() {
     return `${month} ${day}, ${year} at ${time}`;
   }, [refreshedAt]);
 
-  const openDelete = (row: AdminRow) => {
+  const openDelete = (row: AdminListRow) => {
     setDeleteTarget(row);
     setDeleteOpen(true);
   };
@@ -143,12 +158,17 @@ export default function AdminsListPage() {
     setDeleteTarget(null);
   };
 
-  const openEdit = (row: AdminRow) => {
-    setEditTarget(row);
+  const openEdit = (row: AdminListRow) => {
+    setEditTarget(null);
+    setEditId(row.id);
     setEditOpen(true);
   };
 
-  const saveEdit = async (next: AdminRow, newPassword?: string, newAvatar?: File | null) => {
+  const saveEdit = async (
+    next: AdminListRow,
+    newPassword?: string,
+    newAvatar?: File | null
+  ) => {
     try {
       const nameParts = next.name.trim().split(/\s+/).filter(Boolean);
       const firstName = nameParts[0] ?? "";
@@ -161,6 +181,7 @@ export default function AdminsListPage() {
           first_name: firstName || null,
           last_name: lastName,
           phone: next.phone.trim() || null,
+          address: next.address.trim() || null,
           role_id: ROLE_ID_BY_LABEL[next.role],
           is_active: next.status === "ACTIVE",
           password: newPassword || undefined,
@@ -181,6 +202,7 @@ export default function AdminsListPage() {
       toast.success("Admin updated successfully");
       setEditOpen(false);
       setEditTarget(null);
+      setEditId(null);
     } catch (err: any) {
       const msg = err?.response?.data?.error || "Failed to update admin";
       toast.error(msg);
@@ -260,7 +282,7 @@ export default function AdminsListPage() {
                   "JOIN DATE",
                   "PHONE",
                   "STATUS",
-                  "NOTE",
+                  "ADDRESS",
                   "ACTIONS",
                 ].map((h) => (
                   <TableCell
@@ -324,7 +346,7 @@ export default function AdminsListPage() {
                   </TableCell>
 
                   <TableCell className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {row.phone}
+                    {row.phone || "-"}
                   </TableCell>
 
                   <TableCell className="px-4 py-4">
@@ -338,7 +360,7 @@ export default function AdminsListPage() {
                   </TableCell>
 
                   <TableCell className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="line-clamp-1">{row.note}</span>
+                    <span className="line-clamp-1">{row.address || "-"}</span>
                   </TableCell>
 
                   <TableCell className="px-4 py-4">
@@ -427,9 +449,11 @@ export default function AdminsListPage() {
       <EditAdminModal
         open={editOpen}
         admin={editTarget}
+        loading={Boolean(editId) && !editTarget}
         onClose={() => {
           setEditOpen(false);
           setEditTarget(null);
+          setEditId(null);
         }}
         onSave={saveEdit}
       />

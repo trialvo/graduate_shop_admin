@@ -1,101 +1,97 @@
-import { X } from "lucide-react";
-import React, { useEffect } from "react";
-
+import React from "react";
 import { cn } from "@/lib/utils";
 
-type Props = {
+type ModalProps = {
   open: boolean;
-  title?: string;
+  title: string;
   description?: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
-};
+  onClose: () => void;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
 
-const SIZE_CLASS: Record<NonNullable<Props["size"]>, string> = {
-  sm: "max-w-md",
-  md: "max-w-2xl",
-  lg: "max-w-4xl",
-  xl: "max-w-6xl",
+  bodyClassName?: string;
+
+  /** customize only specific modal UI */
+  contentClassName?: string;
 };
 
 export default function Modal({
   open,
   title,
   description,
-  onClose,
-  children,
-  footer,
   size = "md",
-}: Props) {
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
+  onClose,
+  footer,
+  children,
+  bodyClassName,
+  contentClassName,
+}: ModalProps) {
   if (!open) return null;
 
+  const sizeClass =
+    size === "sm"
+      ? "max-w-md"
+      : size === "lg"
+        ? "max-w-3xl"
+        : size === "xl"
+          ? "max-w-5xl"
+          : "max-w-xl";
+
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       {/* Backdrop */}
       <button
         type="button"
-        className="absolute inset-0 bg-gray-900/50 backdrop-blur-[2px]"
         onClick={onClose}
+        className="absolute inset-0 bg-black/40"
         aria-label="Close modal"
       />
 
-      {/* Dialog */}
-      <div className="relative flex min-h-full items-center justify-center p-4">
-        <div
-          className={cn(
-            "w-full overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xl dark:border-gray-800 dark:bg-gray-900",
-            SIZE_CLASS[size]
-          )}
-          role="dialog"
-          aria-modal="true"
-        >
-          {(title || description) && (
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5 dark:border-gray-800">
-              <div>
-                {title ? (
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {title}
-                  </h3>
-                ) : null}
-                {description ? (
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {description}
-                  </p>
-                ) : null}
-              </div>
-
-              <button
-                type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X size={16} />
-              </button>
+      {/* Modal */}
+      <div
+        className={cn(
+          "relative z-[10000] w-full bg-white shadow-theme-xs dark:bg-gray-900",
+          "overflow-hidden", // ✅ IMPORTANT: clip header/footer so rounded corners show
+          "rounded-[4px]", // default
+          sizeClass,
+          contentClassName // ✅ e.g. rounded-[6px]
+        )}
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
+              {description ? (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+              ) : null}
             </div>
-          )}
 
-          <div className="px-6 py-5">{children}</div>
-
-          {footer ? (
-            <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-end">
-              {footer}
-            </div>
-          ) : null}
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] text-gray-500 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
         </div>
+
+        {/* Body */}
+        <div className={cn("max-h-[500px] overflow-y-auto px-5 py-5", bodyClassName)}>
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer ? (
+          <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-900">
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>
   );

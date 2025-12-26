@@ -1,6 +1,6 @@
-import type { AdminRow } from "../types";
+import type { AdminListRow } from "../types";
 
-export const INITIAL_ADMINS: AdminRow[] = [
+export const INITIAL_ADMINS: AdminListRow[] = [
   {
     id: 1,
     name: "Nazmul Hasan",
@@ -10,7 +10,7 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "10/04/2025",
     phone: "01903527399",
     status: "ACTIVE",
-    note: "Make your Best Effort...",
+    address: "Make your Best Effort...",
   },
   {
     id: 2,
@@ -21,7 +21,7 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "15/03/2025",
     phone: "01234567890",
     status: "ACTIVE",
-    note: "Experienced adminin...",
+    address: "Experienced adminin...",
   },
   {
     id: 3,
@@ -32,7 +32,7 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "20/02/2025",
     phone: "01345678901",
     status: "ACTIVE",
-    note: "Team lead for oper...",
+    address: "Team lead for oper...",
   },
   {
     id: 4,
@@ -43,7 +43,7 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "05/01/2025",
     phone: "01456789012",
     status: "ACTIVE",
-    note: "Top performer in sa...",
+    address: "Top performer in sa...",
   },
   {
     id: 5,
@@ -54,7 +54,7 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "12/12/2024",
     phone: "01567890123",
     status: "INACTIVE",
-    note: "Delivery specialist",
+    address: "Delivery specialist",
   },
   {
     id: 6,
@@ -65,7 +65,7 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "18/11/2024",
     phone: "01678901234",
     status: "ACTIVE",
-    note: "Handles order proc...",
+    address: "Handles order proc...",
   },
   {
     id: 7,
@@ -76,6 +76,6 @@ export const INITIAL_ADMINS: AdminRow[] = [
     joinDate: "25/10/2024",
     phone: "01789012345",
     status: "ACTIVE",
-    note: "Product catalog m...",
+    address: "Product catalog m...",
   },
 ];

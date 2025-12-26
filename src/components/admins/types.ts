@@ -13,7 +13,7 @@ export type ApiRole = {
   is_system: 0 | 1;
 };
 
-export type AdminRow = {
+export type AdminApiRow = {
   id: number;
   email: string;
 
@@ -29,6 +29,19 @@ export type AdminRow = {
   last_login_at?: string | null;
 
   profile_img_path: string | null; // "/uploads/profiles/admins/17/..."
+};
+
+export type AdminListRow = {
+  id: number;
+  name: string;
+  email: string;
+  role: AdminRole;
+  joinDate: string;
+  phone: string;
+  status: AdminStatus;
+  address: string;
+  avatarUrl?: string;
+  passwordMasked: string;
 };
 
 // ✅ Form model used by CreateAdminPage (UI)

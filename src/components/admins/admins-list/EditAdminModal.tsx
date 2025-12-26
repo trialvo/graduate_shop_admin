@@ -5,7 +5,7 @@ import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import Switch from "@/components/form/switch/Switch";
-import { AdminRole, AdminRow, AdminStatus } from "../types";
+import { AdminRole, AdminListRow, AdminStatus } from "../types";
 import Modal from "@/components/ui/modal/Modal";
 import Badge from "@/components/ui/badge/Badge";
 
@@ -44,7 +44,7 @@ function isValidBDPhone(v: string): boolean {
   return /^(\+8801\d{9}|01\d{9})$/.test(p);
 }
 
-type Draft = AdminRow & {
+type Draft = AdminListRow & {
   changePassword: boolean;
   newPassword: string;
   confirmNewPassword: string;
@@ -55,13 +55,15 @@ type Draft = AdminRow & {
 export default function EditAdminModal({
   open,
   admin,
+  loading = false,
   onClose,
   onSave,
 }: {
   open: boolean;
-  admin: AdminRow | null;
+  admin: AdminListRow | null;
+  loading?: boolean;
   onClose: () => void;
-  onSave: (next: AdminRow, newPassword?: string, newAvatar?: File | null) => void;
+  onSave: (next: AdminListRow, newPassword?: string, newAvatar?: File | null) => void;
 }) {
   const [draft, setDraft] = useState<Draft | null>(null);
 
@@ -123,7 +125,9 @@ export default function EditAdminModal({
   if (!draft) {
     return (
       <Modal open={open} title="Edit Admin" onClose={onClose} size="lg">
-        <p className="text-sm text-gray-500 dark:text-gray-400">No admin selected.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {loading ? "Loading admin..." : "No admin selected."}
+        </p>
       </Modal>
     );
   }
@@ -137,6 +141,7 @@ export default function EditAdminModal({
       description="Update admin profile, role, status and password."
       onClose={onClose}
       size="xl"
+      contentClassName="rounded-[6px]" 
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -153,7 +158,7 @@ export default function EditAdminModal({
                   joinDate: draft.joinDate,
                   phone: draft.phone.trim(),
                   status: draft.status,
-                  note: draft.note,
+                  address: draft.address.trim(),
                   avatarUrl: draft.avatarPreviewUrl || undefined,
                   passwordMasked: draft.passwordMasked,
                 },
@@ -328,13 +333,17 @@ export default function EditAdminModal({
                   />
                 </div>
 
-                {/* Note */}
+                {/* Address */}
                 <div className="space-y-2 md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Note</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Address
+                  </p>
                   <Input
-                    value={draft.note}
-                    onChange={(e) => setDraft({ ...draft, note: String(e.target.value) })}
-                    placeholder="Write note (optional)"
+                    value={draft.address}
+                    onChange={(e) =>
+                      setDraft({ ...draft, address: String(e.target.value) })
+                    }
+                    placeholder="House/road details, city, etc."
                   />
                 </div>
               </div>
@@ -510,17 +519,21 @@ export default function EditAdminModal({
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                    {draft.name || "—"}
+                    {draft.name || "-"}
                   </p>
                   <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {draft.email || "—"}
+                    {draft.email || "-"}
                   </p>
                   <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {draft.phone || "—"}
+                    {draft.phone || "-"}
                   </p>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge variant="solid" color={draft.status === "ACTIVE" ? "success" : "error"} size="sm">
+                    <Badge
+                      variant="solid"
+                      color={draft.status === "ACTIVE" ? "success" : "error"}
+                      size="sm"
+                    >
                       {draft.status}
                     </Badge>
                     <Badge variant="solid" color="primary" size="sm">
@@ -531,8 +544,8 @@ export default function EditAdminModal({
               </div>
 
               <div className="mt-5 rounded-[4px] border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
-                <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
-                <p className="line-clamp-3">{draft.note || "—"}</p>
+                <p className="font-semibold text-gray-900 dark:text-white mb-1">Address</p>
+                <p className="line-clamp-3">{draft.address || "-"}</p>
               </div>
             </div>
           </div>
@@ -540,9 +553,9 @@ export default function EditAdminModal({
           <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
-              <li>• Use Super Admin role carefully.</li>
-              <li>• Disable status to restrict access instantly.</li>
-              <li>• Change password only when required.</li>
+              <li>Use Super Admin role carefully.</li>
+              <li>Disable status to restrict access instantly.</li>
+              <li>Change password only when required.</li>
             </ul>
           </div>
         </div>
