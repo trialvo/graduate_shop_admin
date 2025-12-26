@@ -25,7 +25,7 @@ export type BrandListResponse = {
   total: number;
 };
 
-export async function getBrands(params: BrandListParams): Promise<BrandListResponse> {
+export async function getBrands(params?: BrandListParams): Promise<BrandListResponse> {
   const res = await api.get("/brands", { params });
   return res.data as BrandListResponse;
 }

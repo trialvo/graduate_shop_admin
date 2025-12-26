@@ -23,7 +23,7 @@ export type Attribute = {
 };
 
 export type AttributesListParams = {
-  limit: number;
+  limit?: number;
   offset?: number;
   name?: string;
   status?: boolean;
@@ -35,7 +35,7 @@ export type AttributesListResponse = {
   total: number;
 };
 
-export async function getAttributes(params: AttributesListParams): Promise<AttributesListResponse> {
+export async function getAttributes(params?: AttributesListParams): Promise<AttributesListResponse> {
   const res = await api.get("/attributes", { params });
   return res.data;
 }

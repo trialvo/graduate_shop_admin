@@ -51,7 +51,7 @@ function toFormData(values: {
  *  MAIN CATEGORY
  *  ========================= */
 
-export async function getMainCategories(params: MainListParams) {
+export async function getMainCategories(params?: MainListParams) {
   const res = await api.get<ListResponse<MainCategory>>("/categories/mainCategories", { params });
   return res.data;
 }
@@ -92,7 +92,7 @@ export async function updateMainCategory(id: number, values: CategoryFormValues)
  *  SUB CATEGORY
  *  ========================= */
 
-export async function getSubCategories(params: SubListParams) {
+export async function getSubCategories(params?: SubListParams) {
   const res = await api.get<ListResponse<SubCategory>>("/categories/subCategories", { params });
   return res.data;
 }
@@ -133,7 +133,7 @@ export async function updateSubCategory(id: number, values: SubCategoryFormValue
  *  CHILD CATEGORY
  *  ========================= */
 
-export async function getChildCategories(params: ChildListParams) {
+export async function getChildCategories(params?: ChildListParams) {
   const res = await api.get<ListResponse<ChildCategory>>("/categories/childCategories", { params });
   return res.data;
 }

@@ -32,7 +32,7 @@ export type CreateColorPayload = {
   priority?: number;
 };
 
-export async function getColors(params: ColorListParams): Promise<ColorListResponse> {
+export async function getColors(params?: ColorListParams): Promise<ColorListResponse> {
   const res = await api.get("/colors", { params });
   return res.data as ColorListResponse;
 }
