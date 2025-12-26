@@ -36,12 +36,12 @@ export type AttributesListResponse = {
 };
 
 export async function getAttributes(params: AttributesListParams): Promise<AttributesListResponse> {
-  const res = await api.get("/api/v1/attributes", { params });
+  const res = await api.get("/attributes", { params });
   return res.data;
 }
 
 export async function getAttribute(id: number): Promise<Attribute> {
-  const res = await api.get(`/api/v1/attribute/${id}`);
+  const res = await api.get(`/attribute/${id}`);
   return res.data;
 }
 
@@ -52,7 +52,7 @@ export type CreateAttributePayload = {
 };
 
 export async function createAttribute(payload: CreateAttributePayload): Promise<Attribute> {
-  const res = await api.post("/api/v1/attribute", payload);
+  const res = await api.post("/attribute", payload);
   return res.data;
 }
 
@@ -63,10 +63,10 @@ export type UpdateAttributePayload = {
 };
 
 export async function updateAttribute(id: number, payload: UpdateAttributePayload): Promise<{ success: true }> {
-  const res = await api.put(`/api/v1/attribute/${id}`, payload);
+  const res = await api.put(`/attribute/${id}`, payload);
   return res.data;
 }
 
 export async function deleteAttribute(id: number): Promise<void> {
-  await api.delete(`/api/v1/attribute/${id}`);
+  await api.delete(`/attribute/${id}`);
 }
