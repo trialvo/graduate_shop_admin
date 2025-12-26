@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import { useState } from "react";
 
 import BrandTab from "./tabs/BrandTab";
 import ColorTab from "./tabs/ColorTab";
@@ -32,30 +32,6 @@ export default function ProductAttributesPage() {
   const [colors, setColors] = useState<ColorRow[]>(INITIAL_COLORS);
   const [attributes, setAttributes] =
     useState<AttributeDefinition[]>(INITIAL_ATTRIBUTES);
-
-  // const [products] = useState<ProductLite[]>(INITIAL_PRODUCTS);
-
-  // productId -> { attributeId -> selected values[] }
-  // const [productAttributeMap, setProductAttributeMap] = useState<
-  //   Record<number, ProductAttributeSelection>
-  // >({});
-
-  // productId -> brandId
-  // const [productBrandMap, setProductBrandMap] = useState<Record<number, number>>(
-  //   {}
-  // );
-
-  // productId -> colorIds[]
-  // const [productColorMap, setProductColorMap] = useState<
-  //   Record<number, number[]>
-  // >({});
-
-  // const [variants, setVariants] = useState<VariantRow[]>(INITIAL_VARIANTS);
-
-  // const activeAttributes = useMemo(
-  //   () => attributes.filter((a) => a.status),
-  //   [attributes]
-  // );
 
   return (
     <div className="space-y-6">
@@ -112,23 +88,6 @@ export default function ProductAttributesPage() {
       {activeTab === "attribute" && (
         <AttributeTab attributes={attributes} onChange={setAttributes} />
       )}
-
-      {/* {activeTab === "variant" && (
-        <VariantTab
-          products={products}
-          brands={brands}
-          colors={colors}
-          attributeDefs={activeAttributes}
-          productAttributeMap={productAttributeMap}
-          onChangeProductAttributeMap={setProductAttributeMap}
-          productBrandMap={productBrandMap}
-          onChangeProductBrandMap={setProductBrandMap}
-          productColorMap={productColorMap}
-          onChangeProductColorMap={setProductColorMap}
-          variants={variants}
-          onChangeVariants={setVariants}
-        />
-      )} */}
     </div>
   );
 }
