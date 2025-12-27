@@ -23,7 +23,13 @@ import Select from "@/components/form/Select";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import StatusToggle from "@/components/ui/button/StatusToggle";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 
 import { cn } from "@/lib/utils";
@@ -76,7 +82,9 @@ function toCustomerRow(u: AdminUserEntity): CustomerRow {
   const firstPhone = u.phones?.[0];
   const phone = firstPhone?.phone_number ?? null;
 
-  const phone_verified = Boolean(firstPhone?.is_verified === true || firstPhone?.is_verified === 1);
+  const phone_verified = Boolean(
+    firstPhone?.is_verified === true || firstPhone?.is_verified === 1
+  );
 
   const deleted_at = u.deleted_at ?? null;
   const isDeleted = Boolean(deleted_at);
@@ -120,7 +128,11 @@ function deletedBadgeColor(isDeleted: boolean): "error" | "success" {
   return isDeleted ? "error" : "success";
 }
 
-function verifiedTone(verified: boolean): { pill: string; icon: React.ReactNode; label: string } {
+function verifiedTone(verified: boolean): {
+  pill: string;
+  icon: React.ReactNode;
+  label: string;
+} {
   if (verified) {
     return {
       pill: "bg-success-600 text-white",
@@ -221,11 +233,15 @@ export default function CustomersListPage() {
     const month = d.toLocaleString("en-US", { month: "long" });
     const day = d.getDate();
     const year = d.getFullYear();
-    const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const time = d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     return `${month} ${day}, ${year} at ${time}`;
   }, [refreshedAt]);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["adminUsers"] }).catch(() => undefined);
+  const invalidate = () =>
+    qc.invalidateQueries({ queryKey: ["adminUsers"] }).catch(() => undefined);
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteAdminUser(id),
@@ -236,7 +252,10 @@ export default function CustomersListPage() {
       invalidate();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to delete customer";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to delete customer";
       toast.error(msg);
     },
   });
@@ -250,19 +269,26 @@ export default function CustomersListPage() {
       invalidate();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to restore customer";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to restore customer";
       toast.error(msg);
     },
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: AdminUserStatus }) => updateAdminUserStatus(id, status),
+    mutationFn: ({ id, status }: { id: number; status: AdminUserStatus }) =>
+      updateAdminUserStatus(id, status),
     onSuccess: () => {
       toast.success("Status updated");
       invalidate();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update status";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update status";
       toast.error(msg);
     },
   });
@@ -291,7 +317,9 @@ export default function CustomersListPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Customers</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
+            Customers
+          </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage status, verification and soft delete/restore.
           </p>
@@ -333,11 +361,15 @@ export default function CustomersListPage() {
                 "inline-flex items-center gap-2 rounded-[4px] px-4 py-2 text-sm font-semibold transition",
                 active
                   ? "bg-brand-500 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
               )}
             >
               <span>{t.label}</span>
-              <span className={cn(active ? "text-white/90" : "text-gray-500 dark:text-gray-400")}>
+              <span
+                className={cn(
+                  active ? "text-white/90" : "text-gray-500 dark:text-gray-400"
+                )}
+              >
                 ({counts[t.key] ?? 0})
               </span>
             </button>
@@ -348,7 +380,9 @@ export default function CustomersListPage() {
       {/* Filters */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">Page Size</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            Page Size
+          </p>
           <Select
             key={`ps-${pageSize}`}
             options={PAGE_SIZE_OPTIONS}
@@ -359,7 +393,9 @@ export default function CustomersListPage() {
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">Search</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            Search
+          </p>
           <div className="relative">
             <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
               <Search size={16} className="text-gray-400" />
@@ -380,49 +416,77 @@ export default function CustomersListPage() {
           <Table className="min-w-[1500px] border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
-                {["CUSTOMER", "STATUS", "DELETED", "VERIFICATION", "TOTAL SPENT", "GENDER", "DOB", "CREATED", "ACTIONS"].map(
-                  (h) => (
-                    <TableCell key={h} isHeader className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                      {h}
-                    </TableCell>
-                  ),
-                )}
+                {[
+                  "CUSTOMER",
+                  "STATUS",
+                  "DELETED",
+                  "VERIFICATION",
+                  "TOTAL SPENT",
+                  "GENDER",
+                  "DOB",
+                  "CREATED",
+                  "ACTIONS",
+                ].map((h) => (
+                  <TableCell
+                    key={h}
+                    isHeader
+                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                  >
+                    {h}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {usersQuery.isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <TableCell
+                    colSpan={9}
+                    className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
                     Loading customers...
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered.map((row) => {
-                  const avatarLetter = row.name.trim().slice(0, 1).toUpperCase() || "C";
-                  const imgUrl = row.img_path ? toPublicUrl(row.img_path) : null;
+                  const avatarLetter =
+                    row.name.trim().slice(0, 1).toUpperCase() || "C";
+                  const imgUrl = row.img_path
+                    ? toPublicUrl(row.img_path)
+                    : null;
 
-                  const verified = Boolean(row.is_fully_verified || row.is_email_verified);
+                  const verified = Boolean(
+                    row.is_fully_verified || row.is_email_verified
+                  );
                   const vt = verifiedTone(verified);
 
                   const statusLower = String(row.status).toLowerCase();
                   const isSuspended = statusLower === "suspended";
 
                   // ✅ Toggle only supports active/inactive
-                  const toggleValue = statusLower === "active" ? "active" : "inactive";
+                  const toggleValue =
+                    statusLower === "active" ? "active" : "inactive";
 
                   const disableToggle =
                     row.isDeleted || isSuspended || statusMutation.isPending;
 
                   return (
-                    <TableRow key={row.id} className="border-b border-gray-100 dark:border-gray-800">
+                    <TableRow
+                      key={row.id}
+                      className="border-b border-gray-100 dark:border-gray-800"
+                    >
                       {/* CUSTOMER */}
                       <TableCell className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="relative h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                             {imgUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={imgUrl} alt={row.name} className="h-full w-full object-cover" />
+                              <img
+                                src={imgUrl}
+                                alt={row.name}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
                                 {avatarLetter}
@@ -433,7 +497,7 @@ export default function CustomersListPage() {
                             <div
                               className={cn(
                                 "absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold shadow",
-                                vt.pill,
+                                vt.pill
                               )}
                               title={vt.label}
                             >
@@ -443,7 +507,9 @@ export default function CustomersListPage() {
                           </div>
 
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-brand-500">{row.name}</p>
+                            <p className="truncate text-sm font-semibold text-brand-500">
+                              {row.name}
+                            </p>
 
                             <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                               <Mail size={14} />
@@ -452,10 +518,20 @@ export default function CustomersListPage() {
 
                             <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                               <Phone size={14} />
-                              <span className="truncate">{row.phone ?? "—"}</span>
+                              <span className="truncate">
+                                {row.phone ?? "—"}
+                              </span>
                               {row.phone ? (
-                                <Badge variant="solid" color={row.phone_verified ? "success" : "warning"} size="sm">
-                                  {row.phone_verified ? "Phone Verified" : "Phone Unverified"}
+                                <Badge
+                                  variant="solid"
+                                  color={
+                                    row.phone_verified ? "success" : "warning"
+                                  }
+                                  size="sm"
+                                >
+                                  {row.phone_verified
+                                    ? "Phone Verified"
+                                    : "Phone Unverified"}
                                 </Badge>
                               ) : null}
                             </p>
@@ -466,10 +542,6 @@ export default function CustomersListPage() {
                       {/* STATUS (Toggle Only) */}
                       <TableCell className="px-4 py-4">
                         <div className="space-y-2">
-                          <Badge variant="solid" color={statusBadgeColor(statusLower)} size="sm">
-                            {String(row.status)}
-                          </Badge>
-
                           <div className="flex items-center gap-3">
                             <StatusToggle
                               value={toggleValue}
@@ -486,31 +558,27 @@ export default function CustomersListPage() {
                                 });
                               }}
                             />
-
-                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                              {statusLower === "active" ? "Active" : statusLower === "inactive" ? "Inactive" : "Suspended"}
-                            </p>
                           </div>
-
-                          {row.isDeleted ? (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Disabled (deleted).</p>
-                          ) : isSuspended ? (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Toggle disabled (suspended). Edit modal can change it.
-                            </p>
-                          ) : null}
                         </div>
                       </TableCell>
 
                       {/* DELETED */}
                       <TableCell className="px-4 py-4">
                         <div className="flex flex-col gap-2">
-                          <Badge variant="solid" color={deletedBadgeColor(row.isDeleted)} size="sm">
+                          <Badge
+                            variant="solid"
+                            color={deletedBadgeColor(row.isDeleted)}
+                            size="sm"
+                          >
                             {row.isDeleted ? "Deleted" : "Not Deleted"}
                           </Badge>
 
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {row.isDeleted && row.deleted_at ? `Deleted at: ${new Date(row.deleted_at).toLocaleString()}` : "—"}
+                            {row.isDeleted && row.deleted_at
+                              ? `Deleted at: ${new Date(
+                                  row.deleted_at
+                                ).toLocaleString()}`
+                              : "—"}
                           </p>
                         </div>
                       </TableCell>
@@ -518,15 +586,33 @@ export default function CustomersListPage() {
                       {/* VERIFICATION */}
                       <TableCell className="px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="solid" color={row.is_email_verified ? "success" : "warning"} size="sm">
-                            Email: {row.is_email_verified ? "Verified" : "Unverified"}
+                          <Badge
+                            variant="solid"
+                            color={
+                              row.is_email_verified ? "success" : "warning"
+                            }
+                            size="sm"
+                          >
+                            Email:{" "}
+                            {row.is_email_verified ? "Verified" : "Unverified"}
                           </Badge>
 
-                          <Badge variant="solid" color={row.is_fully_verified ? "success" : "warning"} size="sm">
-                            Full: {row.is_fully_verified ? "Verified" : "Unverified"}
+                          <Badge
+                            variant="solid"
+                            color={
+                              row.is_fully_verified ? "success" : "warning"
+                            }
+                            size="sm"
+                          >
+                            Full:{" "}
+                            {row.is_fully_verified ? "Verified" : "Unverified"}
                           </Badge>
 
-                          <Badge variant="solid" color={row.has_password ? "success" : "dark"} size="sm">
+                          <Badge
+                            variant="solid"
+                            color={row.has_password ? "success" : "dark"}
+                            size="sm"
+                          >
                             {row.has_password ? "Has Password" : "No Password"}
                           </Badge>
                         </div>
@@ -536,19 +622,25 @@ export default function CustomersListPage() {
                       <TableCell className="px-4 py-4">
                         <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {formatBdt(row.total_spent)}{" "}
-                          <span className="text-xs text-gray-500 dark:text-gray-400">BDT</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            BDT
+                          </span>
                         </div>
                       </TableCell>
 
                       {/* GENDER */}
                       <TableCell className="px-4 py-4">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{row.gender}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {row.gender}
+                        </p>
                       </TableCell>
 
                       {/* DOB */}
                       <TableCell className="px-4 py-4">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {row.dob ? new Date(row.dob).toLocaleDateString() : "—"}
+                          {row.dob
+                            ? new Date(row.dob).toLocaleDateString()
+                            : "—"}
                         </p>
                       </TableCell>
 
@@ -568,14 +660,18 @@ export default function CustomersListPage() {
                               "inline-flex h-10 w-10 items-center justify-center rounded-[4px] border shadow-theme-xs",
                               row.isDeleted
                                 ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
-                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]",
+                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                             )}
                             onClick={() => {
                               if (row.isDeleted) return;
                               openEdit(row);
                             }}
                             aria-label="Edit"
-                            title={row.isDeleted ? "Cannot edit deleted user" : "Edit"}
+                            title={
+                              row.isDeleted
+                                ? "Cannot edit deleted user"
+                                : "Edit"
+                            }
                           >
                             <Pencil size={16} />
                           </button>
@@ -612,7 +708,10 @@ export default function CustomersListPage() {
 
               {!usersQuery.isLoading && filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <TableCell
+                    colSpan={9}
+                    className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
                     No customers found.
                   </TableCell>
                 </TableRow>
@@ -634,7 +733,10 @@ export default function CustomersListPage() {
       </div>
 
       <div className="flex items-center justify-end">
-        <Button variant="outline" onClick={() => toast("Export not connected yet")}>
+        <Button
+          variant="outline"
+          onClick={() => toast("Export not connected yet")}
+        >
           Export
         </Button>
       </div>
@@ -666,7 +768,11 @@ export default function CustomersListPage() {
       <ConfirmDialog
         open={restoreOpen}
         title="Restore Customer"
-        message={restoreTarget ? `Do you want to restore "${restoreTarget.name}"?` : "Do you want to restore this customer?"}
+        message={
+          restoreTarget
+            ? `Do you want to restore "${restoreTarget.name}"?`
+            : "Do you want to restore this customer?"
+        }
         confirmText={restoreMutation.isPending ? "Restoring..." : "Restore"}
         cancelText="Cancel"
         tone="success"
