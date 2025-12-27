@@ -14,6 +14,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
+  XCircle,
+  ShieldCheck,
+  ShieldX,
+  KeyRound,
+  KeySquare,
 } from "lucide-react";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -117,34 +122,59 @@ function toCustomerRow(u: AdminUserEntity): CustomerRow {
   };
 }
 
-function statusBadgeColor(status: string): "success" | "dark" | "warning" {
-  const s = String(status).toLowerCase();
-  if (s === "active") return "success";
-  if (s === "inactive") return "dark";
-  return "warning";
-}
-
 function deletedBadgeColor(isDeleted: boolean): "error" | "success" {
   return isDeleted ? "error" : "success";
 }
 
-function verifiedTone(verified: boolean): {
-  pill: string;
-  icon: React.ReactNode;
+/** Small icon pill for verification indicators */
+function VerifyIcon({
+  ok,
+  label,
+}: {
+  ok: boolean;
   label: string;
-} {
-  if (verified) {
-    return {
-      pill: "bg-success-600 text-white",
-      icon: <CheckCircle2 size={12} />,
-      label: "Verified",
-    };
-  }
-  return {
-    pill: "bg-warning-600 text-white",
-    icon: <AlertTriangle size={12} />,
-    label: "Unverified",
-  };
+}): React.ReactNode {
+  const Icon = ok ? CheckCircle2 : XCircle;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold",
+        ok ? "bg-success-600 text-white" : "bg-error-600 text-white"
+      )}
+      title={label}
+      aria-label={label}
+    >
+      <Icon size={12} />
+    </span>
+  );
+}
+
+function IconBadge({
+  ok,
+  label,
+  okIcon,
+  badIcon,
+}: {
+  ok: boolean;
+  label: string;
+  okIcon: React.ReactNode;
+  badIcon: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 rounded-[4px] border px-3 py-2 text-xs font-semibold",
+        ok
+          ? "border-success-200 bg-success-50 text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300"
+          : "border-error-200 bg-error-50 text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300"
+      )}
+      title={label}
+      aria-label={label}
+    >
+      {ok ? okIcon : badIcon}
+      <span className="truncate">{label}</span>
+    </div>
+  );
 }
 
 export default function CustomersListPage() {
@@ -415,7 +445,7 @@ export default function CustomersListPage() {
         <div className="overflow-x-auto">
           <Table className="min-w-[1500px] border-collapse">
             <TableHeader>
-              <TableRow className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
+              <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                 {[
                   "CUSTOMER",
                   "STATUS",
@@ -459,12 +489,10 @@ export default function CustomersListPage() {
                   const verified = Boolean(
                     row.is_fully_verified || row.is_email_verified
                   );
-                  const vt = verifiedTone(verified);
-
                   const statusLower = String(row.status).toLowerCase();
                   const isSuspended = statusLower === "suspended";
 
-                  // ✅ Toggle only supports active/inactive
+                  // Toggle only supports active/inactive
                   const toggleValue =
                     statusLower === "active" ? "active" : "inactive";
 
@@ -492,18 +520,6 @@ export default function CustomersListPage() {
                                 {avatarLetter}
                               </div>
                             )}
-
-                            {/* verification pill bottom-left */}
-                            <div
-                              className={cn(
-                                "absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold shadow",
-                                vt.pill
-                              )}
-                              title={vt.label}
-                            >
-                              {vt.icon}
-                              <span>{vt.label}</span>
-                            </div>
                           </div>
 
                           <div className="min-w-0">
@@ -511,29 +527,62 @@ export default function CustomersListPage() {
                               {row.name}
                             </p>
 
-                            <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <p className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                               <Mail size={14} />
                               <span className="truncate">{row.email}</span>
+
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                )}
+                                title={
+                                  row.is_email_verified
+                                    ? "Phone Verified"
+                                    : "Phone Unverified"
+                                }
+                              >
+                                {row.is_email_verified ? (
+                                  <CheckCircle2
+                                    size={12}
+                                    className="text-success-600"
+                                  />
+                                ) : (
+                                  <XCircle
+                                    size={12}
+                                    className="text-error-600"
+                                  />
+                                )}
+                              </span>
                             </p>
 
-                            <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <p className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                               <Phone size={14} />
                               <span className="truncate">
                                 {row.phone ?? "—"}
                               </span>
-                              {row.phone ? (
-                                <Badge
-                                  variant="solid"
-                                  color={
-                                    row.phone_verified ? "success" : "warning"
-                                  }
-                                  size="sm"
-                                >
-                                  {row.phone_verified
+
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                )}
+                                title={
+                                  row.phone_verified
                                     ? "Phone Verified"
-                                    : "Phone Unverified"}
-                                </Badge>
-                              ) : null}
+                                    : "Phone Unverified"
+                                }
+                              >
+                                {row.phone_verified ? (
+                                  <CheckCircle2
+                                    size={12}
+                                    className="text-success-600"
+                                  />
+                                ) : (
+                                  <XCircle
+                                    size={12}
+                                    className="text-error-600"
+                                  />
+                                )}
+                              </span>
                             </p>
                           </div>
                         </div>
@@ -541,25 +590,19 @@ export default function CustomersListPage() {
 
                       {/* STATUS (Toggle Only) */}
                       <TableCell className="px-4 py-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3">
-                            <StatusToggle
-                              value={toggleValue}
-                              disabled={disableToggle}
-                              onChange={(v) => {
-                                if (row.isDeleted) return;
+                        <StatusToggle
+                          value={toggleValue}
+                          disabled={disableToggle}
+                          onChange={(v) => {
+                            if (row.isDeleted) return;
+                            if (isSuspended) return;
 
-                                // if currently suspended, do not allow here
-                                if (isSuspended) return;
-
-                                statusMutation.mutate({
-                                  id: row.id,
-                                  status: v as AdminUserStatus,
-                                });
-                              }}
-                            />
-                          </div>
-                        </div>
+                            statusMutation.mutate({
+                              id: row.id,
+                              status: v as AdminUserStatus,
+                            });
+                          }}
+                        />
                       </TableCell>
 
                       {/* DELETED */}
@@ -583,39 +626,31 @@ export default function CustomersListPage() {
                         </div>
                       </TableCell>
 
-                      {/* VERIFICATION */}
+                      {/* ✅ VERIFICATION (replace text badges with icon tiles) */}
                       <TableCell className="px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge
-                            variant="solid"
-                            color={
-                              row.is_email_verified ? "success" : "warning"
-                            }
-                            size="sm"
-                          >
-                            Email:{" "}
-                            {row.is_email_verified ? "Verified" : "Unverified"}
-                          </Badge>
+                          <IconBadge
+                            ok={row.is_email_verified}
+                            label="Email"
+                            okIcon={<Mail size={16} />}
+                            badIcon={<Mail size={16} />}
+                          />
 
-                          <Badge
-                            variant="solid"
-                            color={
-                              row.is_fully_verified ? "success" : "warning"
-                            }
-                            size="sm"
-                          >
-                            Full:{" "}
-                            {row.is_fully_verified ? "Verified" : "Unverified"}
-                          </Badge>
+                          <IconBadge
+                            ok={row.is_fully_verified}
+                            label="Full"
+                            okIcon={<ShieldCheck size={16} />}
+                            badIcon={<ShieldX size={16} />}
+                          />
 
-                          <Badge
-                            variant="solid"
-                            color={row.has_password ? "success" : "dark"}
-                            size="sm"
-                          >
-                            {row.has_password ? "Has Password" : "No Password"}
-                          </Badge>
+                          <IconBadge
+                            ok={row.has_password}
+                            label="Password"
+                            okIcon={<KeyRound size={16} />}
+                            badIcon={<KeySquare size={16} />}
+                          />
                         </div>
+
                       </TableCell>
 
                       {/* TOTAL SPENT */}
@@ -730,15 +765,6 @@ export default function CustomersListPage() {
             setPage(1);
           }}
         />
-      </div>
-
-      <div className="flex items-center justify-end">
-        <Button
-          variant="outline"
-          onClick={() => toast("Export not connected yet")}
-        >
-          Export
-        </Button>
       </div>
 
       {/* Delete Confirm */}
