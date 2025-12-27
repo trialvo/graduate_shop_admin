@@ -5,11 +5,11 @@ import React from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 import type { Product } from "./types";
-import StatusToggle from "./StatusToggle";
 
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
+import StatusToggle from "@/components/ui/button/StatusToggle";
 
 type Props = {
   products: Product[];

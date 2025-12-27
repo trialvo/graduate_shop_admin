@@ -9,7 +9,7 @@ type Props = {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  tone?: "danger" | "default";
+  tone?: "danger" | "default" | "success";
   onClose: () => void;
   onConfirm: () => void;
   loading?: boolean;
@@ -44,7 +44,9 @@ export default function ConfirmDialog({
             className={
               tone === "danger"
                 ? "bg-error-500 hover:bg-error-600"
-                : undefined
+                : tone === "success"
+                  ? "bg-success-500 hover:bg-success-600"
+                  : undefined
             }
           >
             {confirmText}

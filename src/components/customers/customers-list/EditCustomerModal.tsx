@@ -6,11 +6,11 @@ import toast from "react-hot-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Calendar, Image as ImageIcon, Mail, Phone, User2 } from "lucide-react";
 
+import Modal from "@/components/ui/modal/Modal";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
-import Modal from "@/components/ui/modal/Modal";
-
+import Badge from "@/components/ui/badge/Badge";
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
@@ -33,6 +33,7 @@ const GENDER_OPTIONS: Option[] = [
 const STATUS_OPTIONS: Option[] = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
+  { value: "suspended", label: "Suspended" },
 ];
 
 function isValidPhone(phone: string): boolean {
@@ -49,8 +50,19 @@ function isValidDob(dob: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(dob.trim());
 }
 
-type Draft = {
-  user_profile?: File | null;
+function isoToYmd(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+type EditForm = {
+  user_profile: File | null;
+  previewUrl: string | null;
 
   email: string;
   password: string;
@@ -58,11 +70,11 @@ type Draft = {
   first_name: string;
   last_name: string;
 
-  gender: AdminUserGender;
+  gender: AdminUserGender | string;
   phone: string;
-  dob: string;
+  dob: string; // YYYY-MM-DD
 
-  is_active: AdminUserStatus;
+  status: AdminUserStatus | string;
 };
 
 export default function EditCustomerModal({
@@ -74,93 +86,101 @@ export default function EditCustomerModal({
   open: boolean;
   userId: number | null;
   onClose: () => void;
-  onUpdated?: () => void;
+  onUpdated: () => void;
 }) {
-  const enabled = open && !!userId;
+  const enabled = open && typeof userId === "number";
 
   const userQuery = useQuery({
     queryKey: ["adminUser", userId],
-    queryFn: () => getAdminUser(Number(userId)),
+    queryFn: () => getAdminUser(userId as number),
     enabled,
     retry: 1,
   });
 
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [form, setForm] = useState<EditForm | null>(null);
 
   useEffect(() => {
-    const u = userQuery.data?.user;
-    if (!u) return;
+    if (!userQuery.data?.user) return;
+    const u = userQuery.data.user;
 
-    const phone = u.phones?.[0]?.phone_number ?? "";
+    const firstPhone = u.phones?.[0]?.phone_number ?? "";
 
-    const dob = u.dob ? new Date(u.dob).toISOString().slice(0, 10) : "";
-
-    setDraft({
+    setForm({
       user_profile: null,
+      previewUrl: u.img_path ? toPublicUrl(u.img_path) : null,
+
       email: u.email ?? "",
-      password: "", // optional on edit
+      password: "",
+
       first_name: u.first_name ?? "",
       last_name: u.last_name ?? "",
-      gender: (u.gender ?? "unspecified") as AdminUserGender,
-      phone,
-      dob,
-      is_active: (String(u.status ?? "active").toLowerCase() === "inactive" ? "inactive" : "active") as AdminUserStatus,
-    });
 
-    setPreviewUrl(null);
+      gender: (u.gender as any) ?? "unspecified",
+      phone: firstPhone ?? "",
+      dob: isoToYmd(u.dob ?? null),
+
+      status: (u.status as any) ?? "active",
+    });
   }, [userQuery.data]);
 
   const errors = useMemo(() => {
-    if (!draft) return { email: "", first: "", last: "", phone: "", dob: "" };
+    if (!form) {
+      return { email: "", first: "", last: "", phone: "", dob: "" };
+    }
 
-    const emailErr = !draft.email.trim()
+    const emailErr = !form.email.trim()
       ? "Email is required."
-      : !isValidEmail(draft.email)
+      : !isValidEmail(form.email)
       ? "Invalid email format."
       : "";
 
-    const firstErr = !draft.first_name.trim() ? "First name is required." : "";
-    const lastErr = !draft.last_name.trim() ? "Last name is required." : "";
+    const firstErr = !form.first_name.trim() ? "First name is required." : "";
+    const lastErr = !form.last_name.trim() ? "Last name is required." : "";
 
-    const phoneErr = !draft.phone.trim()
+    const phoneErr = !form.phone.trim()
       ? "Phone is required."
-      : !isValidPhone(draft.phone)
+      : !isValidPhone(form.phone)
       ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
       : "";
 
-    const dobErr = !draft.dob.trim()
+    const dobErr = !form.dob.trim()
       ? "DOB is required."
-      : !isValidDob(draft.dob)
+      : !isValidDob(form.dob)
       ? "Use YYYY-MM-DD format."
       : "";
 
     return { email: emailErr, first: firstErr, last: lastErr, phone: phoneErr, dob: dobErr };
-  }, [draft]);
+  }, [form]);
 
   const canSave = useMemo(() => {
-    if (!draft) return false;
+    if (!form) return false;
     return !errors.email && !errors.first && !errors.last && !errors.phone && !errors.dob;
-  }, [draft, errors]);
+  }, [form, errors]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      if (!userId || !draft) throw new Error("Missing user");
+      if (!form || typeof userId !== "number") throw new Error("Missing data");
+
+      // ✅ PUT /admin/editUser/:id (multipart form-data)
       return editAdminUser(userId, {
-        user_profile: draft.user_profile ?? null,
-        email: draft.email.trim(),
-        password: draft.password.trim() ? draft.password : undefined,
-        first_name: draft.first_name.trim(),
-        last_name: draft.last_name.trim(),
-        gender: draft.gender,
-        phone: draft.phone.trim(),
-        dob: draft.dob.trim(),
-        is_active: draft.is_active,
+        user_profile: form.user_profile ?? undefined,
+
+        email: form.email.trim(),
+        password: form.password.trim() ? form.password : undefined,
+
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+
+        gender: form.gender,
+        phone: form.phone.trim(),
+        dob: form.dob.trim(),
+
+        status: form.status,
       });
     },
     onSuccess: () => {
       toast.success("Customer updated");
-      onUpdated?.();
+      onUpdated();
       onClose();
     },
     onError: (err: any) => {
@@ -172,43 +192,19 @@ export default function EditCustomerModal({
     },
   });
 
-  const currentUserImg = userQuery.data?.user?.img_path ? toPublicUrl(userQuery.data.user.img_path) : null;
-  const avatarLetter = useMemo(() => {
-    const name = `${draft?.first_name ?? ""} ${draft?.last_name ?? ""}`.trim();
-    return name.slice(0, 1).toUpperCase() || "C";
-  }, [draft?.first_name, draft?.last_name]);
+  const body = (() => {
+    if (!enabled) {
+      return <p className="text-sm text-gray-500 dark:text-gray-400">No customer selected.</p>;
+    }
 
-  if (!draft) {
+    if (userQuery.isLoading || !form) {
+      return <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>;
+    }
+
+    const fullName = `${form.first_name} ${form.last_name}`.trim();
+    const avatarLetter = (fullName.slice(0, 1).toUpperCase() || "C");
+
     return (
-      <Modal open={open} title="Edit Customer" onClose={onClose} size="xl">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {userQuery.isLoading ? "Loading..." : "No customer selected."}
-        </p>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal
-      open={open}
-      title="Edit Customer"
-      description="Update customer info via /admin/editUser/:id (multipart/form-data)"
-      onClose={() => {
-        if (updateMutation.isPending) return;
-        onClose();
-      }}
-      size="xl"
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={updateMutation.isPending}>
-            Cancel
-          </Button>
-          <Button onClick={() => updateMutation.mutate()} disabled={!canSave || updateMutation.isPending}>
-            {updateMutation.isPending ? "Saving..." : "Update Customer"}
-          </Button>
-        </>
-      }
-    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT */}
         <div className="lg:col-span-8 space-y-6">
@@ -216,12 +212,12 @@ export default function EditCustomerModal({
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Update email, name, phone, dob and image.
+                Update customer profile (multipart form-data).
               </p>
             </div>
 
             <div className="p-5 space-y-5">
-              {/* Image */}
+              {/* image */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -233,7 +229,7 @@ export default function EditCustomerModal({
                       <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                         <ImageIcon className="h-4 w-4 text-gray-400" />
                         <span className="font-semibold">
-                          {draft.user_profile?.name ?? "No new file selected"}
+                          {form.user_profile?.name ?? "Keep existing image"}
                         </span>
                       </div>
 
@@ -245,33 +241,29 @@ export default function EditCustomerModal({
                           className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0] ?? null;
-                            setDraft((p) => ({ ...(p as Draft), user_profile: file }));
-                            if (file) {
-                              const url = URL.createObjectURL(file);
-                              setPreviewUrl(url);
-                            } else {
-                              setPreviewUrl(null);
-                            }
+                            setForm((p) => {
+                              if (!p) return p;
+                              const nextPreview = file ? URL.createObjectURL(file) : p.previewUrl;
+                              return { ...p, user_profile: file, previewUrl: nextPreview };
+                            });
                           }}
                         />
                       </label>
                     </div>
 
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      If no file selected, backend keeps old image.
+                      If you select a file, it will be uploaded as{" "}
+                      <code className="font-mono">user_profile</code>.
                     </p>
                   </div>
                 </div>
 
                 <div className="md:col-span-1">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Current / Preview</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</p>
                   <div className="mt-2 flex h-[120px] items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                    {previewUrl ? (
+                    {form.previewUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={previewUrl} alt="preview" className="h-full w-full object-cover" />
-                    ) : currentUserImg ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={currentUserImg} alt="current" className="h-full w-full object-cover" />
+                      <img src={form.previewUrl} alt="preview" className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xl font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                         {avatarLetter}
@@ -281,7 +273,7 @@ export default function EditCustomerModal({
                 </div>
               </div>
 
-              {/* Fields */}
+              {/* fields */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -293,8 +285,9 @@ export default function EditCustomerModal({
                     </div>
                     <Input
                       className="pl-9"
-                      value={draft.email}
-                      onChange={(e) => setDraft((p) => ({ ...(p as Draft), email: String(e.target.value) }))}
+                      value={form.email}
+                      onChange={(e) => setForm((p) => (p ? { ...p, email: String(e.target.value) } : p))}
+                      placeholder="example@gmail.com"
                     />
                   </div>
                   {errors.email ? <p className="text-xs text-error-500">{errors.email}</p> : null}
@@ -305,13 +298,13 @@ export default function EditCustomerModal({
                     Password (optional)
                   </p>
                   <Input
+                    value={form.password}
+                    onChange={(e) => setForm((p) => (p ? { ...p, password: String(e.target.value) } : p))}
+                    placeholder="Leave empty to keep unchanged"
                     type="password"
-                    value={draft.password}
-                    onChange={(e) => setDraft((p) => ({ ...(p as Draft), password: String(e.target.value) }))}
-                    placeholder="Leave empty to keep existing password"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    If empty, password is not changed.
+                    If empty, password will not be sent.
                   </p>
                 </div>
 
@@ -325,8 +318,9 @@ export default function EditCustomerModal({
                     </div>
                     <Input
                       className="pl-9"
-                      value={draft.first_name}
-                      onChange={(e) => setDraft((p) => ({ ...(p as Draft), first_name: String(e.target.value) }))}
+                      value={form.first_name}
+                      onChange={(e) => setForm((p) => (p ? { ...p, first_name: String(e.target.value) } : p))}
+                      placeholder="First name"
                     />
                   </div>
                   {errors.first ? <p className="text-xs text-error-500">{errors.first}</p> : null}
@@ -337,8 +331,9 @@ export default function EditCustomerModal({
                     Last Name <span className="text-error-500">*</span>
                   </p>
                   <Input
-                    value={draft.last_name}
-                    onChange={(e) => setDraft((p) => ({ ...(p as Draft), last_name: String(e.target.value) }))}
+                    value={form.last_name}
+                    onChange={(e) => setForm((p) => (p ? { ...p, last_name: String(e.target.value) } : p))}
+                    placeholder="Last name"
                   />
                   {errors.last ? <p className="text-xs text-error-500">{errors.last}</p> : null}
                 </div>
@@ -353,8 +348,9 @@ export default function EditCustomerModal({
                     </div>
                     <Input
                       className="pl-9"
-                      value={draft.phone}
-                      onChange={(e) => setDraft((p) => ({ ...(p as Draft), phone: String(e.target.value) }))}
+                      value={form.phone}
+                      onChange={(e) => setForm((p) => (p ? { ...p, phone: String(e.target.value) } : p))}
+                      placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
                     />
                   </div>
                   {errors.phone ? <p className="text-xs text-error-500">{errors.phone}</p> : null}
@@ -362,7 +358,7 @@ export default function EditCustomerModal({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    DOB <span className="text-error-500">*</span>
+                    Date of Birth <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
                     <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -370,8 +366,8 @@ export default function EditCustomerModal({
                     </div>
                     <Input
                       className="pl-9"
-                      value={draft.dob}
-                      onChange={(e) => setDraft((p) => ({ ...(p as Draft), dob: String(e.target.value) }))}
+                      value={form.dob}
+                      onChange={(e) => setForm((p) => (p ? { ...p, dob: String(e.target.value) } : p))}
                       placeholder="YYYY-MM-DD"
                     />
                   </div>
@@ -381,76 +377,110 @@ export default function EditCustomerModal({
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</p>
                   <Select
-                    key={`gender-${draft.gender}`}
+                    key={`g-${userId}-${form.gender}`}
                     options={GENDER_OPTIONS}
-                    defaultValue={draft.gender}
                     placeholder="Select gender"
-                    onChange={(v) => setDraft((p) => ({ ...(p as Draft), gender: v as AdminUserGender }))}
+                    defaultValue={String(form.gender)}
+                    onChange={(v) => setForm((p) => (p ? { ...p, gender: v as any } : p))}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status (is_active)</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
                   <Select
-                    key={`active-${draft.is_active}`}
+                    key={`s-${userId}-${form.status}`}
                     options={STATUS_OPTIONS}
-                    defaultValue={draft.is_active}
                     placeholder="Select status"
-                    onChange={(v) => setDraft((p) => ({ ...(p as Draft), is_active: v as AdminUserStatus }))}
+                    defaultValue={String(form.status)}
+                    onChange={(v) => setForm((p) => (p ? { ...p, status: v as any } : p))}
                   />
                 </div>
-              </div>
-
-              <div
-                className={cn(
-                  "rounded-[4px] border p-4 text-sm",
-                  canSave
-                    ? "border-success-200 bg-success-50 text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300"
-                    : "border-warning-200 bg-warning-50 text-warning-800 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-200",
-                )}
-              >
-                {canSave ? "Ready to update." : "Please fix invalid fields before updating."}
               </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT small preview */}
+        {/* RIGHT */}
         <div className="lg:col-span-4 space-y-6">
           <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Name + email + phone</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Preview</p>
 
-            <div className="mt-4 flex items-start gap-4">
-              <div className="h-14 w-14 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
-                {previewUrl ? (
+            <div className="mt-4 flex items-start gap-3">
+              <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                {form.previewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={previewUrl} alt="preview" className="h-full w-full object-cover" />
-                ) : currentUserImg ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={currentUserImg} alt="current" className="h-full w-full object-cover" />
+                  <img src={form.previewUrl} alt={fullName} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-base font-semibold text-gray-700 dark:text-gray-200">
+                  <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
                     {avatarLetter}
                   </div>
                 )}
               </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                  {`${draft.first_name} ${draft.last_name}`.trim() || "—"}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                  {fullName || "—"}
                 </p>
-                <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                  {draft.email || "—"}
-                </p>
-                <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                  {draft.phone || "—"}
-                </p>
+                <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{form.email || "—"}</p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant="solid"
+                    color={String(form.status).toLowerCase() === "active" ? "success" : "dark"}
+                    size="sm"
+                  >
+                    {form.status}
+                  </Badge>
+                </div>
               </div>
+            </div>
+
+            <div
+              className={cn(
+                "mt-4 rounded-[4px] border p-4",
+                canSave
+                  ? "border-success-200 bg-success-50 dark:border-success-900/40 dark:bg-success-500/10"
+                  : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10",
+              )}
+            >
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {canSave ? "Ready to update" : "Fix required fields"}
+              </p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Required: email, first name, last name, phone, dob.
+              </p>
             </div>
           </div>
         </div>
       </div>
+    );
+  })();
+
+  return (
+    <Modal
+      open={open}
+      title="Edit Customer"
+      description="Update customer data using PUT /admin/editUser/:id (form-data)."
+      onClose={() => {
+        if (updateMutation.isPending) return;
+        onClose();
+      }}
+      size="xl"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={updateMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => updateMutation.mutate()}
+            disabled={!canSave || updateMutation.isPending}
+          >
+            {updateMutation.isPending ? "Updating..." : "Update Customer"}
+          </Button>
+        </>
+      }
+    >
+      {body}
     </Modal>
   );
 }

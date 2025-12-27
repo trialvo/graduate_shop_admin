@@ -1,6 +1,8 @@
 // src/components/customers/customers-list/types.ts
 
-export type UserStatusTab = "ALL" | "ACTIVE" | "INACTIVE" | "DELETED";
+export type UserStatusTab = "ALL" | "ACTIVE" | "INACTIVE" | "SUSPENDED" | "DELETED";
+
+export type AdminStatus = "active" | "inactive" | "suspended" | string;
 
 export type Gender = "unspecified" | "male" | "female" | "other" | string;
 
@@ -14,7 +16,7 @@ export interface CustomerRow {
 
   img_path: string | null;
 
-  status: string; // "active" | "inactive"
+  status: AdminStatus;
   gender: Gender;
   dob: string | null;
 
@@ -29,6 +31,8 @@ export interface CustomerRow {
 
   created_at: string;
   deleted_at: string | null;
+
+  isDeleted: boolean;
 }
 
 export type TabConfig = {
