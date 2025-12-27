@@ -25,6 +25,22 @@ export type ProductVariationEntity = {
   status: 1 | 0;
 };
 
+/**
+ * ✅ List variations by product
+ * GET /api/v1/product/getvariations/:productId
+ */
+export async function getProductVariationsByProduct(productId: number) {
+  const res = await api.get(`/product/getvariations/${productId}`);
+  const payload = res.data;
+
+  if (Array.isArray(payload)) return payload as ProductVariationEntity[];
+  if (Array.isArray(payload?.data)) return payload.data as ProductVariationEntity[];
+  if (Array.isArray(payload?.variations)) return payload.variations as ProductVariationEntity[];
+  if (Array.isArray(payload?.product?.variations)) return payload.product.variations as ProductVariationEntity[];
+
+  return [] as ProductVariationEntity[];
+}
+
 export async function createProductVariation(payload: ProductVariationPayload) {
   const res = await api.post("/product/variation", payload);
   return res.data as { success: true; skuId: number };

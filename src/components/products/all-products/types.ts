@@ -16,9 +16,10 @@ export type Product = {
   categoryPath: CategoryPath;
 
   stockQty: number;
+  variantCount: number;
 
   price: number;
-  discount?: number; // percent or flat - UI only
+  discount?: number;
   salePrice?: number;
 
   status: ProductStatus;

@@ -19,20 +19,33 @@ type Props = {
   onDelete: (productId: string) => void;
 };
 
-const formatCategoryPath = (p: Product) => {
-  const { category, subCategory, childCategory } = p.categoryPath;
-  return [category, subCategory, childCategory].filter(Boolean).join(" > ");
-};
-
 const formatMoney = (n: number) => `$ ${Number(n ?? 0).toFixed(2)}`;
 
-const AllProductsTable: React.FC<Props> = ({
-  products,
-  onStockPlus,
-  onToggleStatus,
-  onEdit,
-  onDelete,
-}) => {
+function CategoryBadges({ p }: { p: Product }) {
+  const { category, subCategory, childCategory } = p.categoryPath;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200">
+        {category}
+      </span>
+
+      {subCategory ? (
+        <span className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200">
+          {subCategory}
+        </span>
+      ) : null}
+
+      {childCategory ? (
+        <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200">
+          {childCategory}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStatus, onEdit, onDelete }) => {
   return (
     <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
       <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
@@ -48,10 +61,10 @@ const AllProductsTable: React.FC<Props> = ({
               <TableCell isHeader className="min-w-[170px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Position
               </TableCell>
-              <TableCell isHeader className="min-w-[300px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+              <TableCell isHeader className="min-w-[360px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Category
               </TableCell>
-              <TableCell isHeader className="min-w-[200px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+              <TableCell isHeader className="min-w-[220px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Stock
               </TableCell>
               <TableCell isHeader className="min-w-[240px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
@@ -105,27 +118,33 @@ const AllProductsTable: React.FC<Props> = ({
                     #{p.positionNumber}
                   </TableCell>
 
-                  <TableCell className="px-4 py-4 text-sm text-gray-700 dark:text-gray-200">
-                    <span className="block truncate max-w-[320px]">{formatCategoryPath(p)}</span>
+                  <TableCell className="px-4 py-4">
+                    <CategoryBadges p={p} />
                   </TableCell>
 
+                  {/* ✅ Stock: total stock + variants */}
                   <TableCell className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "text-sm font-semibold",
-                          lowStock ? "text-error-500" : "text-gray-900 dark:text-white",
-                        )}
-                      >
-                        {p.stockQty}
-                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span
+                          className={cn(
+                            "text-sm font-semibold",
+                            lowStock ? "text-error-500" : "text-gray-900 dark:text-white",
+                          )}
+                        >
+                          Total: {p.stockQty}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Variants: {p.variantCount}
+                        </span>
+                      </div>
 
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onStockPlus(p.id)}
                         className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06]"
-                        ariaLabel="Increase stock"
+                        ariaLabel="Update stock"
                       >
                         <Plus className="h-4 w-4 text-brand-600" />
                       </Button>
@@ -192,8 +211,6 @@ const AllProductsTable: React.FC<Props> = ({
           </TableBody>
         </Table>
       </div>
-
-      {/* Pagination UI stays in page (server pagination) */}
     </div>
   );
 };

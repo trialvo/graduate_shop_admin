@@ -191,7 +191,7 @@ function cleanParams<T extends Record<string, any>>(params?: T) {
     if (v === undefined || v === null) continue;
     if (typeof v === "string" && v.trim() === "") continue;
 
-    // ✅ special rule: DO NOT send offset=0
+    // ✅ DO NOT send offset=0
     if (k === "offset" && Number(v) === 0) continue;
 
     next[k] = v;
@@ -225,5 +225,21 @@ export async function updateProduct(id: number, payload: UpdateProductPayload): 
 
 export async function deleteProduct(id: number): Promise<{ success: true } | any> {
   const res = await api.delete(`/product/${id}`);
+  return res.data;
+}
+
+/**
+ * ✅ Status toggle API
+ * PUT /api/v1/product/:id  (multipart)
+ * body: status=true/false
+ */
+export async function updateProductStatus(id: number, status: boolean): Promise<{ success: true } | any> {
+  const fd = new FormData();
+  fd.append("status", status ? "true" : "false");
+
+  const res = await api.put(`/product/${id}`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return res.data;
 }

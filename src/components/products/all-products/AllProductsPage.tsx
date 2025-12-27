@@ -14,12 +14,12 @@ import AllProductsTable from "./AllProductsTable";
 import type { Product, ProductListFilters } from "./types";
 import { toUiProduct } from "./utils";
 
-import { getProducts, deleteProduct } from "@/api/products.api";
+import { deleteProduct, getProducts, updateProductStatus } from "@/api/products.api";
 import { getChildCategories, getMainCategories, getSubCategories } from "@/api/categories.api";
+
 import EditProductModal from "./EditProductModal";
+import StockVariantsModal from "./StockVariantsModal";
 import DeleteProductConfirmModal from "./DeleteProductConfirmModal";
-
-
 
 type Option = { value: string; label: string };
 
@@ -42,7 +42,6 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 const AllProductsPage: React.FC = () => {
   const qc = useQueryClient();
 
-  // ✅ default initial request should be ONLY: ?limit=20
   const [filters, setFilters] = React.useState<ProductListFilters>({
     q: "",
     mainCategoryId: undefined,
@@ -60,7 +59,6 @@ const AllProductsPage: React.FC = () => {
 
   const debouncedQ = useDebouncedValue(filters.q, 450);
 
-  // lookups (no params => load all)
   const { data: mainRes } = useQuery({
     queryKey: ["mainCategories-all"],
     queryFn: () => getMainCategories(),
@@ -121,7 +119,7 @@ const AllProductsPage: React.FC = () => {
     [availableChild],
   );
 
-  // ✅ Build params: limit always, offset only if >0, q only if provided
+  // ✅ initial request => only ?limit=20 (no offset=0, no search=on)
   const productsQuery = useQuery({
     queryKey: ["products", { ...filters, q: debouncedQ }],
     queryFn: () => {
@@ -153,12 +151,31 @@ const AllProductsPage: React.FC = () => {
     return list.map((p) => toUiProduct(p, { mainNameById, subNameById, childNameById }));
   }, [productsQuery.data, mainNameById, subNameById, childNameById]);
 
-  // modals
+  // -----------------------
+  // ✅ Stock modal state
+  // -----------------------
+  const [stockOpen, setStockOpen] = React.useState(false);
+  const [stockProductId, setStockProductId] = React.useState<number | null>(null);
+  const stockProductName = React.useMemo(() => {
+    if (!stockProductId) return undefined;
+    const p = productsQuery.data?.products?.find((x) => x.id === stockProductId);
+    return p?.name;
+  }, [productsQuery.data, stockProductId]);
+
+  const onStockPlus = (productId: string) => {
+    setStockProductId(Number(productId));
+    setStockOpen(true);
+  };
+
+  // -----------------------
+  // ✅ Edit/Delete modals
+  // -----------------------
   const [editOpen, setEditOpen] = React.useState(false);
   const [editId, setEditId] = React.useState<number | null>(null);
 
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteId, setDeleteId] = React.useState<number | null>(null);
+
   const deleteName = React.useMemo(() => {
     const p = productsQuery.data?.products?.find((x) => x.id === deleteId);
     return p?.name;
@@ -186,6 +203,38 @@ const AllProductsPage: React.FC = () => {
   const onDelete = (productId: string) => {
     setDeleteId(Number(productId));
     setDeleteOpen(true);
+  };
+
+  // -----------------------
+  // ✅ Status toggle API
+  // -----------------------
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: boolean }) => updateProductStatus(id, status),
+    onSuccess: () => {
+      toast.success("Status updated");
+      qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update status";
+      toast.error(msg);
+      qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
+    },
+  });
+
+  const onToggleStatus = (id: string, next: Product["status"]) => {
+    const pid = Number(id);
+    const nextBool = next === "active";
+
+    // optimistic cache update
+    qc.setQueriesData({ queryKey: ["products"] }, (old: any) => {
+      if (!old?.products) return old;
+      return {
+        ...old,
+        products: old.products.map((p: any) => (Number(p.id) === pid ? { ...p, status: nextBool } : p)),
+      };
+    });
+
+    statusMutation.mutate({ id: pid, status: nextBool });
   };
 
   const lowStockCount = uiProducts.filter((p) => p.stockQty <= 10).length;
@@ -258,50 +307,54 @@ const AllProductsPage: React.FC = () => {
           </div>
 
           {/* Filters row */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <Select
-              key={`main-${filters.mainCategoryId ?? ""}`}
-              options={mainOptions}
-              placeholder="All Categories"
-              defaultValue={filters.mainCategoryId ? String(filters.mainCategoryId) : ""}
-              onChange={(v) => {
-                const id = v ? Number(v) : undefined;
-                setFilters((p) => ({
-                  ...p,
-                  mainCategoryId: id,
-                  subCategoryId: undefined,
-                  childCategoryId: undefined,
-                  offset: 0,
-                }));
-              }}
-            />
+          <div className="rounded-[6px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
+            <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Category Filter</div>
 
-            <Select
-              key={`sub-${filters.mainCategoryId ?? ""}-${filters.subCategoryId ?? ""}`}
-              options={subOptions}
-              placeholder="All Sub Categories"
-              defaultValue={filters.subCategoryId ? String(filters.subCategoryId) : ""}
-              onChange={(v) => {
-                const id = v ? Number(v) : undefined;
-                setFilters((p) => ({
-                  ...p,
-                  subCategoryId: id,
-                  childCategoryId: undefined,
-                  offset: 0,
-                }));
-              }}
-            />
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+              <Select
+                key={`main-${filters.mainCategoryId ?? ""}`}
+                options={mainOptions}
+                placeholder="All Categories"
+                defaultValue={filters.mainCategoryId ? String(filters.mainCategoryId) : ""}
+                onChange={(v) => {
+                  const id = v ? Number(v) : undefined;
+                  setFilters((p) => ({
+                    ...p,
+                    mainCategoryId: id,
+                    subCategoryId: undefined,
+                    childCategoryId: undefined,
+                    offset: 0,
+                  }));
+                }}
+              />
 
-            <Select
-              key={`child-${filters.subCategoryId ?? ""}-${filters.childCategoryId ?? ""}`}
-              options={childOptions}
-              placeholder="All Child Categories"
-              defaultValue={filters.childCategoryId ? String(filters.childCategoryId) : ""}
-              onChange={(v) => {
-                const id = v ? Number(v) : undefined;
-                setFilters((p) => ({ ...p, childCategoryId: id, offset: 0 }));
-              }}
-            />
+              <Select
+                key={`sub-${filters.mainCategoryId ?? ""}-${filters.subCategoryId ?? ""}`}
+                options={subOptions}
+                placeholder="All Sub Categories"
+                defaultValue={filters.subCategoryId ? String(filters.subCategoryId) : ""}
+                onChange={(v) => {
+                  const id = v ? Number(v) : undefined;
+                  setFilters((p) => ({
+                    ...p,
+                    subCategoryId: id,
+                    childCategoryId: undefined,
+                    offset: 0,
+                  }));
+                }}
+              />
+
+              <Select
+                key={`child-${filters.subCategoryId ?? ""}-${filters.childCategoryId ?? ""}`}
+                options={childOptions}
+                placeholder="All Child Categories"
+                defaultValue={filters.childCategoryId ? String(filters.childCategoryId) : ""}
+                onChange={(v) => {
+                  const id = v ? Number(v) : undefined;
+                  setFilters((p) => ({ ...p, childCategoryId: id, offset: 0 }));
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -310,8 +363,8 @@ const AllProductsPage: React.FC = () => {
       <div className="w-full min-w-0">
         <AllProductsTable
           products={uiProducts}
-          onStockPlus={(id) => console.log("stock modal (optional):", id)}
-          onToggleStatus={(id, next) => console.log("toggle status server later:", id, next)}
+          onStockPlus={onStockPlus}
+          onToggleStatus={onToggleStatus}
           onEdit={onEdit}
           onDelete={onDelete}
         />
@@ -341,6 +394,18 @@ const AllProductsPage: React.FC = () => {
           Next
         </Button>
       </div>
+
+      {/* ✅ Stock modal (variations) */}
+      <StockVariantsModal
+        open={stockOpen}
+        productId={stockProductId}
+        productName={stockProductName}
+        onClose={() => {
+          setStockOpen(false);
+          setStockProductId(null);
+        }}
+        onUpdated={() => qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined)}
+      />
 
       {/* Edit */}
       <EditProductModal
