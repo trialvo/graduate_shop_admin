@@ -1,24 +1,29 @@
 // src/components/customers/create-customer/CreateCustomerPage.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   BadgeCheck,
-  Calendar,
   Mail,
   Phone,
   User2,
   Image as ImageIcon,
   ShieldAlert,
+  UploadCloud,
+  X,
+  Lock,
+  Calendar,
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import DatePicker from "@/components/form/date-picker";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
+import StatusToggle from "@/components/ui/button/StatusToggle";
 import { cn } from "@/lib/utils";
 
 import { createAdminUser, type AdminUserGender } from "@/api/admin-users.api";
@@ -33,11 +38,6 @@ const GENDER_OPTIONS: Option[] = [
   { value: "other", label: "Other" },
 ];
 
-const STATUS_OPTIONS: Option[] = [
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
-
 function isValidPhone(phone: string): boolean {
   const v = phone.trim();
   return /^(\+8801\d{9}|01\d{9})$/.test(v);
@@ -48,10 +48,6 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
-function isValidDob(dob: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(dob.trim());
-}
-
 const INITIAL_FORM: CreateCustomerForm = {
   user_profile: null,
   email: "",
@@ -60,19 +56,31 @@ const INITIAL_FORM: CreateCustomerForm = {
   last_name: "",
   gender: "unspecified",
   phone: "",
-  dob: "",
+  dob: "", // optional
   is_active: "active",
 };
 
 export default function CreateCustomerPage() {
   const [form, setForm] = useState<CreateCustomerForm>(INITIAL_FORM);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const avatarLetter = useMemo(() => {
-    const s = `${form.first_name} ${form.last_name}`.trim();
-    const c = s.slice(0, 1).toUpperCase();
-    return c || "C";
+  const fullName = useMemo(() => {
+    return `${form.first_name} ${form.last_name}`.trim();
   }, [form.first_name, form.last_name]);
+
+  const avatarLetter = useMemo(() => {
+    const c = fullName.slice(0, 1).toUpperCase();
+    return c || "C";
+  }, [fullName]);
+
+  // cleanup preview object url
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const errors = useMemo(() => {
     const emailErr = !form.email.trim()
@@ -96,19 +104,12 @@ export default function CreateCustomerPage() {
       ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
       : "";
 
-    const dobErr = !form.dob.trim()
-      ? "DOB is required."
-      : !isValidDob(form.dob)
-      ? "Use YYYY-MM-DD format. Example: 1995-11-05"
-      : "";
-
     return {
       email: emailErr,
       pass: passErr,
       first: firstErr,
       last: lastErr,
       phone: phoneErr,
-      dob: dobErr,
     };
   }, [form]);
 
@@ -118,8 +119,7 @@ export default function CreateCustomerPage() {
       !errors.pass &&
       !errors.first &&
       !errors.last &&
-      !errors.phone &&
-      !errors.dob
+      !errors.phone
     );
   }, [errors]);
 
@@ -133,14 +133,18 @@ export default function CreateCustomerPage() {
         last_name: form.last_name.trim(),
         gender: form.gender as AdminUserGender,
         phone: form.phone.trim(),
-        dob: form.dob.trim(),
+        dob: form.dob.trim(), // optional
         is_active: form.is_active,
       });
     },
     onSuccess: () => {
       toast.success("Customer created successfully");
       setForm(INITIAL_FORM);
+
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
+
+      if (fileInputRef.current) fileInputRef.current.value = "";
     },
     onError: (err: any) => {
       const msg =
@@ -153,25 +157,45 @@ export default function CreateCustomerPage() {
 
   const reset = () => {
     setForm(INITIAL_FORM);
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const pickFile = () => fileInputRef.current?.click();
+
+  const removeFile = () => {
+    setForm((p) => ({ ...p, user_profile: null }));
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0] ?? null;
+
+    setForm((p) => ({ ...p, user_profile: file }));
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const requiredLabel =
+    "Required: email, password, first name, last name, phone.";
 
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Create Customer" />
-
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Create Customer
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Create a new customer from Admin panel (multipart form-data).
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT: FORM */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="space-y-6 lg:col-span-8">
           <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -182,84 +206,140 @@ export default function CreateCustomerPage() {
               </p>
             </div>
 
-            <div className="p-5 space-y-5">
-              {/* Image upload */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Profile Image (user_profile)
-                  </p>
+            <div className="space-y-6 p-5">
+              {/* Profile Image + Upload + Status (RESPONSIVE GRID) */}
+              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+                  {/* Preview */}
+                  <div className="md:col-span-4 lg:col-span-3">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Profile Photo
+                    </p>
 
-                  <div className="mt-2 rounded-[4px] border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                        <ImageIcon className="h-4 w-4 text-gray-400" />
-                        <span className="font-semibold">
-                          {form.user_profile?.name ?? "No file selected"}
-                        </span>
+                    <div className="mt-2 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                      <div className="aspect-square w-full">
+                        {previewUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={previewUrl}
+                            alt="profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xl font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                              {avatarLetter}
+                            </div>
+                          </div>
+                        )}
                       </div>
-
-                      <label className="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
-                        Choose File
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] ?? null;
-
-                            setForm((p) => ({ ...p, user_profile: file }));
-
-                            if (file) {
-                              const url = URL.createObjectURL(file);
-                              setPreviewUrl(url);
-                            } else {
-                              setPreviewUrl(null);
-                            }
-                          }}
-                        />
-                      </label>
                     </div>
 
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Uploaded as{" "}
-                      <code className="font-mono">user_profile</code> in form-data.
+                      Best ratio: 1:1 (square)
                     </p>
                   </div>
-                </div>
 
-                <div className="md:col-span-1">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Preview
-                  </p>
-                  <div className="mt-2 flex h-[120px] items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                    {previewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={previewUrl}
-                        alt="preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xl font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                        {avatarLetter}
+                  {/* Upload */}
+                  <div className="md:col-span-8 lg:col-span-6">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Upload Image{" "}
+                      <span className="text-xs text-gray-400">
+                        (user_profile)
+                      </span>
+                    </p>
+
+                    <div className="mt-2 rounded-[4px] border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                            <ImageIcon size={18} />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                              {form.user_profile?.name ?? "No file selected"}
+                            </p>
+                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                              <code className="font-mono">user_profile</code> in
+                              form-data
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+
+                          {form.user_profile ? (
+                            <Button
+                              variant="outline"
+                              onClick={removeFile}
+                              className="w-full sm:w-auto"
+                              startIcon={<X size={16} />}
+                            >
+                              Remove
+                            </Button>
+                          ) : null}
+
+                          <Button
+                            variant="outline"
+                            onClick={pickFile}
+                            className="w-full sm:w-auto"
+                            startIcon={<UploadCloud size={16} />}
+                          >
+                            Choose File
+                          </Button>
+                        </div>
                       </div>
-                    )}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="md:col-span-12 lg:col-span-3">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Status
+                    </p>
+
+                    <div className="mt-2 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {form.is_active === "active" ? "Active" : "Inactive"}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          Toggle customer access
+                        </p>
+                      </div>
+
+                      <StatusToggle
+                        value={form.is_active}
+                        onChange={(v) =>
+                          setForm((p) => ({
+                            ...p,
+                            is_active: v as CreateCustomerForm["is_active"],
+                          }))
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Fields */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {/* Email */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Mail size={16} />
-                    </div>
                     <Input
+                      startIcon={<Mail size={16} />}
                       className="pl-9"
                       value={form.email}
                       onChange={(e) =>
@@ -276,35 +356,39 @@ export default function CreateCustomerPage() {
                   ) : null}
                 </div>
 
+                {/* Password */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password <span className="text-error-500">*</span>
                   </p>
-                  <Input
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        password: String(e.target.value),
-                      }))
-                    }
-                    placeholder="minimum 8 characters"
-                    type="password"
-                  />
+                  <div className="relative">
+                    <Input
+                      startIcon={<Lock size={16} />}
+                      className="pl-9"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          password: String(e.target.value),
+                        }))
+                      }
+                      placeholder="minimum 8 characters"
+                      type="password"
+                    />
+                  </div>
                   {errors.pass ? (
                     <p className="text-xs text-error-500">{errors.pass}</p>
                   ) : null}
                 </div>
 
+                {/* First Name */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     First Name <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <User2 size={16} />
-                    </div>
                     <Input
+                      startIcon={<User2 size={16} />}
                       className="pl-9"
                       value={form.first_name}
                       onChange={(e) =>
@@ -321,34 +405,38 @@ export default function CreateCustomerPage() {
                   ) : null}
                 </div>
 
+                {/* Last Name */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Last Name <span className="text-error-500">*</span>
                   </p>
-                  <Input
-                    value={form.last_name}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        last_name: String(e.target.value),
-                      }))
-                    }
-                    placeholder="Last name"
-                  />
+                  <div className="relative">
+                    <Input
+                      startIcon={<User2 size={16} />}
+                      className="pl-9"
+                      value={form.last_name}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          last_name: String(e.target.value),
+                        }))
+                      }
+                      placeholder="Last name"
+                    />
+                  </div>
                   {errors.last ? (
                     <p className="text-xs text-error-500">{errors.last}</p>
                   ) : null}
                 </div>
 
+                {/* Phone */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Phone <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Phone size={16} />
-                    </div>
                     <Input
+                      startIcon={<Phone size={16} />}
                       className="pl-9"
                       value={form.phone}
                       onChange={(e) =>
@@ -365,31 +453,39 @@ export default function CreateCustomerPage() {
                   ) : null}
                 </div>
 
+                {/* DOB (Optional) with DatePicker */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Date of Birth <span className="text-error-500">*</span>
+                    Date of Birth{" "}
+                    <span className="text-xs text-gray-400">(optional)</span>
                   </p>
+
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Calendar size={16} />
-                    </div>
-                    <Input
-                      className="pl-9"
+                    <DatePicker
                       value={form.dob}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         setForm((p) => ({
                           ...p,
-                          dob: String(e.target.value),
+                          dob: String(v ?? ""),
                         }))
                       }
-                      placeholder="YYYY-MM-DD"
+                      placeholder="Select date"
+                      showClear={true}
+                      showToday={true}
+                      yearRange={{
+                        from: new Date().getFullYear() - 80,
+                        to: new Date().getFullYear(),
+                      }}
                     />
                   </div>
-                  {errors.dob ? (
-                    <p className="text-xs text-error-500">{errors.dob}</p>
-                  ) : null}
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    If your DatePicker returns a date string, it will save as
+                    YYYY-MM-DD.
+                  </p>
                 </div>
 
+                {/* Gender */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Gender
@@ -407,40 +503,25 @@ export default function CreateCustomerPage() {
                     }
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Status (is_active)
-                  </p>
-                  <Select
-                    key={`status-${form.is_active}`}
-                    options={STATUS_OPTIONS}
-                    placeholder="Select status"
-                    defaultValue={form.is_active}
-                    onChange={(v) =>
-                      setForm((p) => ({
-                        ...p,
-                        is_active: v as CreateCustomerForm["is_active"],
-                      }))
-                    }
-                  />
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Actions (responsive) */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
             <Button
               variant="outline"
               onClick={reset}
               disabled={createMutation.isPending}
+              className="w-full sm:w-auto"
             >
               Reset
             </Button>
+
             <Button
               onClick={() => createMutation.mutate()}
               disabled={!canSubmit || createMutation.isPending}
+              className="w-full sm:w-auto"
             >
               {createMutation.isPending ? "Saving..." : "Create Customer"}
             </Button>
@@ -448,7 +529,7 @@ export default function CreateCustomerPage() {
         </div>
 
         {/* RIGHT: Preview Card */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="space-y-6 lg:col-span-4">
           <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -478,7 +559,7 @@ export default function CreateCustomerPage() {
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                    {`${form.first_name} ${form.last_name}`.trim() || "—"}
+                    {fullName || "—"}
                   </p>
 
                   <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -512,19 +593,23 @@ export default function CreateCustomerPage() {
                   "mt-5 rounded-[4px] border p-4",
                   canSubmit
                     ? "border-success-200 bg-success-50 dark:border-success-900/40 dark:bg-success-500/10"
-                    : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10",
+                    : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10"
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                    {canSubmit ? <BadgeCheck size={18} /> : <ShieldAlert size={18} />}
+                    {canSubmit ? (
+                      <BadgeCheck size={18} />
+                    ) : (
+                      <ShieldAlert size={18} />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {canSubmit ? "Ready to create" : "Fix required fields"}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Required: email, password, first name, last name, phone, dob.
+                      {requiredLabel}
                     </p>
                   </div>
                 </div>
@@ -538,8 +623,10 @@ export default function CreateCustomerPage() {
             </p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>• Phone supports BD format: 01xxxxxxxxx or +8801xxxxxxxxx</li>
-              <li>• DOB must be YYYY-MM-DD format.</li>
-              <li>• Image is uploaded as user_profile file.</li>
+              <li>• DOB is optional (you can skip it).</li>
+              <li>
+                • Image is uploaded as user_profile file (square recommended).
+              </li>
             </ul>
           </div>
         </div>
