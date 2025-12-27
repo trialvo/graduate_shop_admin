@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { CheckCircle2, Copy, Wand2 } from "lucide-react";
+import { CheckCircle2, Copy, Wand2, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
@@ -111,6 +111,32 @@ function ensureMatrixRows(
   return next;
 }
 
+function getApiErrorMessage(err: any): string {
+  // axios error shape
+  const data = err?.response?.data;
+
+  // your API: { flag: 422, error: "..." }
+  if (typeof data?.error === "string" && data.error.trim()) return data.error.trim();
+
+  // sometimes backend uses message
+  if (typeof data?.message === "string" && data.message.trim()) return data.message.trim();
+
+  // fallback: axios/network
+  if (typeof err?.message === "string" && err.message.trim()) return err.message.trim();
+
+  return "Failed to create product";
+}
+
+function getSuccessProductId(res: any): number | null {
+  // your API: { success: true, productId: 7 }
+  if (res?.success === true && Number.isFinite(Number(res?.productId))) return Number(res.productId);
+
+  // fallback (older)
+  if (Number.isFinite(Number(res?.productId))) return Number(res.productId);
+
+  return null;
+}
+
 export default function CreateProductPage() {
   // -------------------- Lookups (NO params) --------------------
   const { data: mainRes, isLoading: mainLoading } = useQuery({
@@ -158,11 +184,21 @@ export default function CreateProductPage() {
   const mainCategories = useMemo(() => unwrapList<any>(mainRes), [mainRes]);
   const subCategories = useMemo(() => unwrapList<any>(subRes), [subRes]);
   const childCategories = useMemo(() => unwrapList<any>(childRes), [childRes]);
-  const brands = useMemo(() => unwrapList<any>(brandRes).filter((b: any) => b.status !== false), [brandRes]);
-  const colors = useMemo(() => unwrapList<any>(colorRes).filter((c: any) => c.status !== false), [colorRes]);
-  const attributes = useMemo(() => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false), [attrRes]);
+  const brands = useMemo(
+    () => unwrapList<any>(brandRes).filter((b: any) => b.status !== false),
+    [brandRes],
+  );
+  const colors = useMemo(
+    () => unwrapList<any>(colorRes).filter((c: any) => c.status !== false),
+    [colorRes],
+  );
+  const attributes = useMemo(
+    () => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false),
+    [attrRes],
+  );
 
-  const lookupsLoading = mainLoading || subLoading || childLoading || brandLoading || colorLoading || attrLoading;
+  const lookupsLoading =
+    mainLoading || subLoading || childLoading || brandLoading || colorLoading || attrLoading;
 
   // -------------------- Form State --------------------
   const [productName, setProductName] = useState("");
@@ -208,6 +244,11 @@ export default function CreateProductPage() {
   const [matrix, setMatrix] = useState<VariantRow[]>([]);
 
   const [validationError, setValidationError] = useState("");
+  const [errorBannerVisible, setErrorBannerVisible] = useState(true);
+
+  useEffect(() => {
+    if (validationError) setErrorBannerVisible(true);
+  }, [validationError]);
 
   // -------------------- Default selections when lookups load --------------------
   useEffect(() => {
@@ -225,7 +266,9 @@ export default function CreateProductPage() {
       setSubCategoryId(0);
       return;
     }
-    setSubCategoryId((p) => (availableSubs.some((s: any) => s.id === p) ? p : Number(availableSubs[0]?.id ?? 0)));
+    setSubCategoryId((p) =>
+      availableSubs.some((s: any) => s.id === p) ? p : Number(availableSubs[0]?.id ?? 0),
+    );
   }, [availableSubs]);
 
   const availableChild = useMemo(() => {
@@ -238,7 +281,9 @@ export default function CreateProductPage() {
       setChildCategoryId(0);
       return;
     }
-    setChildCategoryId((p) => (availableChild.some((c: any) => c.id === p) ? p : Number(availableChild[0]?.id ?? 0)));
+    setChildCategoryId((p) =>
+      availableChild.some((c: any) => c.id === p) ? p : Number(availableChild[0]?.id ?? 0),
+    );
   }, [availableChild]);
 
   useEffect(() => {
@@ -336,6 +381,7 @@ export default function CreateProductPage() {
     () => colors.filter((c: any) => !selectedColorIds.includes(Number(c.id))),
     [colors, selectedColorIds],
   );
+
   const colorOptions: Option[] = useMemo(
     () => remainingColors.map((c: any) => ({ value: String(c.id), label: String(c.name) })),
     [remainingColors],
@@ -393,12 +439,32 @@ export default function CreateProductPage() {
   // -------------------- Submit --------------------
   const createMutation = useMutation({
     mutationFn: createProduct,
-    onSuccess: (res) => {
-      toast.success(`Product created (ID: ${res.productId})`);
+    onSuccess: (res: any) => {
+      const productId = getSuccessProductId(res);
+
+      if (res?.success === true) {
+        toast.success(productId ? `Product created (ID: ${productId})` : "Product created");
+        setValidationError("");
+        setErrorBannerVisible(false);
+        return;
+      }
+
+      // defensive: backend might return 200 but success false
+      const msg =
+        (typeof res?.error === "string" && res.error.trim()) ||
+        (typeof res?.message === "string" && res.message.trim()) ||
+        "Failed to create product";
+      toast.error(msg);
+      setValidationError(msg);
+      setErrorBannerVisible(true);
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to create product";
+      const msg = getApiErrorMessage(err);
       toast.error(msg);
+
+      // keep error banner visible & sticky
+      setValidationError(msg);
+      setErrorBannerVisible(true);
     },
   });
 
@@ -406,9 +472,9 @@ export default function CreateProductPage() {
     const err = validate();
     if (err) {
       setValidationError(err);
+      setErrorBannerVisible(true);
       return;
     }
-    setValidationError("");
 
     const variations = matrix
       .filter((r) => r.active)
@@ -462,18 +528,51 @@ export default function CreateProductPage() {
 
   return (
     <div className="space-y-6">
+      {/* ✅ Fixed floating banner under header (always visible on scroll) */}
+      {validationError && errorBannerVisible ? (
+        <div
+          className={cn("fixed left-0 right-0 z-[60] px-4")}
+          style={{
+            top: "calc(var(--app-header-height, 72px) + 12px)",
+          }}
+        >
+          <div
+            className={cn(
+              "mx-auto w-full max-w-[1200px]",
+              "rounded-[4px] border border-error-200 bg-error-50 px-4 py-3",
+              "text-sm font-medium text-error-700 shadow-theme-xs",
+              "dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300",
+            )}
+            role="alert"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 flex-1 pr-2">{validationError}</p>
+
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border",
+                  "border-error-200 bg-white/70 text-error-700 hover:bg-white",
+                  "dark:border-error-900/40 dark:bg-white/[0.03] dark:text-error-300 dark:hover:bg-white/[0.06]",
+                )}
+                onClick={() => setErrorBannerVisible(false)}
+                aria-label="Dismiss error"
+                title="Dismiss"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Product</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Dynamic load: category, brand, color, attribute & attribute variants from API.
         </p>
       </div>
-
-      {validationError ? (
-        <div className="rounded-[4px] border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
-          {validationError}
-        </div>
-      ) : null}
 
       {/* Basic */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
@@ -572,16 +671,17 @@ export default function CreateProductPage() {
               <div className="flex-1">
                 <Input value={skuBase} onChange={(e) => setSkuBase(String(e.target.value))} disabled={skuMode === "auto"} placeholder="SKU base" />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button
                   variant="outline"
                   onClick={() => navigator.clipboard?.writeText(skuBase).catch(() => undefined)}
                   disabled={!skuBase.trim()}
                   startIcon={<Copy size={16} />}
+                  className="w-full sm:w-auto"
                 >
                   Copy
                 </Button>
-                <Button onClick={generateSkuBase} disabled={skuMode !== "auto"} startIcon={<Wand2 size={16} />}>
+                <Button onClick={generateSkuBase} disabled={skuMode !== "auto"} startIcon={<Wand2 size={16} />} className="w-full sm:w-auto">
                   Generate
                 </Button>
               </div>
@@ -615,7 +715,6 @@ export default function CreateProductPage() {
           </p>
         </div>
 
-        {/* Colors dropdown unique */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -650,6 +749,7 @@ export default function CreateProductPage() {
                       type="button"
                       className="text-error-500 hover:text-error-600"
                       onClick={() => setSelectedColorIds((p) => p.filter((x) => x !== Number(c.id)))}
+                      aria-label="Remove color"
                     >
                       ×
                     </button>
@@ -659,7 +759,6 @@ export default function CreateProductPage() {
             ) : null}
           </div>
 
-          {/* Variants from attribute */}
           <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Attribute Variants <span className="text-error-500">*</span>

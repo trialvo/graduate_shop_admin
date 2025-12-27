@@ -19,7 +19,7 @@ type Props = {
   onDelete: (productId: string) => void;
 };
 
-const formatMoney = (n: number) => `$ ${Number(n ?? 0).toFixed(2)}`;
+const formatMoney = (n: number) => `${Number(n ?? 0).toFixed(2)}`;
 
 function CategoryBadges({ p }: { p: Product }) {
   const { category, subCategory, childCategory } = p.categoryPath;
