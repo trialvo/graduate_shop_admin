@@ -20,6 +20,7 @@ import { getMainCategories, getSubCategories, getChildCategories } from "@/api/c
 import { getAttributes } from "@/api/attributes.api";
 import { getColors } from "@/api/colors.api";
 import BaseModal from "./BaseModal";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
   open: boolean;
@@ -701,7 +702,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                         title={marked ? "Will be deleted" : "Click to mark for delete"}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={img.path} alt={`img-${img.id}`} className={cn("h-20 w-full object-cover", marked && "opacity-40")} />
+                        <img src={toPublicUrl(img.path)} alt={`img-${img.id}`} className={cn("h-20 w-full object-cover", marked && "opacity-40")} />
                         <div
                           className={cn(
                             "absolute right-2 top-2 rounded-full px-2 py-1 text-[11px] font-semibold",

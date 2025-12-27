@@ -65,7 +65,7 @@ export default function BaseModal({
             </button>
           </div>
 
-          <div className="max-h-[calc(92vh-120px)] overflow-y-auto px-5 py-4">
+          <div className="max-h-[600px] overflow-y-auto px-5 py-4">
             {children}
           </div>
 
