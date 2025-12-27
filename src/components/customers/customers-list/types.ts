@@ -1,47 +1,37 @@
-export type CustomerType =
-  | "ALL"
-  | "LOYAL"
-  | "VIP"
-  | "NEW"
-  | "ACTIVE"
-  | "FAKE"
-  | "RISKY"
-  | "INACTIVE"
-  | "BLOCKED";
+// src/components/customers/customers-list/types.ts
 
-export type SalesPeriod =
-  | "ALL_TIME"
-  | "LAST_7_DAYS"
-  | "LAST_30_DAYS"
-  | "THIS_YEAR";
+export type UserStatusTab = "ALL" | "ACTIVE" | "INACTIVE" | "DELETED";
 
-export type CustomerBehavior = "REGULAR" | "FRAUD" | "RISKY";
+export type Gender = "unspecified" | "male" | "female" | "other" | string;
 
 export interface CustomerRow {
   id: number;
+
+  email: string;
+  first_name: string;
+  last_name: string;
   name: string;
-  phone: string;
-  avatarLetter: string;
 
-  totalOrderAmountBdt: number;
+  img_path: string | null;
 
-  customerType: Exclude<CustomerType, "ALL">;
+  status: string; // "active" | "inactive"
+  gender: Gender;
+  dob: string | null;
 
-  behavior: CustomerBehavior; // ✅ NEW
-  ipAddress: string; // ✅ already
-  ipBlocked: boolean; // ✅ NEW
+  is_email_verified: boolean;
+  is_fully_verified: boolean;
+  has_password: boolean;
 
-  rating: number; // 0-5
-  lastOrderDate: string; // DD/MM/YYYY
+  total_spent: number;
 
-  totalOrders: number;
-  acceptedOrders: number;
+  phone: string | null;
+  phone_verified: boolean;
 
-  city?: string;
-  subCity?: string;
+  created_at: string;
+  deleted_at: string | null;
 }
 
 export type TabConfig = {
-  key: CustomerType;
+  key: UserStatusTab;
   label: string;
 };
