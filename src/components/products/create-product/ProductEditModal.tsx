@@ -64,7 +64,7 @@ export default function ProductEditModal({ open, productId, onClose, onUpdated }
             <ProductForm
               mode="edit"
               productId={productId as number}
-              initialProduct={data ?? null}
+              initialProduct={data?.product ?? null}
               onClose={onClose}
               onSuccess={() => onUpdated?.()}
             />

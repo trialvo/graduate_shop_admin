@@ -1,6 +1,84 @@
 // src/api/products.api.ts
 import { api } from "./client";
 
+export type ProductImage = { id: number; path: string };
+
+export type ProductVariation = {
+  id: number;
+  color_id: number;
+  variant_id: number;
+  buying_price: number;
+  selling_price: number;
+  discount: number;
+  stock: number;
+  sku: string;
+};
+
+export type ProductEntity = {
+  id: number;
+  name: string;
+  slug: string;
+  main_category_id: number;
+  sub_category_id: number;
+  child_category_id: number;
+  brand_id: number;
+
+  status: boolean;
+  featured: boolean;
+  best_deal: boolean;
+
+  free_delivery?: boolean;
+  attribute_id?: number;
+  video_path?: string | null;
+  short_description?: string | null;
+  long_description?: string | null;
+
+  meta_title?: string | null;
+  meta_description?: string | null;
+  meta_keywords?: string | null;
+  canonical_url?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  robots?: string | null;
+
+  created_at: string;
+  updated_at: string;
+
+  images: ProductImage[];
+  product_images?: ProductImage[];
+  variations: ProductVariation[];
+};
+
+export type Product = ProductEntity;
+
+export type ProductsListParams = {
+  q?: string;
+
+  main_category_id?: number;
+  sub_category_id?: number;
+  child_category_id?: number;
+  brand_id?: number;
+
+  status?: boolean;
+  featured?: boolean;
+  best_deal?: boolean;
+
+  min_price?: number;
+  max_price?: number;
+
+  limit?: number;
+  offset?: number;
+
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+};
+
+export type ProductsListResponse = {
+  total: number;
+  count: number;
+  products: ProductEntity[];
+};
+
 export type ProductVariationPayload = {
   color_id: number;
   variant_id: number;
@@ -43,7 +121,7 @@ export type CreateProductPayload = {
   variations: ProductVariationPayload[];
 };
 
-export type UpdateProductPayload = CreateProductPayload & {
+export type UpdateProductPayload = Omit<CreateProductPayload, "variations"> & {
   delete_image_ids?: number[];
 };
 
@@ -59,7 +137,6 @@ function boolToStr(v: boolean) {
 function buildProductFormData(payload: CreateProductPayload | UpdateProductPayload) {
   const fd = new FormData();
 
-  // multi images
   payload.product_images?.forEach((file) => {
     fd.append("product_images", file);
   });
@@ -91,15 +168,47 @@ function buildProductFormData(payload: CreateProductPayload | UpdateProductPaylo
   appendIfDefined(fd, "og_description", payload.og_description);
   appendIfDefined(fd, "robots", payload.robots);
 
-  // ✅ IMPORTANT: variations is JSON string in form-data
-  fd.append("variations", JSON.stringify(payload.variations ?? []));
+  // create only
+  const maybeCreate = payload as CreateProductPayload;
+  if (Array.isArray(maybeCreate.variations)) {
+    fd.append("variations", JSON.stringify(maybeCreate.variations));
+  }
 
-  const u = payload as UpdateProductPayload;
-  if (Array.isArray(u.delete_image_ids) && u.delete_image_ids.length > 0) {
-    fd.append("delete_image_ids", JSON.stringify(u.delete_image_ids));
+  // update only
+  const maybeUpdate = payload as UpdateProductPayload;
+  if (Array.isArray(maybeUpdate.delete_image_ids) && maybeUpdate.delete_image_ids.length > 0) {
+    fd.append("delete_image_ids", JSON.stringify(maybeUpdate.delete_image_ids));
   }
 
   return fd;
+}
+
+function cleanParams<T extends Record<string, any>>(params?: T) {
+  if (!params) return undefined;
+
+  const next: Record<string, any> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null) continue;
+    if (typeof v === "string" && v.trim() === "") continue;
+
+    // ✅ special rule: DO NOT send offset=0
+    if (k === "offset" && Number(v) === 0) continue;
+
+    next[k] = v;
+  }
+
+  return Object.keys(next).length ? next : undefined;
+}
+
+export async function getProducts(params?: ProductsListParams): Promise<ProductsListResponse> {
+  const cleaned = cleanParams(params);
+  const res = await api.get("/products", cleaned ? { params: cleaned } : undefined);
+  return res.data as ProductsListResponse;
+}
+
+export async function getProduct(id: number): Promise<{ product: ProductEntity }> {
+  const res = await api.get(`/product/${id}`);
+  return res.data as { product: ProductEntity };
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<{ success: true; productId: number }> {
@@ -114,7 +223,7 @@ export async function updateProduct(id: number, payload: UpdateProductPayload): 
   return res.data;
 }
 
-export async function getProduct(id: number) {
-  const res = await api.get(`/product/${id}`);
+export async function deleteProduct(id: number): Promise<{ success: true } | any> {
+  const res = await api.delete(`/product/${id}`);
   return res.data;
 }

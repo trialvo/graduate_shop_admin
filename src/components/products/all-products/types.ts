@@ -1,3 +1,4 @@
+// src/components/products/all-products/types.ts
 export type ProductStatus = "active" | "inactive";
 
 export type CategoryPath = {
@@ -11,18 +12,36 @@ export type Product = {
   name: string;
   imageUrl?: string;
 
-  // requested
   positionNumber: number;
   categoryPath: CategoryPath;
+
   stockQty: number;
 
   price: number;
-  discount?: number; // percentage (0-100)
+  discount?: number; // percent or flat - UI only
   salePrice?: number;
 
   status: ProductStatus;
 
-  // professional extras
   sku: string;
-  createdAt: string; // display string
+  createdAt: string;
+};
+
+export type ProductListFilters = {
+  q: string;
+
+  mainCategoryId?: number;
+  subCategoryId?: number;
+  childCategoryId?: number;
+  brandId?: number;
+
+  status?: boolean;
+  featured?: boolean;
+  bestDeal?: boolean;
+
+  minPrice?: number;
+  maxPrice?: number;
+
+  limit: number;
+  offset: number;
 };
