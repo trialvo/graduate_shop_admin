@@ -17,13 +17,21 @@ import AddCourierModal from "./AddCourierModal";
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
-import { deleteDeliveryCharge, getDeliveryCharges, updateDeliveryCharge } from "@/api/delivery-charges.api";
+import {
+  deleteDeliveryCharge,
+  getDeliveryCharges,
+  updateDeliveryCharge,
+} from "@/api/delivery-charges.api";
+import { deliveryTypeLabel } from "./types";
 
 function formatHeaderTime(d: Date): string {
   const month = d.toLocaleString("en-US", { month: "long" });
   const day = d.getDate();
   const year = d.getFullYear();
-  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   return `${month} ${day}, ${year} at ${time}`;
 }
 
@@ -38,11 +46,16 @@ export default function DeliverySettingsPage() {
   const [pageSize, setPageSize] = useState(20);
   const offset = useMemo(() => (page - 1) * pageSize, [page, pageSize]);
 
-  const [addOpen, setAddOpen] = useState(false);
+  // modal (create/edit)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
+  // delete confirm
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
-  const [deleteTargetTitle, setDeleteTargetTitle] = useState<string | null>(null);
+  const [deleteTargetTitle, setDeleteTargetTitle] = useState<string | null>(
+    null
+  );
 
   const listQuery = useQuery({
     queryKey: ["deliveryCharges", { limit: pageSize, offset }],
@@ -70,16 +83,22 @@ export default function DeliverySettingsPage() {
   }, [rows, search]);
 
   const invalidate = () =>
-    qc.invalidateQueries({ queryKey: ["deliveryCharges"] }).catch(() => undefined);
+    qc
+      .invalidateQueries({ queryKey: ["deliveryCharges"] })
+      .catch(() => undefined);
 
   const toggleMutation = useMutation({
-    mutationFn: (payload: { id: number; status: boolean }) => updateDeliveryCharge(payload.id, { status: payload.status }),
+    mutationFn: (payload: { id: number; status: boolean }) =>
+      updateDeliveryCharge(payload.id, { status: payload.status }),
     onSuccess: () => {
       toast.success("Status updated");
       invalidate();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update status";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update status";
       toast.error(msg);
     },
   });
@@ -94,54 +113,31 @@ export default function DeliverySettingsPage() {
       invalidate();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to delete";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to delete";
       toast.error(msg);
     },
   });
 
-  const openDelete = (id: number, title: string) => {
-    setDeleteTargetId(id);
-    setDeleteTargetTitle(title);
-    setDeleteOpen(true);
+  const openCreate = () => {
+    setEditingId(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (id: number) => {
+    setEditingId(id);
+    setModalOpen(true);
   };
 
   const totalItems = listQuery.data?.pagination?.total ?? 0;
 
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Delivery Settings" />
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Delivery Charge</h1>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>Data Refreshed</span>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={() => {
-                setRefreshedAt(new Date());
-                listQuery.refetch().catch(() => undefined);
-              }}
-              aria-label="Refresh"
-            >
-              <RefreshCcw size={16} />
-            </button>
-          </div>
-
-          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-            {formatHeaderTime(refreshedAt)}
-          </div>
-        </div>
-      </div>
-
       {/* Top actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Button startIcon={<Plus size={16} />} onClick={() => setAddOpen(true)}>
+        <Button startIcon={<Plus size={16} />} onClick={openCreate}>
           Add New Courier
         </Button>
 
@@ -149,99 +145,126 @@ export default function DeliverySettingsPage() {
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
             <Search size={16} className="text-gray-400" />
           </div>
-          <Input className="pl-9" placeholder="Search" value={search} onChange={(e) => setSearch(String(e.target.value))} />
+          <Input
+            className="pl-9"
+            placeholder="Search"
+            value={search}
+            onChange={(e) => setSearch(String(e.target.value))}
+          />
         </div>
       </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {listQuery.isLoading ? (
-          Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[220px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
-            />
-          ))
-        ) : (
-          filtered.map((card) => {
-            const imgUrl = card.img_path ? toPublicUrl(card.img_path) : null;
-
-            return (
+        {listQuery.isLoading
+          ? Array.from({ length: 8 }).map((_, i) => (
               <div
-                key={card.id}
-                className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-              >
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
-                        {imgUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={imgUrl} alt={card.title} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Logo</div>
-                        )}
+                key={i}
+                className="h-[220px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+              />
+            ))
+          : filtered.map((card) => {
+              const imgUrl = card.img_path ? toPublicUrl(card.img_path) : null;
+
+              return (
+                <div
+                  key={card.id}
+                  className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                          {imgUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={imgUrl}
+                              alt={card.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                              Logo
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+                            {card.title}
+                          </p>
+                          <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                            {deliveryTypeLabel(card.type)}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-semibold text-gray-900 dark:text-white">{card.title}</p>
-                      </div>
+                      <Switch
+                        key={`st-${card.id}-${card.status}`}
+                        label=""
+                        defaultChecked={card.status}
+                        onChange={(checked) =>
+                          toggleMutation.mutate({
+                            id: card.id,
+                            status: checked,
+                          })
+                        }
+                        disabled={toggleMutation.isPending}
+                      />
                     </div>
 
-                    <Switch
-                      key={`st-${card.id}-${card.status}`}
-                      label=""
-                      defaultChecked={card.status}
-                      onChange={(checked) => toggleMutation.mutate({ id: card.id, status: checked })}
-                      disabled={toggleMutation.isPending}
-                    />
+                    <p className="mt-4 text-3xl font-semibold text-gray-900 dark:text-white">
+                      {card.customer_charge}{" "}
+                      <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
+                        BDT
+                      </span>
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Our Cost:{" "}
+                      <span className="font-semibold text-gray-700 dark:text-gray-200">
+                        {card.our_charge} BDT
+                      </span>
+                    </p>
+
+                    <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                      <p>
+                        Create : {new Date(card.created_at).toLocaleString()}
+                      </p>
+                      <p>
+                        Update : {new Date(card.updated_at).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
-                  <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                    Type : <span className="font-semibold text-gray-700 dark:text-gray-200">{card.type}</span>
-                  </p>
+                  <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
+                    {/* ✅ View Settings => Edit (open modal) */}
+                    <button
+                      type="button"
+                      className={cn(
+                        "text-sm font-semibold text-brand-500 hover:text-brand-600"
+                      )}
+                      onClick={() => openEdit(card.id)}
+                    >
+                      View Settings
+                    </button>
 
-                  <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
-                    {card.customer_charge}{" "}
-                    <span className="text-base font-semibold text-gray-700 dark:text-gray-200">BDT</span>
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Our Cost: <span className="font-semibold text-gray-700 dark:text-gray-200">{card.our_charge} BDT</span>
-                  </p>
-
-                  <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                    <p>Create : {new Date(card.created_at).toLocaleString()}</p>
-                    <p>Update : {new Date(card.updated_at).toLocaleString()}</p>
+                    <button
+                      type="button"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                      onClick={() => {
+                        setDeleteTargetId(card.id);
+                        setDeleteTargetTitle(card.title);
+                        setDeleteOpen(true);
+                      }}
+                      aria-label="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-                  <button
-                    type="button"
-                    className={cn("text-sm font-semibold text-brand-500 hover:text-brand-600")}
-                    onClick={() => toast("View settings not connected yet")}
-                  >
-                    View Settings
-                  </button>
-
-                  <button
-                    type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
-                    onClick={() => {
-                      setDeleteTargetId(card.id);
-                      setDeleteTargetTitle(card.title);
-                      setDeleteOpen(true);
-                    }}
-                    aria-label="Delete"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })}
 
         {!listQuery.isLoading && filtered.length === 0 ? (
           <div className="md:col-span-2 xl:col-span-4 rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
@@ -264,13 +287,20 @@ export default function DeliverySettingsPage() {
         />
       </div>
 
-      {/* Add Modal */}
+      {/* ✅ One modal for both create/edit */}
       <AddCourierModal
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        onCreated={() => {
+        open={modalOpen}
+        mode={editingId ? "edit" : "create"}
+        editId={editingId ?? undefined}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingId(null);
+        }}
+        onSaved={() => {
           invalidate();
           setRefreshedAt(new Date());
+          setModalOpen(false);
+          setEditingId(null);
         }}
       />
 
@@ -278,7 +308,11 @@ export default function DeliverySettingsPage() {
       <ConfirmDialog
         open={deleteOpen}
         title="Delete Delivery Charge"
-        message={deleteTargetTitle ? `Are you sure you want to delete "${deleteTargetTitle}"?` : "Are you sure you want to delete this item?"}
+        message={
+          deleteTargetTitle
+            ? `Are you sure you want to delete "${deleteTargetTitle}"?`
+            : "Are you sure you want to delete this item?"
+        }
         confirmText={deleteMutation.isPending ? "Deleting..." : "Delete"}
         cancelText="Cancel"
         tone="danger"
