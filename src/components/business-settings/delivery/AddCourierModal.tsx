@@ -1,22 +1,29 @@
+// src/components/delivery-settings/AddCourierModal.tsx
+"use client";
+
 import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { Image as ImageIcon } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
-
-import type { CourierChargeCard, DeliveryZoneType } from "./types";
 import Modal from "@/components/ui/modal/Modal";
+
+import { cn } from "@/lib/utils";
+import type { DeliveryChargeType } from "./types";
+import { createDeliveryCharge } from "@/api/delivery-charges.api";
 
 type Option = { value: string; label: string };
 
 const TYPE_OPTIONS: Option[] = [
-  { value: "OUTSIDE_DHAKA", label: "Outside Dhaka" },
-  { value: "INSIDE_DHAKA", label: "Inside Dhaka" },
-  { value: "INSIDE_CHITTAGONG", label: "Inside Chittagong" },
-  { value: "OUTSIDE_CHITTAGONG", label: "Outside Chittagong" },
-  { value: "FREE_DELIVERY", label: "Free Delivery" },
+  { value: "outside of dhaka", label: "Outside Dhaka" },
+  { value: "inside of dhaka", label: "Inside Dhaka" },
+  { value: "inside chittagong", label: "Inside Chittagong" },
+  { value: "outside chittagong", label: "Outside Chittagong" },
+  { value: "free delivery", label: "Free Delivery" },
 ];
 
 function safeNumber(v: string, fallback: number): number {
@@ -24,115 +31,111 @@ function safeNumber(v: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function nowText(): string {
-  const d = new Date();
-  return d.toLocaleString("en-US", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
-
 export default function AddCourierModal({
   open,
   onClose,
-  onCreate,
+  onCreated,
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (card: CourierChargeCard) => void;
+  onCreated: () => void;
 }) {
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<DeliveryZoneType>("OUTSIDE_DHAKA");
+  const [type, setType] = useState<DeliveryChargeType>("outside of dhaka");
 
   const [customerCharge, setCustomerCharge] = useState("60");
-  const [ownCharge, setOwnCharge] = useState("40");
+  const [ourCharge, setOurCharge] = useState("40");
 
-  const [active, setActive] = useState(true);
+  // ✅ boolean
+  const [status, setStatus] = useState(true);
 
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+  const [imgFile, setImgFile] = useState<File | null>(null);
+  const [imgPreviewUrl, setImgPreviewUrl] = useState("");
 
   useEffect(() => {
     return () => {
-      if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+      if (imgPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imgPreviewUrl);
     };
-  }, [logoPreviewUrl]);
+  }, [imgPreviewUrl]);
+
+  const isFree = String(type).toLowerCase() === "free delivery";
 
   const errors = useMemo(() => {
     const t = title.trim();
     const customer = safeNumber(customerCharge, NaN);
-    const own = safeNumber(ownCharge, NaN);
+    const own = safeNumber(ourCharge, NaN);
 
     return {
       title: !t ? "Title is required." : "",
-      customer:
-        type === "FREE_DELIVERY"
-          ? ""
-          : !(customer >= 0)
-          ? "Enter a valid customer charge."
-          : "",
+      customer: isFree ? "" : !(customer >= 0) ? "Enter a valid customer charge." : "",
       own: !(own >= 0) ? "Enter a valid our charge." : "",
     };
-  }, [title, customerCharge, ownCharge, type]);
+  }, [title, customerCharge, ourCharge, isFree]);
 
-  const canCreate = useMemo(() => {
-    return !errors.title && !errors.customer && !errors.own;
-  }, [errors]);
+  const canCreate = useMemo(() => !errors.title && !errors.customer && !errors.own, [errors]);
 
   const reset = () => {
     setTitle("");
-    setType("OUTSIDE_DHAKA");
+    setType("outside of dhaka");
     setCustomerCharge("60");
-    setOwnCharge("40");
-    setActive(true);
+    setOurCharge("40");
+    setStatus(true);
 
-    setLogoFile(null);
-    if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
-    setLogoPreviewUrl("");
+    setImgFile(null);
+    if (imgPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imgPreviewUrl);
+    setImgPreviewUrl("");
   };
 
-  const create = () => {
-    if (!canCreate) return;
-
-    const t = title.trim();
-    const customer = type === "FREE_DELIVERY" ? 0 : safeNumber(customerCharge, 0);
-    const own = safeNumber(ownCharge, 0);
-
-    const card: CourierChargeCard = {
-      id: Date.now(),
-      title: t,
-      type,
-      customerChargeBdt: customer,
-      ownChargeBdt: own,
-      active,
-      logoUrl: logoPreviewUrl || undefined,
-      createdAt: nowText(),
-      updatedAt: nowText(),
-    };
-
-    onCreate(card);
-    reset();
-    onClose();
-  };
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createDeliveryCharge({
+        delivery_img: imgFile ?? null,
+        title: title.trim(),
+        type: String(type),
+        customer_charge: isFree ? 0 : Math.max(0, safeNumber(customerCharge, 0)),
+        our_charge: Math.max(0, safeNumber(ourCharge, 0)),
+        status,
+      }),
+    onSuccess: (res: any) => {
+      if (res?.success === true) {
+        toast.success("Courier charge created");
+        onCreated();
+        reset();
+        onClose();
+        return;
+      }
+      const msg = res?.error ?? res?.message ?? "Failed to create";
+      toast.error(msg);
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to create";
+      toast.error(msg);
+    },
+  });
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
-      title="Add New Currier"
-      description="Create delivery charge card for a zone and manage availability."
+      onClose={() => {
+        if (createMutation.isPending) return;
+        onClose();
+      }}
+      title="Add New Courier"
+      description="Create delivery charge (multipart form-data) for a zone and manage availability."
       size="xl"
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (createMutation.isPending) return;
+              onClose();
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={create} disabled={!canCreate}>
-            Add Currier
+          <Button onClick={() => createMutation.mutate()} disabled={!canCreate || createMutation.isPending}>
+            {createMutation.isPending ? "Adding..." : "Add Courier"}
           </Button>
         </>
       }
@@ -141,61 +144,37 @@ export default function AddCourierModal({
         {/* Left */}
         <div className="lg:col-span-8 space-y-6">
           <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Currier Info
-            </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Title, zone type and pricing.
-            </p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Courier Info</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Title, zone type and pricing.</p>
 
             <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Title <span className="text-error-500">*</span>
                 </p>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(String(e.target.value))}
-                  placeholder="Outside Dhaka"
-                />
-                {errors.title ? (
-                  <p className="text-xs text-error-500">{errors.title}</p>
-                ) : null}
+                <Input value={title} onChange={(e) => setTitle(String(e.target.value))} placeholder="dhakar baire" />
+                {errors.title ? <p className="text-xs text-error-500">{errors.title}</p> : null}
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Type
-                </p>
-                <Select
-                  key={`type-${type}`}
-                  options={TYPE_OPTIONS}
-                  placeholder="Select type"
-                  defaultValue={type}
-                  onChange={(v) => setType(v as DeliveryZoneType)}
-                />
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</p>
+                <Select key={`type-${type}`} options={TYPE_OPTIONS} placeholder="Select type" defaultValue={String(type)} onChange={(v) => setType(String(v))} />
               </div>
 
-              {/* BOTH CHARGES */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Customer Charge (BDT){" "}
-                  {type !== "FREE_DELIVERY" ? (
-                    <span className="text-error-500">*</span>
-                  ) : null}
+                  Customer Charge (BDT) {!isFree ? <span className="text-error-500">*</span> : null}
                 </p>
                 <Input
-                  value={type === "FREE_DELIVERY" ? "0" : customerCharge}
+                  value={isFree ? "0" : customerCharge}
                   onChange={(e) => setCustomerCharge(String(e.target.value))}
-                  placeholder="60"
-                  disabled={type === "FREE_DELIVERY"}
+                  placeholder="200"
+                  disabled={isFree}
                 />
                 {errors.customer ? (
                   <p className="text-xs text-error-500">{errors.customer}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Checkout এ customer কে দেখাবে।
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Checkout এ customer কে দেখাবে।</p>
                 )}
               </div>
 
@@ -203,39 +182,23 @@ export default function AddCourierModal({
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Our Charge (BDT) <span className="text-error-500">*</span>
                 </p>
-                <Input
-                  value={ownCharge}
-                  onChange={(e) => setOwnCharge(String(e.target.value))}
-                  placeholder="40"
-                />
+                <Input value={ourCharge} onChange={(e) => setOurCharge(String(e.target.value))} placeholder="100" />
                 {errors.own ? (
                   <p className="text-xs text-error-500">{errors.own}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Internal cost (profit calculation ready)।
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Internal cost (profit calculation ready)।</p>
                 )}
               </div>
 
-              {/* Availability */}
               <div className="space-y-2 md:col-span-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Availability
-                </p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Availability</p>
                 <div className="flex items-center justify-between rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {active ? "Enabled" : "Disabled"}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Disable to stop showing this delivery option.
-                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{status ? "Enabled" : "Disabled"}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Disable to stop showing this delivery option.</p>
                   </div>
-                  <Switch
-                    label=""
-                    defaultChecked={active}
-                    onChange={(checked) => setActive(checked)}
-                  />
+
+                  <Switch key={`st-${status}`} label="" defaultChecked={status} onChange={(checked) => setStatus(checked)} />
                 </div>
               </div>
             </div>
@@ -245,22 +208,17 @@ export default function AddCourierModal({
         {/* Right */}
         <div className="lg:col-span-4 space-y-6">
           <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Currier Logo
-            </p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Delivery Image</p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Optional logo for card preview.
+              Uploaded as <span className="font-mono">delivery_img</span> (optional).
             </p>
 
             <div className="mt-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
-                  {logoPreviewUrl ? (
-                    <img
-                      src={logoPreviewUrl}
-                      alt="Logo preview"
-                      className="h-full w-full object-cover"
-                    />
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                  {imgPreviewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imgPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
                   ) : (
                     <ImageIcon className="text-gray-400" size={18} />
                   )}
@@ -275,14 +233,11 @@ export default function AddCourierModal({
                       accept="image/*"
                       onChange={(e) => {
                         const f = e.target.files?.[0] ?? null;
-                        setLogoFile(f);
+                        setImgFile(f);
                         if (!f) return;
 
-                        if (logoPreviewUrl.startsWith("blob:")) {
-                          URL.revokeObjectURL(logoPreviewUrl);
-                        }
-                        const url = URL.createObjectURL(f);
-                        setLogoPreviewUrl(url);
+                        if (imgPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imgPreviewUrl);
+                        setImgPreviewUrl(URL.createObjectURL(f));
                       }}
                     />
                   </label>
@@ -290,11 +245,9 @@ export default function AddCourierModal({
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setLogoFile(null);
-                      if (logoPreviewUrl.startsWith("blob:")) {
-                        URL.revokeObjectURL(logoPreviewUrl);
-                      }
-                      setLogoPreviewUrl("");
+                      setImgFile(null);
+                      if (imgPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imgPreviewUrl);
+                      setImgPreviewUrl("");
                     }}
                   >
                     Remove
@@ -302,40 +255,37 @@ export default function AddCourierModal({
                 </div>
               </div>
 
-              {/* Preview */}
               <div className="mt-5 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
                 <p className="text-xs text-gray-500 dark:text-gray-400">Preview</p>
 
-                <p className="mt-2 text-base font-semibold text-gray-900 dark:text-white">
-                  {title.trim() || "—"}
-                </p>
+                <p className="mt-2 text-base font-semibold text-gray-900 dark:text-white">{title.trim() || "—"}</p>
 
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Type:{" "}
-                  <span className="font-semibold text-gray-700 dark:text-gray-200">
-                    {type}
-                  </span>
+                  Type: <span className="font-semibold text-gray-700 dark:text-gray-200">{String(type)}</span>
                 </p>
 
                 <div className="mt-3 space-y-1">
                   <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                    Customer:{" "}
-                    {type === "FREE_DELIVERY" ? 0 : safeNumber(customerCharge, 0)}{" "}
-                    BDT
+                    Customer: {isFree ? 0 : Math.max(0, safeNumber(customerCharge, 0))} BDT
                   </p>
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Our Cost: {safeNumber(ownCharge, 0)} BDT
+                    Our Cost: {Math.max(0, safeNumber(ourCharge, 0))} BDT
                   </p>
+                </div>
+
+                <div
+                  className={cn(
+                    "mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                    status
+                      ? "bg-success-100 text-success-700 dark:bg-success-500/10 dark:text-success-300"
+                      : "bg-error-100 text-error-700 dark:bg-error-500/10 dark:text-error-300",
+                  )}
+                >
+                  {status ? "Active" : "Inactive"}
                 </div>
               </div>
             </div>
           </div>
-
-          {logoFile ? (
-            <div className="rounded-[4px] border border-gray-200 bg-white p-5 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-              Selected file: <span className="font-semibold">{logoFile.name}</span>
-            </div>
-          ) : null}
         </div>
       </div>
     </Modal>

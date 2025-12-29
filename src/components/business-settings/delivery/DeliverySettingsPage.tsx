@@ -1,15 +1,23 @@
+// src/components/delivery-settings/DeliverySettingsPage.tsx
+"use client";
+
 import React, { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
+import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import Pagination from "@/components/common/Pagination";
 
 import AddCourierModal from "./AddCourierModal";
-import { INITIAL_COURIER_CARDS, INITIAL_DELIVERY_NAMES } from "./mockData";
-import type { CourierChargeCard, DeliveryNameRow } from "./types";
-import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import { cn } from "@/lib/utils";
+import { toPublicUrl } from "@/utils/toPublicUrl";
+
+import { deleteDeliveryCharge, getDeliveryCharges, updateDeliveryCharge } from "@/api/delivery-charges.api";
 
 function formatHeaderTime(d: Date): string {
   const month = d.toLocaleString("en-US", { month: "long" });
@@ -20,51 +28,84 @@ function formatHeaderTime(d: Date): string {
 }
 
 export default function DeliverySettingsPage() {
+  const qc = useQueryClient();
+
   const [refreshedAt, setRefreshedAt] = useState<Date>(new Date());
   const [search, setSearch] = useState("");
 
-  const [cards, setCards] = useState<CourierChargeCard[]>(INITIAL_COURIER_CARDS);
-  const [names] = useState<DeliveryNameRow[]>(INITIAL_DELIVERY_NAMES);
+  // API pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const offset = useMemo(() => (page - 1) * pageSize, [page, pageSize]);
 
   const [addOpen, setAddOpen] = useState(false);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<CourierChargeCard | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleteTargetTitle, setDeleteTargetTitle] = useState<string | null>(null);
+
+  const listQuery = useQuery({
+    queryKey: ["deliveryCharges", { limit: pageSize, offset }],
+    queryFn: () => getDeliveryCharges({ limit: pageSize, offset }),
+    retry: 1,
+  });
+
+  const rows = useMemo(() => listQuery.data?.data ?? [], [listQuery.data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return cards;
-    return cards.filter((c) => {
+    if (!q) return rows;
+
+    return rows.filter((c) => {
+      const title = String(c.title ?? "").toLowerCase();
+      const type = String(c.type ?? "").toLowerCase();
+
       return (
-        c.title.toLowerCase().includes(q) ||
-        c.type.toLowerCase().includes(q) ||
-        String(c.customerChargeBdt).includes(q) ||
-        String(c.ownChargeBdt).includes(q)
+        title.includes(q) ||
+        type.includes(q) ||
+        String(c.customer_charge ?? "").includes(q) ||
+        String(c.our_charge ?? "").includes(q)
       );
     });
-  }, [cards, search]);
+  }, [rows, search]);
 
-  const toggleActive = (id: number, checked: boolean) => {
-    setCards((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? { ...c, active: checked, updatedAt: new Date().toLocaleString() }
-          : c
-      )
-    );
-  };
+  const invalidate = () =>
+    qc.invalidateQueries({ queryKey: ["deliveryCharges"] }).catch(() => undefined);
 
-  const openDelete = (row: CourierChargeCard) => {
-    setDeleteTarget(row);
+  const toggleMutation = useMutation({
+    mutationFn: (payload: { id: number; status: boolean }) => updateDeliveryCharge(payload.id, { status: payload.status }),
+    onSuccess: () => {
+      toast.success("Status updated");
+      invalidate();
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update status";
+      toast.error(msg);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteDeliveryCharge(id),
+    onSuccess: () => {
+      toast.success("Delivery charge deleted");
+      setDeleteOpen(false);
+      setDeleteTargetId(null);
+      setDeleteTargetTitle(null);
+      invalidate();
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to delete";
+      toast.error(msg);
+    },
+  });
+
+  const openDelete = (id: number, title: string) => {
+    setDeleteTargetId(id);
+    setDeleteTargetTitle(title);
     setDeleteOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (!deleteTarget) return;
-    setCards((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-    setDeleteOpen(false);
-    setDeleteTarget(null);
-  };
+  const totalItems = listQuery.data?.pagination?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -73,9 +114,7 @@ export default function DeliverySettingsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            Delivery Charge
-          </h1>
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Delivery Charge</h1>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
@@ -84,7 +123,10 @@ export default function DeliverySettingsPage() {
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={() => setRefreshedAt(new Date())}
+              onClick={() => {
+                setRefreshedAt(new Date());
+                listQuery.refetch().catch(() => undefined);
+              }}
               aria-label="Refresh"
             >
               <RefreshCcw size={16} />
@@ -100,185 +142,156 @@ export default function DeliverySettingsPage() {
       {/* Top actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Button startIcon={<Plus size={16} />} onClick={() => setAddOpen(true)}>
-          Add New Currier
+          Add New Courier
         </Button>
 
         <div className="relative w-full md:max-w-sm">
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
             <Search size={16} className="text-gray-400" />
           </div>
-          <Input
-            className="pl-9"
-            placeholder="Search"
-            value={search}
-            onChange={(e) => setSearch(String(e.target.value))}
-          />
+          <Input className="pl-9" placeholder="Search" value={search} onChange={(e) => setSearch(String(e.target.value))} />
         </div>
       </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {filtered.map((card) => (
-          <div
-            key={card.id}
-            className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden"
-          >
-            <div className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
-                    {card.logoUrl ? (
-                      <img
-                        src={card.logoUrl}
-                        alt={card.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                        Logo
+        {listQuery.isLoading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[220px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+            />
+          ))
+        ) : (
+          filtered.map((card) => {
+            const imgUrl = card.img_path ? toPublicUrl(card.img_path) : null;
+
+            return (
+              <div
+                key={card.id}
+                className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                        {imgUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={imgUrl} alt={card.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Logo</div>
+                        )}
                       </div>
-                    )}
+
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-semibold text-gray-900 dark:text-white">{card.title}</p>
+                      </div>
+                    </div>
+
+                    <Switch
+                      key={`st-${card.id}-${card.status}`}
+                      label=""
+                      defaultChecked={card.status}
+                      onChange={(checked) => toggleMutation.mutate({ id: card.id, status: checked })}
+                      disabled={toggleMutation.isPending}
+                    />
                   </div>
 
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {card.title}
-                    </p>
+                  <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    Type : <span className="font-semibold text-gray-700 dark:text-gray-200">{card.type}</span>
+                  </p>
+
+                  <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+                    {card.customer_charge}{" "}
+                    <span className="text-base font-semibold text-gray-700 dark:text-gray-200">BDT</span>
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Our Cost: <span className="font-semibold text-gray-700 dark:text-gray-200">{card.our_charge} BDT</span>
+                  </p>
+
+                  <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p>Create : {new Date(card.created_at).toLocaleString()}</p>
+                    <p>Update : {new Date(card.updated_at).toLocaleString()}</p>
                   </div>
                 </div>
 
-                <Switch
-                  label=""
-                  defaultChecked={card.active}
-                  onChange={(checked) => toggleActive(card.id, checked)}
-                />
+                <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
+                  <button
+                    type="button"
+                    className={cn("text-sm font-semibold text-brand-500 hover:text-brand-600")}
+                    onClick={() => toast("View settings not connected yet")}
+                  >
+                    View Settings
+                  </button>
+
+                  <button
+                    type="button"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                    onClick={() => {
+                      setDeleteTargetId(card.id);
+                      setDeleteTargetTitle(card.title);
+                      setDeleteOpen(true);
+                    }}
+                    aria-label="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
+            );
+          })
+        )}
 
-              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                Type :{" "}
-                <span className="font-semibold text-gray-700 dark:text-gray-200">
-                  {card.type}
-                </span>
-              </p>
-
-              {/* Customer Charge */}
-              <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
-                {card.customerChargeBdt}{" "}
-                <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
-                  BDT
-                </span>
-              </p>
-
-              {/* Own Charge */}
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Our Cost:{" "}
-                <span className="font-semibold text-gray-700 dark:text-gray-200">
-                  {card.ownChargeBdt} BDT
-                </span>
-              </p>
-
-              <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                <p>Create : {card.createdAt}</p>
-                <p>Update : {card.updatedAt}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-              <button
-                type="button"
-                className="text-sm font-semibold text-brand-500 hover:text-brand-600"
-                onClick={() => console.log("View settings", card.id)}
-              >
-                View Settings
-              </button>
-
-              <button
-                type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
-                onClick={() => openDelete(card)}
-                aria-label="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {filtered.length === 0 ? (
+        {!listQuery.isLoading && filtered.length === 0 ? (
           <div className="md:col-span-2 xl:col-span-4 rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             No delivery charge cards found.
           </div>
         ) : null}
       </div>
 
-      {/* Bottom Name Table */}
+      {/* Pagination (API) */}
       <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Delivery Names
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Simple list (demo) like your screenshot.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-[560px] w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
-                {["#", "Name"].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {names.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-b border-gray-100 dark:border-gray-800"
-                >
-                  <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {r.id}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                    {r.name}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Pagination
+          totalItems={totalItems}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* Add Modal */}
       <AddCourierModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onCreate={(newCard) => setCards((prev) => [newCard, ...prev])}
+        onCreated={() => {
+          invalidate();
+          setRefreshedAt(new Date());
+        }}
       />
 
       {/* Delete Confirm */}
       <ConfirmDialog
         open={deleteOpen}
         title="Delete Delivery Charge"
-        message={
-          deleteTarget
-            ? `Are you sure you want to delete "${deleteTarget.title}"?`
-            : "Are you sure you want to delete this item?"
-        }
-        confirmText="Delete"
+        message={deleteTargetTitle ? `Are you sure you want to delete "${deleteTargetTitle}"?` : "Are you sure you want to delete this item?"}
+        confirmText={deleteMutation.isPending ? "Deleting..." : "Delete"}
         cancelText="Cancel"
         tone="danger"
         onClose={() => {
+          if (deleteMutation.isPending) return;
           setDeleteOpen(false);
-          setDeleteTarget(null);
+          setDeleteTargetId(null);
+          setDeleteTargetTitle(null);
         }}
-        onConfirm={confirmDelete}
+        onConfirm={() => {
+          if (!deleteTargetId) return;
+          deleteMutation.mutate(deleteTargetId);
+        }}
       />
     </div>
   );

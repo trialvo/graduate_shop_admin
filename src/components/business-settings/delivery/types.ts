@@ -1,29 +1,19 @@
-export type DeliveryZoneType =
-  | "OUTSIDE_DHAKA"
-  | "INSIDE_DHAKA"
-  | "INSIDE_CHITTAGONG"
-  | "OUTSIDE_CHITTAGONG"
-  | "FREE_DELIVERY";
+// src/components/delivery-settings/types.ts
+export type DeliveryChargeType = string;
 
-export interface CourierChargeCard {
+export interface DeliveryChargeCard {
   id: number;
-  title: string; // e.g. Outside Dhaka
-  type: DeliveryZoneType;
+  title: string;
+  type: DeliveryChargeType;
 
-  /** Customer pays this amount at checkout */
-  customerChargeBdt: number;
+  customer_charge: number;
+  our_charge: number;
 
-  /** Our internal courier cost (profit calculation ready) */
-  ownChargeBdt: number;
+  // ✅ boolean everywhere
+  status: boolean;
 
-  active: boolean;
+  img_path: string | null;
 
-  logoUrl?: string; // preview only
-  createdAt: string; // display-only
-  updatedAt: string; // display-only
-}
-
-export interface DeliveryNameRow {
-  id: number;
-  name: string;
+  created_at: string;
+  updated_at: string;
 }
