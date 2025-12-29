@@ -1,5 +1,7 @@
+// export const API_ORIGIN =
+//   import.meta.env.VITE_API_ORIGIN || "https://api.graduatefashionbd.com";
 export const API_ORIGIN =
-  import.meta.env.VITE_API_ORIGIN || "https://api.graduatefashionbd.com";
+  import.meta.env.VITE_API_ORIGIN || "https://shop-api.shoplinkbd.com";
 
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api/v1";
 
