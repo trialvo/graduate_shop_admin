@@ -1,68 +1,104 @@
-import type { GatewayProviderDef } from "./types";
+// src/components/settings/payment/providerDefs.ts
+import type { ProviderDef } from "./types";
 
-export const PAYMENT_PROVIDER_DEFS: GatewayProviderDef[] = [
+export const PAYMENT_PROVIDER_DEFS: ProviderDef[] = [
   {
     provider: "bkash",
     title: "bKash",
     category: "Mobile Banking",
     logoText: "bK",
+    common: {
+      gateway_name: "BKASH_GATEWAY_NAME",
+      type: "BKASH_TYPE",
+      note: "BKASH_NOTE",
+      env: "BKASH_ENV",
+    },
     fields: [
-      { key: "baseUrl", label: "Base URL", placeholder: "https://tokenized.sandbox.bka.sh/v1.2.0-beta", type: "url", required: true },
-      { key: "username", label: "Username", placeholder: "sandboxTestUser", type: "text", required: true },
-      { key: "password", label: "Password", placeholder: "••••••••", type: "password", required: true },
-      { key: "appKey", label: "App Key", placeholder: "Your app key", type: "text", required: true },
-      { key: "appSecret", label: "App Secret", placeholder: "Your app secret", type: "password", required: true },
+      { key: "base_url", label: "Base URL", type: "url", required: true, placeholder: "https://tokenized.sandbox.bka.sh/...", readFromConfigKey: "BKASH_BASE_URL" },
+      { key: "username", label: "Username", type: "text", required: true, placeholder: "sandboxTokenizedUser02", readFromConfigKey: "BKASH_USERNAME" },
+      { key: "password", label: "Password", type: "password", required: true, placeholder: "••••••••", readFromConfigKey: "BKASH_PASSWORD" },
+      { key: "app_key", label: "App Key", type: "text", required: true, placeholder: "Your app key", readFromConfigKey: "BKASH_APP_KEY" },
+      { key: "app_secret", label: "App Secret", type: "password", required: true, placeholder: "Your app secret", readFromConfigKey: "BKASH_APP_SECRET" },
     ],
   },
+
   {
     provider: "sslcommerz",
     title: "SSLCommerz",
     category: "Payment Gateway",
     logoText: "SC",
+    common: {
+      gateway_name: "SSL_GATEWAY_NAME",
+      type: "SSL_TYPE",
+      note: "SSL_NOTE",
+      env: "SSL_ENV",
+    },
     fields: [
-      { key: "storeId", label: "Store ID", placeholder: "Your Store ID", type: "text", required: true },
-      { key: "storePassword", label: "Store Password", placeholder: "••••••••", type: "password", required: true },
-      { key: "apiBaseUrl", label: "API Base URL", placeholder: "https://sandbox.sslcommerz.com", type: "url", required: true },
-      { key: "successUrl", label: "Success URL", placeholder: "https://your-site.com/payment/success", type: "url" },
-      { key: "failUrl", label: "Fail URL", placeholder: "https://your-site.com/payment/fail", type: "url" },
-      { key: "cancelUrl", label: "Cancel URL", placeholder: "https://your-site.com/payment/cancel", type: "url" },
+      { key: "store_id", label: "Store ID", type: "text", required: true, placeholder: "heart63b2e486274af", readFromConfigKey: "SSL_STORE_ID" },
+      { key: "store_password", label: "Store Password", type: "password", required: true, placeholder: "••••••••", readFromConfigKey: "SSL_STORE_PASS" },
+      { key: "base_url", label: "Base URL", type: "url", required: true, placeholder: "https://sandbox.sslcommerz.com", readFromConfigKey: "SSL_BASE_URL" },
+
+      { key: "success_url", label: "Success URL", type: "url", placeholder: "https://yourdomain.com/payment/success", readFromConfigKey: "SSL_SUCCESS_URL" },
+      { key: "fail_url", label: "Fail URL", type: "url", placeholder: "https://yourdomain.com/payment/fail", readFromConfigKey: "SSL_FAIL_URL" },
+      { key: "cancel_url", label: "Cancel URL", type: "url", placeholder: "https://yourdomain.com/payment/cancel", readFromConfigKey: "SSL_CANCEL_URL" },
     ],
   },
+
   {
     provider: "shurjopay",
     title: "ShurjoPay",
     category: "Payment Gateway",
     logoText: "SP",
+    common: {
+      gateway_name: "SHURJOPAY_GATEWAY_NAME",
+      type: "SHURJOPAY_TYPE",
+      note: "SHURJOPAY_NOTE",
+      env: "SHURJOPAY_ENV",
+    },
     fields: [
-      { key: "endpoint", label: "Endpoint / Base URL", placeholder: "https://engine.shurjopayment.com", type: "url", required: true },
-      { key: "username", label: "Username", placeholder: "Your username", type: "text", required: true },
-      { key: "password", label: "Password", placeholder: "••••••••", type: "password", required: true },
-      { key: "prefix", label: "Prefix", placeholder: "SP", type: "text", required: true },
-      { key: "clientIp", label: "Client IP", placeholder: "127.0.0.1", type: "text" },
+      { key: "base_url", label: "Base URL", type: "url", required: true, placeholder: "https://sandbox.shurjopayment.com", readFromConfigKey: "SHURJOPAY_BASE_URL" },
+      { key: "username", label: "Username", type: "text", required: true, placeholder: "sp_user", readFromConfigKey: "SHURJOPAY_USERNAME" },
+      { key: "password", label: "Password", type: "password", required: true, placeholder: "••••••••", readFromConfigKey: "SHURJOPAY_PASSWORD" },
+      { key: "prefix", label: "Prefix", type: "text", required: true, placeholder: "NOB", readFromConfigKey: "SHURJOPAY_PREFIX" },
+      { key: "client_ip", label: "Client IP", type: "text", placeholder: "127.0.0.1", readFromConfigKey: "SHURJOPAY_CLIENT_IP" },
     ],
   },
+
   {
     provider: "nagad",
     title: "Nagad",
     category: "Mobile Banking",
     logoText: "N",
+    common: {
+      gateway_name: "NAGAD_GATEWAY_NAME",
+      type: "NAGAD_TYPE",
+      note: "NAGAD_NOTE",
+      env: "NAGAD_ENV",
+    },
     fields: [
-      { key: "baseUrl", label: "API Base URL", placeholder: "https://sandbox.mynagad.com", type: "url", required: true },
-      { key: "merchantId", label: "Merchant ID", placeholder: "Merchant ID", type: "text", required: true },
-      { key: "merchantPrivateKey", label: "Merchant Private Key", placeholder: "••••••••", type: "password", required: true },
-      { key: "merchantPublicKey", label: "Merchant Public Key", placeholder: "••••••••", type: "text", required: true },
+      { key: "merchant_id", label: "Merchant ID", type: "text", required: true, placeholder: "6830020071042", readFromConfigKey: "NAGAD_MERCHANT_ID" },
+      { key: "base_url", label: "Base URL", type: "url", required: true, placeholder: "http://sandbox.mynagad.com:10080/...", readFromConfigKey: "NAGAD_BASE_URL" },
+      { key: "public_key", label: "Public Key", type: "text", required: true, placeholder: "-----BEGIN PUBLIC KEY----- ...", readFromConfigKey: "NAGAD_PUB_KEY" },
+      { key: "private_key", label: "Private Key", type: "password", required: true, placeholder: "-----BEGIN RSA PRIVATE KEY----- ...", readFromConfigKey: "NAGAD_PRIV_KEY" },
     ],
   },
+
   {
     provider: "rocket",
     title: "Rocket",
-    category: "Mobile Banking",
+    category: "Manual",
     logoText: "R",
+    common: {
+      gateway_name: "ROCKET_GATEWAY_NAME",
+      type: "ROCKET_TYPE",
+      note: "ROCKET_NOTE",
+      env: "ROCKET_ENV",
+    },
     fields: [
-      { key: "accountNo", label: "Rocket Account No", placeholder: "01XXXXXXXXX", type: "text", required: true },
-      { key: "accountName", label: "Account Name", placeholder: "Your Business Name", type: "text", required: true },
-      { key: "bankName", label: "Bank Name", placeholder: "Dutch-Bangla Bank", type: "text" },
-      { key: "note", label: "Payment Note (Optional)", placeholder: "e.g. Send money and keep trx id", type: "text" },
+      { key: "rocket_acc_no", label: "Account No", type: "text", required: true, placeholder: "017XXXXXXXX7", readFromConfigKey: "ROCKET_ACC_NO" },
+      { key: "rocket_acc_name", label: "Account Name", type: "text", required: true, placeholder: "E-Shop Bangladesh", readFromConfigKey: "ROCKET_ACC_NAME" },
+      { key: "rocket_bank_name", label: "Bank Name", type: "text", placeholder: "Dutch Bangla Bank", readFromConfigKey: "ROCKET_BANK_NAME" },
+      { key: "rocket_suggestion", label: "Suggestion", type: "text", placeholder: "Please enter trx id after send money", readFromConfigKey: "ROCKET_SUGGESTION" },
     ],
   },
 ];
