@@ -208,7 +208,7 @@ export default function EditCustomerModal({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -260,7 +260,7 @@ export default function EditCustomerModal({
 
                 <div className="md:col-span-1">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</p>
-                  <div className="mt-2 flex h-[120px] items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-2 flex h-[120px] items-center justify-center rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     {form.previewUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={form.previewUrl} alt="preview" className="h-full w-full object-cover" />
@@ -406,7 +406,7 @@ export default function EditCustomerModal({
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Preview</p>
 
             <div className="mt-4 flex items-start gap-3">
-              <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+              <div className="h-12 w-12 rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                 {form.previewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={form.previewUrl} alt={fullName} className="h-full w-full object-cover" />

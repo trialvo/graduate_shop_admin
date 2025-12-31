@@ -208,7 +208,7 @@ function MainHierarchy({
                                 No sub categories for this main category.
                               </div>
                             ) : (
-                              <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                              <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <table className="w-full text-left text-sm">
                                   <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                     <tr>
@@ -292,7 +292,7 @@ function MainHierarchy({
                                                       No child categories for this sub category.
                                                     </div>
                                                   ) : (
-                                                    <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                                                    <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                                       <table className="w-full text-left text-sm">
                                                         <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                                           <tr>
@@ -500,7 +500,7 @@ function SubHierarchy({
                                 No child categories for this sub category.
                               </div>
                             ) : (
-                              <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                              <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <table className="w-full text-left text-sm">
                                   <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                     <tr>

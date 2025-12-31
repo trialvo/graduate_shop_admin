@@ -196,7 +196,7 @@ export default function CreateCustomerPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT: FORM */}
         <div className="space-y-6 lg:col-span-8">
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Profile
@@ -530,7 +530,7 @@ export default function CreateCustomerPage() {
 
         {/* RIGHT: Preview Card */}
         <div className="space-y-6 lg:col-span-4">
-          <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Live Preview

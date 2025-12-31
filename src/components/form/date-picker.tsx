@@ -255,7 +255,7 @@ export default function DatePicker({
 
       {/* Popup */}
       {open ? (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="absolute z-50 mt-2 w-full rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           {/* Header with Month + Year selectors */}
           <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-800">
             <button

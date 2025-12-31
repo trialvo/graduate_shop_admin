@@ -1,58 +1,43 @@
-export type CurrierProviderType = "STEADFAST" | "REDX" | "PATHAO" | "PAPERFLY";
+export type CourierProvider = "steadfast" | "redx" | "pathao" | "paperfly";
 
-export type PathaoApiConfig = {
-  type: "PATHAO";
-  apiBaseUrl: string;
-  storeId: string;
-  clientId: string;
-  clientSecret: string;
-  clientEmail: string;
-  clientPassword: string;
+export type Option = { value: string; label: string };
+
+export type ProviderFieldDef = {
+  /** Form-data field key expected by backend */
+  key: string;
+  /** Read value from getSystemConfig() config object */
+  readFromConfigKey: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  helperText?: string;
+  type?: "text" | "password";
 };
 
-export type SteadfastApiConfig = {
-  type: "STEADFAST";
-  apiBaseUrl: string;
-  apiKey: string;
-  secretKey: string;
+export type CourierProviderDef = {
+  provider: CourierProvider;
+  title: string;
+  category: "Courier";
+  logoText: string;
+  common: {
+    base_url: string;
+    description: string;
+    note: string;
+    image: string;
+  };
+  fields: ProviderFieldDef[];
 };
 
-export type RedxApiConfig = {
-  type: "REDX";
-  apiBaseUrl: string;
-  storeId: string;
-  apiToken: string;
-};
+export type CourierProviderConfigCard = {
+  provider: CourierProvider;
+  is_active: boolean;
+  config: Record<string, any>;
 
-export type PaperflyApiConfig = {
-  type: "PAPERFLY";
-  apiBaseUrl: string;
-  username: string;
-  password: string;
-  apiKey: string;
-};
+  defaultProvider: CourierProvider | null;
+  isDefault: boolean;
 
-export type CurrierApiConfig =
-  | PathaoApiConfig
-  | SteadfastApiConfig
-  | RedxApiConfig
-  | PaperflyApiConfig;
-
-export interface CurrierRow {
-  id: number;
-
-  name: string;
+  base_url: string;
   description: string;
-  type: CurrierProviderType;
-
-  logoUrl?: string; // preview only
-  active: boolean;
-
-  defaultNote: string;
-
-  /** Discriminated union (type-safe per provider) */
-  api: CurrierApiConfig;
-
-  createdAt: string; // display
-  updatedAt: string; // display
-}
+  note: string;
+  imagePath: string;
+};

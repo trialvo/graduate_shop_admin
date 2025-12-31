@@ -1,31 +1,48 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { X, Search } from "lucide-react";
+// src/components/coupon-code/CouponModal.tsx
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { Search, X } from "lucide-react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 
-import type {
-  CouponRow,
-  CouponScope,
-  CustomerLite,
-  DiscountType,
-  Option,
-  ProductLite,
+import type { CouponScope, DiscountType, Option, ProductLite, CustomerLite } from "./types";
+import {
+  normalizeCode,
+  safeNumber,
+  todayISO,
+  toApiCouponScope,
+  toApiDiscountType,
+  toCouponScope,
+  toDiscountType,
+  toYmdFromIso,
+  toBoolStatus,
 } from "./types";
-import { normalizeCode, safeNumber, todayISO } from "./types";
+
+import {
+  createCoupon,
+  getCouponById,
+  getProductScope,
+  getUsersScope,
+  updateCoupon,
+  type ApiCouponCreateResponse,
+} from "@/api/coupon.api";
 
 type Props = {
   open: boolean;
   mode: "create" | "edit";
-  initial?: CouponRow | null;
-
-  products: ProductLite[];
-  customers: CustomerLite[];
-
+  couponId: number | null;
   onClose: () => void;
-  onSave: (payload: Omit<CouponRow, "id" | "totalUses">) => void;
+  onSaved: () => void;
 };
 
 const DISCOUNT_TYPE_OPTIONS: Option[] = [
@@ -35,7 +52,7 @@ const DISCOUNT_TYPE_OPTIONS: Option[] = [
 
 const SCOPE_OPTIONS: Option[] = [
   { value: "all", label: "All" },
-  { value: "specific", label: "Specific" },
+  { value: "specified", label: "Specified" },
 ];
 
 function makeRandomCode(): string {
@@ -45,19 +62,43 @@ function makeRandomCode(): string {
   return out;
 }
 
-function includesQuery(text: string, q: string): boolean {
-  return text.toLowerCase().includes(q.toLowerCase());
+function mapProductScopeToLite(p: any): ProductLite {
+  const variationId = Number(p?.variation_id ?? 0);
+  const sku = String(p?.sku ?? "");
+  const productName = String(p?.product_name ?? "");
+  const variant = p?.variant_name ? String(p.variant_name) : "";
+  const color = p?.color_name ? String(p.color_name) : "";
+  const name = [productName, variant, color].filter(Boolean).join(" - ");
+
+  return {
+    id: variationId,
+    sku,
+    name: name || sku || `Variation #${variationId}`,
+  };
 }
 
-export default function CouponModal({
-  open,
-  mode,
-  initial,
-  products,
-  customers,
-  onClose,
-  onSave,
-}: Props) {
+function mapUserScopeToLite(u: any): CustomerLite {
+  const id = Number(u?.id ?? 0);
+  const name = [u?.first_name, u?.last_name].filter(Boolean).join(" ").trim() || `User #${id}`;
+  const email = typeof u?.email === "string" ? u.email : undefined;
+  const phone =
+    Array.isArray(u?.verified_phones) && u.verified_phones.length > 0
+      ? String(u.verified_phones[0])
+      : undefined;
+
+  return { id, name, email, phone };
+}
+
+function getResponseId(res: any): number | null {
+  if (typeof res?.id === "number") return res.id;
+  if (typeof res?.data?.id === "number") return res.data.id;
+  return null;
+}
+
+export default function CouponModal({ open, mode, couponId, onClose, onSaved }: Props) {
+  const queryClient = useQueryClient();
+  const hydratedRef = useRef(false);
+
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
   const [discountType, setDiscountType] = useState<DiscountType>("flat");
@@ -71,64 +112,114 @@ export default function CouponModal({
   const [expireDate, setExpireDate] = useState<string>(todayISO());
   const [status, setStatus] = useState<boolean>(true);
 
-  // NEW: scope
   const [productScope, setProductScope] = useState<CouponScope>("all");
   const [productIds, setProductIds] = useState<number[]>([]);
   const [customerScope, setCustomerScope] = useState<CouponScope>("all");
   const [customerIds, setCustomerIds] = useState<number[]>([]);
 
-  // pickers search
   const [productSearch, setProductSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
+
+  const selectedProductMapRef = useRef<Map<number, ProductLite>>(new Map());
+  const selectedCustomerMapRef = useRef<Map<number, CustomerLite>>(new Map());
+
+  const singleQuery = useQuery({
+    queryKey: ["coupon", couponId],
+    queryFn: () => {
+      if (!couponId) throw new Error("couponId missing");
+      return getCouponById(couponId);
+    },
+    enabled: open && mode === "edit" && Boolean(couponId),
+    retry: 1,
+  });
 
   useEffect(() => {
     if (!open) return;
 
-    if (mode === "edit" && initial) {
-      setTitle(initial.title);
-      setCode(initial.code);
-      setDiscountType(initial.discountType);
-      setDiscountValue(initial.discountValue);
-      setMinPurchase(initial.minPurchase);
-      setMaxDiscount(initial.maxDiscount);
-      setLimitPerUser(initial.limitPerUser);
-      setStartDate(initial.startDate);
-      setExpireDate(initial.expireDate);
-      setStatus(initial.status);
+    hydratedRef.current = false;
 
-      setProductScope(initial.productScope);
-      setProductIds(initial.productIds);
+    if (mode === "create") {
+      setTitle("");
+      setCode(makeRandomCode());
+      setDiscountType("flat");
+      setDiscountValue(0);
+      setMinPurchase(0);
+      setMaxDiscount(0);
+      setLimitPerUser(1);
+      setStartDate(todayISO());
+      setExpireDate(todayISO());
+      setStatus(true);
 
-      setCustomerScope(initial.customerScope);
-      setCustomerIds(initial.customerIds);
+      setProductScope("all");
+      setProductIds([]);
+      setCustomerScope("all");
+      setCustomerIds([]);
 
       setProductSearch("");
       setCustomerSearch("");
+
+      selectedProductMapRef.current = new Map();
+      selectedCustomerMapRef.current = new Map();
       return;
     }
 
-    // create defaults
-    setTitle("");
-    setCode(makeRandomCode());
-    setDiscountType("flat");
-    setDiscountValue(0);
-    setMinPurchase(0);
-    setMaxDiscount(0);
-    setLimitPerUser(1);
-    setStartDate(todayISO());
-    setExpireDate(todayISO());
-    setStatus(true);
-
-    setProductScope("all");
-    setProductIds([]);
-    setCustomerScope("all");
-    setCustomerIds([]);
-
     setProductSearch("");
     setCustomerSearch("");
-  }, [open, mode, initial]);
+  }, [open, mode]);
 
-  // when scope switches to all -> clear selected ids
+  useEffect(() => {
+    if (!open) return;
+    if (mode !== "edit") return;
+    if (!singleQuery.data?.success) return;
+    if (hydratedRef.current) return;
+
+    const d = singleQuery.data.data;
+
+    setTitle(String(d.title ?? ""));
+    setCode(String(d.code ?? ""));
+    setDiscountType(toDiscountType(d.discount_type));
+    setDiscountValue(Number(d.discount ?? 0));
+
+    setMinPurchase(Number(d.min_purchase_amount ?? 0));
+    setMaxDiscount(Number(d.max_discount_amount ?? 0));
+    setLimitPerUser(Number(d.limit_per_user ?? 1));
+
+    setProductScope(toCouponScope(d.product_scope));
+    setCustomerScope(toCouponScope(d.customer_scope));
+
+    setStartDate(toYmdFromIso(String(d.start_date ?? todayISO())));
+    setExpireDate(toYmdFromIso(String(d.expire_date ?? todayISO())));
+    setStatus(toBoolStatus(d.status));
+
+    const pv = Array.isArray(d.product_variations) ? d.product_variations : [];
+    const nextProductIds = pv.map((x) => Number(x.product_variation_id)).filter((x) => Number.isFinite(x));
+    setProductIds(nextProductIds);
+
+    const cm = Array.isArray(d.customers) ? d.customers : [];
+    const nextCustomerIds = cm.map((x) => Number(x.id)).filter((x) => Number.isFinite(x));
+    setCustomerIds(nextCustomerIds);
+
+    const pMap = new Map<number, ProductLite>();
+    pv.forEach((x) => {
+      const id = Number(x.product_variation_id);
+      if (!Number.isFinite(id)) return;
+      pMap.set(id, { id, sku: String(x.sku ?? ""), name: String(x.name ?? String(x.sku ?? "")) });
+    });
+    selectedProductMapRef.current = pMap;
+
+    const cMap = new Map<number, CustomerLite>();
+    cm.forEach((x) => {
+      const id = Number(x.id);
+      if (!Number.isFinite(id)) return;
+      const name = [x.first_name, x.last_name].filter(Boolean).join(" ").trim() || `User #${id}`;
+      const phone = x.default_phone ? String(x.default_phone) : undefined;
+      cMap.set(id, { id, name, phone });
+    });
+    selectedCustomerMapRef.current = cMap;
+
+    hydratedRef.current = true;
+  }, [open, mode, singleQuery.data]);
+
   useEffect(() => {
     if (productScope === "all") setProductIds([]);
   }, [productScope]);
@@ -137,38 +228,17 @@ export default function CouponModal({
     if (customerScope === "all") setCustomerIds([]);
   }, [customerScope]);
 
-  const filteredProducts = useMemo(() => {
-    const q = productSearch.trim();
-    if (!q) return products;
-    return products.filter(
-      (p) => includesQuery(p.name, q) || includesQuery(p.sku, q) || String(p.id).includes(q)
-    );
-  }, [products, productSearch]);
-
-  const filteredCustomers = useMemo(() => {
-    const q = customerSearch.trim();
-    if (!q) return customers;
-    return customers.filter(
-      (c) =>
-        includesQuery(c.name, q) ||
-        includesQuery(c.phone, q) ||
-        String(c.id).includes(q)
-    );
-  }, [customers, customerSearch]);
-
-  const selectedProductCount = productScope === "all" ? products.length : productIds.length;
-  const selectedCustomerCount = customerScope === "all" ? customers.length : customerIds.length;
-
   const canSave = useMemo(() => {
     if (!title.trim()) return false;
     if (!normalizeCode(code)) return false;
     if (discountValue <= 0) return false;
     if (startDate && expireDate && startDate > expireDate) return false;
 
-    if (productScope === "specific" && productIds.length === 0) return false;
-    if (customerScope === "specific" && customerIds.length === 0) return false;
+    if (productScope === "specified" && productIds.length === 0) return false;
+    if (customerScope === "specified" && customerIds.length === 0) return false;
 
     if (discountType === "percent" && discountValue > 100) return false;
+
     return true;
   }, [
     title,
@@ -188,39 +258,181 @@ export default function CouponModal({
     return [...list, id];
   };
 
-  const setAllProducts = () => {
-    setProductIds(products.map((p) => p.id));
+  /** ✅ Dynamic Product Scope */
+  const productQuery = useInfiniteQuery({
+    queryKey: ["productScope", productSearch],
+    queryFn: ({ pageParam }) =>
+      getProductScope({
+        search: productSearch.trim() ? productSearch.trim() : undefined,
+        status: true,
+        limit: 20,
+        offset: Number(pageParam ?? 0),
+      }),
+    enabled: open && productScope === "specified",
+    getNextPageParam: (lastPage, allPages) => {
+      const total = Number(lastPage?.total ?? 0);
+      const loaded = allPages.reduce((acc, p) => acc + (p?.data?.length ?? 0), 0);
+      if (loaded >= total) return undefined;
+      return loaded;
+    },
+    retry: 1,
+    initialPageParam: 0,
+  });
+
+  const productOptions: ProductLite[] = useMemo(() => {
+    const pages = productQuery.data?.pages ?? [];
+    return pages.flatMap((p) => p.data ?? []).map(mapProductScopeToLite);
+  }, [productQuery.data]);
+
+  /** ✅ Dynamic Customer Scope */
+  const customerQuery = useInfiniteQuery({
+    queryKey: ["usersScope", customerSearch],
+    queryFn: ({ pageParam }) =>
+      getUsersScope({
+        search: customerSearch.trim() ? customerSearch.trim() : undefined,
+        status: "active", // ✅ FIX
+        limit: 20,
+        offset: Number(pageParam ?? 0),
+      }),
+    enabled: open && customerScope === "specified",
+    getNextPageParam: (lastPage, allPages) => {
+      const total = Number(lastPage?.total ?? 0);
+      const loaded = allPages.reduce((acc, p) => acc + (p?.data?.length ?? 0), 0);
+      if (loaded >= total) return undefined;
+      return loaded;
+    },
+    retry: 1,
+    initialPageParam: 0,
+  });
+
+  const customerOptions: CustomerLite[] = useMemo(() => {
+    const pages = customerQuery.data?.pages ?? [];
+    return pages.flatMap((p) => p.data ?? []).map(mapUserScopeToLite);
+  }, [customerQuery.data]);
+
+  const invalidateCouponList = async () => {
+    // ✅ IMPORTANT:
+    // Make sure your Coupon List page uses query keys starting with ["coupons"] for list fetching.
+    await queryClient.invalidateQueries({ queryKey: ["coupons"] });
   };
 
-  const clearProducts = () => setProductIds([]);
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createCoupon({
+        title: title.trim(),
+        code: normalizeCode(code),
+        discount: discountValue,
+        discount_type: toApiDiscountType(discountType),
+        min_purchase_amount: minPurchase,
+        max_discount_amount: discountType === "percent" ? maxDiscount : 0,
+        limit_per_user: limitPerUser,
 
-  const setAllCustomers = () => {
-    setCustomerIds(customers.map((c) => c.id));
-  };
+        product_scope: toApiCouponScope(productScope),
+        product_variation_ids: productScope === "specified" ? productIds : [],
 
-  const clearCustomers = () => setCustomerIds([]);
+        customer_scope: toApiCouponScope(customerScope),
+        customer_ids: customerScope === "specified" ? customerIds : [],
+
+        start_date: startDate,
+        expire_date: expireDate,
+        status,
+      }),
+    onSuccess: async (res: ApiCouponCreateResponse | any) => {
+      const createdId = getResponseId(res);
+      if (createdId) {
+        toast.success(`Coupon created (ID: ${createdId})`);
+
+        // ✅ refresh list after success create
+        await invalidateCouponList();
+
+        onSaved();
+        return;
+      }
+
+      if (res?.success === true) {
+        toast.success("Coupon created");
+        await invalidateCouponList();
+        onSaved();
+        return;
+      }
+
+      toast.error(res?.error ?? res?.message ?? "Failed to create coupon");
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to create coupon";
+      toast.error(msg);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!couponId) throw new Error("couponId missing");
+      return updateCoupon(couponId, {
+        title: title.trim(),
+        code: normalizeCode(code),
+        discount: discountValue,
+        discount_type: toApiDiscountType(discountType),
+        min_purchase_amount: minPurchase,
+        max_discount_amount: discountType === "percent" ? maxDiscount : 0,
+        limit_per_user: limitPerUser,
+
+        product_scope: toApiCouponScope(productScope),
+        product_variation_ids: productScope === "specified" ? productIds : [],
+
+        customer_scope: toApiCouponScope(customerScope),
+        customer_ids: customerScope === "specified" ? customerIds : [],
+
+        start_date: startDate,
+        expire_date: expireDate,
+        status,
+      });
+    },
+    onSuccess: async (res: any) => {
+      const updatedId = getResponseId(res);
+      if (updatedId) {
+        toast.success(`Coupon updated (ID: ${updatedId})`);
+
+        // ✅ refresh list after success update
+        await invalidateCouponList();
+
+        onSaved();
+        return;
+      }
+
+      if (res?.success === true) {
+        toast.success("Coupon updated");
+        await invalidateCouponList();
+        onSaved();
+        return;
+      }
+
+      toast.error(res?.error ?? res?.message ?? "Failed to update coupon");
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update coupon";
+      toast.error(msg);
+    },
+  });
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const submit = () => {
-    const payload: Omit<CouponRow, "id" | "totalUses"> = {
-      title: title.trim(),
-      code: normalizeCode(code),
-      discountType,
-      discountValue,
-      minPurchase,
-      maxDiscount: discountType === "percent" ? maxDiscount : 0,
-      limitPerUser,
-      startDate,
-      expireDate,
-      status,
-
-      productScope,
-      productIds: productScope === "specific" ? productIds : [],
-      customerScope,
-      customerIds: customerScope === "specific" ? customerIds : [],
-    };
-
-    onSave(payload);
+    if (!canSave || isSaving) return;
+    if (mode === "create") createMutation.mutate();
+    else updateMutation.mutate();
   };
+
+  const selectedProducts = useMemo(() => {
+    const map = selectedProductMapRef.current;
+    return productIds.map((id) => map.get(id) ?? { id, sku: `#${id}`, name: `Variation #${id}` });
+  }, [productIds]);
+
+  const selectedCustomers = useMemo(() => {
+    const map = selectedCustomerMapRef.current;
+    return customerIds.map((id) => map.get(id) ?? { id, name: `User #${id}` });
+  }, [customerIds]);
 
   if (!open) return null;
 
@@ -255,7 +467,7 @@ export default function CouponModal({
           </button>
         </div>
 
-        {/* Body scroll */}
+        {/* Body */}
         <div className="max-h-[800px] overflow-y-auto px-6 py-5">
           {/* Main form */}
           <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -264,11 +476,7 @@ export default function CouponModal({
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Title <span className="text-error-500">*</span>
                 </p>
-                <Input
-                  placeholder="New coupon"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
+                <Input placeholder="New coupon" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
               <div className="space-y-2">
@@ -276,26 +484,17 @@ export default function CouponModal({
                   Code <span className="text-error-500">*</span>
                 </p>
                 <div className="flex gap-2">
-                  <Input
-                    placeholder="CODE"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => setCode(makeRandomCode())}
-                    className="shrink-0"
-                  >
+                  <Input placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value)} />
+                  <Button variant="outline" onClick={() => setCode(makeRandomCode())} className="shrink-0">
                     Regenerate
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Discount Type
-                </p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Discount Type</p>
                 <Select
+                  key={`dt-${discountType}`}
                   options={DISCOUNT_TYPE_OPTIONS}
                   placeholder="Select type"
                   defaultValue={discountType}
@@ -319,20 +518,12 @@ export default function CouponModal({
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Min Purchase (৳)
-                </p>
-                <Input
-                  type="number"
-                  value={String(minPurchase)}
-                  onChange={(e) => setMinPurchase(safeNumber(e.target.value, 0))}
-                />
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Purchase (৳)</p>
+                <Input type="number" value={String(minPurchase)} onChange={(e) => setMinPurchase(safeNumber(e.target.value, 0))} />
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Max Discount (৳)
-                </p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Max Discount (৳)</p>
                 <Input
                   type="number"
                   value={String(maxDiscount)}
@@ -340,16 +531,12 @@ export default function CouponModal({
                   disabled={discountType !== "percent"}
                 />
                 {discountType !== "percent" ? (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Only for percent discount
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Only for percent discount</p>
                 ) : null}
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Limit per user
-                </p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Limit per user</p>
                 <Input
                   type="number"
                   value={String(limitPerUser)}
@@ -358,38 +545,22 @@ export default function CouponModal({
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Start Date
-                </p>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</p>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Expire Date
-                </p>
-                <Input
-                  type="date"
-                  value={expireDate}
-                  onChange={(e) => setExpireDate(e.target.value)}
-                />
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Expire Date</p>
+                <Input type="date" value={expireDate} onChange={(e) => setExpireDate(e.target.value)} />
                 {startDate && expireDate && startDate > expireDate ? (
                   <p className="text-xs text-error-500">Expire date must be after start date</p>
                 ) : null}
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Status
-                </p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
                 <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {status ? "Active" : "Inactive"}
-                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{status ? "Active" : "Inactive"}</p>
                   <Switch label="" defaultChecked={status} onChange={(c) => setStatus(c)} />
                 </div>
               </div>
@@ -400,17 +571,16 @@ export default function CouponModal({
           <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Product Scope
-                </h4>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Product Scope</h4>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Apply coupon on {productScope === "all" ? "all products" : "specific products"} (
-                  selected: <span className="font-semibold">{selectedProductCount}</span>)
+                  Apply coupon on {productScope === "all" ? "all products" : "specified products"} (selected:{" "}
+                  <span className="font-semibold">{productScope === "all" ? "All" : productIds.length}</span>)
                 </p>
               </div>
 
               <div className="w-full md:w-[240px]">
                 <Select
+                  key={`ps-${productScope}`}
                   options={SCOPE_OPTIONS}
                   placeholder="Select scope"
                   defaultValue={productScope}
@@ -419,42 +589,67 @@ export default function CouponModal({
               </div>
             </div>
 
-            {productScope === "specific" ? (
+            {productScope === "specified" ? (
               <div className="mt-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="relative w-full md:w-[320px]">
+                  <div className="relative w-full md:w-[340px]">
                     <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
                       <Search size={16} className="text-gray-400" />
                     </div>
                     <Input
                       className="pl-9"
-                      placeholder="Search product by name / sku..."
+                      placeholder="Search product by sku / name..."
                       value={productSearch}
                       onChange={(e) => setProductSearch(e.target.value)}
                     />
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={setAllProducts}>
-                      Select All
-                    </Button>
-                    <Button variant="outline" onClick={clearProducts}>
+                    <Button variant="outline" disabled={productIds.length === 0} onClick={() => setProductIds([])}>
                       Clear
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={!productQuery.hasNextPage || productQuery.isFetchingNextPage}
+                      onClick={() => productQuery.fetchNextPage()}
+                    >
+                      {productQuery.isFetchingNextPage ? "Loading..." : "Load More"}
                     </Button>
                   </div>
                 </div>
 
-                <div className="mt-4 max-h-[240px] overflow-y-auto rounded-[4px] border border-gray-200 dark:border-gray-800">
-                  {filteredProducts.map((p) => {
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {selectedProducts.map((p) => (
+                    <span
+                      key={`sp-${p.id}`}
+                      className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      {p.sku || `#${p.id}`}
+                      <button
+                        type="button"
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        onClick={() => setProductIds((prev) => prev.filter((x) => x !== p.id))}
+                        aria-label="Remove"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-4 max-h-[260px] overflow-y-auto rounded-[4px] border border-gray-200 dark:border-gray-800">
+                  {productOptions.map((p) => {
                     const checked = productIds.includes(p.id);
+                    if (checked) selectedProductMapRef.current.set(p.id, p);
+
                     return (
                       <label
-                        key={p.id}
+                        key={`p-${p.id}`}
                         className="flex cursor-pointer items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 dark:border-gray-800"
                       >
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{p.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{p.sku}</p>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">{p.name}</p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">{p.sku}</p>
                         </div>
 
                         <input
@@ -467,7 +662,13 @@ export default function CouponModal({
                     );
                   })}
 
-                  {filteredProducts.length === 0 ? (
+                  {productQuery.isLoading ? (
+                    <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Loading products...
+                    </div>
+                  ) : null}
+
+                  {!productQuery.isLoading && productOptions.length === 0 ? (
                     <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                       No products found.
                     </div>
@@ -485,17 +686,16 @@ export default function CouponModal({
           <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Customer Scope
-                </h4>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Customer Scope</h4>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Apply coupon for {customerScope === "all" ? "all customers" : "specific customers"} (
-                  selected: <span className="font-semibold">{selectedCustomerCount}</span>)
+                  Apply coupon for {customerScope === "all" ? "all customers" : "specified customers"} (selected:{" "}
+                  <span className="font-semibold">{customerScope === "all" ? "All" : customerIds.length}</span>)
                 </p>
               </div>
 
               <div className="w-full md:w-[240px]">
                 <Select
+                  key={`cs-${customerScope}`}
                   options={SCOPE_OPTIONS}
                   placeholder="Select scope"
                   defaultValue={customerScope}
@@ -504,10 +704,10 @@ export default function CouponModal({
               </div>
             </div>
 
-            {customerScope === "specific" ? (
+            {customerScope === "specified" ? (
               <div className="mt-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="relative w-full md:w-[320px]">
+                  <div className="relative w-full md:w-[340px]">
                     <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
                       <Search size={16} className="text-gray-400" />
                     </div>
@@ -520,26 +720,34 @@ export default function CouponModal({
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={setAllCustomers}>
-                      Select All
-                    </Button>
-                    <Button variant="outline" onClick={clearCustomers}>
+                    <Button variant="outline" disabled={customerIds.length === 0} onClick={() => setCustomerIds([])}>
                       Clear
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={!customerQuery.hasNextPage || customerQuery.isFetchingNextPage}
+                      onClick={() => customerQuery.fetchNextPage()}
+                    >
+                      {customerQuery.isFetchingNextPage ? "Loading..." : "Load More"}
                     </Button>
                   </div>
                 </div>
 
-                <div className="mt-4 max-h-[240px] overflow-y-auto rounded-[4px] border border-gray-200 dark:border-gray-800">
-                  {filteredCustomers.map((c) => {
+                <div className="mt-4 max-h-[260px] overflow-y-auto rounded-[4px] border border-gray-200 dark:border-gray-800">
+                  {customerOptions.map((c) => {
                     const checked = customerIds.includes(c.id);
+                    if (checked) selectedCustomerMapRef.current.set(c.id, c);
+
                     return (
                       <label
-                        key={c.id}
+                        key={`c-${c.id}`}
                         className="flex cursor-pointer items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 dark:border-gray-800"
                       >
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{c.phone}</p>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">{c.name}</p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                            {c.phone ? c.phone : c.email ? c.email : `User #${c.id}`}
+                          </p>
                         </div>
 
                         <input
@@ -552,7 +760,13 @@ export default function CouponModal({
                     );
                   })}
 
-                  {filteredCustomers.length === 0 ? (
+                  {customerQuery.isLoading ? (
+                    <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Loading customers...
+                    </div>
+                  ) : null}
+
+                  {!customerQuery.isLoading && customerOptions.length === 0 ? (
                     <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                       No customers found.
                     </div>
@@ -569,11 +783,11 @@ export default function CouponModal({
 
         {/* Footer */}
         <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!canSave}>
-            {mode === "create" ? "Create Coupon" : "Update Coupon"}
+          <Button onClick={submit} disabled={!canSave || isSaving}>
+            {isSaving ? "Saving..." : mode === "create" ? "Create Coupon" : "Update Coupon"}
           </Button>
         </div>
       </div>

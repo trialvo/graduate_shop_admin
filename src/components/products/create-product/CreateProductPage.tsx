@@ -856,7 +856,7 @@ export default function CreateProductPage() {
         </div>
 
         {/* Matrix Table */}
-        <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="border-b border-gray-200 p-4 dark:border-gray-800">
             <p className="text-base font-semibold text-gray-900 dark:text-white">
               Variation Matrix

@@ -1,125 +1,182 @@
+// src/components/business-settings/currier-settings/CurrierSettingsPage.tsx
+
 import React, { useMemo, useState } from "react";
-import { Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { RefreshCcw, Search, Settings } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
 
-import { INITIAL_CURRIERS } from "./mockData";
+import { COURIER_PROVIDER_DEFS } from "./providerDefs";
 import CurrierModal from "./CurrierModal";
-import type { CurrierRow } from "./types";
-import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import type { CourierProvider, CourierProviderConfigCard } from "./types";
+
+import {
+  getCourierSystemConfig,
+  setDefaultCourier,
+  updateCourierProviderConfig,
+} from "@/api/courier-config.api";
+import { cn } from "@/lib/utils";
+import { toPublicUrl } from "@/config/env";
 
 function formatHeaderTime(d: Date): string {
   const month = d.toLocaleString("en-US", { month: "long" });
   const day = d.getDate();
   const year = d.getFullYear();
-  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   return `${month} ${day}, ${year} at ${time}`;
 }
 
+function safeStr(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v == null) return "";
+  return String(v);
+}
+
+function isCourierProvider(v: string): v is CourierProvider {
+  return COURIER_PROVIDER_DEFS.some((d) => d.provider === v);
+}
+
 export default function CurrierSettingsPage() {
+  const qc = useQueryClient();
+
   const [refreshedAt, setRefreshedAt] = useState<Date>(new Date());
   const [search, setSearch] = useState("");
-  const [items, setItems] = useState<CurrierRow[]>(INITIAL_CURRIERS);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [activeItem, setActiveItem] = useState<CurrierRow | null>(null);
+  const [editingProvider, setEditingProvider] =
+    useState<CourierProvider | null>(null);
+  const [editingInitial, setEditingInitial] =
+    useState<CourierProviderConfigCard | null>(null);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<CurrierRow | null>(null);
+  const courierQuery = useQuery({
+    queryKey: ["systemConfig", "courier"],
+    queryFn: () => getCourierSystemConfig(),
+    retry: 1,
+  });
+
+  const invalidate = () =>
+    qc
+      .invalidateQueries({ queryKey: ["systemConfig", "courier"] })
+      .catch(() => undefined);
+
+  const cards: CourierProviderConfigCard[] = useMemo(() => {
+    const courier = courierQuery.data?.courier ?? {};
+
+    const rawDefault = safeStr(
+      (courier as any)?.default?.config?.COURIER_DEFAULT_PROVIDER
+    ).trim();
+    const defaultProvider: CourierProvider | null =
+      rawDefault && isCourierProvider(rawDefault) ? rawDefault : null;
+
+    return COURIER_PROVIDER_DEFS.map((def) => {
+      const node = (courier as any)?.[def.provider] ?? {};
+      const cfg = (node?.config ?? {}) as Record<string, any>;
+      const common = def.common;
+
+      const base_url = safeStr(cfg?.[common.base_url] ?? "");
+      const description = safeStr(cfg?.[common.description] ?? "");
+      const note = safeStr(cfg?.[common.note] ?? "");
+      const imagePath = safeStr(cfg?.[common.image] ?? "");
+
+      return {
+        provider: def.provider,
+        is_active: Boolean(node?.is_active),
+        config: cfg,
+        defaultProvider,
+        isDefault: defaultProvider === def.provider,
+        base_url,
+        description,
+        note,
+        imagePath,
+      };
+    });
+  }, [courierQuery.data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((c) => {
+    if (!q) return cards;
+
+    return cards.filter((c) => {
+      const meta = COURIER_PROVIDER_DEFS.find((d) => d.provider === c.provider);
       return (
-        c.name.toLowerCase().includes(q) ||
-        c.type.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q)
+        safeStr(c.provider).toLowerCase().includes(q) ||
+        safeStr(meta?.title).toLowerCase().includes(q) ||
+        safeStr(c.base_url).toLowerCase().includes(q) ||
+        safeStr(c.description).toLowerCase().includes(q) ||
+        safeStr(c.note).toLowerCase().includes(q)
       );
     });
-  }, [items, search]);
+  }, [cards, search]);
 
-  const openCreate = () => {
-    setModalMode("create");
-    setActiveItem(null);
+  const toggleMutation = useMutation({
+    mutationFn: (payload: { provider: CourierProvider; status: boolean }) => {
+      const fd = new FormData();
+      fd.append("status", String(Boolean(payload.status)));
+      // fd.append("setdefault", "false");
+      // fd.append("setnull", "false");
+      return updateCourierProviderConfig(payload.provider, fd);
+    },
+    onSuccess: (res: any) => {
+      if (res?.success === true) {
+        toast.success("Status updated");
+        invalidate();
+        return;
+      }
+      toast.error(res?.error ?? res?.message ?? "Failed to update");
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update";
+      toast.error(msg);
+    },
+  });
+
+  const defaultMutation = useMutation({
+    mutationFn: (p: CourierProvider) => setDefaultCourier(p),
+    onSuccess: (res: any) => {
+      if (res?.success === true) {
+        toast.success("Default courier updated");
+        invalidate();
+        return;
+      }
+      toast.error(res?.error ?? res?.message ?? "Failed to update default");
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update default";
+      toast.error(msg);
+    },
+  });
+
+  const openEdit = (row: CourierProviderConfigCard) => {
+    setEditingProvider(row.provider);
+    setEditingInitial(row);
     setModalOpen(true);
   };
 
-  const openEdit = (row: CurrierRow) => {
-    setModalMode("edit");
-    setActiveItem(row);
-    setModalOpen(true);
-  };
-
-  const upsert = (payload: CurrierRow) => {
-    setItems((prev) => {
-      const exists = prev.some((x) => x.id === payload.id);
-      if (!exists) return [payload, ...prev];
-      return prev.map((x) => (x.id === payload.id ? payload : x));
-    });
-  };
-
-  const toggleActive = (id: number, checked: boolean) => {
-    setItems((prev) =>
-      prev.map((x) =>
-        x.id === id
-          ? { ...x, active: checked, updatedAt: new Date().toLocaleString() }
-          : x
-      )
-    );
-  };
-
-  const openDelete = (row: CurrierRow) => {
-    setDeleteTarget(row);
-    setDeleteOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (!deleteTarget) return;
-    setItems((prev) => prev.filter((x) => x.id !== deleteTarget.id));
-    setDeleteOpen(false);
-    setDeleteTarget(null);
+  const doRefresh = async () => {
+    setRefreshedAt(new Date());
+    try {
+      await courierQuery.refetch();
+    } catch {
+      toast.error("Failed to refresh");
+    }
   };
 
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Currier Settings" />
-
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            Currier Management
-          </h1>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>Data Refreshed</span>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={() => setRefreshedAt(new Date())}
-              aria-label="Refresh"
-            >
-              <RefreshCcw size={16} />
-            </button>
-          </div>
-
-          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-            {formatHeaderTime(refreshedAt)}
-          </div>
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Button startIcon={<Plus size={16} />} onClick={openCreate}>
-          Add New Currier
-        </Button>
-
         <div className="relative w-full md:max-w-sm">
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
             <Search size={16} className="text-gray-400" />
@@ -133,100 +190,151 @@ export default function CurrierSettingsPage() {
         </div>
       </div>
 
+      {courierQuery.isError ? (
+        <div className="rounded-[4px] border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+          Failed to load courier settings.
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {filtered.map((card) => (
-          <div
-            key={card.id}
-            className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden"
-          >
-            <div className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40 flex items-center justify-center">
-                    {card.logoUrl ? (
-                      <img
-                        src={card.logoUrl}
-                        alt={card.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                        Logo
+        {courierQuery.isLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+              />
+            ))
+          : filtered.map((g) => {
+              const meta = COURIER_PROVIDER_DEFS.find(
+                (d) => d.provider === g.provider
+              );
+
+              return (
+                <div
+                  key={g.provider}
+                  className="overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                          {g.imagePath ? (
+                            <img
+                              src={toPublicUrl(g.imagePath) ?? undefined}
+                              alt={meta?.title ?? g.provider}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            meta?.logoText ?? "CR"
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                            {meta?.title ?? g.provider}
+                          </p>
+                          {g.base_url ? (
+                            <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                              {g.base_url}
+                            </p>
+                          ) : (
+                            <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                              Provider:{" "}
+                              <span className="font-semibold">
+                                {g.provider}
+                              </span>
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    )}
+
+                      <Switch
+                        key={`courier-st-${g.provider}-${g.is_active}`}
+                        label=""
+                        defaultChecked={g.is_active}
+                        disabled={toggleMutation.isPending}
+                        onChange={(checked) =>
+                          toggleMutation.mutate({
+                            provider: g.provider,
+                            status: checked,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {g.isDefault ? (
+                          <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
+                            Default
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => defaultMutation.mutate(g.provider)}
+                            disabled={defaultMutation.isPending}
+                          >
+                            Make Default
+                          </Button>
+                        )}
+
+                        <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                          Courier
+                        </span>
+                      </div>
+
+                      {g.description ? (
+                        <p className="line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
+                          {g.description}
+                        </p>
+                      ) : null}
+
+                      {g.note ? (
+                        <p className="line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                          {g.note}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {card.name}
-                    </p>
+                  <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600"
+                      onClick={() => openEdit(g)}
+                    >
+                      <Settings size={16} />
+                      View Settings
+                    </button>
                   </div>
                 </div>
+              );
+            })}
 
-                <Switch
-                  label=""
-                  defaultChecked={card.active}
-                  onChange={(checked) => toggleActive(card.id, checked)}
-                />
-              </div>
-
-              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 line-clamp-3">
-                {card.description}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-              <button
-                type="button"
-                className="text-sm font-semibold text-brand-500 hover:text-brand-600"
-                onClick={() => openEdit(card)}
-              >
-                View Settings
-              </button>
-
-              <button
-                type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
-                onClick={() => openDelete(card)}
-                aria-label="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {filtered.length === 0 ? (
-          <div className="md:col-span-2 xl:col-span-4 rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-            No curriers found.
+        {!courierQuery.isLoading && filtered.length === 0 ? (
+          <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+            No courier provider found.
           </div>
         ) : null}
       </div>
 
       <CurrierModal
         open={modalOpen}
-        mode={modalMode}
-        initial={activeItem}
-        onClose={() => setModalOpen(false)}
-        onSubmit={upsert}
-      />
-
-      <ConfirmDialog
-        open={deleteOpen}
-        title="Delete Currier"
-        message={
-          deleteTarget
-            ? `Are you sure you want to delete "${deleteTarget.name}"?`
-            : "Are you sure you want to delete this item?"
-        }
-        confirmText="Delete"
-        cancelText="Cancel"
-        tone="danger"
+        provider={editingProvider}
+        initial={editingInitial}
         onClose={() => {
-          setDeleteOpen(false);
-          setDeleteTarget(null);
+          setModalOpen(false);
+          setEditingProvider(null);
+          setEditingInitial(null);
         }}
-        onConfirm={confirmDelete}
+        onSaved={() => {
+          invalidate();
+          setRefreshedAt(new Date());
+          setModalOpen(false);
+          setEditingProvider(null);
+          setEditingInitial(null);
+        }}
       />
     </div>
   );

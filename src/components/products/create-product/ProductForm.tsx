@@ -451,7 +451,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">SKU Base (helper)</p>
 
-              <div className="inline-flex overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="inline-flex rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <button
                   type="button"
                   onClick={() => setSkuMode("auto")}

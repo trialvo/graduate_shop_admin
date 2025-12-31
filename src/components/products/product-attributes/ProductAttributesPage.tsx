@@ -27,7 +27,7 @@ export default function ProductAttributesPage() {
       </div>
 
       {/* Tabs */}
-      <div className="inline-flex w-full max-w-4xl overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="inline-flex w-full max-w-4xl rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {TABS.map((tab) => {
           const label =
             tab === "brand"

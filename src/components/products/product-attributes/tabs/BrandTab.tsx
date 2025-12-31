@@ -656,7 +656,7 @@ export default function BrandTab() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {isLoading ? (
           <TableSkeleton />
         ) : (

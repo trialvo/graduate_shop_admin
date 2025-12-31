@@ -169,7 +169,7 @@ export default function DeliverySettingsPage() {
               return (
                 <div
                   key={card.id}
-                  className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-3">
@@ -274,7 +274,7 @@ export default function DeliverySettingsPage() {
       </div>
 
       {/* Pagination (API) */}
-      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <Pagination
           totalItems={totalItems}
           page={page}
