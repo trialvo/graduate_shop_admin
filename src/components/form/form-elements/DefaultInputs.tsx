@@ -8,6 +8,7 @@ import DatePicker from "../date-picker.tsx";
 
 export default function DefaultInputs() {
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
   const options = [
     { value: "marketing", label: "Marketing" },
     { value: "template", label: "Template" },
@@ -58,13 +59,13 @@ export default function DefaultInputs() {
         </div>
 
         <div>
+          <Label>Date Picker Input</Label>
           <DatePicker
-            id="date-picker"
-            label="Date Picker Input"
+            value={selectedDate}
             placeholder="Select a date"
-            onChange={(dates, currentDateString) => {
-              // Handle your logic
-              console.log({ dates, currentDateString });
+            onChange={(value) => {
+              setSelectedDate(value);
+              console.log({ value });
             }}
           />
         </div>

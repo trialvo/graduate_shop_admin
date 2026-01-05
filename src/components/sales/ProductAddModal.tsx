@@ -49,7 +49,7 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
           <img
             src={product.image}
             alt={product.title}
-            className="h-20 w-20 rounded-2xl object-cover ring-1 ring-gray-200 dark:ring-gray-800"
+            className="h-20 w-20 rounded-[4px] object-cover ring-1 ring-gray-200 dark:ring-gray-800"
           />
           <div className="min-w-0">
             <p className="truncate text-base font-semibold text-gray-800 dark:text-white/90">

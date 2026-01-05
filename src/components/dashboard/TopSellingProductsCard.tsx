@@ -9,7 +9,7 @@ const TopSellingProductsCard = () => {
   const preview = useMemo(() => topSellingProducts.slice(0, PAGE_SIZE), []);
 
   return (
-    <div className="h-full w-full rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 flex flex-col">
+    <div className="h-full w-full rounded-[4px] border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 flex flex-col">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">

@@ -50,7 +50,7 @@ const BillingPanel = ({
   const total = subtotal - discount + deliveryFee + tax;
 
   return (
-    <div className="h-full rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 flex flex-col">
+    <div className="h-full rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 flex flex-col">
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
           Billing Section
@@ -104,7 +104,7 @@ const BillingPanel = ({
       </div>
 
       {/* Delivery info */}
-      <div className="mt-4 rounded-xl border border-gray-200 dark:border-gray-800">
+      <div className="mt-4 rounded-[4px] border border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-gray-800 dark:text-white/90">
@@ -180,7 +180,7 @@ const BillingPanel = ({
 
       {/* Cart list */}
       <div className="mt-4 flex-1 overflow-auto custom-scrollbar">
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800">
+        <div className="rounded-[4px] border border-gray-200 dark:border-gray-800">
           <div className="grid grid-cols-12 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
             <div className="col-span-6">Food</div>
             <div className="col-span-2 text-center">QTY</div>

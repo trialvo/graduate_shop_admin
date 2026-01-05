@@ -123,7 +123,7 @@ const StockUpdateModal: React.FC<Props> = ({
       />
 
       {/* modal */}
-      <div className="relative w-[94%] max-w-xl rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
+      <div className="relative w-[94%] max-w-xl rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -143,7 +143,7 @@ const StockUpdateModal: React.FC<Props> = ({
               size="sm"
               type="button"
               onClick={onClose}
-              className="rounded-xl"
+              className="rounded-[4px]"
             >
               Close
             </Button>
@@ -161,7 +161,7 @@ const StockUpdateModal: React.FC<Props> = ({
                 type="button"
                 onClick={() => setType("increase")}
                 className={[
-                  "h-11 rounded-xl border text-sm font-semibold",
+                  "h-11 rounded-[4px] border text-sm font-semibold",
                   type === "increase"
                     ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-gray-800"
                     : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
@@ -173,7 +173,7 @@ const StockUpdateModal: React.FC<Props> = ({
                 type="button"
                 onClick={() => setType("decrease")}
                 className={[
-                  "h-11 rounded-xl border text-sm font-semibold",
+                  "h-11 rounded-[4px] border text-sm font-semibold",
                   type === "decrease"
                     ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-gray-800"
                     : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
@@ -185,7 +185,7 @@ const StockUpdateModal: React.FC<Props> = ({
                 type="button"
                 onClick={() => setType("set")}
                 className={[
-                  "h-11 rounded-xl border text-sm font-semibold",
+                  "h-11 rounded-[4px] border text-sm font-semibold",
                   type === "set"
                     ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-gray-800"
                     : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
@@ -206,7 +206,7 @@ const StockUpdateModal: React.FC<Props> = ({
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setQty(Number(e.target.value))
               }
-              className="h-11 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
+              className="h-11 rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
               placeholder={type === "set" ? "e.g. 120" : "e.g. 10"}
               type="number"
               min={0}
@@ -238,7 +238,7 @@ const StockUpdateModal: React.FC<Props> = ({
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 text-sm text-gray-900 dark:text-gray-100"
+              className="h-11 w-full rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 text-sm text-gray-900 dark:text-gray-100"
             >
               {REASONS.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -256,14 +256,14 @@ const StockUpdateModal: React.FC<Props> = ({
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="min-h-[96px] w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+              className="min-h-[96px] w-full rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
               placeholder="Add details for audit/history..."
             />
           </div>
         </div>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-end gap-2">
-          <Button variant="outline" type="button" onClick={onClose} className="rounded-xl">
+          <Button variant="outline" type="button" onClick={onClose} className="rounded-[4px]">
             Cancel
           </Button>
           <Button
@@ -271,7 +271,7 @@ const StockUpdateModal: React.FC<Props> = ({
             type="button"
             onClick={handleApply}
             disabled={!canApply}
-            className="rounded-xl bg-brand-500 hover:bg-brand-600"
+            className="rounded-[4px] bg-brand-500 hover:bg-brand-600"
           >
             Apply Update
           </Button>

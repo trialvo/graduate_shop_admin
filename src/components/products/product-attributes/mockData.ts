@@ -3,19 +3,43 @@ import type {
   BrandRow,
   ColorRow,
   ProductLite,
-  VariantRow,
+  ProductVariantRow,
 } from "./types";
 
 export const INITIAL_BRANDS: BrandRow[] = [
-  { id: 1, name: "No Brand", status: true, priority: "Normal" },
-  { id: 2, name: "Nike", status: true, priority: "High" },
-  { id: 3, name: "Adidas", status: true, priority: "Medium" },
+  {
+    id: 1,
+    name: "No Brand",
+    img_path: null,
+    status: true,
+    priority: 1,
+    created_at: "",
+    updated_at: "",
+  },
+  {
+    id: 2,
+    name: "Nike",
+    img_path: null,
+    status: true,
+    priority: 3,
+    created_at: "",
+    updated_at: "",
+  },
+  {
+    id: 3,
+    name: "Adidas",
+    img_path: null,
+    status: true,
+    priority: 2,
+    created_at: "",
+    updated_at: "",
+  },
 ];
 
 export const INITIAL_COLORS: ColorRow[] = [
-  { id: 1, name: "Red", hex: "#EF4444", status: true, priority: "Normal" },
-  { id: 2, name: "Black", hex: "#111827", status: true, priority: "High" },
-  { id: 3, name: "White", hex: "#F9FAFB", status: true, priority: "Medium" },
+  { id: 1, name: "Red", hex: "#EF4444", status: true, priority: 1 },
+  { id: 2, name: "Black", hex: "#111827", status: true, priority: 3 },
+  { id: 3, name: "White", hex: "#F9FAFB", status: true, priority: 2 },
 ];
 
 export const INITIAL_ATTRIBUTES: AttributeDefinition[] = [
@@ -45,4 +69,4 @@ export const INITIAL_PRODUCTS: ProductLite[] = [
   { id: 9003, name: "Sandal", sku: "SANDAL-001" },
 ];
 
-export const INITIAL_VARIANTS: VariantRow[] = [];
+export const INITIAL_VARIANTS: ProductVariantRow[] = [];

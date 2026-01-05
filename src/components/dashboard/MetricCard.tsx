@@ -20,7 +20,7 @@ const MetricCard = ({
   return (
     <div
       className="
-        relative overflow-hidden rounded-2xl
+        relative overflow-hidden rounded-[4px]
         bg-white
         p-5
         shadow-theme-md

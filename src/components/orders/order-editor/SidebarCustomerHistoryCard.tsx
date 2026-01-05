@@ -39,7 +39,7 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
   onDownloadInvoice,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
       <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
         Customer History:
       </div>
@@ -85,7 +85,7 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
           {altPhone}
         </div>
 
-        <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div className="col-span-2 rounded-[4px] border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
           {additionalNotes}
         </div>
 

@@ -1,33 +1,86 @@
-export type Priority = "Low" | "Normal" | "Medium" | "High";
+export type ApiErrorShape = {
+  flag?: number;
+  error?: string;
+};
 
-export interface CategoryRow {
+export type PaginationParams = {
+  limit?: number;
+  offset?: number;
+};
+
+export type BaseListParams = PaginationParams & {
+  name?: string;
+  status?: boolean;
+  featured?: boolean;
+  priority?: number;
+};
+
+export type MainCategory = {
   id: number;
   name: string;
+  img_path: string | null;
   status: boolean;
   featured: boolean;
-  priority: Priority;
-  imageUrl?: string;
-}
+  priority: number;
+  created_at?: string;
+  updated_at?: string;
+  sub_categories?: SubCategory[];
+};
 
-export interface SubCategoryRow {
+export type SubCategory = {
   id: number;
+  main_category_id: number;
   name: string;
-  mainCategoryId: number;
+  img_path: string | null;
   status: boolean;
   featured: boolean;
-  priority: Priority;
-  imageUrl?: string;
-}
+  priority: number;
+  created_at?: string;
+  updated_at?: string;
+  child_categories?: ChildCategory[];
+};
 
-export interface ChildCategoryRow {
+export type ChildCategory = {
   id: number;
+  sub_category_id: number;
   name: string;
-  mainCategoryId: number;
-  subCategoryId: number;
+  img_path: string | null;
   status: boolean;
   featured: boolean;
-  priority: Priority;
-  imageUrl?: string;
-}
+  priority: number;
+  created_at?: string;
+  updated_at?: string;
+};
 
-export type Option = { value: string; label: string };
+export type ListResponse<T> = {
+  data: T[];
+  total: number;
+};
+
+export type MainListParams = BaseListParams;
+
+export type SubListParams = BaseListParams & {
+  main_category_id?: number;
+};
+
+export type ChildListParams = BaseListParams & {
+  sub_category_id?: number;
+};
+
+export type CategoryFormValues = {
+  name: string;
+  priority: number;
+  status: boolean;
+  featured: boolean;
+  category_img?: File | null;
+};
+
+export type SubCategoryFormValues = CategoryFormValues & {
+  main_category_id: number;
+};
+
+export type ChildCategoryFormValues = CategoryFormValues & {
+  sub_category_id: number;
+};
+
+export type CategoryEntity = "main" | "sub" | "child";

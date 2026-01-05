@@ -49,7 +49,7 @@ const AddCustomerModal = ({ open, onClose, onCreate }: Props) => {
 
       {/* Body */}
       <div className="px-6 py-6">
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-white/5">
+        <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-white/5">
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12">
               <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -59,7 +59,7 @@ const AddCustomerModal = ({ open, onClose, onCreate }: Props) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Sajjad Hossain"
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                className="h-11 w-full rounded-[4px] border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               />
             </div>
 
@@ -71,7 +71,7 @@ const AddCustomerModal = ({ open, onClose, onCreate }: Props) => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. 01700-000000"
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                className="h-11 w-full rounded-[4px] border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Phone is required for delivery/contact.
@@ -86,7 +86,7 @@ const AddCustomerModal = ({ open, onClose, onCreate }: Props) => {
                 value={addressLine}
                 onChange={(e) => setAddressLine(e.target.value)}
                 placeholder="e.g. Dhaka, Mirpur 10"
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                className="h-11 w-full rounded-[4px] border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               />
             </div>
           </div>
