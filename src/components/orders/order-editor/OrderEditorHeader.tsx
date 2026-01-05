@@ -1,6 +1,7 @@
+// src/components/orders/order-editor/OrderEditorHeader.tsx
+
 import type React from "react";
 import Badge from "@/components/ui/badge/Badge";
-
 import type { OrderStatus, PaymentStatus } from "./types";
 
 interface OrderEditorHeaderProps {
@@ -14,7 +15,7 @@ interface OrderEditorHeaderProps {
 }
 
 const statusToBadgeColor = (
-  status: OrderStatus,
+  status: OrderStatus
 ): "primary" | "success" | "error" | "warning" | "info" => {
   switch (status) {
     case "delivered":
@@ -31,12 +32,12 @@ const statusToBadgeColor = (
 };
 
 const paymentToBadgeColor = (
-  status: PaymentStatus,
+  status: PaymentStatus
 ): "success" | "error" | "warning" => {
   switch (status) {
     case "paid":
       return "success";
-    case "partial":
+    case "partial_paid":
       return "warning";
     default:
       return "error";
@@ -90,19 +91,11 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
             </span>
           </div>
 
-          <Badge
-            variant="light"
-            size="md"
-            color={paymentToBadgeColor(paymentStatus)}
-          >
+          <Badge variant="light" size="md" color={paymentToBadgeColor(paymentStatus)}>
             {paymentStatus.toUpperCase()}
           </Badge>
 
-          <Badge
-            variant="light"
-            size="md"
-            color={statusToBadgeColor(orderStatus)}
-          >
+          <Badge variant="light" size="md" color={statusToBadgeColor(orderStatus)}>
             {statusLabel}
           </Badge>
         </div>

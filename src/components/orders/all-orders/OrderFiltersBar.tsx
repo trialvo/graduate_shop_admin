@@ -1,3 +1,5 @@
+// src/components/orders/all-orders/OrderFiltersBar.tsx
+
 import { Search } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import type { OrderStatus } from "./types";
@@ -7,13 +9,65 @@ type Props = {
   setStatus: (s: OrderStatus) => void;
   counts: Record<OrderStatus, number>;
   statusOptions: { id: OrderStatus; label: string }[];
-  sortBy: "date" | "total";
-  setSortBy: (v: "date" | "total") => void;
-  orderType: "all" | "cod" | "paid";
-  setOrderType: (v: "all" | "cod" | "paid") => void;
+
   search: string;
   setSearch: (v: string) => void;
+
+  orderType: "all" | "regular";
+  setOrderType: (v: "all" | "regular") => void;
+
+  paymentStatus: "all" | "unpaid" | "partial_paid" | "paid";
+  setPaymentStatus: (v: "all" | "unpaid" | "partial_paid" | "paid") => void;
+
+  paymentType: "all" | "gateway" | "cod" | "mixed";
+  setPaymentType: (v: "all" | "gateway" | "cod" | "mixed") => void;
+
+  paymentProvider:
+    | "all"
+    | "sslcommerz"
+    | "bkash"
+    | "nagad"
+    | "shurjopay"
+    | "rocket";
+  setPaymentProvider: (
+    v:
+      | "all"
+      | "sslcommerz"
+      | "bkash"
+      | "nagad"
+      | "shurjopay"
+      | "rocket"
+  ) => void;
+
+  fraud: "all" | "0" | "1";
+  setFraud: (v: "all" | "0" | "1") => void;
+
+  minTotal: string;
+  setMinTotal: (v: string) => void;
+
+  maxTotal: string;
+  setMaxTotal: (v: string) => void;
+
+  dateFrom: string;
+  setDateFrom: (v: string) => void;
+
+  dateTo: string;
+  setDateTo: (v: string) => void;
+
+  limit: number;
+  setLimit: (v: number) => void;
+
   onClear: () => void;
+
+  uiOptions: {
+    orderType: readonly { id: string; label: string }[];
+    paymentStatus: readonly { id: string; label: string }[];
+    paymentType: readonly { id: string; label: string }[];
+    paymentProvider: readonly { id: string; label: string }[];
+    fraud: readonly { id: string; label: string }[];
+  };
+
+  loading?: boolean;
 };
 
 function statusPillClasses(active: boolean) {
@@ -26,13 +80,43 @@ export default function OrderFiltersBar({
   setStatus,
   counts,
   statusOptions,
-  sortBy,
-  setSortBy,
-  orderType,
-  setOrderType,
+
   search,
   setSearch,
+
+  orderType,
+  setOrderType,
+
+  paymentStatus,
+  setPaymentStatus,
+
+  paymentType,
+  setPaymentType,
+
+  paymentProvider,
+  setPaymentProvider,
+
+  fraud,
+  setFraud,
+
+  minTotal,
+  setMinTotal,
+
+  maxTotal,
+  setMaxTotal,
+
+  dateFrom,
+  setDateFrom,
+
+  dateTo,
+  setDateTo,
+
+  limit,
+  setLimit,
+
   onClear,
+  uiOptions,
+  loading,
 }: Props) {
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -62,24 +146,85 @@ export default function OrderFiltersBar({
       <div className="mt-4 grid grid-cols-12 gap-3">
         <div className="col-span-12 md:col-span-2">
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            value={orderType}
+            onChange={(e) => setOrderType(e.target.value as any)}
             className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
           >
-            <option value="date">by: Date</option>
-            <option value="total">by: Total</option>
+            {uiOptions.orderType.map((x) => (
+              <option key={x.id} value={x.id}>
+                Order: {x.label}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="col-span-12 md:col-span-2">
           <select
-            value={orderType}
-            onChange={(e) => setOrderType(e.target.value as any)}
+            value={paymentStatus}
+            onChange={(e) => setPaymentStatus(e.target.value as any)}
             className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
           >
-            <option value="all">Order Type</option>
-            <option value="cod">COD</option>
-            <option value="paid">Paid</option>
+            {uiOptions.paymentStatus.map((x) => (
+              <option key={x.id} value={x.id}>
+                Pay: {x.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-12 md:col-span-2">
+          <select
+            value={paymentType}
+            onChange={(e) => setPaymentType(e.target.value as any)}
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          >
+            {uiOptions.paymentType.map((x) => (
+              <option key={x.id} value={x.id}>
+                Type: {x.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-12 md:col-span-2">
+          <select
+            value={paymentProvider}
+            onChange={(e) => setPaymentProvider(e.target.value as any)}
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          >
+            {uiOptions.paymentProvider.map((x) => (
+              <option key={x.id} value={x.id}>
+                Provider: {x.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-12 md:col-span-2">
+          <select
+            value={fraud}
+            onChange={(e) => setFraud(e.target.value as any)}
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          >
+            {uiOptions.fraud.map((x) => (
+              <option key={x.id} value={x.id}>
+                Fraud: {x.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-12 md:col-span-2">
+          <select
+            value={String(limit)}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          >
+            {[5, 10, 20, 50].map((x) => (
+              <option key={x} value={x}>
+                Limit: {x}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -89,10 +234,48 @@ export default function OrderFiltersBar({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search"
+              placeholder="Search phone or email"
               className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
             />
           </div>
+        </div>
+
+        <div className="col-span-6 md:col-span-3">
+          <input
+            value={minTotal}
+            onChange={(e) => setMinTotal(e.target.value)}
+            placeholder="Min total"
+            type="number"
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          />
+        </div>
+
+        <div className="col-span-6 md:col-span-3">
+          <input
+            value={maxTotal}
+            onChange={(e) => setMaxTotal(e.target.value)}
+            placeholder="Max total"
+            type="number"
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          />
+        </div>
+
+        <div className="col-span-6 md:col-span-3">
+          <input
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            type="date"
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          />
+        </div>
+
+        <div className="col-span-6 md:col-span-3">
+          <input
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            type="date"
+            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+          />
         </div>
 
         <div className="col-span-12 md:col-span-2 flex md:justify-end">
@@ -100,8 +283,9 @@ export default function OrderFiltersBar({
             variant="outline"
             onClick={onClear}
             className="h-11 w-full md:w-auto"
+            disabled={loading}
           >
-            Clear
+            {loading ? "Loading..." : "Clear"}
           </Button>
         </div>
       </div>
