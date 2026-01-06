@@ -1,20 +1,22 @@
 export type UserRole = "Admin" | "Super Admin" | "Manager";
 
 export type ProfileUser = {
-  id: string;
+  id: number;
+  email: string;
+
   firstName: string;
   lastName: string;
-  email: string;
   phone: string;
-  country: string;
-  city: string;
-  state: string;
-  zipcode: string;
   address: string;
+
   role: UserRole;
   status: "active" | "inactive";
-  avatarUrl?: string;
-  lastVisitAt?: string; // UI only
+
+  avatarUrl?: string | null;
+
+  createdAt?: string | null;
+  lastLoginAt?: string | null;
+  lastVisitAt?: string; // UI formatted
 };
 
 export type NotificationCount = {
