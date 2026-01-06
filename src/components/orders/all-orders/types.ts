@@ -99,10 +99,22 @@ export type OrderRow = {
     apiConfigured: boolean;
     apiConnected: boolean;
 
+    preview?: {
+      receiverName?: string;
+      receiverPhone?: string;
+      address?: string;
+      area?: string;
+      codAmount?: number;
+      weightKg?: number;
+    };
+    autoDetected?: boolean;
+    lastMessage?: string;
+
     availableAutoCouriers: {
-      providerId: CourierProviderId;
+      providerId: Exclude<CourierProviderId, "select" | "manual">;
       providerName: string;
       connected: boolean;
+      isDefault?: boolean;
     }[];
   };
 };
