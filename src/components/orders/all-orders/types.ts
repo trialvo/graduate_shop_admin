@@ -1,5 +1,3 @@
-// src/components/orders/all-orders/types.ts
-
 export type OrderStatus =
   | "all"
   | "new"
@@ -17,43 +15,35 @@ export type OrderStatus =
 export type CourierProviderId =
   | "select"
   | "manual"
-  | "sa_paribahan"
-  | "pathao"
-  | "redx"
-  | "delivery_tiger"
-  | "sundarban"
   | "steadfast"
-  | "paperfly";
+  | "redx"
+  | "pathao"
+  | "paperfly"
+  | "sa_paribahan"
+  | "delivery_tiger"
+  | "sundarban";
 
 export type OrderItemRow = {
   id: string;
 
   productId?: number;
-  productSkuId?: number;
+  skuId?: number;
 
-  productName: string;
-  productImage?: string;
+  name: string;
+  image?: string | null;
 
-  sku?: string;
-  brandName?: string;
+  brandName?: string | null;
 
-  colorName?: string;
-  colorHex?: string;
+  colorName?: string | null;
+  colorHex?: string | null;
 
-  variantName?: string;
-  attributeName?: string;
+  size?: string | null; // variant_name
+  code?: string | null; // sku
 
-  quantity: number;
+  qty: number;
 
-  buyingPrice?: number;
-  sellingPrice?: number;
-
-  discount?: number;
-  couponCode?: string | null;
-  couponDiscount?: number;
-
-  finalUnitPrice: number;
-  lineTotal: number;
+  price: number; // final_unit_price
+  total: number; // line_total
 };
 
 export type OrderRow = {
@@ -63,19 +53,17 @@ export type OrderRow = {
   customerPhone: string;
   customerImage?: string;
 
-  email?: string;
-
   fraudLevel: "safe" | "medium" | "high";
 
-  paymentMethod: string;
+  paymentMethod: "COD" | "BKASH" | "NAGAD" | "ROCKET" | "CARD";
   paymentStatus: "unpaid" | "partial_paid" | "paid";
 
   status: Exclude<OrderStatus, "all">;
 
-  itemsAmount: number;
-  totalItems: number;
-
+  itemsAmount: number; // number of line items
+  totalItems: number; // total qty across items
   total: number;
+
   currencySymbol: string;
 
   orderDateLabel: string;
@@ -85,14 +73,22 @@ export type OrderRow = {
   orderNote?: string;
   shippingLocation: string;
 
+  email?: string;
+
   paidAmount: number;
   shippingCost: number;
   discount: number;
 
-  paymentType: string;
-  paymentProvider: string;
+  paymentType: "gateway" | "cod" | "mixed";
+  paymentProvider?: string;
 
-  items?: OrderItemRow[];
+  // ✅ IMPORTANT: items used by modal
+  items: OrderItemRow[];
+
+  // optional extra modal fields
+  shippingAddress?: string;
+  shippingArea?: string;
+  qrValue?: string;
 
   courier: {
     providerId: CourierProviderId;
@@ -103,10 +99,10 @@ export type OrderRow = {
     apiConfigured: boolean;
     apiConnected: boolean;
 
-    availableAutoCouriers: Array<{
-      providerId: CourierProviderId | string;
+    availableAutoCouriers: {
+      providerId: CourierProviderId;
       providerName: string;
       connected: boolean;
-    }>;
+    }[];
   };
 };

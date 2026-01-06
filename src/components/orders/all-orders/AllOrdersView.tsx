@@ -1,19 +1,12 @@
-// src/components/orders/all-orders/AllOrdersView.tsx
-
 import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import {
-  keepPreviousData,
-  useQuery,
-  useQueries,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
 
-import type { OrderRow, OrderStatus } from "./types";
+import type { OrderRow, OrderStatus, OrderItemRow } from "./types";
 import {
   FRAUD_OPTIONS,
   ORDER_TYPE_OPTIONS,
@@ -28,26 +21,15 @@ import { toPublicUrl } from "@/utils/toPublicUrl";
 
 function nowLabel() {
   const d = new Date();
-  const date = d.toLocaleDateString(undefined, {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const time = d.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   return `${date} at ${time}`;
 }
 
 function formatOrderDateLabel(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-  });
+  return d.toLocaleDateString(undefined, { month: "short", day: "2-digit", year: "numeric" });
 }
 
 function formatOrderTimeLabel(iso: string) {
@@ -83,24 +65,59 @@ function providerGuessFromPayments(payments: ApiOrder["payments"]) {
   return last?.provider ?? "";
 }
 
+function mapApiItemsToRowItems(items: any[]): OrderItemRow[] {
+  if (!Array.isArray(items)) return [];
+
+  return items.map((it) => {
+    const name = (it?.product_name ?? "").trim() || "—";
+    const img = it?.product_image ? toPublicUrl(it.product_image) : null;
+
+    const qty = Number(it?.quantity ?? 0) || 0;
+
+    const unitPrice = Number(it?.final_unit_price ?? it?.selling_price ?? 0) || 0;
+    const lineTotal = Number(it?.line_total ?? unitPrice * qty) || 0;
+
+    return {
+      id: String(it?.id ?? `${it?.order_id ?? "x"}-${it?.product_id ?? "p"}-${it?.product_sku_id ?? "s"}`),
+
+      productId: typeof it?.product_id === "number" ? it.product_id : undefined,
+      skuId: typeof it?.product_sku_id === "number" ? it.product_sku_id : undefined,
+
+      name,
+      image: img,
+
+      brandName: it?.brand_name ?? null,
+
+      colorName: it?.color_name ?? null,
+      colorHex: it?.color_hex ?? null,
+
+      size: it?.variant_name ?? null,
+      code: it?.sku ?? null,
+
+      qty,
+
+      price: unitPrice,
+      total: lineTotal,
+    };
+  });
+}
+
 export default function AllOrdersView() {
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<OrderStatus>("all");
 
-  const [search, setSearch] = useState(""); // used to fill customer_phone OR customer_email
+  const [search, setSearch] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
 
   const [orderType, setOrderType] = useState<"all" | "regular">("all");
 
-  const [paymentStatus, setPaymentStatus] = useState<
-    "all" | "unpaid" | "partial_paid" | "paid"
-  >("all");
+  const [paymentStatus, setPaymentStatus] = useState<"all" | "unpaid" | "partial_paid" | "paid">(
+    "all"
+  );
 
-  const [paymentType, setPaymentType] = useState<
-    "all" | "gateway" | "cod" | "mixed"
-  >("all");
+  const [paymentType, setPaymentType] = useState<"all" | "gateway" | "cod" | "mixed">("all");
 
   const [paymentProvider, setPaymentProvider] = useState<
     "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket"
@@ -119,7 +136,6 @@ export default function AllOrdersView() {
 
   const [refreshedAt, setRefreshedAt] = useState(nowLabel());
 
-  // derive phone/email from search input
   useEffect(() => {
     const q = search.trim();
     if (!q) {
@@ -181,7 +197,6 @@ export default function AllOrdersView() {
     retry: 1,
   });
 
-  // counts (accurate) using pagination.total per status (limit=1)
   const countQueries = useQueries({
     queries: STATUS_OPTIONS.filter((x) => x.id !== "all").map((opt) => ({
       queryKey: ordersKeys.list({
@@ -233,32 +248,38 @@ export default function AllOrdersView() {
     const data = ordersQuery.data?.data ?? [];
     const courierOption = ordersQuery.data?.courierOption;
 
-    return data.map((o) => {
+    return data.map((o: any) => {
       const providerGuess = providerGuessFromPayments(o.payments);
       const method = paymentMethodFromApi(o.payment_type, providerGuess);
 
-      const itemsCount = Array.isArray(o.items) ? o.items.length : 0;
-      const qtyCount = (o.items ?? []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+      const apiItems = Array.isArray(o.items) ? o.items : [];
+      const rowItems = mapApiItemsToRowItems(apiItems);
+
+      const itemsCount = rowItems.length;
+      const qtyCount = rowItems.reduce((s, it) => s + (Number(it.qty) || 0), 0);
 
       const mainCourier = (o.couriers ?? [])[0];
       const courierProvider = (mainCourier?.courier_provider || "").toLowerCase();
 
       const autoList =
-        courierOption?.available_providers?.map((p) => ({
-          providerId: (p.provider.toLowerCase() as any),
+        courierOption?.available_providers?.map((p: any) => ({
+          providerId: (String(p.provider || "").toLowerCase() as any),
           providerName: p.provider,
           connected: Number(p.is_auto_available) === 1,
         })) ?? [];
 
-      const apiConnected = autoList.some(
-        (x) => x.providerId === courierProvider && x.connected
-      );
+      const apiConnected = autoList.some((x: any) => x.providerId === courierProvider && x.connected);
+
+      const shippingLocation = `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—";
 
       return {
         id: String(o.id),
+
         customerName: (o.customer_name || "").trim() || "—",
         customerPhone: o.customer_phone || "—",
-        customerImage: toPublicUrl((o as any).customer_image ?? null) ?? undefined,
+
+        // ✅ your API uses customer_img
+        customerImage: toPublicUrl(o.customer_img ?? null) ?? undefined,
 
         fraudLevel: o.is_fraud ? "high" : "safe",
 
@@ -277,7 +298,10 @@ export default function AllOrdersView() {
         relativeTimeLabel: timeAgoLabel(o.created_at),
 
         orderNote: o.note ?? undefined,
-        shippingLocation: `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—",
+
+        shippingLocation,
+        shippingAddress: `${o.full_address ?? ""}`.trim() || "—",
+        shippingArea: `${o.city ?? ""}`.trim() || "—",
 
         email: o.customer_email ?? undefined,
 
@@ -287,6 +311,9 @@ export default function AllOrdersView() {
 
         paymentType: o.payment_type,
         paymentProvider: providerGuess,
+
+        // ✅ IMPORTANT: modal reads these
+        items: rowItems,
 
         courier: {
           providerId: (courierProvider as any) || (mainCourier ? "manual" : "select"),
@@ -366,9 +393,7 @@ export default function AllOrdersView() {
             ).map((x) => (
               <span key={x.label} className="text-gray-500 dark:text-gray-400">
                 <span className="text-brand-500 font-semibold">{x.label}</span>{" "}
-                <span className="text-gray-900 dark:text-white">
-                  ({x.value})
-                </span>
+                <span className="text-gray-900 dark:text-white">({x.value})</span>
               </span>
             ))}
           </div>
@@ -475,17 +500,9 @@ export default function AllOrdersView() {
       <div className="flex flex-col gap-3 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-gray-600 dark:text-gray-300">
           Page{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {currentPage}
-          </span>{" "}
-          of{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {totalPages}
-          </span>{" "}
-          Total{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {total}
-          </span>
+          <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> of{" "}
+          <span className="font-semibold text-gray-900 dark:text-white">{totalPages}</span> Total{" "}
+          <span className="font-semibold text-gray-900 dark:text-white">{total}</span>
         </div>
 
         <div className="flex items-center gap-2">
