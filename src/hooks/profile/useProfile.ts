@@ -25,8 +25,8 @@ export function useUpdateAdminProfile() {
 
   return useMutation({
     mutationFn: (payload: UpdateAdminProfilePayload) => updateAdminProfile(payload),
-    onSuccess: (data) => {
-      qc.setQueryData(profileKeys.admin(), data);
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: profileKeys.admin() });
       toast.success("Profile updated.");
     },
     onError: (err: any) => {
