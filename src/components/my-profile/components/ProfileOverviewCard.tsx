@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import Button from "@/components/ui/button/Button";
 import type { ProfileUser } from "../types";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
   user: ProfileUser;
@@ -29,7 +30,7 @@ export default function ProfileOverviewCard({ user, onLogout }: Props) {
         <div className="relative">
           <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={name} className="h-full w-full object-cover" />
+              <img src={toPublicUrl(user.avatarUrl)} alt={name} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-gray-700 dark:text-gray-200">
                 {initials(user.firstName, user.lastName)}
