@@ -71,15 +71,17 @@ export default function ChangePasswordModal({
     if (error) return;
 
     const otpNum = Number(otp);
-    await reset.mutateAsync({
+    const res = await reset.mutateAsync({
       email: localEmail.trim(),
       otp: otpNum,
       new_password: next.trim(),
     });
 
-    onChanged();
-    resetAll();
-    onClose();
+    if (res?.success === true) {
+      onChanged();
+      resetAll();
+      onClose();
+    }
   };
 
   return (

@@ -33,6 +33,15 @@ type SessionOptions = StoragePersistOptions & {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const clearAllCookies = () => {
+  if (typeof document === "undefined") return;
+  document.cookie.split(";").forEach((cookie) => {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.slice(0, eqPos) : cookie;
+    document.cookie = `${name.trim()}=;expires=${new Date(0).toUTCString()};path=/`;
+  });
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,6 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = useCallback(
     (reason?: string) => {
       clearAuthStorage();
+      clearAllCookies();
       setToken(null);
       setAdmin(null);
       toast.success(reason ?? "Logged out");
@@ -120,6 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const handler = () => {
       // avoid double toast spam
       clearAuthStorage();
+      clearAllCookies();
       setToken(null);
       setAdmin(null);
 

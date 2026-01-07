@@ -55,14 +55,20 @@ export function useAdminResetPassword() {
   return useMutation({
     mutationFn: (payload: ResetPasswordPayload) => adminResetPassword(payload),
     onSuccess: (data) => {
-      if (data?.success === false) {
-        toast.error(data?.message || "Failed to reset password.");
+      if (data?.success === true) {
+        toast.success(data?.message || "Password updated successfully.");
         return;
       }
-      toast.success(data?.message || "Password updated successfully.");
+      if (data?.flag === 100 || data?.error) {
+        toast.error(data?.error || data?.message || "Failed to reset password.");
+        return;
+      }
+      toast.error(data?.message || "Failed to reset password.");
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to reset password.");
+      toast.error(
+        err?.response?.data?.error || err?.response?.data?.message || "Failed to reset password."
+      );
     },
   });
 }
