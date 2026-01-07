@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
-import {
-  useAdminProfile,
-  useUpdateAdminProfile,
-} from "@/hooks/profile/useProfile";
+import { useAdminProfile, useUpdateAdminProfile } from "@/hooks/profile/useProfile";
 import { useAuth } from "@/context/AuthProvider";
 import type { ProfileContact, ProfileUser } from "./types";
 import { formatNow, mapAdminProfileToUi } from "./utils";
@@ -114,7 +111,10 @@ export default function MyProfilePage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         {/* Left */}
         <div className="space-y-6 xl:col-span-4">
-          <ProfileOverviewCard user={user} onLogout={() => logout()} />
+          <ProfileOverviewCard
+            user={user}
+            onLogout={() => logout()}
+          />
           <ProfileContactCard contact={contact} />
         </div>
 
@@ -135,6 +135,7 @@ export default function MyProfilePage() {
         email={user.email}
         onChanged={() => {
           setPwdOpen(false);
+          logout();
         }}
       />
     </div>
