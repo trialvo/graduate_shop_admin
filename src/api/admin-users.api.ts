@@ -1,4 +1,3 @@
-// src/api/admin-users.api.ts
 import { api } from "./client";
 
 export type AdminUserGender = "unspecified" | "male" | "female" | "other";
@@ -140,21 +139,21 @@ export async function createAdminUser(payload: CreateAdminUserPayload): Promise<
   return res.data;
 }
 
-// ---------- Edit ----------
+// ---------- Edit (PATCH-LIKE via FormData) ----------
 export type EditAdminUserPayload = {
   user_profile?: File | null;
 
-  email: string;
-  password?: string; // optional in UI
+  email?: string;
+  password?: string; // optional
 
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
 
-  gender: AdminUserGender | string;
-  phone: string;
-  dob: string; // YYYY-MM-DD
+  gender?: AdminUserGender | string;
+  phone?: string;
+  dob?: string; // YYYY-MM-DD
 
-  status: AdminUserStatus | string;
+  status?: AdminUserStatus | string;
 
   // special
   restore_user?: boolean;
