@@ -26,6 +26,24 @@ import type {
 } from "@/components/products/product-category/types";
 import { categoriesKeys } from "./categories.keys";
 
+function getApiErrorFromResponse(res: unknown) {
+  const data = res as any;
+  if (typeof data?.error === "string" && data.error.trim()) return data.error.trim();
+  if (typeof data?.message === "string" && data.message.trim()) return data.message.trim();
+  if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) return "Something went wrong";
+  return null;
+}
+
+function getApiErrorMessage(err: unknown, fallback: string) {
+  const anyErr = err as any;
+  return (
+    anyErr?.response?.data?.error ||
+    anyErr?.response?.data?.message ||
+    anyErr?.message ||
+    fallback
+  );
+}
+
 export const useMainCategories = (params: MainListParams) => {
   return useQuery<ListResponse<MainCategory>>({
     queryKey: categoriesKeys.list("main", params),
@@ -83,12 +101,17 @@ export const useDeleteMainCategory = (
 
   return useMutation<unknown, unknown, number>({
     mutationFn: (id) => deleteMainCategory(id),
-    onSuccess: async () => {
+    onSuccess: async (res) => {
+      const apiError = getApiErrorFromResponse(res);
+      if (apiError) {
+        toast.error(apiError);
+        return;
+      }
       toast.success("Main category deleted");
       await qc.invalidateQueries({ queryKey: categoriesKeys.all });
     },
     onError: (e: any) => {
-      toast.error(e?.message || "Failed to delete");
+      toast.error(getApiErrorMessage(e, "Failed to delete"));
     },
     ...options,
   });
@@ -101,12 +124,17 @@ export const useDeleteSubCategory = (
 
   return useMutation<unknown, unknown, number>({
     mutationFn: (id) => deleteSubCategory(id),
-    onSuccess: async () => {
+    onSuccess: async (res) => {
+      const apiError = getApiErrorFromResponse(res);
+      if (apiError) {
+        toast.error(apiError);
+        return;
+      }
       toast.success("Sub category deleted");
       await qc.invalidateQueries({ queryKey: categoriesKeys.all });
     },
     onError: (e: any) => {
-      toast.error(e?.message || "Failed to delete");
+      toast.error(getApiErrorMessage(e, "Failed to delete"));
     },
     ...options,
   });
@@ -119,12 +147,17 @@ export const useDeleteChildCategory = (
 
   return useMutation<unknown, unknown, number>({
     mutationFn: (id) => deleteChildCategory(id),
-    onSuccess: async () => {
+    onSuccess: async (res) => {
+      const apiError = getApiErrorFromResponse(res);
+      if (apiError) {
+        toast.error(apiError);
+        return;
+      }
       toast.success("Child category deleted");
       await qc.invalidateQueries({ queryKey: categoriesKeys.all });
     },
     onError: (e: any) => {
-      toast.error(e?.message || "Failed to delete");
+      toast.error(getApiErrorMessage(e, "Failed to delete"));
     },
     ...options,
   });
