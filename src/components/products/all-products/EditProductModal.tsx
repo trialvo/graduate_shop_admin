@@ -75,6 +75,34 @@ function normalizeRobots(v: string) {
   return v.replace(/\s+/g, " ").trim(); // "index, follow" => "index, follow"
 }
 
+function getApiErrorMessage(err: unknown, fallback: string) {
+  const anyErr = err as any;
+  const data = anyErr?.response?.data;
+
+  if (typeof data === "string") {
+    try {
+      const parsed = JSON.parse(data);
+      if (typeof parsed?.error === "string") return parsed.error;
+      if (typeof parsed?.message === "string") return parsed.message;
+    } catch {
+      return data;
+    }
+  }
+
+  if (typeof data?.error === "string") return data.error;
+  if (typeof data?.message === "string") return data.message;
+  if (Array.isArray(data?.errors)) {
+    return data.errors
+      .map((e: any) => (typeof e === "string" ? e : e?.message ?? e?.error))
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  if (typeof anyErr?.message === "string") return anyErr.message;
+
+  return fallback;
+}
+
 /**
  * Tries to extract "variant options" from attributes response in a safe way.
  * Supports common shapes:
@@ -360,14 +388,22 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
         delete_image_ids: deleteImageIds.length ? deleteImageIds : undefined,
       } as any);
     },
-    onSuccess: async () => {
+    onSuccess: async (res: any) => {
+      if (res?.error || (Number(res?.flag) >= 400 && Number.isFinite(Number(res?.flag)))) {
+        const msg =
+          (typeof res?.error === "string" && res.error.trim()) ||
+          (typeof res?.message === "string" && res.message.trim()) ||
+          "Failed to update product";
+        toast.error(msg);
+        return;
+      }
+
       toast.success("Product updated");
       onUpdated?.();
       onClose();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update product";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, "Failed to update product"));
     },
   });
 
@@ -422,8 +458,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       await productQuery.refetch();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to add variation";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, "Failed to add variation"));
     },
   });
 
@@ -435,8 +470,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       await productQuery.refetch();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update variation";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, "Failed to update variation"));
     },
   });
 
@@ -449,8 +483,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       await productQuery.refetch();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to delete variation";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, "Failed to delete variation"));
     },
   });
 
