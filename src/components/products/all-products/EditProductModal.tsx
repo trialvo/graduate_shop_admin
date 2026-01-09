@@ -75,6 +75,10 @@ function normalizeRobots(v: string) {
   return v.replace(/\s+/g, " ").trim(); // "index, follow" => "index, follow"
 }
 
+function normalizeId(value: number) {
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 function getApiErrorMessage(err: unknown, fallback: string) {
   const anyErr = err as any;
   const data = anyErr?.response?.data;
@@ -361,12 +365,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
         name,
         slug,
 
-        main_category_id: mainCategoryId,
-        sub_category_id: subCategoryId,
-        child_category_id: childCategoryId,
+        main_category_id: normalizeId(mainCategoryId),
+        sub_category_id: normalizeId(subCategoryId),
+        child_category_id: normalizeId(childCategoryId),
 
-        brand_id: brandId,
-        attribute_id: attributeId,
+        brand_id: normalizeId(brandId),
+        attribute_id: normalizeId(attributeId),
 
         video_path: videoPath,
         short_description: shortDescription,
