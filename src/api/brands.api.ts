@@ -77,6 +77,7 @@ export async function updateBrand(id: number, payload: UpdateBrandPayload): Prom
   return res.data as Brand;
 }
 
-export async function deleteBrand(id: number): Promise<void> {
-  await api.delete(`/brand/${id}`);
+export async function deleteBrand(id: number): Promise<any> {
+  const res = await api.delete(`/brand/${id}`);
+  return res.data;
 }

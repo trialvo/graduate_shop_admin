@@ -43,6 +43,13 @@ const TABS: { id: CategoryEntity; label: string; hint: string }[] = [
   { id: "child", label: "Child Categories", hint: "Third-level categories under a sub category" },
 ];
 
+function getApiErrorFromResponse(res: any) {
+  if (typeof res?.error === "string" && res.error.trim()) return res.error.trim();
+  if (typeof res?.message === "string" && res.message.trim()) return res.message.trim();
+  if (Number.isFinite(Number(res?.flag)) && Number(res.flag) >= 400) return "Something went wrong";
+  return null;
+}
+
 export default function ProductCategoryPage() {
   const qc = useQueryClient();
 
@@ -134,21 +141,29 @@ export default function ProductCategoryPage() {
     values: any,
   ) => {
     try {
+      let res: any;
+
       if (entity === "main") {
-        if (mode === "create") await createMainCategory(values);
-        else await updateMainCategory(id as number, values);
+        if (mode === "create") res = await createMainCategory(values);
+        else res = await updateMainCategory(id as number, values);
       }
 
       if (entity === "sub") {
         const v = values as SubCategoryFormValues;
-        if (mode === "create") await createSubCategory(v);
-        else await updateSubCategory(id as number, v);
+        if (mode === "create") res = await createSubCategory(v);
+        else res = await updateSubCategory(id as number, v);
       }
 
       if (entity === "child") {
         const v = values as ChildCategoryFormValues;
-        if (mode === "create") await createChildCategory(v);
-        else await updateChildCategory(id as number, v);
+        if (mode === "create") res = await createChildCategory(v);
+        else res = await updateChildCategory(id as number, v);
+      }
+
+      const apiError = getApiErrorFromResponse(res);
+      if (apiError) {
+        toast.error(apiError);
+        return;
       }
 
       toast.success(mode === "create" ? "Category created" : "Category updated");
