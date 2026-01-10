@@ -42,6 +42,13 @@ const PRIORITY_OPTIONS: Option[] = [
   { value: "4", label: "High" },
 ];
 
+function getApiErrorFromResponse(res: any) {
+  if (typeof res?.error === "string" && res.error.trim()) return res.error.trim();
+  if (typeof res?.message === "string" && res.message.trim()) return res.message.trim();
+  if (Number.isFinite(Number(res?.flag)) && Number(res.flag) >= 400) return "Something went wrong";
+  return null;
+}
+
 function priorityLabel(p: number): string {
   if (p === 1) return "Low";
   if (p === 2) return "Normal";
@@ -372,7 +379,13 @@ export default function ColorTab() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteColor,
-    onSuccess: () => {
+    onSuccess: (res: any) => {
+      const apiError = getApiErrorFromResponse(res);
+      if (apiError) {
+        toast.error(apiError);
+        return;
+      }
+
       toast.success("Color deleted");
       qc.invalidateQueries({ queryKey: ["colors"] });
     },

@@ -52,6 +52,7 @@ export async function updateColor(id: number, payload: CreateColorPayload): Prom
   return res.data as Color;
 }
 
-export async function deleteColor(id: number): Promise<void> {
-  await api.delete(`/color/${id}`);
+export async function deleteColor(id: number): Promise<any> {
+  const res = await api.delete(`/color/${id}`);
+  return res.data;
 }
