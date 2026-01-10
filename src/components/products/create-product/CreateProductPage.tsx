@@ -1,9 +1,8 @@
-// src/components/products/create-product/CreateProductPage.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { CheckCircle2, Copy, Wand2, X } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
@@ -75,13 +74,14 @@ function genSkuFromParts(parts: string[]) {
   return [...cleaned, String(rand)].join("-");
 }
 
-function unwrapList<T>(payload: any): T[] {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.rows)) return payload.rows;
-  if (Array.isArray(payload?.colors)) return payload.colors;
-  if (Array.isArray(payload?.brands)) return payload.brands;
-  if (Array.isArray(payload?.attributes)) return payload.attributes;
+function unwrapList<T>(payload: unknown): T[] {
+  const anyPayload = payload as any;
+  if (Array.isArray(anyPayload)) return anyPayload;
+  if (Array.isArray(anyPayload?.data)) return anyPayload.data;
+  if (Array.isArray(anyPayload?.rows)) return anyPayload.rows;
+  if (Array.isArray(anyPayload?.colors)) return anyPayload.colors;
+  if (Array.isArray(anyPayload?.brands)) return anyPayload.brands;
+  if (Array.isArray(anyPayload?.attributes)) return anyPayload.attributes;
   return [];
 }
 
@@ -96,7 +96,7 @@ function ensureMatrixRows(
   defaults: { buying: number; selling: number; discount: number },
   skuBaseParts: string[]
 ) {
-  const map = new Map(prev.map((r) => [r.key, r]));
+  const map = new Map(prev.map((r) => [r.key, r] as const));
   const next: VariantRow[] = [];
 
   for (const colorId of selectedColorIds) {
@@ -127,104 +127,34 @@ function ensureMatrixRows(
   return next;
 }
 
-function getApiErrorMessage(err: any): string {
-  // axios error shape
-  const data = err?.response?.data;
+function getApiErrorMessage(err: unknown): string {
+  const anyErr = err as any;
+  const data = anyErr?.response?.data;
 
-  // your API: { flag: 422, error: "..." }
   if (typeof data?.error === "string" && data.error.trim())
     return data.error.trim();
 
-  // sometimes backend uses message
   if (typeof data?.message === "string" && data.message.trim())
     return data.message.trim();
 
-  // fallback: axios/network
-  if (typeof err?.message === "string" && err.message.trim())
-    return err.message.trim();
+  if (typeof anyErr?.message === "string" && anyErr.message.trim())
+    return anyErr.message.trim();
 
   return "Failed to create product";
 }
 
-function getSuccessProductId(res: any): number | null {
-  // your API: { success: true, productId: 7 }
-  if (res?.success === true && Number.isFinite(Number(res?.productId)))
-    return Number(res.productId);
+function getSuccessProductId(res: unknown): number | null {
+  const anyRes = res as any;
 
-  // fallback (older)
-  if (Number.isFinite(Number(res?.productId))) return Number(res.productId);
+  if (anyRes?.success === true && Number.isFinite(Number(anyRes?.productId)))
+    return Number(anyRes.productId);
+
+  if (Number.isFinite(Number(anyRes?.productId))) return Number(anyRes.productId);
 
   return null;
 }
 
 export default function CreateProductPage() {
-  // -------------------- Lookups (NO params) --------------------
-  const { data: mainRes, isLoading: mainLoading } = useQuery({
-    queryKey: ["mainCategories-all"],
-    queryFn: () => getMainCategories(),
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const { data: subRes, isLoading: subLoading } = useQuery({
-    queryKey: ["subCategories-all"],
-    queryFn: () => getSubCategories(),
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const { data: childRes, isLoading: childLoading } = useQuery({
-    queryKey: ["childCategories-all"],
-    queryFn: () => getChildCategories(),
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const { data: brandRes, isLoading: brandLoading } = useQuery({
-    queryKey: ["brands-all"],
-    queryFn: () => getBrands(),
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const { data: colorRes, isLoading: colorLoading } = useQuery({
-    queryKey: ["colors-all"],
-    queryFn: () => getColors(),
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const { data: attrRes, isLoading: attrLoading } = useQuery({
-    queryKey: ["attributes-all"],
-    queryFn: () => getAttributes(),
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const mainCategories = useMemo(() => unwrapList<any>(mainRes), [mainRes]);
-  const subCategories = useMemo(() => unwrapList<any>(subRes), [subRes]);
-  const childCategories = useMemo(() => unwrapList<any>(childRes), [childRes]);
-  const brands = useMemo(
-    () => unwrapList<any>(brandRes).filter((b: any) => b.status !== false),
-    [brandRes]
-  );
-  const colors = useMemo(
-    () => unwrapList<any>(colorRes).filter((c: any) => c.status !== false),
-    [colorRes]
-  );
-  const attributes = useMemo(
-    () => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false),
-    [attrRes]
-  );
-
-  const lookupsLoading =
-    mainLoading ||
-    subLoading ||
-    childLoading ||
-    brandLoading ||
-    colorLoading ||
-    attrLoading;
-
   // -------------------- Form State --------------------
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
@@ -275,49 +205,114 @@ export default function CreateProductPage() {
     if (validationError) setErrorBannerVisible(true);
   }, [validationError]);
 
+  // -------------------- Lookups --------------------
+  const { data: mainRes, isLoading: mainLoading } = useQuery({
+    queryKey: ["mainCategories-all"],
+    queryFn: () => getMainCategories(),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  // ✅ SubCategories depends on MainCategory
+  const { data: subRes, isLoading: subLoading } = useQuery({
+    queryKey: ["subCategories-by-main", mainCategoryId],
+    queryFn: () => getSubCategories({ main_category_id: mainCategoryId }),
+    enabled: !!mainCategoryId,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  // ✅ ChildCategories depends on SubCategory
+  const { data: childRes, isLoading: childLoading } = useQuery({
+    queryKey: ["childCategories-by-sub", subCategoryId],
+    queryFn: () => getChildCategories({ sub_category_id: subCategoryId }),
+    enabled: !!subCategoryId,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const { data: brandRes, isLoading: brandLoading } = useQuery({
+    queryKey: ["brands-all"],
+    queryFn: () => getBrands(),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const { data: colorRes, isLoading: colorLoading } = useQuery({
+    queryKey: ["colors-all"],
+    queryFn: () => getColors(),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const { data: attrRes, isLoading: attrLoading } = useQuery({
+    queryKey: ["attributes-all"],
+    queryFn: () => getAttributes(),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const mainCategories = useMemo(() => unwrapList<any>(mainRes), [mainRes]);
+  const subCategories = useMemo(() => unwrapList<any>(subRes), [subRes]);
+  const childCategories = useMemo(() => unwrapList<any>(childRes), [childRes]);
+
+  const brands = useMemo(
+    () => unwrapList<any>(brandRes).filter((b: any) => b.status !== false),
+    [brandRes]
+  );
+  const colors = useMemo(
+    () => unwrapList<any>(colorRes).filter((c: any) => c.status !== false),
+    [colorRes]
+  );
+  const attributes = useMemo(
+    () => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false),
+    [attrRes]
+  );
+
+  const initialLoading = mainLoading || brandLoading || colorLoading || attrLoading;
+
   // -------------------- Default selections when lookups load --------------------
   useEffect(() => {
     if (!mainCategories.length) return;
     setMainCategoryId((p) => (p ? p : Number(mainCategories[0]?.id ?? 0)));
   }, [mainCategories]);
 
-  const availableSubs = useMemo(() => {
-    if (!mainCategoryId) return [];
-    return subCategories.filter(
-      (s: any) => Number(s.main_category_id) === Number(mainCategoryId)
-    );
-  }, [subCategories, mainCategoryId]);
+  // when main changes -> reset dependent fields fast
+  useEffect(() => {
+    setSubCategoryId(0);
+    setChildCategoryId(0);
+  }, [mainCategoryId]);
 
   useEffect(() => {
-    if (!availableSubs.length) {
+    if (subLoading) return;
+    if (!subCategories.length) {
       setSubCategoryId(0);
       return;
     }
     setSubCategoryId((p) =>
-      availableSubs.some((s: any) => s.id === p)
+      subCategories.some((s: any) => Number(s.id) === Number(p))
         ? p
-        : Number(availableSubs[0]?.id ?? 0)
+        : Number(subCategories[0]?.id ?? 0)
     );
-  }, [availableSubs]);
+  }, [subCategories, subLoading]);
 
-  const availableChild = useMemo(() => {
-    if (!subCategoryId) return [];
-    return childCategories.filter(
-      (c: any) => Number(c.sub_category_id) === Number(subCategoryId)
-    );
-  }, [childCategories, subCategoryId]);
+  // when sub changes -> reset child fast
+  useEffect(() => {
+    setChildCategoryId(0);
+  }, [subCategoryId]);
 
   useEffect(() => {
-    if (!availableChild.length) {
+    if (childLoading) return;
+    if (!childCategories.length) {
       setChildCategoryId(0);
       return;
     }
     setChildCategoryId((p) =>
-      availableChild.some((c: any) => c.id === p)
+      childCategories.some((c: any) => Number(c.id) === Number(p))
         ? p
-        : Number(availableChild[0]?.id ?? 0)
+        : Number(childCategories[0]?.id ?? 0)
     );
-  }, [availableChild]);
+  }, [childCategories, childLoading]);
 
   useEffect(() => {
     if (!brands.length) return;
@@ -343,7 +338,7 @@ export default function CreateProductPage() {
 
   const availableVariants: AttributeVariant[] = useMemo(() => {
     const list = Array.isArray(selectedAttribute?.variants)
-      ? selectedAttribute?.variants
+      ? selectedAttribute.variants
       : [];
     return list.filter((v) => v && v.status !== false);
   }, [selectedAttribute]);
@@ -357,8 +352,7 @@ export default function CreateProductPage() {
   // -------------------- SKU base generator --------------------
   const generateSkuBase = () => {
     const brand =
-      brands.find((b: any) => Number(b.id) === Number(brandId))?.name ??
-      "BRAND";
+      brands.find((b: any) => Number(b.id) === Number(brandId))?.name ?? "BRAND";
     const cat =
       mainCategories.find((c: any) => Number(c.id) === Number(mainCategoryId))
         ?.name ?? "CAT";
@@ -375,9 +369,8 @@ export default function CreateProductPage() {
 
   // -------------------- Ensure matrix rows when selections change --------------------
   useEffect(() => {
-    const skuParts = [skuBase || "SKU", productSlug || "PRODUCT"].filter(
-      Boolean
-    );
+    const skuParts = [skuBase || "SKU", productSlug || "PRODUCT"].filter(Boolean);
+
     const next = ensureMatrixRows(
       selectedColorIds,
       selectedVariantIds,
@@ -389,6 +382,7 @@ export default function CreateProductPage() {
     const same =
       next.length === matrix.length &&
       next.every((n, i) => matrix[i]?.key === n.key);
+
     if (!same) setMatrix(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedColorIds, selectedVariantIds]);
@@ -405,31 +399,37 @@ export default function CreateProductPage() {
 
   const subOptions: Option[] = useMemo(
     () =>
-      availableSubs.map((s: any) => ({
+      subCategories.map((s: any) => ({
         value: String(s.id),
         label: String(s.name),
       })),
-    [availableSubs]
+    [subCategories]
   );
 
   const childOptions: Option[] = useMemo(
     () =>
-      availableChild.map((c: any) => ({
+      childCategories.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
       })),
-    [availableChild]
+    [childCategories]
   );
 
   const brandOptions: Option[] = useMemo(
     () =>
-      brands.map((b: any) => ({ value: String(b.id), label: String(b.name) })),
+      brands.map((b: any) => ({
+        value: String(b.id),
+        label: String(b.name),
+      })),
     [brands]
   );
 
   const attributeOptions: Option[] = useMemo(
     () =>
-      attributes.map((a) => ({ value: String(a.id), label: String(a.name) })),
+      attributes.map((a) => ({
+        value: String(a.id),
+        label: String(a.name),
+      })),
     [attributes]
   );
 
@@ -505,32 +505,29 @@ export default function CreateProductPage() {
   // -------------------- Submit --------------------
   const createMutation = useMutation({
     mutationFn: createProduct,
-    onSuccess: (res: any) => {
+    onSuccess: (res: unknown) => {
       const productId = getSuccessProductId(res);
+      const anyRes = res as any;
 
-      if (res?.success === true) {
-        toast.success(
-          productId ? `Product created (ID: ${productId})` : "Product created"
-        );
+      if (anyRes?.success === true) {
+        toast.success(productId ? `Product created (ID: ${productId})` : "Product created");
         setValidationError("");
         setErrorBannerVisible(false);
         return;
       }
 
-      // defensive: backend might return 200 but success false
       const msg =
-        (typeof res?.error === "string" && res.error.trim()) ||
-        (typeof res?.message === "string" && res.message.trim()) ||
+        (typeof anyRes?.error === "string" && anyRes.error.trim()) ||
+        (typeof anyRes?.message === "string" && anyRes.message.trim()) ||
         "Failed to create product";
+
       toast.error(msg);
       setValidationError(msg);
       setErrorBannerVisible(true);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       const msg = getApiErrorMessage(err);
       toast.error(msg);
-
-      // keep error banner visible & sticky
       setValidationError(msg);
       setErrorBannerVisible(true);
     },
@@ -584,7 +581,7 @@ export default function CreateProductPage() {
   };
 
   // -------------------- UI --------------------
-  if (lookupsLoading) {
+  if (initialLoading) {
     return (
       <div className="space-y-3">
         <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
@@ -640,16 +637,13 @@ export default function CreateProductPage() {
           Create Product
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Dynamic load: category, brand, color, attribute & attribute variants
-          from API.
+          Dynamic load: category, brand, color, attribute & attribute variants from API.
         </p>
       </div>
 
       {/* Basic */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Basic
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Basic</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-2">
@@ -669,9 +663,7 @@ export default function CreateProductPage() {
                 Slug *
               </p>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Auto
-                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Auto</span>
                 <Switch
                   key={`slug-${slugLocked}`}
                   label=""
@@ -709,7 +701,7 @@ export default function CreateProductPage() {
             <Select
               key={`sub-${mainCategoryId}-${subCategoryId}`}
               options={subOptions}
-              placeholder="Select sub category"
+              placeholder={subLoading ? "Loading sub categories..." : "Select sub category"}
               defaultValue={String(subCategoryId)}
               onChange={(v) => setSubCategoryId(Number(v))}
             />
@@ -722,7 +714,13 @@ export default function CreateProductPage() {
             <Select
               key={`child-${subCategoryId}-${childCategoryId}`}
               options={childOptions}
-              placeholder="Select child category"
+              placeholder={
+                !subCategoryId
+                  ? "Select sub category first"
+                  : childLoading
+                    ? "Loading child categories..."
+                    : "Select child category"
+              }
               defaultValue={String(childCategoryId)}
               onChange={(v) => setChildCategoryId(Number(v))}
             />
@@ -743,14 +741,13 @@ export default function CreateProductPage() {
       </div>
 
       {/* Colors + Attribute variants => Matrix */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="space-y-6 rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Variations
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Colors dropdown + variants from selected attribute. This generates
-            the variations payload.
+            Colors dropdown + variants from selected attribute. This generates the variations payload.
           </p>
         </div>
 
@@ -764,9 +761,7 @@ export default function CreateProductPage() {
               <Select
                 key={`color-dd-${selectedColorIds.join("-")}`}
                 options={colorOptions}
-                placeholder={
-                  colorOptions.length ? "Select color" : "No more colors"
-                }
+                placeholder={colorOptions.length ? "Select color" : "No more colors"}
                 defaultValue=""
                 onChange={(v) => {
                   const id = Number(v);
@@ -793,9 +788,7 @@ export default function CreateProductPage() {
                       type="button"
                       className="text-error-500 hover:text-error-600"
                       onClick={() =>
-                        setSelectedColorIds((p) =>
-                          p.filter((x) => x !== Number(c.id))
-                        )
+                        setSelectedColorIds((p) => p.filter((x) => x !== Number(c.id)))
                       }
                       aria-label="Remove color"
                     >
@@ -820,6 +813,7 @@ export default function CreateProductPage() {
                 Variants come from selected attribute
               </p>
             </div>
+
             <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Attribute Variants <span className="text-error-500">*</span>
@@ -862,32 +856,24 @@ export default function CreateProductPage() {
               Variation Matrix
             </p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              This table generates API variations: color_id + variant_id +
-              prices + stock + sku
+              This table generates API variations: color_id + variant_id + prices + stock + sku
             </p>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-[1200px] w-full border-collapse">
+            <table className="w-full min-w-[1200px] border-collapse">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                  {[
-                    "Color",
-                    "Variant",
-                    "Buying",
-                    "Selling",
-                    "Discount",
-                    "Stock",
-                    "SKU",
-                    "Active",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {["Color", "Variant", "Buying", "Selling", "Discount", "Stock", "SKU", "Active"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
 
@@ -908,18 +894,16 @@ export default function CreateProductPage() {
                     );
                     return g.rows.map((r, idx) => {
                       const variantName =
-                        availableVariants.find((v) => v.id === r.variantId)
-                          ?.name ?? `#${r.variantId}`;
+                        availableVariants.find((v) => v.id === r.variantId)?.name ??
+                        `#${r.variantId}`;
+
                       return (
                         <tr
                           key={r.key}
                           className="border-b border-gray-100 dark:border-gray-800"
                         >
                           {idx === 0 ? (
-                            <td
-                              rowSpan={g.rows.length}
-                              className="px-4 py-4 align-middle"
-                            >
+                            <td rowSpan={g.rows.length} className="px-4 py-4 align-middle">
                               <div className="flex items-center gap-3">
                                 <span
                                   className="h-4 w-6 rounded-md border border-gray-200 dark:border-gray-800"
@@ -949,10 +933,7 @@ export default function CreateProductPage() {
                               value={r.buyingPrice}
                               onChange={(e) =>
                                 updateRow(r.key, {
-                                  buyingPrice: safeNumber(
-                                    String(e.target.value),
-                                    r.buyingPrice
-                                  ),
+                                  buyingPrice: safeNumber(String(e.target.value), r.buyingPrice),
                                 })
                               }
                             />
@@ -979,10 +960,7 @@ export default function CreateProductPage() {
                               value={r.discount}
                               onChange={(e) =>
                                 updateRow(r.key, {
-                                  discount: safeNumber(
-                                    String(e.target.value),
-                                    r.discount
-                                  ),
+                                  discount: safeNumber(String(e.target.value), r.discount),
                                 })
                               }
                             />
@@ -994,10 +972,7 @@ export default function CreateProductPage() {
                               value={r.stock}
                               onChange={(e) =>
                                 updateRow(r.key, {
-                                  stock: Math.max(
-                                    0,
-                                    safeNumber(String(e.target.value), r.stock)
-                                  ),
+                                  stock: Math.max(0, safeNumber(String(e.target.value), r.stock)),
                                 })
                               }
                             />
@@ -1006,11 +981,7 @@ export default function CreateProductPage() {
                           <td className="px-4 py-4">
                             <Input
                               value={r.sku}
-                              onChange={(e) =>
-                                updateRow(r.key, {
-                                  sku: String(e.target.value),
-                                })
-                              }
+                              onChange={(e) => updateRow(r.key, { sku: String(e.target.value) })}
                             />
                           </td>
 
@@ -1019,9 +990,7 @@ export default function CreateProductPage() {
                               key={`row-${r.key}-${r.active}`}
                               label=""
                               defaultChecked={r.active}
-                              onChange={(checked) =>
-                                updateRow(r.key, { active: checked })
-                              }
+                              onChange={(checked) => updateRow(r.key, { active: checked })}
                             />
                           </td>
                         </tr>
@@ -1036,34 +1005,32 @@ export default function CreateProductPage() {
       </div>
 
       {/* Media */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Media
-        </h2>
+      <div className="space-y-6 rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Media</h2>
+
         <ImageMultiUploader
           label="Product Images"
           images={images}
           onChange={setImages}
           max={10}
         />
-        <VideoUploader
-          label="Product Video"
-          value={video}
-          onChange={setVideo}
-        />
+
+        <VideoUploader label="Product Video" value={video} onChange={setVideo} />
       </div>
 
       {/* Descriptions */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="space-y-6 rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Descriptions
         </h2>
+
         <RichTextEditor
           label="Short Description"
           value={shortDescription}
           onChange={setShortDescription}
           heightClassName="min-h-[160px]"
         />
+
         <RichTextEditor
           label="Long Description"
           value={longDescription}
@@ -1074,9 +1041,7 @@ export default function CreateProductPage() {
 
       {/* Flags */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Flags
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Flags</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(
@@ -1099,9 +1064,7 @@ export default function CreateProductPage() {
                   key={`flag-${item.key}-${flags[item.key]}`}
                   label=""
                   defaultChecked={flags[item.key]}
-                  onChange={(checked) =>
-                    setFlags((p) => ({ ...p, [item.key]: checked }))
-                  }
+                  onChange={(checked) => setFlags((p) => ({ ...p, [item.key]: checked }))}
                 />
               </div>
             </div>
@@ -1111,20 +1074,14 @@ export default function CreateProductPage() {
 
       {/* SEO (minimal) */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          SEO
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">SEO</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Meta Title
-            </p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Title</p>
             <Input
               value={seo.meta_title}
-              onChange={(e) =>
-                setSeo((p) => ({ ...p, meta_title: String(e.target.value) }))
-              }
+              onChange={(e) => setSeo((p) => ({ ...p, meta_title: String(e.target.value) }))}
             />
           </div>
 
