@@ -12,7 +12,7 @@ import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
 import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
-import VideoUploader, { type UploadedVideo } from "@/components/ui/upload/VideoUploader";
+import VideoUploader from "@/components/ui/upload/VideoUploader";
 import { cn } from "@/lib/utils";
 
 import { getAttributes } from "@/api/attributes.api";
@@ -108,7 +108,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
 
   // Media
   const [newImages, setNewImages] = useState<UploadedImage[]>([]);
-  const [video, setVideo] = useState<UploadedVideo>({ kind: "none" });
+  const [videoUrl, setVideoUrl] = useState("");
 
   // Existing images for edit
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([]);
@@ -208,6 +208,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
 
     setShortDescription(initialProduct.short_description ?? "");
     setLongDescription(initialProduct.long_description ?? "");
+    setVideoUrl(initialProduct.video_path ?? "");
 
     setFlags({
       status: Boolean(initialProduct.status),
@@ -311,7 +312,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
       brand_id: brandId,
       attribute_id: attributeId,
 
-      video_path: video.kind === "url" ? video.url : undefined,
+      video_path: videoUrl.trim() ? videoUrl.trim() : undefined,
 
       short_description: shortDescription,
       long_description: longDescription,
@@ -589,8 +590,8 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
 
         <VideoUploader
           label="Video URL"
-          value={video}
-          onChange={setVideo}
+          value={videoUrl}
+          onChange={setVideoUrl}
           helperText="Paste YouTube URL (video_path)."
         />
       </div>
