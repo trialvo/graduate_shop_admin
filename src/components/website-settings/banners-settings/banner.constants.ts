@@ -9,16 +9,17 @@ export const ZONES: string[] = [
   "Campaign",
 ];
 
+// backend sends "Default"
 export const TYPES: string[] = ["Default"];
 
 export const STATUS_FILTER_OPTIONS: Option[] = [
-  { value: "", label: "All" }, // ✅ empty = do not send to API
+  { value: "", label: "All" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
 
 export const FEATURED_FILTER_OPTIONS: Option[] = [
-  { value: "", label: "All" }, // ✅ empty = do not send to API
+  { value: "", label: "All" },
   { value: "featured", label: "Featured" },
   { value: "not_featured", label: "Not Featured" },
 ];

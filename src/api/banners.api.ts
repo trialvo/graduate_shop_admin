@@ -1,16 +1,17 @@
 import { api } from "./client";
 
-export type BannerTypeApi = string;
-export type BannerZoneApi = string;
 
 export type BannerApi = {
   id: number;
   title: string;
-  zone: BannerZoneApi;
-  type: BannerTypeApi;
+  zone: string;
+  type: string;
   img_path: string | null;
+  path: string | null;
+
   status: boolean;
   featured: boolean;
+
   created_at: string;
   updated_at: string;
 };
@@ -20,8 +21,6 @@ export type GetBannersParams = {
   zone?: string;
   type?: string;
 
-  // backend sample: status=5 (all), featured=2 (all)
-  // BUT: you want these omitted unless user explicitly filters
   status?: 0 | 1 | 5;
   featured?: 0 | 1 | 2;
 
@@ -50,6 +49,10 @@ export type CreateBannerInput = {
   title: string;
   zone: string;
   type: string;
+
+  // ✅ new
+  path: string | null;
+
   status: boolean;
   featured: boolean;
 };
@@ -59,6 +62,10 @@ export type UpdateBannerPatch = Partial<{
   title: string;
   zone: string;
   type: string;
+
+  // ✅ new
+  path: string | null;
+
   status: boolean;
   featured: boolean;
 }>;
@@ -67,39 +74,47 @@ function hasOwn(obj: object, key: string) {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }
 
+function compactParams<T extends Record<string, any>>(input: T): Partial<T> {
+  const out: Record<string, any> = {};
+  Object.entries(input).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    if (typeof v === "string" && v.trim() === "") return;
+    out[k] = v;
+  });
+  return out as Partial<T>;
+}
+
 function buildFormDataForPatch(patch: UpdateBannerPatch) {
   const fd = new FormData();
 
-  // IMPORTANT: include only keys that exist in patch (supports false)
+  // NOTE: include ONLY keys that exist in patch (supports false / null)
   if (hasOwn(patch, "banner_img") && patch.banner_img) {
     fd.append("banner_img", patch.banner_img);
   }
-  if (hasOwn(patch, "title") && patch.title !== undefined) {
-    fd.append("title", String(patch.title ?? ""));
+  if (hasOwn(patch, "title")) fd.append("title", String(patch.title ?? ""));
+  if (hasOwn(patch, "zone")) fd.append("zone", String(patch.zone ?? ""));
+  if (hasOwn(patch, "type")) fd.append("type", String(patch.type ?? ""));
+
+  // ✅ path included only if provided (can be null)
+  if (hasOwn(patch, "path")) {
+    // multipart can't send real null, so send empty string for null -> backend should store null
+    fd.append("path", patch.path == null ? "" : String(patch.path));
   }
-  if (hasOwn(patch, "zone") && patch.zone !== undefined) {
-    fd.append("zone", String(patch.zone ?? ""));
-  }
-  if (hasOwn(patch, "type") && patch.type !== undefined) {
-    fd.append("type", String(patch.type ?? ""));
-  }
-  if (hasOwn(patch, "status") && patch.status !== undefined) {
-    fd.append("status", String(Boolean(patch.status)));
-  }
-  if (hasOwn(patch, "featured") && patch.featured !== undefined) {
-    fd.append("featured", String(Boolean(patch.featured)));
-  }
+
+  if (hasOwn(patch, "status")) fd.append("status", String(Boolean(patch.status)));
+  if (hasOwn(patch, "featured")) fd.append("featured", String(Boolean(patch.featured)));
 
   return fd;
 }
 
-// ✅ Only pass params if there is at least 1 key.
-// Otherwise call just /banners with no query string.
+// ✅ Initial call: GET /banners (NO QUERY)
+// Only send params if user applied something.
 export async function getBanners(params?: GetBannersParams) {
-  const hasParams = params && Object.keys(params).length > 0;
+  const cleaned = params ? compactParams(params) : undefined;
+  const hasParams = cleaned && Object.keys(cleaned).length > 0;
 
   const { data } = await api.get<GetBannersResponse>("/banners", {
-    params: hasParams ? params : undefined,
+    params: hasParams ? cleaned : undefined,
   });
 
   return data;
@@ -116,6 +131,10 @@ export async function createBanner(input: CreateBannerInput) {
   fd.append("title", input.title);
   fd.append("zone", input.zone);
   fd.append("type", input.type);
+
+  // ✅ always include path on create
+  fd.append("path", input.path == null ? "" : String(input.path));
+
   fd.append("status", String(Boolean(input.status)));
   fd.append("featured", String(Boolean(input.featured)));
 
