@@ -79,6 +79,15 @@ function normalizeId(value: number) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+function readId(value: unknown) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function pickNestedId(payload: any, directKey: string, nestedKey: string) {
+  return readId(payload?.[directKey] ?? payload?.[nestedKey]?.id ?? 0);
+}
+
 function getApiErrorMessage(err: unknown, fallback: string) {
   const anyErr = err as any;
   const data = anyErr?.response?.data;
@@ -248,12 +257,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     setName(String(p.name ?? ""));
     setSlug(String(p.slug ?? ""));
 
-    setMainCategoryId(Number(p.main_category_id ?? 0));
-    setSubCategoryId(Number(p.sub_category_id ?? 0));
-    setChildCategoryId(Number(p.child_category_id ?? 0));
+    setMainCategoryId(pickNestedId(p, "main_category_id", "main_category"));
+    setSubCategoryId(pickNestedId(p, "sub_category_id", "sub_category"));
+    setChildCategoryId(pickNestedId(p, "child_category_id", "child_category"));
 
-    setBrandId(Number(p.brand_id ?? 0));
-    setAttributeId(Number((p as any).attribute_id ?? 0));
+    setBrandId(pickNestedId(p, "brand_id", "brand"));
+    setAttributeId(pickNestedId(p, "attribute_id", "attribute"));
 
     setVideoPath(String((p as any).video_path ?? ""));
     setShortDescription(String((p as any).short_description ?? ""));
