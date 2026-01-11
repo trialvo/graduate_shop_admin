@@ -50,6 +50,8 @@ const stickyActionHeaderClass = cn(
   "bg-gray-50 dark:bg-gray-950",
   "border-l border-gray-200 dark:border-gray-800",
   "w-[1%] whitespace-nowrap",
+  // ✅ subtle shadow so it feels floating
+  "shadow-[-10px_0_22px_-18px_rgba(0,0,0,0.35)] dark:shadow-[-10px_0_22px_-18px_rgba(0,0,0,0.75)]",
 );
 
 const stickyActionCellClass = cn(
