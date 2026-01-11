@@ -1,245 +1,220 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import Cropper from "react-easy-crop";
-import { UploadCloud, X, Scissors } from "lucide-react";
+import React, { useCallback, useMemo, useState } from "react";
+import Cropper, { type Area } from "react-easy-crop";
+import { X } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
-import { getCroppedFile } from "./cropImage";
 
-type CropAreaPixels = { x: number; y: number; width: number; height: number };
+type Props = {
+  open: boolean;
+  imageUrl: string;
+  fileName?: string;
+  aspect?: number; // default 3/1
+  onClose: () => void;
+  onApply: (result: { file: File; previewUrl: string }) => void;
+};
 
-function isImageFile(f: File) {
-  return f.type.startsWith("image/");
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(e);
+    img.src = url;
+  });
 }
 
-function revokeUrl(url: string | null) {
-  if (!url) return;
-  if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+async function getCroppedBlob(imageSrc: string, pixelCrop: Area, mimeType: string) {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) throw new Error("Canvas not supported");
+
+  canvas.width = Math.max(1, Math.floor(pixelCrop.width));
+  canvas.height = Math.max(1, Math.floor(pixelCrop.height));
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  const blob: Blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (b) => {
+        if (!b) return reject(new Error("Crop failed"));
+        resolve(b);
+      },
+      mimeType || "image/jpeg",
+      0.92
+    );
+  });
+
+  return blob;
 }
 
-export default function BannerImageCropper({
-  label = "Banner Image",
-  required = false,
-  initialPreviewUrl,
-  onChange,
+export default function ImageCropperModal({
+  open,
+  imageUrl,
+  fileName,
   aspect = 3 / 1,
-}: {
-  label?: string;
-  required?: boolean;
-  initialPreviewUrl?: string | null;
-  onChange: (payload: { file: File | null; previewUrl: string | null }) => void;
-  aspect?: number;
-}) {
-  const fileRef = useRef<HTMLInputElement | null>(null);
-
-  const [rawFile, setRawFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialPreviewUrl ?? null);
-
-  const [cropOpen, setCropOpen] = useState(false);
+  onClose,
+  onApply,
+}: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedPixels, setCroppedPixels] = useState<CropAreaPixels | null>(null);
+  const [croppedPixels, setCroppedPixels] = useState<Area | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const mimeType = useMemo(() => rawFile?.type || "image/jpeg", [rawFile]);
+  const prettyAspect = useMemo(() => `${aspect.toFixed(2)}:1`, [aspect]);
 
-  useEffect(() => {
-    // when parent changes initial (edit open/close), set preview but don't override if user picked new
-    if (!rawFile) setPreviewUrl(initialPreviewUrl ?? null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPreviewUrl]);
-
-  useEffect(() => {
-    return () => revokeUrl(previewUrl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onCropComplete = useCallback((_area: Area, areaPixels: Area) => {
+    setCroppedPixels(areaPixels);
   }, []);
 
-  const pick = () => fileRef.current?.click();
+  const applyCrop = useCallback(async () => {
+    if (!croppedPixels) return;
+    try {
+      setSaving(true);
 
-  const setFile = (f: File | null) => {
-    if (!f) return;
-    if (!isImageFile(f)) return;
+      // Prefer png if original looks like png (transparent) else jpeg
+      const mime = "image/jpeg";
+      const blob = await getCroppedBlob(imageUrl, croppedPixels, mime);
 
-    // revoke old blob preview if any
-    if (previewUrl?.startsWith("blob:")) revokeUrl(previewUrl);
+      const safeName = fileName?.trim() ? fileName.trim() : "banner.jpg";
+      const finalName = safeName.toLowerCase().endsWith(".png")
+        ? safeName.replace(/\.png$/i, ".jpg")
+        : safeName.toLowerCase().endsWith(".jpeg") || safeName.toLowerCase().endsWith(".jpg")
+          ? safeName
+          : `${safeName}.jpg`;
 
-    const url = URL.createObjectURL(f);
-    setRawFile(f);
-    setPreviewUrl(url);
-    onChange({ file: f, previewUrl: url });
-  };
+      const file = new File([blob], finalName, { type: blob.type || mime });
+      const previewUrl = URL.createObjectURL(file);
 
-  const reset = () => {
-    if (previewUrl?.startsWith("blob:")) revokeUrl(previewUrl);
-    setRawFile(null);
-    setPreviewUrl(null);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCroppedPixels(null);
-    if (fileRef.current) fileRef.current.value = "";
-    onChange({ file: null, previewUrl: null });
-  };
+      onApply({ file, previewUrl });
+    } finally {
+      setSaving(false);
+    }
+  }, [croppedPixels, fileName, imageUrl, onApply]);
 
-  const onCropComplete = (_: any, areaPixels: CropAreaPixels) => {
-    setCroppedPixels(areaPixels);
-  };
-
-  const applyCrop = async () => {
-    if (!previewUrl || !croppedPixels) return;
-    const base = rawFile?.name?.replace(/\.[^/.]+$/, "") || "banner";
-
-    const croppedFile = await getCroppedFile(previewUrl, croppedPixels, `${base}_crop`, mimeType);
-
-    // update preview to cropped blob
-    if (previewUrl?.startsWith("blob:")) revokeUrl(previewUrl);
-    const newUrl = URL.createObjectURL(croppedFile);
-
-    setRawFile(croppedFile);
-    setPreviewUrl(newUrl);
-    onChange({ file: croppedFile, previewUrl: newUrl });
-    setCropOpen(false);
-  };
+  if (!open) return null;
 
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            {label} {required ? <span className="text-error-500">*</span> : null}
-          </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Recommended ratio: 3:1 (crop supported)
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={pick}>
-            Upload
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setCropOpen(true)}
-            disabled={!previewUrl}
-            startIcon={<Scissors size={16} />}
-          >
-            Crop
-          </Button>
-          <Button variant="outline" onClick={reset} disabled={!previewUrl}>
-            Reset
-          </Button>
-        </div>
-      </div>
-
-      {/* Preview 3:1 */}
-      <div className="mt-4 overflow-hidden rounded-[4px] border border-gray-200 dark:border-gray-800">
-        <div className="relative w-full bg-gray-50 dark:bg-gray-800">
-          <div className="pt-[33.333%]" />
-          <div className="absolute inset-0">
-            {previewUrl ? (
-              <img src={previewUrl} alt="Banner preview" className="h-full w-full object-cover" />
-            ) : (
-              <button
-                type="button"
-                className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-500 dark:text-gray-400"
-                onClick={pick}
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-300 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
-                  <UploadCloud size={20} />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold">Upload Banner</p>
-                  <p className="mt-1 text-xs">Click to select</p>
-                </div>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+    <div className="fixed inset-0 z-[90] flex items-center justify-center">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/70"
+        onClick={() => !saving && onClose()}
+        aria-label="Close overlay"
       />
 
-      {/* Crop Modal */}
-      {cropOpen ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center">
+      <div className="relative w-[96vw] max-w-5xl overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Crop Banner Image
+            </h3>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Fixed ratio: <b>{prettyAspect}</b> (recommended 3:1)
+            </p>
+          </div>
+
           <button
             type="button"
-            className="absolute inset-0 bg-black/70"
-            onClick={() => setCropOpen(false)}
-            aria-label="Close crop overlay"
-          />
+            onClick={() => !saving && onClose()}
+            className={cn(
+              "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border",
+              "border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
+              "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+            )}
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-          <div className="relative w-[95vw] max-w-4xl overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-              <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Crop Image</p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Keep important content inside the safe area
-                </p>
+        {/* Body */}
+        <div className="px-6 py-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Crop area */}
+            <div className="lg:col-span-2">
+              <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
+                {/* 3:1 stage */}
+                <div className="relative w-full overflow-hidden rounded-[4px] bg-black">
+                  <div className="pt-[33.333%]" />
+                  <div className="absolute inset-0">
+                    <Cropper
+                      image={imageUrl}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={aspect}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={onCropComplete}
+                      restrictPosition
+                      showGrid
+                    />
+                  </div>
+                </div>
               </div>
-
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border",
-                  "border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
-                  "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                )}
-                onClick={() => setCropOpen(false)}
-                aria-label="Close"
-              >
-                <X size={18} />
-              </button>
             </div>
 
-            <div className="p-5">
-              <div className="relative h-[420px] w-full overflow-hidden rounded-[4px] border border-gray-200 bg-black dark:border-gray-800">
-                {previewUrl ? (
-                  <Cropper
-                    image={previewUrl}
-                    crop={crop}
-                    zoom={zoom}
-                    aspect={aspect}
-                    onCropChange={setCrop}
-                    onZoomChange={setZoom}
-                    onCropComplete={onCropComplete}
+            {/* Controls */}
+            <div className="space-y-5">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Zoom</p>
+                <div className="mt-3">
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.01}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="w-full"
                   />
-                ) : null}
+                  <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>1x</span>
+                    <span>{zoom.toFixed(2)}x</span>
+                    <span>3x</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-4">
-                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  Zoom
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={3}
-                  step={0.01}
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="mt-2 w-full"
-                />
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Tips
+                </h4>
+                <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                  <li>• Drag image to position</li>
+                  <li>• Use zoom to fit properly</li>
+                  <li>• Output will be saved as JPG</li>
+                </ul>
               </div>
-            </div>
-
-            <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setCropOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={applyCrop} disabled={!previewUrl || !croppedPixels}>
-                Apply Crop
-              </Button>
             </div>
           </div>
         </div>
-      ) : null}
+
+        {/* Footer */}
+        <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={() => !saving && onClose()} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={applyCrop} disabled={saving || !croppedPixels}>
+            {saving ? "Applying..." : "Apply Crop"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
