@@ -45,9 +45,24 @@ function CategoryBadges({ p }: { p: Product }) {
   );
 }
 
+const stickyActionHeaderClass = cn(
+  "sticky right-0 z-30",
+  "bg-gray-50 dark:bg-gray-950",
+  "border-l border-gray-200 dark:border-gray-800",
+  "w-[1%] whitespace-nowrap",
+);
+
+const stickyActionCellClass = cn(
+  "sticky right-0 z-20",
+  "bg-white dark:bg-gray-900",
+  "group-hover:bg-gray-50 dark:group-hover:bg-white/[0.04]",
+  "border-l border-gray-200 dark:border-gray-800",
+  "w-[1%] whitespace-nowrap",
+);
+
 const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStatus, onEdit, onDelete }) => {
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
         <Table className="min-w-[1100px] border-collapse">
           <TableHeader>
@@ -55,25 +70,39 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
               <TableCell isHeader className="w-[70px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Sl
               </TableCell>
+
               <TableCell isHeader className="min-w-[320px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Product
               </TableCell>
+
               <TableCell isHeader className="min-w-[170px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Position
               </TableCell>
+
               <TableCell isHeader className="min-w-[360px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Category
               </TableCell>
+
               <TableCell isHeader className="min-w-[220px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Stock
               </TableCell>
+
               <TableCell isHeader className="min-w-[240px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Price
               </TableCell>
+
               <TableCell isHeader className="min-w-[140px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
                 Status
               </TableCell>
-              <TableCell isHeader className="min-w-[160px] px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-brand-500">
+
+              {/* ✅ Sticky Action header (right) */}
+              <TableCell
+                isHeader
+                className={cn(
+                  stickyActionHeaderClass,
+                  "min-w-[132px] px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-brand-500",
+                )}
+              >
                 Action
               </TableCell>
             </TableRow>
@@ -86,15 +115,15 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
               return (
                 <TableRow
                   key={p.id}
-                  className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.04]"
+                  className="group border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.04]"
                 >
                   <TableCell className="px-4 py-4 text-sm font-medium text-gray-700 dark:text-gray-200">
                     {idx + 1}
                   </TableCell>
 
                   <TableCell className="px-4 py-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 shrink-0 rounded-[4px] bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
                         {p.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
@@ -104,17 +133,15 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                       </div>
 
                       <div className="min-w-0">
-                        <div className="font-semibold text-gray-900 dark:text-white truncate max-w-[280px]">
+                        <div className="max-w-[280px] truncate font-semibold text-gray-900 dark:text-white">
                           {p.name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {p.sku}
-                        </div>
+                        <div className="truncate text-xs text-gray-500 dark:text-gray-400">{p.sku}</div>
                       </div>
                     </div>
                   </TableCell>
 
-                  <TableCell className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                  <TableCell className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                     #{p.positionNumber}
                   </TableCell>
 
@@ -134,9 +161,7 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                         >
                           Total: {p.stockQty}
                         </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Variants: {p.variantCount}
-                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Variants: {p.variantCount}</span>
                       </div>
 
                       <Button
@@ -150,7 +175,7 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                       </Button>
 
                       {lowStock ? (
-                        <span className="text-xs font-semibold text-error-500 bg-error-50 dark:bg-error-500/10 dark:text-error-300 px-2 py-1 rounded-full border border-error-100 dark:border-error-500/20">
+                        <span className="rounded-full border border-error-100 bg-error-50 px-2 py-1 text-xs font-semibold text-error-500 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
                           Low
                         </span>
                       ) : null}
@@ -159,11 +184,11 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
 
                   <TableCell className="px-4 py-4">
                     <div className="leading-tight">
-                      <div className="text-gray-900 dark:text-white font-semibold whitespace-nowrap">
+                      <div className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
                         {formatMoney(p.price)}
                       </div>
 
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-x-3 gap-y-1">
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                         <span>Discount: {p.discount ?? 0}</span>
                         <span>Sale: {formatMoney(p.salePrice ?? p.price)}</span>
                       </div>
@@ -174,8 +199,9 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                     <StatusToggle value={p.status} onChange={(next) => onToggleStatus(p.id, next)} />
                   </TableCell>
 
-                  <TableCell className="px-4 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                  {/* ✅ Sticky Action cell (right) */}
+                  <TableCell className={cn(stickyActionCellClass, "px-4 py-4")}>
+                    <div className="inline-flex items-center justify-end gap-2">
                       <Button
                         variant="outline"
                         size="icon"
