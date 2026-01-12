@@ -1,0 +1,67 @@
+import { useMemo } from "react";
+import Button from "@/components/ui/button/Button";
+import type { ProfileUser } from "../types";
+import { toPublicUrl } from "@/utils/toPublicUrl";
+
+type Props = {
+  user: ProfileUser;
+  onLogout: () => void;
+};
+
+function initials(firstName: string, lastName: string): string {
+  const a = (firstName?.[0] ?? "").toUpperCase();
+  const b = (lastName?.[0] ?? "").toUpperCase();
+  const out = `${a}${b}`.trim();
+  return out || "U";
+}
+
+export default function ProfileOverviewCard({ user, onLogout }: Props) {
+  const name = useMemo(() => {
+    const n = `${user.firstName} ${user.lastName}`.trim();
+    return n || "—";
+  }, [user.firstName, user.lastName]);
+
+  const statusClass =
+    user.status === "active" ? "bg-success-600 text-white" : "bg-gray-600 text-white";
+
+  return (
+    <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative">
+          <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+            {user.avatarUrl ? (
+              <img src={toPublicUrl(user.avatarUrl)} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-gray-700 dark:text-gray-200">
+                {initials(user.firstName, user.lastName)}
+              </div>
+            )}
+          </div>
+
+          <span
+            className={`absolute bottom-1 right-2 inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold ${statusClass}`}
+          >
+            {user.status.toUpperCase()}
+          </span>
+        </div>
+
+        <h3 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">{name}</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+
+        <span className="mt-3 inline-flex items-center rounded-full bg-brand-500 px-3 py-1 text-xs font-semibold text-white">
+          {user.role}
+        </span>
+
+        {user.lastVisitAt ? (
+          <p className="mt-3 text-sm text-brand-500">last login {user.lastVisitAt}</p>
+        ) : null}
+
+        <div className="mt-6 w-full">
+          <Button onClick={onLogout} className="w-full">
+            Log Out
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,9 @@
+// src/components/orders/order-editor/OrderEditorPage.tsx
+
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import OrderEditorHeader from "./OrderEditorHeader";
 import OrderFormCard from "./OrderFormCard";
@@ -10,6 +14,16 @@ import SidebarInfoCard from "./SidebarInfoCard";
 import SidebarShippingStickerCard from "./SidebarShippingStickerCard";
 
 import type { OrderEditorData, OrderProductLine } from "./types";
+
+
+import {
+  getAdminOrderById,
+  ordersKeys,
+  patchOrderPaymentStatus,
+  patchOrderStatus,
+  type ApiOrder,
+} from "@/api/orders.api";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 const statusLabel = (status: OrderEditorData["orderStatus"]): string => {
   return status
@@ -42,113 +56,157 @@ const formatDateTimeLabel = (iso?: string): string | undefined => {
   });
 };
 
+const timeAgoLabel = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+};
+
 const calcLineTotals = (p: OrderProductLine): { base: number; tax: number } => {
   const base = Math.max(0, p.unitPrice - p.discount) * p.quantity;
   const tax = (base * p.taxPercent) / 100;
   return { base, tax };
 };
 
-const makeMockData = (): OrderEditorData => ({
-  orderId: "15986",
-  orderNumber: "15986",
-  orderDate: "2025-09-24T00:00:00.000Z",
-  customerIp: "49.0.34.69",
+function paymentLabelFromOrder(o: ApiOrder) {
+  if (o.payment_type === "cod") return "Payment via Cash on delivery";
+  const provider = (o.payments ?? []).slice(-1)[0]?.provider ?? "gateway";
+  return `Payment via ${provider} gateway`;
+}
 
-  billingName: "Nazmul Hasan",
-  email: "demo@gmail.com",
+function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
+  const deliveryType = (o.city || "").toLowerCase().includes("dhaka")
+    ? "inside_dhaka"
+    : "out_of_dhaka";
 
-  shippingAddress: "Gazipur dhaka , Bangladesh konabari",
-  city: "Gazipur",
-  postalCode: "1346",
+  const products: OrderProductLine[] = (o.items ?? []).map((it) => ({
+    id: String(it.id),
+    sku: it.sku ? String(it.sku) : `#${it.product_sku_id}`,
+    serialNo: it.brand_name ? String(it.brand_name) : it.product_name,
+    name: it.product_name,
+    imageUrl: toPublicUrl(it.product_image ?? null) ?? undefined,
+    color: it.color_name ?? "—",
+    size: it.variant_name ?? it.attribute_name ?? "—",
+    discount: Number(it.discount ?? 0),
+    unitPrice: Number(it.selling_price ?? 0),
+    quantity: Number(it.quantity ?? 1),
+    taxPercent: 0,
+  }));
 
-  phone: "01903527399",
-  altPhone: "01903527399",
+  const firstCourier = (o.couriers ?? [])[0];
 
-  orderStatus: "processing",
-  paymentStatus: "unpaid",
-  deliveryType: "out_of_dhaka",
-  paymentMethod: "cod",
+  return {
+    orderId: String(o.id),
+    orderNumber: String(o.id),
+    orderDate: o.created_at,
 
-  note: "",
+    billingName: (o.customer_name || "").trim() || "—",
+    email: o.customer_email || "—",
 
-  products: [
-    {
-      id: "line-1",
-      sku: "#7802",
-      serialNo: '15ABR8 Ryzen 5 5625U 15.6" Laptop',
-      name: "Lenovo IdeaPad Slim 3",
-      imageUrl: "",
-      color: "Red",
-      size: "XL",
-      discount: 0,
-      unitPrice: 70000,
-      quantity: 2,
-      taxPercent: 0,
+    shippingAddress: o.full_address || "—",
+    city: o.city || "—",
+    postalCode: o.zip_code || "—",
+
+    phone: o.customer_phone || "—",
+    altPhone: "",
+
+    orderStatus: o.order_status,
+    paymentStatus: o.payment_status,
+    deliveryType,
+    paymentMethod: o.payment_type,
+
+    note: o.note ?? "",
+
+    products,
+
+    deliveryCharge: Number(o.delivery_charge ?? 0),
+    specialDiscount: Number(o.discount_total ?? 0),
+    advancePayment: Number(o.paid_amount ?? 0),
+
+    courier: {
+      method: firstCourier?.courier_provider ?? "manual",
+      consignmentId:
+        firstCourier?.reference_id !== null && firstCourier?.reference_id !== undefined
+          ? String(firstCourier.reference_id)
+          : firstCourier?.memo ?? "",
+      trackingUrl: firstCourier?.tracking_number
+        ? `Tracking: ${firstCourier.tracking_number}`
+        : undefined,
+      lastUpdatedAt: firstCourier?.created_at,
     },
-    {
-      id: "line-2",
-      sku: "#5002",
-      serialNo: '22B20JH2 22" 100Hz 1ms IPS FHD Monitor',
-      name: "AOC 22B20JH2",
-      imageUrl: "",
-      color: "Silver",
-      size: "M",
-      discount: 0,
-      unitPrice: 9800,
-      quantity: 1,
-      taxPercent: 0,
+
+    customerInfo: {
+      name: (o.customer_name || "").trim() || "—",
+      phone: o.customer_phone || "—",
+      email: o.customer_email || "—",
+      address: `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—",
     },
-    {
-      id: "line-3",
-      sku: "#2002",
-      serialNo: "Intel 13th Gen Core i5 13600K Raptor Lake Processor",
-      name: "Intel 13th Gen Core i5 13600K",
-      imageUrl: "",
-      color: "Black",
-      size: "36",
-      discount: 0,
-      unitPrice: 28000,
-      quantity: 1,
-      taxPercent: 0,
+
+    // backend doesn’t provide history; using current order as placeholder
+    customerHistory: {
+      orderId: `#${o.id}`,
+      shipping: deliveryType === "inside_dhaka" ? "Inside Dhaka" : "Out of Dhaka",
+      orderDate: o.created_at,
+      totalAmount: Number(o.grand_total ?? 0),
+      timeAgo: timeAgoLabel(o.created_at),
+      orderStatus: o.order_status,
+      sentBy: "manually",
+      altPhone: "",
+      additionalNotes: o.note ?? "—",
     },
-  ],
+  };
+}
 
-  deliveryCharge: 120,
-  specialDiscount: 0,
-  advancePayment: 0,
+type Props = { orderId: number | null };
 
-  courier: {
-    method: "Stead Fast",
-    consignmentId: "854848932",
-    trackingUrl: "http://steadfast/orders/84965445",
-    lastUpdatedAt: "2025-09-12T06:48:00.000Z",
-  },
+const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
+  const queryClient = useQueryClient();
+  const hydratedRef = useRef(false);
 
-  customerInfo: {
-    name: "Rooney Hossain",
-    phone: "01903527399",
-    email: "demo@gmail.com",
-    address: "Gazipur, Konabari, Purbapara 1349",
-  },
+  const detailQuery = useQuery({
+    queryKey: ordersKeys.detail(orderId ?? "none"),
+    queryFn: () => {
+      if (!orderId) throw new Error("orderId missing");
+      return getAdminOrderById(orderId);
+    },
+    enabled: Boolean(orderId),
+    retry: 1,
+  });
 
-  customerHistory: {
-    orderId: "#15986",
-    shipping: "Inside dhaka",
-    orderDate: "2025-12-10T11:51:00.000Z",
-    totalAmount: 107800,
-    timeAgo: "10m ago",
-    orderStatus: "processing",
-    sentBy: "manually",
-    altPhone: "0157/1455066",
-    additionalNotes:
-      "Payment to be made upon delivery. Order status changed from Pending payment to Processing.",
-  },
-});
+  const [data, setData] = useState<OrderEditorData | null>(null);
 
-const OrderEditorPage: React.FC = () => {
-  const [data, setData] = useState<OrderEditorData>(() => makeMockData());
+  const snapshotRef = useRef<{ orderStatus?: string; paymentStatus?: string }>({
+    orderStatus: undefined,
+    paymentStatus: undefined,
+  });
+
+  useEffect(() => {
+    if (!detailQuery.data?.success) return;
+    if (hydratedRef.current) return;
+
+    const mapped = mapApiOrderToEditorData(detailQuery.data.data);
+    setData(mapped);
+
+    snapshotRef.current = {
+      orderStatus: mapped.orderStatus,
+      paymentStatus: mapped.paymentStatus,
+    };
+
+    hydratedRef.current = true;
+  }, [detailQuery.data]);
 
   const totals = useMemo(() => {
+    if (!data) {
+      return { itemCount: 0, subTotal: 0, taxTotal: 0, grandTotal: 0, payable: 0 };
+    }
+
     const lineTotals = data.products.map(calcLineTotals);
     const subTotal = lineTotals.reduce((sum, t) => sum + t.base, 0);
     const taxTotal = lineTotals.reduce((sum, t) => sum + t.tax, 0);
@@ -167,59 +225,115 @@ const OrderEditorPage: React.FC = () => {
       grandTotal,
       payable: Math.max(0, payable),
     };
-  }, [
-    data.advancePayment,
-    data.deliveryCharge,
-    data.products,
-    data.specialDiscount,
-  ]);
+  }, [data]);
 
-  const handleChangeForm = <K extends keyof OrderEditorData>(
-    key: K,
-    value: OrderEditorData[K],
-  ) => {
-    setData((prev) => ({ ...prev, [key]: value }));
+  const paymentMutation = useMutation({
+    mutationFn: (payload: { orderId: number; new_payment_status: "unpaid" | "partial_paid" | "paid" }) =>
+      patchOrderPaymentStatus(payload.orderId, payload.new_payment_status),
+    onSuccess: async () => {
+      toast.success("Payment status updated");
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update payment status";
+      toast.error(msg);
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: (payload: { orderId: number; new_status: ApiOrder["order_status"] }) =>
+      patchOrderStatus(payload.orderId, payload.new_status),
+    onSuccess: async () => {
+      toast.success("Order status updated");
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update order status";
+      toast.error(msg);
+    },
+  });
+
+  const handleChangeForm = <K extends keyof OrderEditorData>(key: K, value: OrderEditorData[K]) => {
+    setData((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
-  const handleSubmitTop = () => {
-    // Hook API here
-    // eslint-disable-next-line no-console
-    console.log("Update order meta", data);
+  const handleSubmitTop = async () => {
+    if (!data || !orderId) return;
+
+    const prev = snapshotRef.current;
+    const nextStatus = data.orderStatus;
+    const nextPay = data.paymentStatus;
+
+    const jobs: Promise<any>[] = [];
+
+    if (prev.orderStatus !== nextStatus) {
+      jobs.push(statusMutation.mutateAsync({ orderId, new_status: nextStatus }));
+    }
+
+    if (prev.paymentStatus !== nextPay) {
+      jobs.push(paymentMutation.mutateAsync({ orderId, new_payment_status: nextPay }));
+    }
+
+    if (!jobs.length) {
+      toast("Nothing changed");
+      return;
+    }
+
+    await Promise.all(jobs);
+
+    snapshotRef.current = {
+      orderStatus: nextStatus,
+      paymentStatus: nextPay,
+    };
+
+    toast.success("Order updated");
   };
 
   const handleChangeLine = (id: string, patch: Partial<OrderProductLine>) => {
-    setData((prev) => ({
-      ...prev,
-      products: prev.products.map((p) =>
-        p.id === id ? { ...p, ...patch } : p,
-      ),
-    }));
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        products: prev.products.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+      };
+    });
   };
 
   const handleDeleteLine = (id: string) => {
-    setData((prev) => ({
-      ...prev,
-      products: prev.products.filter((p) => p.id !== id),
-    }));
+    setData((prev) => {
+      if (!prev) return prev;
+      return { ...prev, products: prev.products.filter((p) => p.id !== id) };
+    });
   };
 
   const handleAddLine = () => {
-    const nextIndex = data.products.length + 1;
-    const id = `line-${Date.now()}`;
-    const newLine: OrderProductLine = {
-      id,
-      sku: `#NEW${nextIndex}`,
-      serialNo: "New product serial",
-      name: "New Product",
-      imageUrl: "",
-      color: "Black",
-      size: "M",
-      discount: 0,
-      unitPrice: 0,
-      quantity: 1,
-      taxPercent: 0,
-    };
-    setData((prev) => ({ ...prev, products: [newLine, ...prev.products] }));
+    setData((prev) => {
+      if (!prev) return prev;
+      const nextIndex = prev.products.length + 1;
+      const id = `line-${Date.now()}`;
+      const newLine: OrderProductLine = {
+        id,
+        sku: `#NEW${nextIndex}`,
+        serialNo: "New product serial",
+        name: "New Product",
+        imageUrl: "",
+        color: "Black",
+        size: "M",
+        discount: 0,
+        unitPrice: 0,
+        quantity: 1,
+        taxPercent: 0,
+      };
+      return { ...prev, products: [newLine, ...prev.products] };
+    });
   };
 
   const handleChangeTotals = (patch: {
@@ -227,68 +341,65 @@ const OrderEditorPage: React.FC = () => {
     specialDiscount?: number;
     advancePayment?: number;
   }) => {
-    setData((prev) => ({
-      ...prev,
-      deliveryCharge:
-        patch.deliveryCharge !== undefined
-          ? Number(patch.deliveryCharge) || 0
-          : prev.deliveryCharge,
-      specialDiscount:
-        patch.specialDiscount !== undefined
-          ? Number(patch.specialDiscount) || 0
-          : prev.specialDiscount,
-      advancePayment:
-        patch.advancePayment !== undefined
-          ? Number(patch.advancePayment) || 0
-          : prev.advancePayment,
-    }));
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        deliveryCharge:
+          patch.deliveryCharge !== undefined ? Number(patch.deliveryCharge) || 0 : prev.deliveryCharge,
+        specialDiscount:
+          patch.specialDiscount !== undefined ? Number(patch.specialDiscount) || 0 : prev.specialDiscount,
+        advancePayment:
+          patch.advancePayment !== undefined ? Number(patch.advancePayment) || 0 : prev.advancePayment,
+      };
+    });
   };
 
   const handleSubmitProducts = () => {
-    // Hook API here
-    // eslint-disable-next-line no-console
-    console.log("Update product calculations", data.products);
+    toast("No API for products update yet");
   };
 
-  const handleCourierChange = (patch: {
-    method?: string;
-    consignmentId?: string;
-  }) => {
-    setData((prev) => ({
-      ...prev,
-      courier: { ...prev.courier, ...patch },
-    }));
+  const handleCourierChange = (patch: { method?: string; consignmentId?: string }) => {
+    setData((prev) => {
+      if (!prev) return prev;
+      return { ...prev, courier: { ...prev.courier, ...patch } };
+    });
   };
 
-  const handleCourierSend = () => {
-    // Hook API here
-    // eslint-disable-next-line no-console
-    console.log("Courier send", data.courier);
-  };
+  const handleCourierSend = () => toast("No courier API endpoint provided yet");
+  const handleCourierComplete = () => toast("No courier complete endpoint provided yet");
+  const handleCourierInvoice = () => toast("No courier invoice endpoint provided yet");
+  const handleInvoiceDownload = () => toast("No invoice endpoint provided yet");
+  const handleOpenStickerGenerator = () => toast("Sticker generator not implemented yet");
 
-  const handleCourierComplete = () => {
-    // Hook API here
-    // eslint-disable-next-line no-console
-    console.log("Courier complete");
-  };
+  if (!orderId) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
+        <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              Missing orderId in URL. Example: <span className="font-semibold">/order-editor?orderId=23</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleCourierInvoice = () => {
-    // Hook API here
-    // eslint-disable-next-line no-console
-    console.log("Download courier invoice");
-  };
+  if (detailQuery.isLoading || !data) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
+        <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm text-gray-600 dark:text-gray-300">Loading order...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleInvoiceDownload = () => {
-    // Hook API here
-    // eslint-disable-next-line no-console
-    console.log("Download invoice");
-  };
-
-  const handleOpenStickerGenerator = () => {
-    // Hook modal/page here
-    // eslint-disable-next-line no-console
-    console.log("Open sticker generator");
-  };
+  const apiOrder = detailQuery.data?.data;
+  const paymentLabel = apiOrder ? paymentLabelFromOrder(apiOrder) : "Payment";
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
@@ -298,7 +409,7 @@ const OrderEditorPage: React.FC = () => {
           orderStatus={data.orderStatus}
           paymentStatus={data.paymentStatus}
           orderDateLabel={formatDateLabel(data.orderDate)}
-          paymentLabel="Payment via Cash on delivery"
+          paymentLabel={paymentLabel}
           statusLabel={statusLabel(data.orderStatus)}
           customerIp={data.customerIp}
         />
@@ -376,9 +487,7 @@ const OrderEditorPage: React.FC = () => {
               onDownloadInvoice={handleInvoiceDownload}
             />
 
-            <SidebarShippingStickerCard
-              onOpenGenerator={handleOpenStickerGenerator}
-            />
+            <SidebarShippingStickerCard onOpenGenerator={handleOpenStickerGenerator} />
           </div>
         </div>
       </div>

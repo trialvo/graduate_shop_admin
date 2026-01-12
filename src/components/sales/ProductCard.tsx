@@ -9,13 +9,13 @@ const ProductCard = ({ product, onClick }: Props) => {
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-theme-xs transition hover:shadow-theme-md dark:border-gray-800 dark:bg-white/[0.03]"
+      className="w-full rounded-[4px] border border-gray-200 bg-white p-4 text-left shadow-theme-xs transition hover:shadow-theme-md dark:border-gray-800 dark:bg-white/[0.03]"
     >
       <div className="flex items-center justify-center">
         <img
           src={product.image}
           alt={product.title}
-          className="h-20 w-20 rounded-xl object-cover"
+          className="h-20 w-20 rounded-[4px] object-cover"
         />
       </div>
 

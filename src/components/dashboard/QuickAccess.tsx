@@ -19,7 +19,7 @@ const QuickAccess = () => {
   };
 
   return (
-    <section className="mb-6">
+    <section className="mb-4">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-gray-800 dark:text-white">

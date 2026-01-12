@@ -1,7 +1,3 @@
-export type OrderPaymentStatus = "paid" | "unpaid";
-
-export type OrderPaymentMethod = "COD" | "BKASH" | "NAGAD" | "CARD";
-
 export type OrderStatus =
   | "all"
   | "new"
@@ -9,88 +5,65 @@ export type OrderStatus =
   | "processing"
   | "packaging"
   | "shipped"
-  | "out_of_delivery"
+  | "out_for_delivery"
   | "delivered"
   | "returned"
   | "cancelled"
   | "on_hold"
   | "trash";
 
-export type FraudLevel = "safe" | "medium" | "high";
-
 export type CourierProviderId =
   | "select"
-  | "sa_paribahan"
-  | "pathao"
+  | "manual"
+  | "steadfast"
   | "redx"
+  | "pathao"
+  | "paperfly"
+  | "sa_paribahan"
   | "delivery_tiger"
-  | "sundarban"
-  | "steadfast";
-
-export type CourierPreview = {
-  receiverName?: string;
-  receiverPhone?: string;
-  address?: string;
-  area?: string;
-  codAmount?: number;
-  weightKg?: number;
-};
-
-export type AutoCourierItem = {
-  providerId: Exclude<CourierProviderId, "select">;
-  providerName: string;
-  connected: boolean;
-  // optional: set as "default"
-  isDefault?: boolean;
-};
-
-export type CourierInfo = {
-  providerId?: CourierProviderId;
-  providerName?: string;
-
-  memoNo?: string;
-  trackingNo?: string;
-  requestedAt?: string;
-
-  apiConfigured?: boolean;
-  apiConnected?: boolean;
-
-  // API connected courier list (for Auto tab)
-  availableAutoCouriers?: AutoCourierItem[];
-
-  autoDetected?: boolean;
-  lastMessage?: string;
-
-  preview?: CourierPreview;
-};
+  | "sundarban";
 
 export type OrderItemRow = {
   id: string;
+
+  productId?: number;
+  skuId?: number;
+
   name: string;
-  image?: string;
-  size?: string;
-  code?: string;
+  image?: string | null;
+
+  brandName?: string | null;
+
+  colorName?: string | null;
+  colorHex?: string | null;
+
+  size?: string | null; // variant_name
+  code?: string | null; // sku
+
   qty: number;
-  price: number;
-  total: number;
+
+  price: number; // final_unit_price
+  total: number; // line_total
 };
 
 export type OrderRow = {
   id: string;
+
   customerName: string;
   customerPhone: string;
   customerImage?: string;
 
-  fraudLevel: FraudLevel;
+  fraudLevel: "safe" | "medium" | "high";
 
-  paymentMethod: OrderPaymentMethod;
-  paymentStatus: OrderPaymentStatus;
+  paymentMethod: "COD" | "BKASH" | "NAGAD" | "ROCKET" | "CARD";
+  paymentStatus: "unpaid" | "partial_paid" | "paid";
 
   status: Exclude<OrderStatus, "all">;
 
-  itemsAmount: number;
-  totalItems: number;
+  itemsAmount: number; // number of line items
+  totalItems: number; // total qty across items
   total: number;
+
   currencySymbol: string;
 
   orderDateLabel: string;
@@ -101,18 +74,47 @@ export type OrderRow = {
   shippingLocation: string;
 
   email?: string;
-  billingName?: string;
-  billingPhone?: string;
 
+  paidAmount: number;
+  shippingCost: number;
+  discount: number;
+
+  paymentType: "gateway" | "cod" | "mixed";
+  paymentProvider?: string;
+
+  // ✅ IMPORTANT: items used by modal
+  items: OrderItemRow[];
+
+  // optional extra modal fields
   shippingAddress?: string;
   shippingArea?: string;
-
   qrValue?: string;
-  products?: OrderItemRow[];
 
-  discount?: number;
-  paidAmount?: number;
-  shippingCost?: number;
+  courier: {
+    providerId: CourierProviderId;
+    providerName?: string;
+    memoNo?: string;
+    trackingNo?: string;
 
-  courier?: CourierInfo;
+    apiConfigured: boolean;
+    apiConnected: boolean;
+
+    preview?: {
+      receiverName?: string;
+      receiverPhone?: string;
+      address?: string;
+      area?: string;
+      codAmount?: number;
+      weightKg?: number;
+    };
+    autoDetected?: boolean;
+    lastMessage?: string;
+
+    availableAutoCouriers: {
+      providerId: Exclude<CourierProviderId, "select" | "manual">;
+      providerName: string;
+      connected: boolean;
+      isDefault?: boolean;
+    }[];
+  };
 };

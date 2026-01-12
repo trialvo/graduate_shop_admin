@@ -1,6 +1,7 @@
+// src/components/orders/order-editor/OrderEditorHeader.tsx
+
 import type React from "react";
 import Badge from "@/components/ui/badge/Badge";
-
 import type { OrderStatus, PaymentStatus } from "./types";
 
 interface OrderEditorHeaderProps {
@@ -14,7 +15,7 @@ interface OrderEditorHeaderProps {
 }
 
 const statusToBadgeColor = (
-  status: OrderStatus,
+  status: OrderStatus
 ): "primary" | "success" | "error" | "warning" | "info" => {
   switch (status) {
     case "delivered":
@@ -31,12 +32,12 @@ const statusToBadgeColor = (
 };
 
 const paymentToBadgeColor = (
-  status: PaymentStatus,
+  status: PaymentStatus
 ): "success" | "error" | "warning" => {
   switch (status) {
     case "paid":
       return "success";
-    case "partial":
+    case "partial_paid":
       return "warning";
     default:
       return "error";
@@ -53,7 +54,7 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
   customerIp,
 }) => {
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="flex flex-col gap-4 rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
@@ -90,26 +91,18 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
             </span>
           </div>
 
-          <Badge
-            variant="light"
-            size="md"
-            color={paymentToBadgeColor(paymentStatus)}
-          >
+          <Badge variant="light" size="md" color={paymentToBadgeColor(paymentStatus)}>
             {paymentStatus.toUpperCase()}
           </Badge>
 
-          <Badge
-            variant="light"
-            size="md"
-            color={statusToBadgeColor(orderStatus)}
-          >
+          <Badge variant="light" size="md" color={statusToBadgeColor(orderStatus)}>
             {statusLabel}
           </Badge>
         </div>
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="w-full max-w-[260px] rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+        <div className="w-full max-w-[260px] rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
           <div className="h-12 w-full rounded-lg bg-gray-900/5 dark:bg-white/5">
             <div className="flex h-full w-full items-center justify-center gap-1">
               {Array.from({ length: 44 }).map((_, i) => (

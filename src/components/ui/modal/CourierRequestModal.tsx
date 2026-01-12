@@ -132,7 +132,7 @@ export default function CourierRequestModal({
         <div className="grid grid-cols-12 gap-4 px-6 py-6">
           {/* Preview */}
           <div className="col-span-12 md:col-span-6">
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Preview Details
               </h4>
@@ -181,7 +181,7 @@ export default function CourierRequestModal({
                   </span>
                 </div>
 
-                <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
+                <div className="mt-3 rounded-[4px] border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
                   <span className="font-semibold text-brand-500">Note: </span>
                   {order.orderNote?.trim() ? order.orderNote : "—"}
                 </div>
@@ -191,7 +191,7 @@ export default function CourierRequestModal({
 
           {/* Settings */}
           <div className="col-span-12 md:col-span-6">
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+            <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                 {tab === "auto" ? "Auto (API) Couriers" : "Manual Input"}
               </h4>
@@ -230,7 +230,7 @@ export default function CourierRequestModal({
                   </div>
 
                   {/* show existing tracking/memo if any */}
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         Tracking

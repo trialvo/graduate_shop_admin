@@ -18,6 +18,7 @@ import {
 
 import { useSidebar } from "../context/SidebarContext";
 import { HorizontaLDots } from "../icons";
+import BrandLogo from "../components/common/BrandLogo";
 
 type NavItem = {
   name: string;
@@ -61,8 +62,8 @@ const navItems: NavItem[] = [
     icon: <BarChart3 />,
     subItems: [
       { name: "Product Reports", path: "/product-reports", pro: false },
-      { name: "Order Report", path: "/order-report", pro: false },
-      { name: "Transaction Report", path: "/transaction-report", pro: false },
+      { name: "Order Report", path: "/order-reports", pro: false },
+      { name: "Stock Reports", path: "/stock-reports", pro: false },
       { name: "Visitor Report", path: "/visitor-report", pro: false },
     ],
   },
@@ -72,14 +73,14 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "List of customers", path: "/customers-list", pro: false },
       { name: "Create Customer", path: "/create-customer", pro: false },
-      { name: "Blocked Customer", path: "/blocked-customer", pro: false },
+      // { name: "Blocked Customer", path: "/blocked-customer", pro: false },
     ],
   },
-  {
-    icon: <Star />,
-    name: "Customer review",
-    path: "/customer-review",
-  },
+  // {
+  //   icon: <Star />,
+  //   name: "Customer review",
+  //   path: "/customer-review",
+  // },
 ];
 
 const othersItems: NavItem[] = [
@@ -106,13 +107,13 @@ const othersItems: NavItem[] = [
     name: "Website Settings",
     subItems: [
       { name: "Banners", path: "/banners-settings", pro: false },
-      {
-        name: "Header category",
-        path: "/header-category-settings",
-        pro: false,
-      },
-      { name: "Footer", path: "/footer-settings", pro: false },
-      { name: "Contact Page", path: "/contact-page", pro: false },
+      // {
+      //   name: "Header category",
+      //   path: "/header-category-settings",
+      //   pro: false,
+      // },
+      // { name: "Footer", path: "/footer-settings", pro: false },
+      // { name: "Contact Page", path: "/contact-page", pro: false },
     ],
   },
   {
@@ -330,33 +331,18 @@ const AppSidebar: React.FC = () => {
     >
       <div
         className={`py-8 flex ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-center"
         }`}
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <img
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
+            <BrandLogo width={150} height={40} className="h-10 w-auto" />
           ) : (
-            <img
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
+            <BrandLogo
+              variant="icon"
               width={32}
               height={32}
+              className="h-8 w-8"
             />
           )}
         </Link>

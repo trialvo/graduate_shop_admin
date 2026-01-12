@@ -1,61 +1,18 @@
-import { useMemo, useState } from "react";
+// src/components/products/product-attributes/ProductAttributesPage.tsx
+"use client";
+
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 import BrandTab from "./tabs/BrandTab";
 import ColorTab from "./tabs/ColorTab";
 import AttributeTab from "./tabs/AttributeTab";
-import VariantTab from "./tabs/VariantTab";
 
-import type {
-  AttributeDefinition,
-  BrandRow,
-  ColorRow,
-  ProductAttributeSelection,
-  ProductLite,
-  VariantRow,
-} from "./types";
-
-import {
-  INITIAL_ATTRIBUTES,
-  INITIAL_BRANDS,
-  INITIAL_COLORS,
-  INITIAL_PRODUCTS,
-  INITIAL_VARIANTS,
-} from "./mockData";
-
-const TABS = ["brand", "color", "attribute", "variant"] as const;
+const TABS = ["brand", "color", "attribute"] as const;
 type TabType = (typeof TABS)[number];
 
 export default function ProductAttributesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("brand");
-
-  const [brands, setBrands] = useState<BrandRow[]>(INITIAL_BRANDS);
-  const [colors, setColors] = useState<ColorRow[]>(INITIAL_COLORS);
-  const [attributes, setAttributes] =
-    useState<AttributeDefinition[]>(INITIAL_ATTRIBUTES);
-
-  const [products] = useState<ProductLite[]>(INITIAL_PRODUCTS);
-
-  // productId -> { attributeId -> selected values[] }
-  const [productAttributeMap, setProductAttributeMap] = useState<
-    Record<number, ProductAttributeSelection>
-  >({});
-
-  // productId -> brandId
-  const [productBrandMap, setProductBrandMap] = useState<Record<number, number>>(
-    {}
-  );
-
-  // productId -> colorIds[]
-  const [productColorMap, setProductColorMap] = useState<
-    Record<number, number[]>
-  >({});
-
-  const [variants, setVariants] = useState<VariantRow[]>(INITIAL_VARIANTS);
-
-  const activeAttributes = useMemo(
-    () => attributes.filter((a) => a.status),
-    [attributes]
-  );
 
   return (
     <div className="space-y-6">
@@ -70,16 +27,14 @@ export default function ProductAttributesPage() {
       </div>
 
       {/* Tabs */}
-      <div className="inline-flex w-full max-w-4xl overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="inline-flex w-full max-w-4xl rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {TABS.map((tab) => {
           const label =
             tab === "brand"
               ? "Product Brand"
               : tab === "color"
               ? "Product Color"
-              : tab === "attribute"
-              ? "Attribute / Size"
-              : "Variant";
+              : "Attribute / Variant";
 
           const active = activeTab === tab;
 
@@ -87,12 +42,12 @@ export default function ProductAttributesPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={[
+              className={cn(
                 "flex-1 px-4 py-3 text-sm font-semibold transition",
                 active
                   ? "bg-brand-500 text-white"
-                  : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]",
-              ].join(" ")}
+                  : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+              )}
             >
               {label}
             </button>
@@ -101,34 +56,9 @@ export default function ProductAttributesPage() {
       </div>
 
       {/* Content */}
-      {activeTab === "brand" && (
-        <BrandTab brands={brands} onChange={setBrands} />
-      )}
-
-      {activeTab === "color" && (
-        <ColorTab colors={colors} onChange={setColors} />
-      )}
-
-      {activeTab === "attribute" && (
-        <AttributeTab attributes={attributes} onChange={setAttributes} />
-      )}
-
-      {activeTab === "variant" && (
-        <VariantTab
-          products={products}
-          brands={brands}
-          colors={colors}
-          attributeDefs={activeAttributes}
-          productAttributeMap={productAttributeMap}
-          onChangeProductAttributeMap={setProductAttributeMap}
-          productBrandMap={productBrandMap}
-          onChangeProductBrandMap={setProductBrandMap}
-          productColorMap={productColorMap}
-          onChangeProductColorMap={setProductColorMap}
-          variants={variants}
-          onChangeVariants={setVariants}
-        />
-      )}
+      {activeTab === "brand" ? <BrandTab /> : null}
+      {activeTab === "color" ? <ColorTab /> : null}
+      {activeTab === "attribute" ? <AttributeTab /> : null}
     </div>
   );
 }

@@ -1,14 +1,11 @@
+// src/components/orders/order-editor/OrderFormCard.tsx
+
 import type React from "react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 
-import type {
-  DeliveryType,
-  OrderStatus,
-  PaymentMethod,
-  PaymentStatus,
-} from "./types";
+import type { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from "./types";
 
 interface OrderFormValues {
   billingName: string;
@@ -27,20 +24,13 @@ interface OrderFormValues {
 
 interface OrderFormCardProps {
   values: OrderFormValues;
-  onChange: <K extends keyof OrderFormValues>(
-    key: K,
-    value: OrderFormValues[K],
-  ) => void;
+  onChange: <K extends keyof OrderFormValues>(key: K, value: OrderFormValues[K]) => void;
   onSubmit: () => void;
 }
 
-const OrderFormCard: React.FC<OrderFormCardProps> = ({
-  values,
-  onChange,
-  onSubmit,
-}) => {
+const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmit }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           <div>
@@ -66,7 +56,7 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({
                 { value: "processing", label: "Processing" },
                 { value: "packaging", label: "Packaging" },
                 { value: "shipped", label: "Shipped" },
-                { value: "out_of_delivery", label: "Out of delivery" },
+                { value: "out_for_delivery", label: "Out for delivery" },
                 { value: "delivered", label: "Delivered" },
                 { value: "returned", label: "Returned" },
                 { value: "cancelled", label: "Cancelled" },
@@ -87,7 +77,7 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({
               <Select
                 options={[
                   { value: "paid", label: "Paid" },
-                  { value: "partial", label: "Partial" },
+                  { value: "partial_paid", label: "Partial paid" },
                   { value: "unpaid", label: "Unpaid" },
                 ]}
                 defaultValue={values.paymentStatus}
@@ -191,14 +181,13 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Payment method
+                Payment Type
               </div>
               <Select
                 options={[
+                  { value: "gateway", label: "Gateway" },
                   { value: "cod", label: "COD" },
-                  { value: "bkash", label: "bKash" },
-                  { value: "nagad", label: "Nagad" },
-                  { value: "card", label: "Card" },
+                  { value: "mixed", label: "Mixed" },
                 ]}
                 defaultValue={values.paymentMethod}
                 onChange={(v) => onChange("paymentMethod", v as PaymentMethod)}

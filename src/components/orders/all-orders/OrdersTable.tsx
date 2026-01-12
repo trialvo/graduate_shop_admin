@@ -1,3 +1,5 @@
+// src/components/orders/all-orders/OrdersTable.tsx
+
 import { useMemo, useState } from "react";
 import {
   CheckCircle2,
@@ -8,10 +10,16 @@ import {
   Printer,
   MoreVertical,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
 import type { CourierProviderId, OrderRow } from "./types";
 import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
+
+import { ordersKeys, patchOrderPaymentStatus, patchOrderStatus } from "@/api/orders.api";
 
 type Props = { rows: OrderRow[] };
 
@@ -25,6 +33,7 @@ function fraudIcon(level: OrderRow["fraudLevel"]) {
 
 const PAYMENT_OPTIONS = [
   { id: "paid", label: "paid" },
+  { id: "partial_paid", label: "partial_paid" },
   { id: "unpaid", label: "unpaid" },
 ] as const;
 
@@ -34,17 +43,20 @@ const STATUS_OPTIONS = [
   { id: "processing", label: "processing" },
   { id: "packaging", label: "packaging" },
   { id: "shipped", label: "shipped" },
-  { id: "out_of_delivery", label: "out of delivery" },
+  { id: "out_for_delivery", label: "out_for_delivery" },
   { id: "delivered", label: "delivered" },
   { id: "returned", label: "returned" },
   { id: "cancelled", label: "cancelled" },
-  { id: "on_hold", label: "on hold" },
+  { id: "on_hold", label: "on_hold" },
   { id: "trash", label: "trash" },
 ] as const;
 
 export default function OrdersTable({ rows }: Props) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [paymentOverride, setPaymentOverride] = useState<
-    Record<string, "paid" | "unpaid">
+    Record<string, OrderRow["paymentStatus"]>
   >({});
   const [statusOverride, setStatusOverride] = useState<
     Record<string, OrderRow["status"]>
@@ -70,7 +82,11 @@ export default function OrdersTable({ rows }: Props) {
     setViewOpen(true);
   };
 
-  const updateCourier = (orderId: string, providerId: CourierProviderId, memoNo: string) => {
+  const updateCourier = (
+    orderId: string,
+    providerId: CourierProviderId,
+    memoNo: string
+  ) => {
     setCourierOverride((prev) => ({
       ...prev,
       [orderId]: { providerId, memoNo },
@@ -81,22 +97,61 @@ export default function OrdersTable({ rows }: Props) {
     orderId: string,
     providerId: Exclude<CourierProviderId, "select">
   ) => {
-    // TODO: Replace with real API call
+    // TODO: no endpoint provided yet
     // eslint-disable-next-line no-console
     console.log("Request courier for:", orderId, "provider:", providerId);
-
-    // After success you can update state from API response (tracking no etc.)
   };
+
+  const paymentMutation = useMutation({
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: "unpaid" | "partial_paid" | "paid";
+    }) => patchOrderPaymentStatus(payload.orderId, payload.newStatus),
+    onSuccess: async () => {
+      toast.success("Payment status updated");
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update payment status";
+      toast.error(msg);
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: OrderRow["status"];
+    }) => patchOrderStatus(payload.orderId, payload.newStatus),
+    onSuccess: async () => {
+      toast.success("Order status updated");
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update order status";
+      toast.error(msg);
+    },
+  });
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-[1200px] w-full border-collapse">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   Customer
@@ -138,7 +193,10 @@ export default function OrdersTable({ rows }: Props) {
                   className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
                 >
                   <td className="px-4 py-4">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
                   </td>
 
                   {/* Customer */}
@@ -203,6 +261,9 @@ export default function OrdersTable({ rows }: Props) {
                           type="button"
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
                           aria-label="Edit"
+                          onClick={() =>
+                            navigate(`/order-editor?orderId=${encodeURIComponent(r.id)}`)
+                          }
                         >
                           <Pencil size={16} />
                         </button>
@@ -230,12 +291,14 @@ export default function OrdersTable({ rows }: Props) {
                   <td className="px-4 py-4">
                     <OrderSelectDropdown
                       value={r.paymentStatus}
-                      onChange={(v) =>
-                        setPaymentOverride((prev) => ({
-                          ...prev,
-                          [r.id]: v as "paid" | "unpaid",
-                        }))
-                      }
+                      onChange={(v) => {
+                        const next = v as OrderRow["paymentStatus"];
+                        setPaymentOverride((prev) => ({ ...prev, [r.id]: next }));
+                        paymentMutation.mutate({
+                          orderId: Number(r.id),
+                          newStatus: next,
+                        });
+                      }}
                       options={PAYMENT_OPTIONS as any}
                       variant="pill"
                     />
@@ -245,12 +308,14 @@ export default function OrdersTable({ rows }: Props) {
                   <td className="px-4 py-4">
                     <OrderSelectDropdown
                       value={r.status}
-                      onChange={(v) =>
-                        setStatusOverride((prev) => ({
-                          ...prev,
-                          [r.id]: v as OrderRow["status"],
-                        }))
-                      }
+                      onChange={(v) => {
+                        const next = v as OrderRow["status"];
+                        setStatusOverride((prev) => ({ ...prev, [r.id]: next }));
+                        statusMutation.mutate({
+                          orderId: Number(r.id),
+                          newStatus: next,
+                        });
+                      }}
                       options={STATUS_OPTIONS as any}
                       variant="pill"
                     />
