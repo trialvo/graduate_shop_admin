@@ -163,7 +163,6 @@ export default function CreateProductPage() {
   // -------------------- Form State --------------------
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
-  const [slugLocked, setSlugLocked] = useState(false);
 
   const [mainCategoryId, setMainCategoryId] = useState<number>(0);
   const [subCategoryId, setSubCategoryId] = useState<number>(0);
@@ -318,9 +317,8 @@ export default function CreateProductPage() {
 
   // -------------------- Auto slug --------------------
   useEffect(() => {
-    if (slugLocked) return;
     setProductSlug(slugify(productName));
-  }, [productName, slugLocked]);
+  }, [productName]);
 
   // -------------------- Variants from selected attribute --------------------
   const selectedAttribute = useMemo(
@@ -598,24 +596,17 @@ export default function CreateProductPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Slug *</p>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Auto</span>
-                <Switch key={`slug-${slugLocked}`} label="" defaultChecked={!slugLocked} onChange={(checked) => setSlugLocked(!checked)} />
-              </div>
             </div>
             <Input
               value={productSlug}
-              onChange={(e) => {
-                setProductSlug(String(e.target.value));
-                setSlugLocked(true);
-              }}
+              disabled
               placeholder="product-slug"
             />
           </div>
 
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Category *</p>
-            <Select options={mainOptions} placeholder="Select category" defaultValue={String(mainCategoryId)} onChange={(v) => setMainCategoryId(Number(v))} />
+            <Select options={mainOptions} placeholder="Select category" value={String(mainCategoryId)} onChange={(v) => setMainCategoryId(Number(v))} />
           </div>
 
           <div className="space-y-2">
@@ -624,7 +615,7 @@ export default function CreateProductPage() {
               key={`sub-${mainCategoryId}-${subCategoryId}`}
               options={subOptions}
               placeholder={subLoading ? "Loading sub categories..." : "Select sub category"}
-              defaultValue={String(subCategoryId)}
+              value={String(subCategoryId)}
               onChange={(v) => setSubCategoryId(Number(v))}
             />
           </div>
@@ -635,14 +626,14 @@ export default function CreateProductPage() {
               key={`child-${subCategoryId}-${childCategoryId}`}
               options={childOptions}
               placeholder={!subCategoryId ? "Select sub category first" : childLoading ? "Loading child categories..." : "Select child category"}
-              defaultValue={String(childCategoryId)}
+              value={String(childCategoryId)}
               onChange={(v) => setChildCategoryId(Number(v))}
             />
           </div>
 
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Brand *</p>
-            <Select options={brandOptions} placeholder="Select brand" defaultValue={String(brandId)} onChange={(v) => setBrandId(Number(v))} />
+            <Select options={brandOptions} placeholder="Select brand" value={String(brandId)} onChange={(v) => setBrandId(Number(v))} />
           </div>
         </div>
       </Section>
@@ -702,7 +693,7 @@ export default function CreateProductPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Attribute *</p>
-              <Select options={attributeOptions} placeholder="Select attribute" defaultValue={String(attributeId)} onChange={(v) => setAttributeId(Number(v))} />
+              <Select options={attributeOptions} placeholder="Select attribute" value={String(attributeId)} onChange={(v) => setAttributeId(Number(v))} />
               <p className="text-xs text-gray-500 dark:text-gray-400">Variants come from selected attribute.</p>
             </div>
 
