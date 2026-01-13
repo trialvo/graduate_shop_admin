@@ -5,11 +5,11 @@ import toast from "react-hot-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
-
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
+import RichTextEditor from "@/components/ui/editor/RichTextEditor";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 
 import { cn } from "@/lib/utils";
@@ -72,7 +72,7 @@ function unwrapList<T>(payload: any): T[] {
 }
 
 function normalizeRobots(v: string) {
-  return v.replace(/\s+/g, " ").trim(); // "index, follow" => "index, follow"
+  return v.replace(/\s+/g, " ").trim();
 }
 
 function normalizeId(value: number) {
@@ -133,11 +133,9 @@ function buildVariantOptionsForAttribute(attributeId: number, attributesRaw: any
 
   const values = Array.isArray(attr?.values) ? attr.values : null;
   if (values?.length) {
-    // if objects with id
     if (typeof values[0] === "object" && values[0] !== null && "id" in values[0]) {
       return values.map((x: any) => ({ value: String(x.id), label: String(x.name ?? x.title ?? x.value ?? x.id) }));
     }
-    // if strings only => no numeric IDs (API requires numeric) => can't map safely
     return [];
   }
 
@@ -148,31 +146,31 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   const enabled = open && !!productId;
 
   // lookups (load all, no params)
-  const { data: mainRes } = useQuery({
+  const { data: mainRes, isFetching: mainFetching } = useQuery({
     queryKey: ["mainCategories-all"],
     queryFn: () => getMainCategories(),
     staleTime: 60_000,
   });
 
-  const { data: subRes } = useQuery({
+  const { data: subRes, isFetching: subFetching } = useQuery({
     queryKey: ["subCategories-all"],
     queryFn: () => getSubCategories(),
     staleTime: 60_000,
   });
 
-  const { data: childRes } = useQuery({
+  const { data: childRes, isFetching: childFetching } = useQuery({
     queryKey: ["childCategories-all"],
     queryFn: () => getChildCategories(),
     staleTime: 60_000,
   });
 
-  const { data: colorsRes } = useQuery({
+  const { data: colorsRes, isFetching: colorsFetching } = useQuery({
     queryKey: ["colors-all"],
     queryFn: () => getColors({} as any),
     staleTime: 60_000,
   });
 
-  const { data: attrsRes } = useQuery({
+  const { data: attrsRes, isFetching: attrsFetching } = useQuery({
     queryKey: ["attributes-all"],
     queryFn: () => getAttributes({} as any),
     staleTime: 60_000,
@@ -188,6 +186,11 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   const colorNameById = React.useMemo(
     () => new Map(colorsRaw.map((c: any) => [Number(c.id), String(c.name ?? c.title ?? `#${c.id}`)])),
     [colorsRaw],
+  );
+
+  const getColorLabel = React.useCallback(
+    (colorId: number) => colorNameById.get(Number(colorId)) ?? `Color #${colorId}`,
+    [colorNameById],
   );
 
   // product query
@@ -208,10 +211,11 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   const [subCategoryId, setSubCategoryId] = React.useState<number>(0);
   const [childCategoryId, setChildCategoryId] = React.useState<number>(0);
 
-  const [brandId, setBrandId] = React.useState<number>(0); // if you want brand dropdown later
+  const [brandId, setBrandId] = React.useState<number>(0); // keep for API compatibility
   const [attributeId, setAttributeId] = React.useState<number>(0);
 
-  const [videoPath, setVideoPath] = React.useState<string>("");
+  // ✅ consistent naming: videoUrl
+  const [videoUrl, setVideoUrl] = React.useState<string>("");
   const [shortDescription, setShortDescription] = React.useState<string>("");
   const [longDescription, setLongDescription] = React.useState<string>("");
 
@@ -252,6 +256,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
 
   // hydrate form when product changes
   React.useEffect(() => {
+    if (!enabled) return;
+
     const p = productQuery.data?.product;
     if (!p) return;
 
@@ -265,7 +271,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     setBrandId(pickNestedId(p, "brand_id", "brand"));
     setAttributeId(pickNestedId(p, "attribute_id", "attribute"));
 
-    setVideoPath(String((p as any).video_path ?? ""));
+    // ✅ initial value fix
+    setVideoUrl(String((p as any).video_path ?? ""));
     setShortDescription(String((p as any).short_description ?? ""));
     setLongDescription(String((p as any).long_description ?? ""));
 
@@ -290,9 +297,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     setVariations(vars);
     setVarEdit({});
 
-    // sensible defaults for add form
-    setAddDraft((prev) => ({
-      ...prev,
+    setAddDraft({
       color_id: vars[0]?.color_id ?? 0,
       variant_id: vars[0]?.variant_id ?? 0,
       buying_price: vars[0]?.buying_price ?? 0,
@@ -300,8 +305,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       discount: vars[0]?.discount ?? 0,
       stock: 0,
       sku: "",
-    }));
-  }, [productQuery.data]);
+    });
+  }, [enabled, productQuery.data]);
 
   React.useEffect(() => {
     const items = newFiles.map((file) => ({
@@ -358,6 +363,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
 
   // keep sub/child valid
   React.useEffect(() => {
+    if (!enabled) return;
+
     if (!availableSubs.length) {
       setSubCategoryId(0);
       return;
@@ -365,9 +372,11 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     if (!availableSubs.some((s: any) => Number(s.id) === Number(subCategoryId))) {
       setSubCategoryId(Number(availableSubs[0].id));
     }
-  }, [availableSubs, subCategoryId]);
+  }, [enabled, availableSubs, subCategoryId]);
 
   React.useEffect(() => {
+    if (!enabled) return;
+
     if (!availableChild.length) {
       setChildCategoryId(0);
       return;
@@ -375,7 +384,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     if (!availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))) {
       setChildCategoryId(Number(availableChild[0].id));
     }
-  }, [availableChild, childCategoryId]);
+  }, [enabled, availableChild, childCategoryId]);
 
   // ----------------------------
   // Product update mutation
@@ -396,7 +405,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
         brand_id: normalizeId(brandId),
         attribute_id: normalizeId(attributeId),
 
-        video_path: videoPath,
+        // ✅ send as video_path like create
+        video_path: videoUrl,
         short_description: shortDescription,
         long_description: longDescription,
 
@@ -597,6 +607,11 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     </div>
   );
 
+  // initial loading for lookups + product
+  const initialLoading =
+    productQuery.isLoading ||
+    (!productQuery.data && (mainFetching || subFetching || childFetching || colorsFetching || attrsFetching));
+
   return (
     <>
       <BaseModal
@@ -610,8 +625,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
         widthClassName="w-[1100px]"
         footer={footer}
       >
-        {productQuery.isLoading ? (
-          <div className="py-14 text-center text-sm text-gray-500 dark:text-gray-400">Loading product...</div>
+        {initialLoading ? (
+          <div className="space-y-3">
+            <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+            <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+            <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+          </div>
         ) : productQuery.isError ? (
           <div className="py-14 text-center text-sm text-error-600">Failed to load product.</div>
         ) : (
@@ -689,10 +708,125 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                     onChange={(v) => setAttributeId(Number(v))}
                   />
                 </div>
+              </div>
+            </div>
 
-                <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Video URL</p>
-                  <Input value={videoPath} onChange={(e) => setVideoPath(e.target.value)} placeholder="https://..." />
+            {/* Media */}
+            <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Media</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Product images and product video URL.
+              </p>
+
+              <div className="mt-4 space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Product Video URL</p>
+                  <Input
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    placeholder="https://youtube.com/... or direct video link"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Images</p>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Existing: {existingImages.length} | Marked delete: {deleteImageIds.length} | New: {newFiles.length}
+                    </span>
+                  </div>
+
+                  {existingImages.length ? (
+                    <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                      {existingImages.map((img) => {
+                        const marked = deleteImageIds.includes(img.id);
+                        return (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={() => toggleDeleteImage(img.id)}
+                            className={cn(
+                              "relative overflow-hidden rounded-[6px] border bg-gray-50 dark:bg-gray-950",
+                              marked ? "border-error-400" : "border-gray-200 dark:border-gray-800",
+                            )}
+                            title={marked ? "Will be deleted" : "Click to mark for delete"}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={toPublicUrl(img.path)}
+                              alt={`img-${img.id}`}
+                              className={cn("h-20 w-full object-cover", marked && "opacity-40")}
+                            />
+                            <div
+                              className={cn(
+                                "absolute right-2 top-2 rounded-full px-2 py-1 text-[11px] font-semibold",
+                                marked ? "bg-error-600 text-white" : "bg-black/50 text-white",
+                              )}
+                            >
+                              {marked ? "Delete" : `#${img.id}`}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">No existing images.</div>
+                  )}
+
+                  <div className="mt-4 rounded-[6px] border border-dashed border-gray-300 p-4 dark:border-gray-800">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Upload new images</p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          These will be sent as <code className="font-mono">product_images</code> (multi-file).
+                        </p>
+                      </div>
+
+                      {newFiles.length ? (
+                        <Button variant="outline" className="h-10" onClick={() => setNewFiles([])}>
+                          Clear all
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="mt-3 block w-full text-sm text-gray-700 dark:text-gray-300"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        addNewFiles(files);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+
+                    {newPreviews.length ? (
+                      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                        {newPreviews.map((item, index) => (
+                          <div
+                            key={item.id}
+                            className="group relative overflow-hidden rounded-[6px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={item.url} alt={item.file.name} className="h-20 w-full object-cover" />
+                            <button
+                              type="button"
+                              className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                              onClick={() => setNewFiles((prev) => prev.filter((_, i) => i !== index))}
+                            >
+                              Remove
+                            </button>
+                            <div className="absolute inset-x-2 bottom-1 truncate text-[11px] text-white drop-shadow-sm">
+                              {item.file.name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">No new images selected yet.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -711,145 +845,38 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{x.label}</p>
-                    <Switch
-                      key={`${x.label}-${x.value}`}
-                      label=""
-                      defaultChecked={x.value}
-                      onChange={(checked) => x.onChange(checked)}
-                    />
+                    <Switch key={`${x.label}-${x.value}`} label="" defaultChecked={x.value} onChange={(checked) => x.onChange(checked)} />
                   </div>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Toggle for listing & promotions.</p>
                 </div>
               ))}
             </div>
 
-            {/* Descriptions */}
+            {/* Descriptions (✅ RichTextEditor) */}
             <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Descriptions</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Use rich text editor for short and long descriptions.
+              </p>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Short Description</p>
-                  <textarea
-                    className="min-h-[120px] w-full rounded-[6px] border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                    value={shortDescription}
-                    onChange={(e) => setShortDescription(e.target.value)}
-                    placeholder="Short description..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Long Description</p>
-                  <textarea
-                    className="min-h-[120px] w-full rounded-[6px] border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                    value={longDescription}
-                    onChange={(e) => setLongDescription(e.target.value)}
-                    placeholder="Long description..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Images */}
-            <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Images</h3>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Existing: {existingImages.length} | Marked delete: {deleteImageIds.length} | New: {newFiles.length}
-                </span>
-              </div>
-
-              {existingImages.length ? (
-                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-                  {existingImages.map((img) => {
-                    const marked = deleteImageIds.includes(img.id);
-                    return (
-                      <button
-                        key={img.id}
-                        type="button"
-                        onClick={() => toggleDeleteImage(img.id)}
-                        className={cn(
-                          "relative overflow-hidden rounded-[6px] border bg-gray-50 dark:bg-gray-950",
-                          marked ? "border-error-400" : "border-gray-200 dark:border-gray-800",
-                        )}
-                        title={marked ? "Will be deleted" : "Click to mark for delete"}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={toPublicUrl(img.path)} alt={`img-${img.id}`} className={cn("h-20 w-full object-cover", marked && "opacity-40")} />
-                        <div
-                          className={cn(
-                            "absolute right-2 top-2 rounded-full px-2 py-1 text-[11px] font-semibold",
-                            marked ? "bg-error-600 text-white" : "bg-black/50 text-white",
-                          )}
-                        >
-                          {marked ? "Delete" : `#${img.id}`}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">No existing images.</div>
-              )}
-
-              <div className="mt-4 rounded-[6px] border border-dashed border-gray-300 p-4 dark:border-gray-800">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Upload new images</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      These will be sent as <code className="font-mono">product_images</code> (multi-file).
-                    </p>
-                  </div>
-
-                  {newFiles.length ? (
-                    <Button variant="outline" className="h-10" onClick={() => setNewFiles([])}>
-                      Clear all
-                    </Button>
-                  ) : null}
-                </div>
-
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="mt-3 block w-full text-sm text-gray-700 dark:text-gray-300"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files ?? []);
-                    addNewFiles(files);
-                    e.currentTarget.value = "";
-                  }}
+              <div className="mt-4 space-y-6">
+                <RichTextEditor
+                  label="Short Description"
+                  value={shortDescription}
+                  onChange={setShortDescription}
+                  heightClassName="min-h-[160px]"
                 />
-
-                {newPreviews.length ? (
-                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-                    {newPreviews.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="group relative overflow-hidden rounded-[6px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt={item.file.name} className="h-20 w-full object-cover" />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
-                          onClick={() => setNewFiles((prev) => prev.filter((_, i) => i !== index))}
-                        >
-                          Remove
-                        </button>
-                        <div className="absolute inset-x-2 bottom-1 truncate text-[11px] text-white drop-shadow-sm">
-                          {item.file.name}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">No new images selected yet.</div>
-                )}
+                <RichTextEditor
+                  label="Long Description"
+                  value={longDescription}
+                  onChange={setLongDescription}
+                  heightClassName="min-h-[260px]"
+                />
               </div>
             </div>
 
             {/* ✅ Variations */}
-            <div className="rounded-[6px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+            <div className="overflow-hidden rounded-[6px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
               <div className="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Variations</h3>
@@ -864,7 +891,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
               </div>
 
               {/* Add row */}
-              <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+              <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
                   <div className="md:col-span-1">
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Color</p>
@@ -903,9 +930,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                     <Input
                       type="number"
                       value={addDraft.buying_price}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({ ...p, buying_price: safeNumber(e.target.value, p.buying_price) }))
-                      }
+                      onChange={(e) => setAddDraft((p) => ({ ...p, buying_price: safeNumber(e.target.value, p.buying_price) }))}
                     />
                   </div>
 
@@ -914,9 +939,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                     <Input
                       type="number"
                       value={addDraft.selling_price}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({ ...p, selling_price: safeNumber(e.target.value, p.selling_price) }))
-                      }
+                      onChange={(e) => setAddDraft((p) => ({ ...p, selling_price: safeNumber(e.target.value, p.selling_price) }))}
                     />
                   </div>
 
@@ -934,7 +957,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                     <Input
                       type="number"
                       value={addDraft.stock}
-                      onChange={(e) => setAddDraft((p) => ({ ...p, stock: Math.max(0, safeNumber(e.target.value, p.stock)) }))}
+                      onChange={(e) =>
+                        setAddDraft((p) => ({ ...p, stock: Math.max(0, safeNumber(e.target.value, p.stock)) }))
+                      }
                     />
                   </div>
 
@@ -943,7 +968,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                     <Input value={addDraft.sku} onChange={(e) => setAddDraft((p) => ({ ...p, sku: e.target.value }))} />
                   </div>
 
-                  <div className="md:col-span-2 flex items-end justify-end gap-2">
+                  <div className="flex items-end justify-end gap-2 md:col-span-2">
                     <Button
                       variant="outline"
                       className="h-11"
@@ -983,7 +1008,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
               <div className="overflow-x-auto">
                 <Table className="min-w-[1200px] border-collapse">
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                    <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                       {["Color", "Variant", "Buying", "Selling", "Discount", "Stock", "SKU", "Action"].map((h) => (
                         <TableCell key={h} isHeader className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                           {h}
@@ -998,7 +1023,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                         const editing = !!varEdit[v.id];
                         const draft = varEdit[v.id];
 
-                        const colorLabel = colorNameById.get(Number(v.color_id)) ?? `#${v.color_id}`;
+                        // ✅ fixed undefined
+                        const colorLabel = getColorLabel(v.color_id);
 
                         return (
                           <TableRow key={v.id} className="border-b border-gray-100 dark:border-gray-800">
@@ -1036,9 +1062,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   />
                                 )
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  #{v.variant_id}
-                                </span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">#{v.variant_id}</span>
                               )}
                             </TableCell>
 
@@ -1048,7 +1072,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   type="number"
                                   value={draft.buying_price}
                                   onChange={(e) =>
-                                    patchEditVariation(v.id, { buying_price: safeNumber(e.target.value, draft.buying_price) })
+                                    patchEditVariation(v.id, {
+                                      buying_price: safeNumber(e.target.value, draft.buying_price),
+                                    })
                                   }
                                 />
                               ) : (
@@ -1062,7 +1088,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   type="number"
                                   value={draft.selling_price}
                                   onChange={(e) =>
-                                    patchEditVariation(v.id, { selling_price: safeNumber(e.target.value, draft.selling_price) })
+                                    patchEditVariation(v.id, {
+                                      selling_price: safeNumber(e.target.value, draft.selling_price),
+                                    })
                                   }
                                 />
                               ) : (
@@ -1075,7 +1103,11 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                 <Input
                                   type="number"
                                   value={draft.discount}
-                                  onChange={(e) => patchEditVariation(v.id, { discount: safeNumber(e.target.value, draft.discount) })}
+                                  onChange={(e) =>
+                                    patchEditVariation(v.id, {
+                                      discount: safeNumber(e.target.value, draft.discount),
+                                    })
+                                  }
                                 />
                               ) : (
                                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{v.discount}</span>
@@ -1088,7 +1120,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   type="number"
                                   value={draft.stock}
                                   onChange={(e) =>
-                                    patchEditVariation(v.id, { stock: Math.max(0, safeNumber(e.target.value, draft.stock)) })
+                                    patchEditVariation(v.id, {
+                                      stock: Math.max(0, safeNumber(e.target.value, draft.stock)),
+                                    })
                                   }
                                 />
                               ) : (
@@ -1271,9 +1305,7 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
           </div>
         }
       >
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          Are you sure you want to delete this variation?
-        </div>
+        <div className="text-sm text-gray-700 dark:text-gray-300">Are you sure you want to delete this variation?</div>
       </BaseModal>
     </>
   );
