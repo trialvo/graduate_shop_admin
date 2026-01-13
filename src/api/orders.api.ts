@@ -22,6 +22,24 @@ export type OrdersListParams = {
   offset?: number;
 };
 
+/** Courier provider ids (match UI types) */
+export type CourierProviderId =
+  | "select"
+  | "manual"
+  | "sa_paribahan"
+  | "pathao"
+  | "redx"
+  | "delivery_tiger"
+  | "sundarban"
+  | "steadfast"
+  | "paperfly";
+
+export type DispatchCourierProvider =
+  | "paperfly"
+  | "redx"
+  | "pathao"
+  | "steadfast";
+
 export const ordersKeys = {
   all: ["orders"] as const,
   lists: () => [...ordersKeys.all, "list"] as const,
@@ -162,7 +180,13 @@ export type OrdersListResponse = {
   courierOption: CourierOption;
   data: ApiOrder[];
   pagination: { limit: number; offset: number; total: number };
-  summary?: { total: number; new: number; delivered: number; cancelled: number; others: number };
+  summary?: {
+    total: number;
+    new: number;
+    delivered: number;
+    cancelled: number;
+    others: number;
+  };
 };
 
 export type OrderDetailResponse = {
@@ -172,8 +196,8 @@ export type OrderDetailResponse = {
 };
 
 export type DispatchCourierRequest = {
-  courier_provider: "paperfly" | "redx" | "pathao" | "steadfast";
-  weight?: number;
+  courier_provider: DispatchCourierProvider;
+  weight?: number; // kg
 };
 
 export type DispatchCourierResponse = {
@@ -185,11 +209,11 @@ export type DispatchCourierResponse = {
 };
 
 export type ManualDispatchRequest = {
-  courier_provider: "paperfly" | "redx" | "pathao" | "steadfast";
+  courier_provider: DispatchCourierProvider;
   tracking_number?: string;
   reference_id?: string;
   memo?: string;
-  weight?: number;
+  weight?: number; // kg
 };
 
 export type ManualDispatchResponse = {
@@ -245,12 +269,23 @@ export async function patchOrderStatus(
   return res.data;
 }
 
-export async function dispatchOrderCourier(orderId: number, payload: DispatchCourierRequest) {
-  const res = await api.post<DispatchCourierResponse>(`/admin/order/dispatch/${orderId}`, payload);
+/** Auto dispatch via API: POST /admin/order/dispatch/:id */
+export async function dispatchOrderCourier(
+  orderId: number,
+  payload: DispatchCourierRequest
+) {
+  const res = await api.post<DispatchCourierResponse>(
+    `/admin/order/dispatch/${orderId}`,
+    payload
+  );
   return res.data;
 }
 
-export async function manualDispatchOrder(orderId: number, payload: ManualDispatchRequest) {
+/** Manual dispatch via API: POST /admin/order/manualDispatchOrder/:id */
+export async function manualDispatchOrder(
+  orderId: number,
+  payload: ManualDispatchRequest
+) {
   const res = await api.post<ManualDispatchResponse>(
     `/admin/order/manualDispatchOrder/${orderId}`,
     payload
