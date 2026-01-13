@@ -39,7 +39,7 @@ function readApiError(err: any, fallback: string) {
 
 const PAYMENT_OPTIONS = [
   { id: "paid", label: "paid" },
-  { id: "partial_paid", label: "partial_paid" },
+  { id: "partial_paid", label: "Partial Paid" },
   { id: "unpaid", label: "unpaid" },
 ] as const;
 
@@ -92,14 +92,23 @@ export default function OrdersTable({ rows }: Props) {
   });
 
   const statusMutation = useMutation({
-    mutationFn: async (payload: { orderId: number; newStatus: OrderRow["status"] }) =>
-      patchOrderStatus(payload.orderId, payload.newStatus),
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: OrderRow["status"];
+      prevStatus: OrderRow["status"];
+    }) => patchOrderStatus(payload.orderId, payload.newStatus),
     onSuccess: async (res: any) => {
       toast.success(res?.message || "Order status updated");
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
-    onError: (err: any) => toast.error(readApiError(err, "Failed to update order status")),
+    onError: (err: any, variables) => {
+      setStatusOverride((prev) => ({
+        ...prev,
+        [variables.orderId]: variables.prevStatus,
+      }));
+      toast.error(readApiError(err, "Failed to update order status"));
+    },
   });
 
   return (
@@ -229,10 +238,15 @@ export default function OrdersTable({ rows }: Props) {
                       <OrderSelectDropdown
                         value={r.status}
                         onChange={(v) => {
-                          const next = v as OrderRow["status"];
-                          setStatusOverride((prev) => ({ ...prev, [r.id]: next }));
-                          statusMutation.mutate({ orderId: Number(r.id), newStatus: next });
-                        }}
+                        const next = v as OrderRow["status"];
+                        const prevStatus = r.status;
+                        setStatusOverride((prev) => ({ ...prev, [r.id]: next }));
+                        statusMutation.mutate({
+                          orderId: Number(r.id),
+                          newStatus: next,
+                          prevStatus,
+                        });
+                      }}
                         options={STATUS_OPTIONS as any}
                         variant="pill"
                       />

@@ -266,7 +266,12 @@ export async function patchOrderStatus(
   const res = await api.patch(`/admin/order/status/${orderId}`, {
     new_status: newStatus,
   });
-  return res.data;
+  const data: any = res.data;
+  if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
+    const message = data?.error || data?.message || "Failed to update order status";
+    throw new Error(message);
+  }
+  return data;
 }
 
 /** Auto dispatch via API: POST /admin/order/dispatch/:id */
