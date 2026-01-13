@@ -1,14 +1,10 @@
-// src/app/(admin)/products/create/page.tsx
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { CheckCircle2, RefreshCcw, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import Button from "@/components/ui/button/Button";
-import Input from "@/components/form/input/InputField";
-import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
 import ImageMultiUploader, {
@@ -59,11 +55,6 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
       {children}
     </p>
   );
-}
-
-function safeNumber(input: string, fallback: number) {
-  const n = Number(input);
-  return Number.isFinite(n) ? n : fallback;
 }
 
 function slugify(input: string) {
