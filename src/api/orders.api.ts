@@ -31,7 +31,6 @@ export const ordersKeys = {
     [...ordersKeys.details(), String(orderId)] as const,
 };
 
-
 export type CourierOption = {
   any_auto_available: boolean;
   available_providers: { provider: string; is_auto_available: number }[];
@@ -106,9 +105,9 @@ export type ApiOrderItem = {
   created_at: string;
   stock_adjusted: number;
   sell_count_adjusted: number;
-  sku: string | null;
-  attribute_name: string | null;
-  brand_name: string | null;
+  sku?: string | null;
+  attribute_name?: string | null;
+  brand_name?: string | null;
 };
 
 export type ApiOrder = {
@@ -163,12 +162,44 @@ export type OrdersListResponse = {
   courierOption: CourierOption;
   data: ApiOrder[];
   pagination: { limit: number; offset: number; total: number };
+  summary?: { total: number; new: number; delivered: number; cancelled: number; others: number };
 };
 
 export type OrderDetailResponse = {
   success: boolean;
   courierOption: CourierOption;
   data: ApiOrder;
+};
+
+export type DispatchCourierRequest = {
+  courier_provider: "paperfly" | "redx" | "pathao" | "steadfast";
+  weight?: number;
+};
+
+export type DispatchCourierResponse = {
+  success: boolean;
+  message: string;
+  courier: string;
+  tracking_number: string;
+  response?: any;
+};
+
+export type ManualDispatchRequest = {
+  courier_provider: "paperfly" | "redx" | "pathao" | "steadfast";
+  tracking_number?: string;
+  reference_id?: string;
+  memo?: string;
+  weight?: number;
+};
+
+export type ManualDispatchResponse = {
+  success: boolean;
+  message: string;
+  courier: string;
+  tracking_number?: string;
+  reference_id?: string;
+  memo?: string;
+  weight?: number;
 };
 
 function cleanParams(params: Record<string, any>) {
@@ -194,16 +225,35 @@ export async function getAdminOrderById(orderId: number) {
   return res.data;
 }
 
-export async function patchOrderPaymentStatus(orderId: number, newPaymentStatus: "unpaid" | "partial_paid" | "paid") {
+export async function patchOrderPaymentStatus(
+  orderId: number,
+  newPaymentStatus: "unpaid" | "partial_paid" | "paid"
+) {
   const res = await api.patch(`/admin/order/paymentstatus/${orderId}`, {
     new_payment_status: newPaymentStatus,
   });
   return res.data;
 }
 
-export async function patchOrderStatus(orderId: number, newStatus: ApiOrder["order_status"]) {
+export async function patchOrderStatus(
+  orderId: number,
+  newStatus: ApiOrder["order_status"]
+) {
   const res = await api.patch(`/admin/order/status/${orderId}`, {
     new_status: newStatus,
   });
+  return res.data;
+}
+
+export async function dispatchOrderCourier(orderId: number, payload: DispatchCourierRequest) {
+  const res = await api.post<DispatchCourierResponse>(`/admin/order/dispatch/${orderId}`, payload);
+  return res.data;
+}
+
+export async function manualDispatchOrder(orderId: number, payload: ManualDispatchRequest) {
+  const res = await api.post<ManualDispatchResponse>(
+    `/admin/order/manualDispatchOrder/${orderId}`,
+    payload
+  );
   return res.data;
 }

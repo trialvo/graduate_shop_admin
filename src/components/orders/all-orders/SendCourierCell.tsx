@@ -1,5 +1,3 @@
-// src/components/orders/all-orders/SendCourierCell.tsx
-
 import React, { useMemo, useState } from "react";
 import type { CourierProviderId, OrderRow } from "./types";
 import CourierRequestModal from "@/components/ui/modal/CourierRequestModal";
@@ -8,34 +6,33 @@ import { cn } from "@/lib/utils";
 type Props = {
   order: OrderRow;
 
-  courierOverride?: { providerId?: CourierProviderId; memoNo?: string };
+  onAutoDispatch: (
+    orderId: number,
+    payload: { provider: Exclude<CourierProviderId, "select" | "manual">; weightKg?: number }
+  ) => Promise<void>;
 
-  onUpdateCourier: (
-    orderId: string,
-    providerId: CourierProviderId,
-    memoNo: string
-  ) => void;
-
-  onRequestCourier: (
-    orderId: string,
-    providerId: Exclude<CourierProviderId, "select">
-  ) => Promise<void> | void;
+  onManualDispatch: (
+    orderId: number,
+    payload: {
+      provider: Exclude<CourierProviderId, "select" | "manual">;
+      trackingNumber?: string;
+      referenceId?: string;
+      memo?: string;
+      weightKg?: number;
+    }
+  ) => Promise<void>;
 };
 
-type CourierProviderIdSafe = CourierProviderId | "manual" | "unknown";
+type CourierProviderIdSafe = CourierProviderId | "unknown";
 
 function providerLabel(id?: CourierProviderIdSafe) {
   switch (id) {
-    case "sa_paribahan":
-      return "S A Paribahan";
     case "pathao":
       return "Pathao";
     case "redx":
       return "RedX";
-    case "delivery_tiger":
-      return "Delivery Tiger";
-    case "sundarban":
-      return "Sundarban Courier";
+    case "paperfly":
+      return "Paperfly";
     case "steadfast":
       return "Steadfast";
     case "manual":
@@ -47,83 +44,61 @@ function providerLabel(id?: CourierProviderIdSafe) {
   }
 }
 
-export default function SendCourierCell({
-  order,
-  courierOverride,
-  onUpdateCourier,
-  onRequestCourier,
-}: Props) {
+export default function SendCourierCell({ order, onAutoDispatch, onManualDispatch }: Props) {
   const [open, setOpen] = useState(false);
 
   const apiConfigured = Boolean(order.courier?.apiConfigured);
-  const apiConnectedForThisOrder = Boolean(order.courier?.apiConnected);
 
   const connectedAutoProviders =
     order.courier?.availableAutoCouriers?.filter((x) => x.connected) ?? [];
 
   const canAutoRequest = apiConfigured && connectedAutoProviders.length > 0;
 
-  const providerId: CourierProviderIdSafe =
-    (courierOverride?.providerId as CourierProviderIdSafe) ??
-    ((order.courier?.providerId as CourierProviderIdSafe) || "select");
-
-  const memoNo = courierOverride?.memoNo ?? order.courier?.memoNo ?? "";
+  const providerId = (order.courier?.providerId as CourierProviderIdSafe) || "select";
+  const memoNo = order.courier?.memoNo ?? "";
   const trackingNo = order.courier?.trackingNo ?? "";
 
   const label = useMemo(() => {
-    // If this order's selected provider is API-connected, show that provider name prominently
-    if (apiConnectedForThisOrder) {
-      const byName = (order.courier?.providerName || "").trim();
-      if (byName) return byName;
-      return providerLabel(order.courier?.providerId as CourierProviderIdSafe);
-    }
-
-    // Otherwise show the currently selected (or overridden) provider label
+    const byName = (order.courier?.providerName || "").trim();
+    if (byName) return byName;
     return providerLabel(providerId);
-  }, [apiConnectedForThisOrder, providerId, order.courier?.providerId, order.courier?.providerName]);
+  }, [providerId, order.courier?.providerName]);
 
   const statusPill = useMemo(() => {
-    if (apiConnectedForThisOrder) return { text: "API", cls: "bg-success-50 text-success-700 ring-success-200 dark:bg-success-500/10 dark:text-success-200 dark:ring-success-500/30" };
-    if (apiConfigured) return { text: "Manual", cls: "bg-gray-50 text-gray-700 ring-gray-200 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10" };
-    return { text: "Not Set", cls: "bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-200 dark:ring-orange-500/30" };
-  }, [apiConnectedForThisOrder, apiConfigured]);
+    if (canAutoRequest)
+      return {
+        text: "AUTO",
+        cls: "bg-success-50 text-success-700 ring-success-200 dark:bg-success-500/10 dark:text-success-200 dark:ring-success-500/30",
+      };
+    if (apiConfigured)
+      return {
+        text: "MANUAL",
+        cls: "bg-gray-50 text-gray-700 ring-gray-200 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10",
+      };
+    return {
+      text: "NOT SET",
+      cls: "bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-200 dark:ring-orange-500/30",
+    };
+  }, [canAutoRequest, apiConfigured]);
 
-  const actionLabel = useMemo(() => {
-    if (canAutoRequest) return "REQUEST";
-    if (trackingNo || memoNo || providerId !== "select") return "EDIT";
-    return "SEND";
-  }, [canAutoRequest, trackingNo, memoNo, providerId]);
-
-  const secondaryLine = apiConnectedForThisOrder
-    ? trackingNo
-      ? `Tracking: ${trackingNo}`
-      : "Tracking: —"
+  const secondaryLine = trackingNo
+    ? `Tracking: ${trackingNo}`
     : memoNo
       ? `Memo: ${memoNo}`
-      : "Memo: —";
+      : "Tracking/Memo: —";
 
   return (
     <>
       <div className="flex flex-col gap-2">
-        {/* Compact preview */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-              {label}
-            </p>
+            <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{label}</p>
 
             <span
               className={cn(
                 "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
                 statusPill.cls
               )}
-              title={
-                apiConnectedForThisOrder
-                  ? "Courier API connected"
-                  : apiConfigured
-                    ? "Courier API configured (manual send)"
-                    : "Courier not configured"
-              }
             >
               {statusPill.text}
             </span>
@@ -141,7 +116,6 @@ export default function SendCourierCell({
           ) : null}
         </div>
 
-        {/* Action button */}
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -150,7 +124,7 @@ export default function SendCourierCell({
             canAutoRequest ? "bg-success-600 hover:bg-success-700" : "bg-brand-500 hover:bg-brand-600"
           )}
         >
-          {actionLabel}
+          Save & Send
         </button>
       </div>
 
@@ -158,10 +132,8 @@ export default function SendCourierCell({
         open={open}
         onClose={() => setOpen(false)}
         order={order}
-        courierProviderId={(providerId === "manual" ? "select" : providerId) as CourierProviderId}
-        memoNo={memoNo}
-        onSaveManual={(p, memo) => onUpdateCourier(order.id, p, memo)}
-        onRequestCourier={(provider) => onRequestCourier(order.id, provider)}
+        onAutoDispatch={(payload) => onAutoDispatch(Number(order.id), payload)}
+        onManualDispatch={(payload) => onManualDispatch(Number(order.id), payload)}
       />
     </>
   );
