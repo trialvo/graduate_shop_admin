@@ -19,7 +19,7 @@ import { getAttributes } from "@/api/attributes.api";
 import { getVariants } from "@/api/variants.api";
 import { createProduct, updateProduct, type Product, type ProductVariationPayload } from "@/api/products.api";
 
-import VariantMatrix from "./components/VariantMatrix";
+// import VariantMatrix from "./components/VariantMatrix";
 import type { ExistingImage, Option, ProductStatusFlags, SeoMeta, VariantMatrixRow } from "./types";
 import { genSkuFromParts, safeNumber, slugify } from "./utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -506,7 +506,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
       <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Variations</h2>
 
-        <VariantMatrix
+        {/* <VariantMatrix
           colors={colors}
           variants={variants as any}
           activeAttributeId={attributeId}
@@ -521,7 +521,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
           baseDiscount={0}
           brandNameForSku={brandNameForSku}
           productSlugForSku={productSlug}
-        />
+        /> */}
       </div>
 
       {/* Media */}
