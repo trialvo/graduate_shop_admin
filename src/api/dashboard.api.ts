@@ -37,7 +37,6 @@ export type DashboardTimeRange = "today" | "week" | "month" | "year" | "all";
 
 /**
  * Backward-compatible alias used by some dashboard components.
- * ✅ Fixes "no exported member TopViewedTimeRange"
  */
 export type TopViewedTimeRange = DashboardTimeRange;
 
@@ -133,6 +132,21 @@ export type DashboardTopSellingAreaResponse = {
   meta: DashboardTopSellingAreaMeta;
 };
 
+/** =========================
+ *  Yearly Statistic (Revenue/Profit)
+ *  ========================= */
+export type DashboardYearlyStatisticItem = {
+  month: string; // "Jan"
+  revenue: string; // "18530.00"
+  profit: string; // "5048.00"
+};
+
+export type DashboardYearlyStatisticResponse = {
+  success: boolean;
+  year: number;
+  data: DashboardYearlyStatisticItem[];
+};
+
 export const dashboardKeys = {
   all: ["dashboard"] as const,
 
@@ -149,6 +163,9 @@ export const dashboardKeys = {
   topSellingArea: () => [...dashboardKeys.all, "topSellingArea"] as const,
   topSellingAreaList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
     [...dashboardKeys.topSellingArea(), "list", params] as const,
+
+  yearlyStatistic: () => [...dashboardKeys.all, "yearlyStatistic"] as const,
+  yearlyStatisticByYear: (year: number) => [...dashboardKeys.yearlyStatistic(), "year", year] as const,
 };
 
 export async function getDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -181,4 +198,15 @@ export async function getDashboardTopSellingArea(params: {
 }): Promise<DashboardTopSellingAreaResponse> {
   const res = await api.get("/admin/dashboard/topselling-area", { params });
   return res.data as DashboardTopSellingAreaResponse;
+}
+
+/**
+ * ✅ Yearly statistic
+ * Endpoint provided: dashboard/yearly-statistic?year=2025
+ * Most of your dashboard endpoints are under /admin/dashboard/...
+ * So we use: /admin/dashboard/yearly-statistic
+ */
+export async function getDashboardYearlyStatistic(year: number): Promise<DashboardYearlyStatisticResponse> {
+  const res = await api.get("/admin/dashboard/yearly-statistic", { params: { year } });
+  return res.data as DashboardYearlyStatisticResponse;
 }
