@@ -22,6 +22,9 @@ export interface ButtonProps {
   /** For icon-only buttons (a11y) */
   ariaLabel?: string;
 
+  /** Optional native tooltip */
+  title?: string;
+
   /** ✅ optional loading */
   isLoading?: boolean;
   loadingText?: string;
@@ -47,6 +50,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   type = "button",
   ariaLabel,
+  title,
   isLoading = false,
   loadingText,
 }) => {
@@ -74,6 +78,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       aria-label={ariaLabel}
+      title={title}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-[4px] transition-colors duration-150",
         "whitespace-nowrap select-none",
