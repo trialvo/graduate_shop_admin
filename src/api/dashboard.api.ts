@@ -35,6 +35,12 @@ export type DashboardOverviewResponse = {
  *  ========================= */
 export type DashboardTimeRange = "today" | "week" | "month" | "year" | "all";
 
+/**
+ * Backward-compatible alias used by some dashboard components.
+ * ✅ Fixes "no exported member TopViewedTimeRange"
+ */
+export type TopViewedTimeRange = DashboardTimeRange;
+
 /** =========================
  *  Top Viewed Products
  *  ========================= */
@@ -104,24 +110,45 @@ export type DashboardTopSellingResponse = {
   meta: DashboardTopSellingMeta;
 };
 
+/** =========================
+ *  Top Selling Area (District/City)
+ *  ========================= */
+export type DashboardTopSellingAreaItem = {
+  city: string;
+  total_orders: number;
+  total_items_sold: number;
+  total_revenue: string; // "18880.00"
+};
+
+export type DashboardTopSellingAreaMeta = {
+  timeRange: DashboardTimeRange;
+  count: number;
+  limit: number;
+  offset: number;
+};
+
+export type DashboardTopSellingAreaResponse = {
+  success: boolean;
+  data: DashboardTopSellingAreaItem[];
+  meta: DashboardTopSellingAreaMeta;
+};
+
 export const dashboardKeys = {
   all: ["dashboard"] as const,
 
   overview: () => [...dashboardKeys.all, "overview"] as const,
 
   topViewed: () => [...dashboardKeys.all, "topViewed"] as const,
-  topViewedList: (params: {
-    timeRange: DashboardTimeRange;
-    limit: number;
-    offset: number;
-  }) => [...dashboardKeys.topViewed(), "list", params] as const,
+  topViewedList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
+    [...dashboardKeys.topViewed(), "list", params] as const,
 
   topSelling: () => [...dashboardKeys.all, "topSelling"] as const,
-  topSellingList: (params: {
-    timeRange: DashboardTimeRange;
-    limit: number;
-    offset: number;
-  }) => [...dashboardKeys.topSelling(), "list", params] as const,
+  topSellingList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
+    [...dashboardKeys.topSelling(), "list", params] as const,
+
+  topSellingArea: () => [...dashboardKeys.all, "topSellingArea"] as const,
+  topSellingAreaList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
+    [...dashboardKeys.topSellingArea(), "list", params] as const,
 };
 
 export async function getDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -145,4 +172,13 @@ export async function getDashboardTopSelling(params: {
 }): Promise<DashboardTopSellingResponse> {
   const res = await api.get("/admin/dashboard/topselling", { params });
   return res.data as DashboardTopSellingResponse;
+}
+
+export async function getDashboardTopSellingArea(params: {
+  timeRange: DashboardTimeRange;
+  limit: number;
+  offset: number;
+}): Promise<DashboardTopSellingAreaResponse> {
+  const res = await api.get("/admin/dashboard/topselling-area", { params });
+  return res.data as DashboardTopSellingAreaResponse;
 }
