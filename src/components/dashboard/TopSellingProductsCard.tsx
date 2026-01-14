@@ -1,78 +1,175 @@
-import { useMemo, useState } from "react";
-import { topSellingProducts } from "../../pages/Dashboard/dashboardSection5Data";
+import * as React from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+
 import TopSellingProductsModal from "./TopSellingProductsModal";
+import TopViewedRangeFilter from "./TopViewedRangeFilter";
+
+import {
+  dashboardKeys,
+  getDashboardTopSelling,
+  type DashboardTopSellingItem,
+  type DashboardTimeRange,
+} from "@/api/dashboard.api";
+import { cn } from "@/lib/utils";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 const PAGE_SIZE = 10;
 
-const TopSellingProductsCard = () => {
-  const [open, setOpen] = useState(false);
-  const preview = useMemo(() => topSellingProducts.slice(0, PAGE_SIZE), []);
+function formatBDT(n: number): string {
+  if (!Number.isFinite(n)) return "৳0";
+  const formatted = new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 }).format(n);
+  return `৳${formatted}`;
+}
+
+function imageFallbackSvgDataUri(title: string) {
+  const safe = title.replace(/</g, "").replace(/>/g, "").slice(0, 2).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
+    <rect width="100%" height="100%" rx="16" ry="16" fill="#E5E7EB"/>
+    <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
+      font-family="Arial" font-size="28" font-weight="700" fill="#6B7280">${safe}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function bestVariationPrice(item: DashboardTopSellingItem): number {
+  // choose the highest selling_price among variations; fallback 0
+  const prices = item.variations?.map((v) => v.selling_price).filter((v) => Number.isFinite(v)) ?? [];
+  if (prices.length === 0) return 0;
+  return Math.max(...prices);
+}
+
+function categoryLine(item: DashboardTopSellingItem): string {
+  const parts = [item.main_category?.name, item.sub_category?.name, item.child_category?.name].filter(Boolean);
+  return parts.length ? parts.join(" • ") : "—";
+}
+
+const TopSellingProductsCard: React.FC = () => {
+  const [open, setOpen] = React.useState(false);
+
+  // ✅ default all (as you requested)
+  const [timeRange, setTimeRange] = React.useState<DashboardTimeRange>("all");
+
+  const query = useQuery({
+    queryKey: dashboardKeys.topSellingList({ timeRange, limit: PAGE_SIZE, offset: 0 }),
+    queryFn: () => getDashboardTopSelling({ timeRange, limit: PAGE_SIZE, offset: 0 }),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+
+  const preview: DashboardTopSellingItem[] = query.data?.data ?? [];
+  const totalCount = query.data?.meta?.count ?? 0;
 
   return (
-    <div className="h-full w-full rounded-[4px] border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 flex flex-col">
+    <div className="h-full w-full rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 flex flex-col">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Top Selling Products
-        </h3>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Top Selling Products</h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {query.isError ? "Failed to load data." : `Showing top ${PAGE_SIZE} items.`}
+          </p>
+        </div>
 
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-        >
-          View All
-        </button>
+        <div className="flex items-center justify-between gap-3 sm:justify-end">
+          <TopViewedRangeFilter value={timeRange} onChange={setTimeRange} />
+
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={cn(
+              "rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+            )}
+          >
+            View All
+          </button>
+        </div>
       </div>
 
       {/* Table Header */}
-      <div className="grid grid-cols-12 rounded-lg bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-        <div className="col-span-2">Image</div>
-        <div className="col-span-6">Name</div>
-        <div className="col-span-2 text-center">Qty</div>
-        <div className="col-span-2 text-right">Total</div>
+      <div className="grid grid-cols-12 rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
+        <div className="col-span-7">Product</div>
+        <div className="col-span-2 text-center">Sold</div>
+        <div className="col-span-3 text-right">Stock</div>
       </div>
 
       {/* Body */}
       <div className="flex-1">
         <div className="divide-y divide-gray-200 dark:divide-gray-800">
-          {preview.map((p) => (
-            <div
-              key={p.id}
-              className="grid grid-cols-12 items-center px-4 py-4"
-            >
-              <div className="col-span-2">
-                <img
-                  src={p.image}
-                  alt={p.title}
-                  className="h-11 w-11 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-800"
-                />
+          {query.isLoading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="grid grid-cols-12 items-center gap-2 px-4 py-4">
+                <div className="col-span-7 flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-gray-200 animate-pulse dark:bg-gray-800" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-4 w-3/4 rounded bg-gray-200 animate-pulse dark:bg-gray-800" />
+                    <div className="mt-2 h-3 w-1/2 rounded bg-gray-200 animate-pulse dark:bg-gray-800" />
+                  </div>
+                </div>
+                <div className="col-span-2 flex items-center justify-center">
+                  <div className="h-4 w-10 rounded bg-gray-200 animate-pulse dark:bg-gray-800" />
+                </div>
+                <div className="col-span-3 flex items-center justify-end">
+                  <div className="h-4 w-14 rounded bg-gray-200 animate-pulse dark:bg-gray-800" />
+                </div>
               </div>
+            ))
+          ) : preview.length === 0 ? (
+            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
+          ) : (
+            preview.map((p) => {
+              const img = p.first_image ? toPublicUrl(p.first_image) : imageFallbackSvgDataUri(p.product_name);
+              const price = bestVariationPrice(p);
 
-              <div className="col-span-6 min-w-0">
-                <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {p.title}
-                </p>
-                <p className="text-xs text-gray-400">
-                  Order: {p.id} • SKU: {p.sku}
-                </p>
-                <p className="text-xs text-brand-500">
-                  {p.category} • Category total: {p.totalByCategory}
-                </p>
-              </div>
+              return (
+                <div key={p.product_id} className="grid grid-cols-12 items-center gap-2 px-4 py-4">
+                  <div className="col-span-7 flex items-center gap-3">
+                    <img
+                      src={img}
+                      alt={p.product_name}
+                      className="h-11 w-11 rounded-xl object-cover ring-1 ring-gray-200 dark:ring-gray-800"
+                      loading="lazy"
+                    />
 
-              <div className="col-span-2 text-center text-sm text-gray-600 dark:text-gray-300">
-                {p.qty}
-              </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
+                        {p.product_name}
+                      </p>
 
-              <div className="col-span-2 text-right text-sm text-gray-600 dark:text-gray-300">
-                {p.total}
-              </div>
-            </div>
-          ))}
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="truncate">{categoryLine(p)}</span>
+                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                        <span>Max price: {formatBDT(price)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 flex items-center justify-center text-sm font-semibold text-gray-900 dark:text-white/90">
+                    {p.total_sell_count}
+                  </div>
+
+                  <div className="col-span-3 flex items-center justify-end text-sm text-gray-700 dark:text-gray-300">
+                    {p.total_in_stock}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
-      <TopSellingProductsModal open={open} onClose={() => setOpen(false)} />
+      {/* Footer */}
+      <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <span>Total {totalCount} entries</span>
+        <span className="text-gray-400">→</span>
+      </div>
+
+      <TopSellingProductsModal
+        open={open}
+        onClose={() => setOpen(false)}
+        timeRange={timeRange}
+        onChangeTimeRange={setTimeRange}
+      />
     </div>
   );
 };

@@ -127,17 +127,4 @@ export const stockAlertProducts: StockAlertProductRow[] = [
     price: 1199,
     stock: 0,
   },
-
-  // extra for modal pagination
-  ...Array.from({ length: 25 }).map((_, idx) => {
-    const n = idx + 6;
-    return {
-      id: `ORD-90${n.toString().padStart(2, "0")}`,
-      title: n % 2 === 0 ? "Premium Product..." : "Stock Alert Item...",
-      sku: (3100 + n).toString(),
-      image: `/images/product/product-0${((n - 1) % 5) + 1}.jpg`,
-      price: 400 + (n % 9) * 120,
-      stock: n % 3 === 0 ? 1 : 0,
-    };
-  }),
 ];
