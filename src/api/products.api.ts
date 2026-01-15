@@ -52,7 +52,7 @@ export type ProductEntity = {
 export type Product = ProductEntity;
 
 export type ProductsListParams = {
-  q?: string;
+  search?: string;
 
   main_category_id?: number;
   sub_category_id?: number;
