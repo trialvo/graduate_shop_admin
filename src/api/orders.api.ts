@@ -237,41 +237,69 @@ function cleanParams(params: Record<string, any>) {
   return out;
 }
 
+function getErrMessage(err: any, fallback: string) {
+  return (
+    err?.response?.data?.error ??
+    err?.response?.data?.message ??
+    err?.message ??
+    fallback
+  );
+}
+
 export async function getAdminOrders(params: OrdersListParams) {
-  const res = await api.get<OrdersListResponse>("/admin/orders", {
-    params: cleanParams(params),
-  });
-  return res.data;
+  try {
+    const res = await api.get<OrdersListResponse>("/admin/orders", {
+      params: cleanParams(params),
+    });
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to load orders"));
+  }
 }
 
 export async function getAdminOrderById(orderId: number) {
-  const res = await api.get<OrderDetailResponse>(`/admin/order/${orderId}`);
-  return res.data;
+  try {
+    const res = await api.get<OrderDetailResponse>(`/admin/order/${orderId}`);
+    return res.data;
+  } catch (err: any) {
+    // Handles: { flag: 404, error: "Order not found" }
+    const msg = getErrMessage(err, "Failed to load order");
+    throw new Error(msg);
+  }
 }
 
 export async function patchOrderPaymentStatus(
   orderId: number,
   newPaymentStatus: "unpaid" | "partial_paid" | "paid"
 ) {
-  const res = await api.patch(`/admin/order/paymentstatus/${orderId}`, {
-    new_payment_status: newPaymentStatus,
-  });
-  return res.data;
+  try {
+    const res = await api.patch(`/admin/order/paymentstatus/${orderId}`, {
+      new_payment_status: newPaymentStatus,
+    });
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to update payment status"));
+  }
 }
 
 export async function patchOrderStatus(
   orderId: number,
   newStatus: ApiOrder["order_status"]
 ) {
-  const res = await api.patch(`/admin/order/status/${orderId}`, {
-    new_status: newStatus,
-  });
-  const data: any = res.data;
-  if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
-    const message = data?.error || data?.message || "Failed to update order status";
-    throw new Error(message);
+  try {
+    const res = await api.patch(`/admin/order/status/${orderId}`, {
+      new_status: newStatus,
+    });
+    const data: any = res.data;
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
+      const message =
+        data?.error || data?.message || "Failed to update order status";
+      throw new Error(message);
+    }
+    return data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to update order status"));
   }
-  return data;
 }
 
 /** Auto dispatch via API: POST /admin/order/dispatch/:id */
@@ -279,11 +307,15 @@ export async function dispatchOrderCourier(
   orderId: number,
   payload: DispatchCourierRequest
 ) {
-  const res = await api.post<DispatchCourierResponse>(
-    `/admin/order/dispatch/${orderId}`,
-    payload
-  );
-  return res.data;
+  try {
+    const res = await api.post<DispatchCourierResponse>(
+      `/admin/order/dispatch/${orderId}`,
+      payload
+    );
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to dispatch courier"));
+  }
 }
 
 /** Manual dispatch via API: POST /admin/order/manualDispatchOrder/:id */
@@ -291,9 +323,13 @@ export async function manualDispatchOrder(
   orderId: number,
   payload: ManualDispatchRequest
 ) {
-  const res = await api.post<ManualDispatchResponse>(
-    `/admin/order/manualDispatchOrder/${orderId}`,
-    payload
-  );
-  return res.data;
+  try {
+    const res = await api.post<ManualDispatchResponse>(
+      `/admin/order/manualDispatchOrder/${orderId}`,
+      payload
+    );
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to manual dispatch courier"));
+  }
 }

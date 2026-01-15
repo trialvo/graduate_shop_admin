@@ -3,15 +3,29 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 
+type ProviderItem = { provider: string; is_auto_available: number };
+
 interface SidebarCourierCardProps {
   method: string;
   consignmentId: string;
   trackingUrl?: string;
   lastUpdatedAtLabel?: string;
+
+  // ✅ NEW: from API (courierOption)
+  anyAutoAvailable?: boolean;
+  providers?: ProviderItem[];
+
   onChange: (patch: { method?: string; consignmentId?: string }) => void;
   onSend: () => void;
   onComplete: () => void;
   onDownloadInvoice: () => void;
+}
+
+function toLabel(p: string) {
+  return p
+    .split("_")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
 }
 
 const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
@@ -19,15 +33,49 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
   consignmentId,
   trackingUrl,
   lastUpdatedAtLabel,
+  anyAutoAvailable,
+  providers,
   onChange,
   onSend,
   onComplete,
   onDownloadInvoice,
 }) => {
+  const options =
+    providers && providers.length
+      ? providers.map((p) => ({
+          value: p.provider,
+          label: `${toLabel(p.provider)}${p.is_auto_available ? " (Auto)" : ""}`,
+        }))
+      : [
+          { value: "steadfast", label: "Steadfast" },
+          { value: "pathao", label: "Pathao" },
+          { value: "redx", label: "RedX" },
+          { value: "paperfly", label: "Paperfly" },
+        ];
+
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
-      <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
-        Currier:
+      <div className="flex items-start justify-between gap-4">
+        <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
+          Currier:
+        </div>
+
+        {providers?.length ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+              Providers: {providers.length}
+            </span>
+            {anyAutoAvailable ? (
+              <span className="rounded-full bg-success-500/10 px-2 py-1 text-[11px] font-semibold text-success-700 dark:text-success-300">
+                Auto available
+              </span>
+            ) : (
+              <span className="rounded-full bg-gray-900/5 px-2 py-1 text-[11px] font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
+                Manual only
+              </span>
+            )}
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-4 space-y-4">
@@ -36,13 +84,7 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
             Select Method
           </div>
           <Select
-            options={[
-              { value: "Stead Fast", label: "Stead Fast" },
-              { value: "Pathao", label: "Pathao" },
-              { value: "RedX", label: "RedX" },
-              { value: "Paperfly", label: "Paperfly" },
-              { value: "eCourier", label: "eCourier" },
-            ]}
+            options={options}
             defaultValue={method}
             onChange={(v) => onChange({ method: v })}
             className="bg-white dark:bg-gray-900"

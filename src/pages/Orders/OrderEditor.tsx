@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import PageMeta from "@/components/common/PageMeta";
-import OrderEditorPage from "@/components/orders/order-editor/OrderEditorPage";
+import OrderEditorRoute from "@/components/orders/order-editor/OrderEditorRoute";
 
 export default function OrderEditor() {
   const [params] = useSearchParams();
@@ -17,7 +17,7 @@ export default function OrderEditor() {
   return (
     <>
       <PageMeta title="Order Editor" description="Order Management - Editor" />
-      <OrderEditorPage orderId={orderId} />
+      <OrderEditorRoute orderId={orderId} />
     </>
   );
 }

@@ -33,8 +33,8 @@ export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
 
-  const [email, setEmail] = useState("superadmin@shop.com");
-  const [password, setPassword] = useState("12345678");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => {
@@ -158,10 +158,10 @@ export default function SignInForm() {
           </div>
 
           {/* optional helper */}
-          <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+          {/* <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
             Demo: <span className="font-medium">superadmin@shop.com</span> /{" "}
             <span className="font-medium">12345678</span>
-          </p>
+          </p> */}
         </div>
       </div>
     </div>

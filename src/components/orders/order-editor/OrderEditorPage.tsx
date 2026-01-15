@@ -1,5 +1,3 @@
-// src/components/orders/order-editor/OrderEditorPage.tsx
-
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +13,6 @@ import SidebarShippingStickerCard from "./SidebarShippingStickerCard";
 
 import type { OrderEditorData, OrderProductLine } from "./types";
 
-
 import {
   getAdminOrderById,
   ordersKeys,
@@ -24,6 +21,7 @@ import {
   type ApiOrder,
 } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+import Button from "@/components/ui/button/Button";
 
 const statusLabel = (status: OrderEditorData["orderStatus"]): string => {
   return status
@@ -149,7 +147,6 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
       address: `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—",
     },
 
-    // backend doesn’t provide history; using current order as placeholder
     customerHistory: {
       orderId: `#${o.id}`,
       shipping: deliveryType === "inside_dhaka" ? "Inside Dhaka" : "Out of Dhaka",
@@ -164,9 +161,12 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
   };
 }
 
-type Props = { orderId: number | null };
+type Props = {
+  orderId: number | null;
+  onBack?: () => void; // ✅ NEW
+};
 
-const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
+const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   const queryClient = useQueryClient();
   const hydratedRef = useRef(false);
 
@@ -186,6 +186,13 @@ const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
     orderStatus: undefined,
     paymentStatus: undefined,
   });
+
+  // ✅ Reset when orderId changes
+  useEffect(() => {
+    hydratedRef.current = false;
+    setData(null);
+    snapshotRef.current = { orderStatus: undefined, paymentStatus: undefined };
+  }, [orderId]);
 
   useEffect(() => {
     if (!detailQuery.data?.success) return;
@@ -228,19 +235,17 @@ const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
   }, [data]);
 
   const paymentMutation = useMutation({
-    mutationFn: (payload: { orderId: number; new_payment_status: "unpaid" | "partial_paid" | "paid" }) =>
-      patchOrderPaymentStatus(payload.orderId, payload.new_payment_status),
+    mutationFn: (payload: {
+      orderId: number;
+      new_payment_status: "unpaid" | "partial_paid" | "paid";
+    }) => patchOrderPaymentStatus(payload.orderId, payload.new_payment_status),
     onSuccess: async () => {
       toast.success("Payment status updated");
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
     },
     onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error ??
-        err?.response?.data?.message ??
-        "Failed to update payment status";
-      toast.error(msg);
+      toast.error(err?.message ?? "Failed to update payment status");
     },
   });
 
@@ -253,15 +258,14 @@ const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
     },
     onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error ??
-        err?.response?.data?.message ??
-        "Failed to update order status";
-      toast.error(msg);
+      toast.error(err?.message ?? "Failed to update order status");
     },
   });
 
-  const handleChangeForm = <K extends keyof OrderEditorData>(key: K, value: OrderEditorData[K]) => {
+  const handleChangeForm = <K extends keyof OrderEditorData>(
+    key: K,
+    value: OrderEditorData[K]
+  ) => {
     setData((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
@@ -378,7 +382,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
         <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
           <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div className="text-sm text-gray-600 dark:text-gray-300">
-              Missing orderId in URL. Example: <span className="font-semibold">/order-editor?orderId=23</span>
+              Missing orderId in URL. Example:{" "}
+              <span className="font-semibold">/order-editor?orderId=23</span>
             </div>
           </div>
         </div>
@@ -398,12 +403,57 @@ const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
     );
   }
 
+  if (detailQuery.isError) {
+    const msg = (detailQuery.error as any)?.message ?? "Failed to load order";
+    return (
+      <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
+        <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm font-semibold text-red-600 dark:text-red-400">
+              {msg}
+            </div>
+            <div className="mt-3 flex gap-3">
+              {onBack ? (
+                <Button onClick={onBack} variant="primary" size="sm">
+                  Back to Orders
+                </Button>
+              ) : null}
+              <Button
+                onClick={() => detailQuery.refetch()}
+                variant="outline"
+                size="sm"
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const apiOrder = detailQuery.data?.data;
   const paymentLabel = apiOrder ? paymentLabelFromOrder(apiOrder) : "Payment";
+
+  const courierOption = detailQuery.data?.courierOption;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
       <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
+        <div className="flex items-center justify-between gap-3">
+          {onBack ? (
+            <Button onClick={onBack} size="sm" variant="outline">
+              ← Back to Orders
+            </Button>
+          ) : (
+            <div />
+          )}
+
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Order ID: <span className="font-semibold text-gray-900 dark:text-white">{orderId}</span>
+          </div>
+        </div>
+
         <OrderEditorHeader
           orderNumber={data.orderNumber}
           orderStatus={data.orderStatus}
@@ -468,6 +518,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId }) => {
               consignmentId={data.courier.consignmentId}
               trackingUrl={data.courier.trackingUrl}
               lastUpdatedAtLabel={formatDateTimeLabel(data.courier.lastUpdatedAt)}
+              anyAutoAvailable={courierOption?.any_auto_available}
+              providers={courierOption?.available_providers}
               onChange={handleCourierChange}
               onSend={handleCourierSend}
               onComplete={handleCourierComplete}
