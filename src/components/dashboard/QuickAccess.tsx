@@ -28,7 +28,10 @@ function sortQuickAccess(items: ApiQuickAccessItem[]) {
   });
 }
 
-function mergeUpdatePayload(item: ApiQuickAccessItem, patch: UpdateQuickAccessPayload): UpdateQuickAccessPayload {
+function mergeUpdatePayload(
+  item: ApiQuickAccessItem,
+  patch: UpdateQuickAccessPayload
+): UpdateQuickAccessPayload {
   // Backend says "nothing required", but we send safe merged data (prevents accidental null/undefined issues)
   return {
     title: patch.title ?? item.title,
@@ -44,7 +47,10 @@ const QuickAccess: React.FC = () => {
   const [open, setOpen] = React.useState(false);
   const [updatingId, setUpdatingId] = React.useState<number | null>(null);
 
-  const pinnedParams: QuickAccessListParams = React.useMemo(() => ({ is_pinned: true }), []);
+  const pinnedParams: QuickAccessListParams = React.useMemo(
+    () => ({ is_pinned: true }),
+    []
+  );
 
   // Dashboard list (only pinned)
   const pinnedQuery = useQuery({
@@ -60,11 +66,16 @@ const QuickAccess: React.FC = () => {
   });
 
   const pinnedItems = React.useMemo(() => {
-    const list = sortQuickAccess(pinnedQuery.data ?? []).filter((i) => i.is_pinned);
+    const list = sortQuickAccess(pinnedQuery.data ?? []).filter(
+      (i) => i.is_pinned
+    );
     return list.slice(0, MAX_PIN);
   }, [pinnedQuery.data]);
 
-  const allItems = React.useMemo(() => sortQuickAccess(allQuery.data ?? []), [allQuery.data]);
+  const allItems = React.useMemo(
+    () => sortQuickAccess(allQuery.data ?? []),
+    [allQuery.data]
+  );
 
   const pinnedCount = React.useMemo(() => {
     if (allItems.length) return allItems.filter((i) => i.is_pinned).length;
@@ -72,13 +83,20 @@ const QuickAccess: React.FC = () => {
   }, [allItems, pinnedItems.length]);
 
   const mutation = useMutation({
-    mutationFn: async (vars: { id: number; payload: UpdateQuickAccessPayload }) => {
+    mutationFn: async (vars: {
+      id: number;
+      payload: UpdateQuickAccessPayload;
+    }) => {
       setUpdatingId(vars.id);
       return updateQuickAccess(vars.id, vars.payload);
     },
     onMutate: ({ id, payload }) => {
-      const prevPinned = qc.getQueryData<ApiQuickAccessItem[]>(quickAccessKeys.list(pinnedParams));
-      const prevAll = qc.getQueryData<ApiQuickAccessItem[]>(quickAccessKeys.list({}));
+      const prevPinned = qc.getQueryData<ApiQuickAccessItem[]>(
+        quickAccessKeys.list(pinnedParams)
+      );
+      const prevAll = qc.getQueryData<ApiQuickAccessItem[]>(
+        quickAccessKeys.list({})
+      );
 
       const applyUpdate = (items: ApiQuickAccessItem[] | undefined) => {
         if (!items) return items;
@@ -95,13 +113,17 @@ const QuickAccess: React.FC = () => {
         });
       };
 
-      qc.setQueryData(quickAccessKeys.list(pinnedParams), applyUpdate(prevPinned));
+      qc.setQueryData(
+        quickAccessKeys.list(pinnedParams),
+        applyUpdate(prevPinned)
+      );
       qc.setQueryData(quickAccessKeys.list({}), applyUpdate(prevAll));
 
       return { prevPinned, prevAll };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prevPinned) qc.setQueryData(quickAccessKeys.list(pinnedParams), ctx.prevPinned);
+      if (ctx?.prevPinned)
+        qc.setQueryData(quickAccessKeys.list(pinnedParams), ctx.prevPinned);
       if (ctx?.prevAll) qc.setQueryData(quickAccessKeys.list({}), ctx.prevAll);
       toast.error("Failed to update quick access item.");
     },
@@ -129,7 +151,10 @@ const QuickAccess: React.FC = () => {
     mutation.mutate({ id: item.id, payload });
   };
 
-  const handleUpdateItem = (item: ApiQuickAccessItem, patch: UpdateQuickAccessPayload) => {
+  const handleUpdateItem = (
+    item: ApiQuickAccessItem,
+    patch: UpdateQuickAccessPayload
+  ) => {
     const payload = mergeUpdatePayload(item, patch);
     mutation.mutate({ id: item.id, payload });
   };
@@ -138,7 +163,9 @@ const QuickAccess: React.FC = () => {
     <section className="mb-4">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Quick Access</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          Quick Access
+        </h2>
 
         <button
           type="button"
@@ -179,6 +206,7 @@ const QuickAccess: React.FC = () => {
           {pinnedItems.map((item) => (
             <QuickAccessCard
               key={item.id}
+              id={item.id}
               title={item.title}
               imgUrl={item.img_path ? toPublicUrl(item.img_path) : undefined}
               path={item.path}

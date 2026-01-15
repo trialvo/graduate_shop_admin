@@ -26,6 +26,11 @@ type LoginResponse = {
   };
 };
 
+type LoginErrorResponse = {
+  flag?: number;
+  error?: string;
+};
+
 export default function SignInForm() {
   const navigate = useNavigate();
   const { setSession } = useAuth();
@@ -50,10 +55,20 @@ export default function SignInForm() {
 
     setIsSubmitting(true);
     try {
-      const res = await api.post<LoginResponse>("/admin/login", {
+      const res = await api.post<LoginResponse & LoginErrorResponse>("/admin/login", {
         email: email.trim(),
         password: password,
       });
+
+      if (res.data?.flag && res.data.flag !== 200) {
+        toast.error(res.data.error || "Login failed");
+        return;
+      }
+
+      if (!res.data?.accessToken) {
+        toast.error(res.data?.error || "Login failed");
+        return;
+      }
 
       // ✅ persist based on "Keep me logged in"
       setSession(res.data.accessToken, res.data.admin, {
