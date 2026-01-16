@@ -245,14 +245,21 @@ export default function AdminsListPage() {
   const handleUpdateStatus = async (
     id: number,
     isActive: boolean,
-    role: AdminRole
+    roleId?: number,
+    roleLabel?: AdminRole
   ) => {
     try {
+      const resolvedRoleId =
+        roleId ?? (roleLabel ? ROLE_ID_BY_LABEL[roleLabel] : undefined);
+      if (!resolvedRoleId) {
+        throw new Error("Role is required");
+      }
+
       const res = await updateMutation.mutateAsync({
         id,
         body: {
           is_active: isActive,
-          role_id: ROLE_ID_BY_LABEL[role],
+          role_id: resolvedRoleId,
         },
       });
       assertApiSuccess(res, "Update failed");
@@ -264,6 +271,9 @@ export default function AdminsListPage() {
       );
 
       toast.success("Admin status updated");
+
+      // keep server list synced
+      await refetch();
     } catch (err: any) {
       const msg = err?.response?.data?.error || "Failed to update status";
       toast.error(msg);

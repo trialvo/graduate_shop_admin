@@ -83,6 +83,7 @@ type Draft = AdminListRow & {
 
   avatarFile: File | null;
   avatarPreviewUrl: string;
+  roleId: number | null;
 };
 
 export default function EditAdminModal({
@@ -100,7 +101,12 @@ export default function EditAdminModal({
   loading?: boolean;
   onClose: () => void;
   onUpdateDetails: (next: AdminListRow) => Promise<void>;
-  onUpdateStatus: (id: number, isActive: boolean, role: AdminRole) => Promise<void>;
+  onUpdateStatus: (
+    id: number,
+    isActive: boolean,
+    roleId?: number,
+    roleLabel?: AdminRole
+  ) => Promise<void>;
   onUpdatePassword: (id: number, password: string) => Promise<void>;
   onUpdateAvatar: (id: number, file: File) => Promise<void>;
 }) {
@@ -116,10 +122,10 @@ export default function EditAdminModal({
   const roles = rolesQuery.data ?? [];
 
   const roleOptions: Option[] = useMemo(() => {
-    return roles.map((r) => {
-      const label = normalizeRoleLabel(r.name);
-      return { value: label, label };
-    });
+    return roles.map((r) => ({
+      value: String(r.id),
+      label: normalizeRoleLabel(r.name),
+    }));
   }, [roles]);
 
   useEffect(() => {
@@ -140,8 +146,16 @@ export default function EditAdminModal({
 
       avatarFile: null,
       avatarPreviewUrl: admin.avatarUrl ?? "",
+      roleId: null,
     });
   }, [admin]);
+
+  useEffect(() => {
+    if (!draft || draft.roleId || roles.length === 0) return;
+    const match = roles.find((r) => normalizeRoleLabel(r.name) === draft.role);
+    if (!match) return;
+    setDraft((prev) => (prev ? { ...prev, roleId: match.id } : prev));
+  }, [draft, roles]);
 
   useEffect(() => {
     return () => {
@@ -219,7 +233,7 @@ export default function EditAdminModal({
     if (!draft) return;
     setSaving((prev) => ({ ...prev, status: true }));
     try {
-      await onUpdateStatus(draft.id, draft.status === "ACTIVE", draft.role);
+      await onUpdateStatus(draft.id, draft.status === "ACTIVE", draft.roleId ?? undefined, draft.role);
     } catch {
       // errors are surfaced via parent toast handlers
     } finally {
@@ -466,11 +480,18 @@ export default function EditAdminModal({
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Role</p>
                   <Select
-                    key={`role-${draft.id}-${draft.role}`}
                     options={roleOptions}
                     placeholder="Select role"
-                    defaultValue={draft.role}
-                    onChange={(v) => setDraft({ ...draft, role: v as AdminRole })}
+                    value={draft.roleId ? String(draft.roleId) : ""}
+                    onChange={(v) => {
+                      const nextId = Number(v);
+                      const match = roles.find((r) => r.id === nextId);
+                      setDraft({
+                        ...draft,
+                        roleId: Number.isNaN(nextId) ? null : nextId,
+                        role: normalizeRoleLabel(match?.name),
+                      });
+                    }}
                     isLoading={rolesQuery.isLoading}
                     disabled={rolesQuery.isLoading || rolesQuery.isError}
                   />
@@ -493,7 +514,10 @@ export default function EditAdminModal({
               </div>
 
               <div className="mt-5 flex justify-end">
-                <Button onClick={handleUpdateStatus} disabled={saving.status}>
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={saving.status || rolesQuery.isLoading || !draft.roleId}
+                >
                   {saving.status ? "Updating..." : "Update Status"}
                 </Button>
               </div>
