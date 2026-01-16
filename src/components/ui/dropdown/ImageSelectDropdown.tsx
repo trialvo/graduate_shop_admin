@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Dropdown } from "./Dropdown";
 import { DropdownItem } from "./DropdownItem";
@@ -19,21 +19,17 @@ type Props = {
   disabled?: boolean;
 };
 
-/**
- * A reusable dropdown/select component that supports option images.
- * - Uses the project's existing Dropdown/DropdownItem utilities.
- * - Styled to match existing inputs.
- */
 export default function ImageSelectDropdown({
   value,
   onChange,
   options,
   placeholder,
-  className = "",
+  className,
   disabled = false,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const selected = useMemo(() => options.find((o) => o.id === value) ?? null, [options, value]);
 
   // Close on Escape
@@ -46,27 +42,45 @@ export default function ImageSelectDropdown({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen]);
 
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const el = rootRef.current;
+      if (!el) return;
+      if (el.contains(e.target as Node)) return;
+      setIsOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [isOpen]);
+
   const buttonLabel = selected?.label ?? placeholder;
 
   return (
-    <div className={cn("relative", className)} aria-disabled={disabled ? true : undefined}>
+    <div ref={rootRef} className={cn("relative", className)} aria-disabled={disabled ? true : undefined}>
       <button
         type="button"
         disabled={disabled}
         className={cn(
-          "dropdown-toggle flex h-12 w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 text-sm focus:border-brand-500 focus:outline-none",
+          "dropdown-toggle flex h-12 w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 text-sm transition",
+          "focus:border-brand-500 focus:outline-none",
           "dark:border-gray-800 dark:bg-gray-900",
           disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
         )}
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => {
+          if (disabled) return;
+          setIsOpen((v) => !v);
+        }}
       >
         <span className="flex min-w-0 items-center gap-3">
           {selected?.image ? (
-            <img src={selected.image} alt="" className="h-6 w-6 rounded-md object-cover" />
-          ) : null}
-          <span
-            className={cn("truncate", selected ? "text-gray-700 dark:text-gray-200" : "text-gray-400")}
-          >
+            <img src={selected.image} alt="" className="h-6 w-6 rounded-lg object-cover" />
+          ) : (
+            <span className="h-6 w-6 rounded-lg bg-gray-100 dark:bg-white/5" />
+          )}
+
+          <span className={cn("truncate", selected ? "text-gray-700 dark:text-gray-200" : "text-gray-400")}>
             {buttonLabel}
           </span>
         </span>
@@ -75,7 +89,7 @@ export default function ImageSelectDropdown({
       </button>
 
       <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="w-full p-2">
-        <div className="max-h-64 overflow-auto custom-scrollbar">
+        <div className="max-h-72 overflow-auto custom-scrollbar">
           {options.map((o) => {
             const active = o.id === value;
             return (
@@ -86,17 +100,17 @@ export default function ImageSelectDropdown({
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm",
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm",
                   active
-                    ? "bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-gray-200"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
+                    ? "bg-gray-100 text-gray-800 dark:bg-white/5 dark:text-gray-200"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-white/5"
                 )}
                 baseClassName=""
               >
                 {o.image ? (
-                  <img src={o.image} alt="" className="h-7 w-7 rounded-md object-cover" />
+                  <img src={o.image} alt="" className="h-8 w-8 rounded-lg object-cover" />
                 ) : (
-                  <span className="h-7 w-7 rounded-md bg-gray-100 dark:bg-white/5" />
+                  <span className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-white/5" />
                 )}
                 <span className="min-w-0 truncate">{o.label}</span>
               </DropdownItem>

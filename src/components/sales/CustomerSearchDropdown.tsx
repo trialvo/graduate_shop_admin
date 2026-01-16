@@ -1,113 +1,129 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import React from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAdminUsers, type AdminUserEntity } from "@/api/admin-users.api";
 
 type Props = {
   value: number | null;
-  onChange: (id: number | null, user?: AdminUserEntity | null) => void;
+  onChange: (user: AdminUserEntity | null) => void;
   disabled?: boolean;
   className?: string;
 };
 
-const LIMIT = 20;
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debounced, setDebounced] = React.useState(value);
 
-function fullName(u: AdminUserEntity) {
-  const n = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
-  return n || u.email || `User #${u.id}`;
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(t);
+  }, [value, delayMs]);
+
+  return debounced;
 }
 
-export default function CustomerSearchDropdown({ value, onChange, disabled = false, className }: Props) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const [offset, setOffset] = useState(0);
+function userLabel(u: AdminUserEntity) {
+  const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
+  const phone = u.phones?.[0]?.phone_number ?? "";
+  if (name && phone) return `${name} • ${phone}`;
+  if (name) return name;
+  if (phone) return phone;
+  return u.email;
+}
 
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+export default function CustomerSearchDropdown({
+  value,
+  onChange,
+  disabled = false,
+  className,
+}: Props) {
+  const [open, setOpen] = React.useState(false);
+  const [q, setQ] = React.useState("");
 
-  const usersQuery = useQuery({
-    queryKey: ["adminUsersDropdown", { q: q.trim(), limit: LIMIT, offset }],
-    queryFn: () =>
+  const debouncedQ = useDebouncedValue(q.trim(), 350);
+
+  const query = useInfiniteQuery({
+    queryKey: ["adminUsersForSale", debouncedQ],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
       getAdminUsers({
-        search: q.trim() || undefined,
-        limit: LIMIT,
-        offset: offset === 0 ? undefined : offset,
+        limit: 20,
+        offset: pageParam,
+        search: debouncedQ ? debouncedQ : undefined,
       }),
-    placeholderData: keepPreviousData,
+    getNextPageParam: (last) => {
+      const nextOffset = last.meta.offset + last.meta.limit;
+      return nextOffset < last.meta.total ? nextOffset : undefined;
+    },
+    enabled: open, // load only when dropdown opens
   });
 
-  const users = usersQuery.data?.users ?? [];
-  const total = usersQuery.data?.meta?.total ?? 0;
+  const users = React.useMemo(() => {
+    const pages = query.data?.pages ?? [];
+    return pages.flatMap((p) => p.users);
+  }, [query.data]);
 
-  const selectedUser = useMemo(() => users.find((u) => u.id === value) ?? null, [users, value]);
+  const selected = React.useMemo(() => {
+    if (!value) return null;
+    return users.find((u) => u.id === value) ?? null;
+  }, [users, value]);
 
-  const label = useMemo(() => {
-    if (value && selectedUser) return `${fullName(selectedUser)} (${selectedUser.email})`;
-    if (value && !selectedUser) return `Selected: #${value}`;
-    return "Select customer";
-  }, [value, selectedUser]);
-
-  useEffect(() => {
+  // Close on outside click
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
     if (!open) return;
-
-    const onDoc = (e: MouseEvent) => {
-      const el = wrapRef.current;
-      if (!el) return;
-      if (el.contains(e.target as Node)) return;
-      setOpen(false);
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(e.target as Node)) setOpen(false);
     };
-
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("mousedown", onDoc);
-    window.addEventListener("keydown", onEsc);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      window.removeEventListener("keydown", onEsc);
-    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
   }, [open]);
 
   return (
-    <div ref={wrapRef} className={cn("relative", className)} aria-disabled={disabled ? true : undefined}>
+    <div ref={rootRef} className={cn("relative", className)}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white",
+          "flex h-12 w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-700 transition",
+          "focus:border-brand-500 focus:outline-none",
+          "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200",
           disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
         )}
       >
-        <span className="min-w-0 truncate">{label}</span>
+        <span className={cn("min-w-0 truncate", !selected && "text-gray-400")}>
+          {selected ? userLabel(selected) : "Select customer"}
+        </span>
         <ChevronDown className="h-4 w-4 text-gray-400" />
       </button>
 
       {open ? (
-        <div className="absolute z-[60] mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-950">
+        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-950">
+          {/* search input */}
           <div className="border-b border-gray-200 p-3 dark:border-gray-800">
-            <div className="flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-900">
               <Search size={16} className="text-gray-400" />
               <input
                 value={q}
-                onChange={(e) => {
-                  setOffset(0);
-                  setQ(e.target.value);
-                }}
-                placeholder="Search name/email/phone"
-                className="w-full bg-transparent text-sm text-gray-900 outline-none dark:text-white"
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search by name / email / phone"
+                className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
               />
             </div>
           </div>
 
-          <div className="max-h-72 overflow-auto custom-scrollbar">
-            {usersQuery.isLoading ? (
-              <div className="p-4 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+          {/* list */}
+          <div className="max-h-72 overflow-auto custom-scrollbar p-2">
+            {query.isLoading ? (
+              <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
             ) : users.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No users found</div>
+              <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                No customers found
+              </div>
             ) : (
-              <div className="p-2">
+              <div className="space-y-1">
                 {users.map((u) => {
                   const active = u.id === value;
                   return (
@@ -115,70 +131,43 @@ export default function CustomerSearchDropdown({ value, onChange, disabled = fal
                       key={u.id}
                       type="button"
                       onClick={() => {
-                        onChange(u.id, u);
+                        onChange(u);
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition",
+                        "w-full rounded-xl px-3 py-2 text-left text-sm transition",
                         active
                           ? "bg-gray-100 text-gray-900 dark:bg-white/[0.06] dark:text-white"
                           : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/[0.06]"
                       )}
                     >
-                      <span className="min-w-0 truncate">
-                        {fullName(u)}{" "}
-                        <span className="text-xs text-gray-500 dark:text-gray-400">({u.email})</span>
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">#{u.id}</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate font-medium">{userLabel(u)}</span>
+                        <span className="shrink-0 text-xs text-gray-400">#{u.id}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {u.email}
+                      </div>
                     </button>
                   );
                 })}
+
+                {query.hasNextPage ? (
+                  <button
+                    type="button"
+                    onClick={() => query.fetchNextPage()}
+                    disabled={query.isFetchingNextPage}
+                    className={cn(
+                      "mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700",
+                      "hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]",
+                      query.isFetchingNextPage && "opacity-70"
+                    )}
+                  >
+                    {query.isFetchingNextPage ? "Loading..." : "Load more"}
+                  </button>
+                ) : null}
               </div>
             )}
-          </div>
-
-          <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-            <div>
-              {Math.min(offset + LIMIT, total)} / {total}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={offset === 0}
-                onClick={() => setOffset((o) => Math.max(0, o - LIMIT))}
-                className={cn(
-                  "rounded-md px-2 py-1 ring-1 transition",
-                  offset === 0
-                    ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-800"
-                    : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                )}
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                disabled={offset + LIMIT >= total}
-                onClick={() => setOffset((o) => o + LIMIT)}
-                className={cn(
-                  "rounded-md px-2 py-1 ring-1 transition",
-                  offset + LIMIT >= total
-                    ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-800"
-                    : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                )}
-              >
-                Next
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(null, null);
-                  setOpen(false);
-                }}
-                className="rounded-md px-2 py-1 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              >
-                Clear
-              </button>
-            </div>
           </div>
         </div>
       ) : null}

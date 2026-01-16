@@ -9,16 +9,6 @@ export type AdminUserPhone = {
   is_verified: boolean | 0 | 1;
 };
 
-export type AdminUserAddress = {
-  id: number;
-  phone_id: number;
-  name: string;
-  address_type: "home" | "office" | "n/a" | string;
-  full_address: string;
-  city: string | null;
-  zip_code: string | null;
-};
-
 export type AdminUserEntity = {
   id: number;
   email: string;
@@ -40,18 +30,18 @@ export type AdminUserEntity = {
   phones: AdminUserPhone[];
 
   default_address: any;
-  addresses: AdminUserAddress[];
+  addresses: any[];
 
   created_at: string;
   deleted_at: string | null;
 };
 
 export type AdminUsersListParams = {
-  // ✅ added: backend supports ?search=
-  search?: string;
-
   limit: number;
   offset?: number;
+
+  // ✅ added (your API supports /admin/users?search=...)
+  search?: string;
 };
 
 export type AdminUsersListResponse = {
@@ -144,12 +134,7 @@ export type CreateAdminUserPayload = {
   is_active: "active" | "inactive";
 };
 
-export type CreateAdminUserResponse =
-  | { success: true; message: string; data: { id: number; email: string } }
-  | { flag: number; error: string }
-  | any;
-
-export async function createAdminUser(payload: CreateAdminUserPayload): Promise<CreateAdminUserResponse> {
+export async function createAdminUser(payload: CreateAdminUserPayload): Promise<any> {
   const fd = buildCreateUserFormData(payload);
   const res = await api.post("/admin/createUser", fd, {
     headers: { "Content-Type": "multipart/form-data" },
