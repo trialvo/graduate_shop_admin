@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Camera, KeyRound, Mail, Phone, User2, MapPin, Calendar } from "lucide-react";
+import { Camera, KeyRound, Mail, Phone, User2, MapPin } from "lucide-react";
 
 import Input from "@/components/form/input/InputField";
 import Select, { type Option } from "@/components/form/Select";
+import DatePicker from "@/components/form/date-picker";
 import Button from "@/components/ui/button/Button";
 import Switch from "@/components/form/switch/Switch";
 import { AdminRole, AdminListRow } from "../types";
@@ -46,10 +47,40 @@ function isValidBDPhone(v: string): boolean {
   return /^(\+8801\d{9}|01\d{9})$/.test(p);
 }
 
+function pad2(n: number) {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+/** ISO -> DD/MM/YYYY */
+function isoToDDMMYYYY(iso?: string): string {
+  if (!iso) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+/** DD/MM/YYYY -> ISO (YYYY-MM-DD) */
+function ddmmyyyyToISO(v?: string): string {
+  if (!v) return "";
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v.trim());
+  if (!m) return "";
+  const dd = Number(m[1]);
+  const mm = Number(m[2]);
+  const yy = Number(m[3]);
+  if (dd < 1 || dd > 31 || mm < 1 || mm > 12) return "";
+  // basic validity check using Date
+  const dt = new Date(yy, mm - 1, dd);
+  if (dt.getFullYear() !== yy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return "";
+  return `${yy}-${pad2(mm)}-${pad2(dd)}`;
+}
+
 type Draft = AdminListRow & {
+  joinDateISO: string;
+
   changePassword: boolean;
   newPassword: string;
   confirmNewPassword: string;
+
   avatarFile: File | null;
   avatarPreviewUrl: string;
 };
@@ -69,7 +100,7 @@ export default function EditAdminModal({
   loading?: boolean;
   onClose: () => void;
   onUpdateDetails: (next: AdminListRow) => Promise<void>;
-  onUpdateStatus: (id: number, isActive: boolean) => Promise<void>;
+  onUpdateStatus: (id: number, isActive: boolean, role: AdminRole) => Promise<void>;
   onUpdatePassword: (id: number, password: string) => Promise<void>;
   onUpdateAvatar: (id: number, file: File) => Promise<void>;
 }) {
@@ -80,6 +111,7 @@ export default function EditAdminModal({
     password: false,
     avatar: false,
   });
+
   const rolesQuery = useAdminRoles();
   const roles = rolesQuery.data ?? [];
 
@@ -95,11 +127,17 @@ export default function EditAdminModal({
       setDraft(null);
       return;
     }
+
+    const joinISO = ddmmyyyyToISO(admin.joinDate);
+
     setDraft({
       ...admin,
+      joinDateISO: joinISO,
+
       changePassword: false,
       newPassword: "",
       confirmNewPassword: "",
+
       avatarFile: null,
       avatarPreviewUrl: admin.avatarUrl ?? "",
     });
@@ -181,7 +219,7 @@ export default function EditAdminModal({
     if (!draft) return;
     setSaving((prev) => ({ ...prev, status: true }));
     try {
-      await onUpdateStatus(draft.id, draft.status === "ACTIVE");
+      await onUpdateStatus(draft.id, draft.status === "ACTIVE", draft.role);
     } catch {
       // errors are surfaced via parent toast handlers
     } finally {
@@ -330,17 +368,12 @@ export default function EditAdminModal({
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Name <span className="text-error-500">*</span>
                   </p>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <User2 size={16} />
-                    </div>
-                    <Input
-                      startIcon={<User2 size={16} />}
-                      value={draft.name}
-                      onChange={(e) => setDraft({ ...draft, name: String(e.target.value) })}
-                      placeholder="Admin name"
-                    />
-                  </div>
+                  <Input
+                    startIcon={<User2 size={16} />}
+                    value={draft.name}
+                    onChange={(e) => setDraft({ ...draft, name: String(e.target.value) })}
+                    placeholder="Admin name"
+                  />
                   {errors.name ? <p className="text-xs text-error-500">{errors.name}</p> : null}
                 </div>
 
@@ -349,17 +382,12 @@ export default function EditAdminModal({
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email <span className="text-error-500">*</span>
                   </p>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Mail size={16} />
-                    </div>
-                    <Input
-                      startIcon={<Mail size={16} />}
-                      value={draft.email}
-                      onChange={(e) => setDraft({ ...draft, email: String(e.target.value) })}
-                      placeholder="admin@email.com"
-                    />
-                  </div>
+                  <Input
+                    startIcon={<Mail size={16} />}
+                    value={draft.email}
+                    onChange={(e) => setDraft({ ...draft, email: String(e.target.value) })}
+                    placeholder="admin@email.com"
+                  />
                   {errors.email ? (
                     <p className="text-xs text-error-500">{errors.email}</p>
                   ) : null}
@@ -370,58 +398,54 @@ export default function EditAdminModal({
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Phone <span className="text-error-500">*</span>
                   </p>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Phone size={16} />
-                    </div>
-                    <Input
-                      startIcon={<Phone size={16} />}
-                      value={draft.phone}
-                      onChange={(e) => setDraft({ ...draft, phone: String(e.target.value) })}
-                      placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
-                    />
-                  </div>
+                  <Input
+                    startIcon={<Phone size={16} />}
+                    value={draft.phone}
+                    onChange={(e) => setDraft({ ...draft, phone: String(e.target.value) })}
+                    placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
+                  />
                   {errors.phone ? (
                     <p className="text-xs text-error-500">{errors.phone}</p>
                   ) : null}
                 </div>
 
-                {/* Join Date */}
+                {/* ✅ Join Date (Reusable DatePicker) */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Joining Date
                   </p>
-                  <Input
-                    startIcon={<Calendar size={16} />}
-                    value={draft.joinDate}
-                    onChange={(e) =>
-                      setDraft({ ...draft, joinDate: String(e.target.value) })
-                    }
-                    placeholder="DD/MM/YYYY"
+
+                  <DatePicker
+                    value={draft.joinDateISO}
+                    placeholder="Select a date"
+                    onChange={(value) => {
+                      setDraft((prev) => {
+                        if (!prev) return prev;
+                        const nextIso = String(value || "");
+                        return {
+                          ...prev,
+                          joinDateISO: nextIso,
+                          joinDate: nextIso ? isoToDDMMYYYY(nextIso) : "",
+                        };
+                      });
+                    }}
                   />
                 </div>
 
                 {/* Address */}
                 <div className="space-y-2 md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Address
-                  </p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Address</p>
                   <Input
                     startIcon={<MapPin size={16} />}
                     value={draft.address}
-                    onChange={(e) =>
-                      setDraft({ ...draft, address: String(e.target.value) })
-                    }
+                    onChange={(e) => setDraft({ ...draft, address: String(e.target.value) })}
                     placeholder="House/road details, city, etc."
                   />
                 </div>
               </div>
 
               <div className="mt-5 flex justify-end">
-                <Button
-                  onClick={handleUpdateDetails}
-                  disabled={!canUpdateDetails || saving.details}
-                >
+                <Button onClick={handleUpdateDetails} disabled={!canUpdateDetails || saving.details}>
                   {saving.details ? "Updating..." : "Update Details"}
                 </Button>
               </div>
@@ -431,9 +455,7 @@ export default function EditAdminModal({
           {/* Role & Status */}
           <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Access & Status
-              </p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Access & Status</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Define role permissions and account status.
               </p>
@@ -483,9 +505,7 @@ export default function EditAdminModal({
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Password
-                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Password</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Change password only when needed.
                   </p>
@@ -510,20 +530,13 @@ export default function EditAdminModal({
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       New Password <span className="text-error-500">*</span>
                     </p>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <KeyRound size={16} />
-                      </div>
-                      <Input
-                        className="pl-9"
-                        type="password"
-                        value={draft.newPassword}
-                        onChange={(e) =>
-                          setDraft({ ...draft, newPassword: String(e.target.value) })
-                        }
-                        placeholder="Minimum 6 characters"
-                      />
-                    </div>
+                    <Input
+                      type="password"
+                      value={draft.newPassword}
+                      onChange={(e) => setDraft({ ...draft, newPassword: String(e.target.value) })}
+                      placeholder="Minimum 6 characters"
+                      startIcon={<KeyRound size={16} />}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -534,10 +547,7 @@ export default function EditAdminModal({
                       type="password"
                       value={draft.confirmNewPassword}
                       onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          confirmNewPassword: String(e.target.value),
-                        })
+                        setDraft({ ...draft, confirmNewPassword: String(e.target.value) })
                       }
                       placeholder="Re-enter password"
                     />
@@ -552,10 +562,7 @@ export default function EditAdminModal({
               )}
 
               <div className="mt-5 flex justify-end">
-                <Button
-                  onClick={handleUpdatePassword}
-                  disabled={!canUpdatePassword || saving.password}
-                >
+                <Button onClick={handleUpdatePassword} disabled={!canUpdatePassword || saving.password}>
                   {saving.password ? "Updating..." : "Update Password"}
                 </Button>
               </div>
@@ -568,9 +575,7 @@ export default function EditAdminModal({
           <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                How it will appear in the list.
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">How it will appear in the list.</p>
             </div>
 
             <div className="p-5">

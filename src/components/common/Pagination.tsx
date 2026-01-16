@@ -136,43 +136,40 @@ export default function Pagination({
       )}
     >
       {/* Left summary */}
-      <div className="flex flex-col gap-1">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Showing <span className="font-semibold">{start}</span>–{" "}
-          <span className="font-semibold">{end}</span> of{" "}
-          <span className="font-semibold">{totalItems}</span>
-        </p>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>
-            Page <span className="font-semibold text-gray-700 dark:text-gray-200">{safePage}</span>{" "}
-            /{" "}
-            <span className="font-semibold text-gray-700 dark:text-gray-200">{totalPages}</span>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <span>
+          Page{" "}
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {safePage}
+          </span>{" "}
+          /{" "}
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {totalPages}
           </span>
+        </span>
 
-          <span className="hidden h-3 w-px bg-gray-200 dark:bg-gray-800 sm:inline-block" />
+        <span className="hidden h-3 w-px bg-gray-200 dark:bg-gray-800 sm:inline-block" />
 
-          {/* Quick jump (nice on long lists) */}
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline">Jump:</span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => go(1)}
-                disabled={safePage <= 1}
-              >
-                First
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => go(totalPages)}
-                disabled={safePage >= totalPages}
-              >
-                Last
-              </Button>
-            </div>
+        {/* Quick jump (nice on long lists) */}
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline">Jump:</span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => go(1)}
+              disabled={safePage <= 1}
+            >
+              First
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => go(totalPages)}
+              disabled={safePage >= totalPages}
+            >
+              Last
+            </Button>
           </div>
         </div>
       </div>

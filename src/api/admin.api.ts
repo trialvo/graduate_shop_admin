@@ -83,6 +83,12 @@ export type UploadProfileImageResponse = {
   profile_img_path: string;
 };
 
+export type DeleteAdminResponse = {
+  success: boolean;
+  id?: number;
+  message?: string;
+};
+
 export const getAdmins = async (params: {
   role?: string;
   email?: string;
@@ -97,7 +103,9 @@ export const getAdmins = async (params: {
 };
 
 export const getAdminById = async (id: number) => {
-  const { data } = await api.get<AdminByIdResponse>(`/admin/getAdminById/${id}`);
+  const { data } = await api.get<AdminByIdResponse>(
+    `/admin/getAdminById/${id}`
+  );
   return data;
 };
 
@@ -154,5 +162,14 @@ export const uploadProfileImage = async (id: number, file: File) => {
     fd,
     { headers: { "Content-Type": "multipart/form-data" } }
   );
+  return data;
+};
+
+/**
+ * ✅ Delete admin
+ * NOTE: If your backend route is different, only change the URL here.
+ */
+export const deleteAdmin = async (id: number) => {
+  const { data } = await api.delete<DeleteAdminResponse>(`/admin/user/${id}`);
   return data;
 };

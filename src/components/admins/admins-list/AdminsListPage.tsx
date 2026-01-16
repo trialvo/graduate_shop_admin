@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, RefreshCcw, Search, Trash2, UserPlus } from "lucide-react";
+import { Pencil, Search, Trash2, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/common/Pagination";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
@@ -17,10 +16,12 @@ import { toPublicUrl } from "@/config/env";
 import {
   useAdminById,
   useAdmins,
+  useDeleteAdmin,
   useUpdateAdmin,
   useUploadAdminProfile,
 } from "@/hooks/useAdmins";
 import type { AdminByIdResponse, AdminListResponse } from "@/api/admin.api";
+import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -54,6 +55,28 @@ const toJoinDate = (iso: string) => {
   return d.toLocaleDateString("en-GB");
 };
 
+type ApiMaybeError = {
+  flag?: number;
+  error?: string;
+  message?: string;
+  success?: boolean;
+};
+
+const assertApiSuccess = (res: unknown, fallback: string) => {
+  if (!res) {
+    throw new Error(fallback);
+  }
+  if (typeof res !== "object") return;
+
+  const maybe = res as ApiMaybeError;
+  if (maybe.flag && maybe.error) {
+    throw new Error(maybe.error);
+  }
+  if (maybe.success === false) {
+    throw new Error(maybe.message || fallback);
+  }
+};
+
 export default function AdminsListPage() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<AdminListRow[]>([]);
@@ -62,10 +85,9 @@ export default function AdminsListPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [refreshedAt, setRefreshedAt] = useState<Date>(new Date());
-
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminListRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminListRow | null>(null);
@@ -84,6 +106,7 @@ export default function AdminsListPage() {
 
   const updateMutation = useUpdateAdmin();
   const uploadProfileMutation = useUploadAdminProfile();
+  const deleteMutation = useDeleteAdmin();
 
   const toListRow = (
     admin: AdminListResponse["data"][number] | AdminByIdResponse
@@ -143,25 +166,33 @@ export default function AdminsListPage() {
     setPage(1);
   }, [search, pageSize]);
 
-  const headerTime = useMemo(() => {
-    const d = refreshedAt;
-    const month = d.toLocaleString("en-US", { month: "long" });
-    const day = d.getDate();
-    const year = d.getFullYear();
-    const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-    return `${month} ${day}, ${year} at ${time}`;
-  }, [refreshedAt]);
-
   const openDelete = (row: AdminListRow) => {
     setDeleteTarget(row);
     setDeleteOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-    setDeleteOpen(false);
-    setDeleteTarget(null);
+
+    setDeleting(true);
+    try {
+      const res = await deleteMutation.mutateAsync({ id: deleteTarget.id });
+      assertApiSuccess(res, "Delete failed");
+
+      setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+
+      toast.success("Admin deleted");
+      setDeleteOpen(false);
+      setDeleteTarget(null);
+
+      // keep server list synced
+      await refetch();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || "Failed to delete admin";
+      toast.error(msg);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const openEdit = (row: AdminListRow) => {
@@ -184,12 +215,9 @@ export default function AdminsListPage() {
           last_name: lastName,
           phone: next.phone.trim() || null,
           address: next.address.trim() || null,
-          role_id: ROLE_ID_BY_LABEL[next.role],
         },
       });
-      if (res?.success === false) {
-        throw new Error("Update failed");
-      }
+      assertApiSuccess(res, "Update failed");
 
       setRows((prev) =>
         prev.map((r) =>
@@ -214,15 +242,20 @@ export default function AdminsListPage() {
     }
   };
 
-  const handleUpdateStatus = async (id: number, isActive: boolean) => {
+  const handleUpdateStatus = async (
+    id: number,
+    isActive: boolean,
+    role: AdminRole
+  ) => {
     try {
       const res = await updateMutation.mutateAsync({
         id,
-        body: { is_active: isActive },
+        body: {
+          is_active: isActive,
+          role_id: ROLE_ID_BY_LABEL[role],
+        },
       });
-      if (res?.success === false) {
-        throw new Error("Update failed");
-      }
+      assertApiSuccess(res, "Update failed");
 
       setRows((prev) =>
         prev.map((r) =>
@@ -244,9 +277,7 @@ export default function AdminsListPage() {
         id,
         body: { password },
       });
-      if (res?.success === false) {
-        throw new Error("Update failed");
-      }
+      assertApiSuccess(res, "Update failed");
 
       setRows((prev) =>
         prev.map((r) => (r.id === id ? { ...r, passwordMasked: "************" } : r))
@@ -263,11 +294,10 @@ export default function AdminsListPage() {
   const handleUpdateAvatar = async (id: number, file: File) => {
     try {
       const res = await uploadProfileMutation.mutateAsync({ id, file });
+      assertApiSuccess(res, "Failed to update profile image");
       const avatarUrl = toPublicUrl(res.profile_img_path) ?? undefined;
 
-      setRows((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, avatarUrl } : r))
-      );
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, avatarUrl } : r)));
 
       toast.success("Profile image updated");
     } catch (err: any) {
@@ -277,15 +307,18 @@ export default function AdminsListPage() {
     }
   };
 
+  const stickyHeaderCell =
+    "sticky right-0 z-20 bg-gray-50 dark:bg-gray-800 border-l border-gray-200 dark:border-gray-800";
+  const stickyBodyCell =
+    "sticky right-0 z-10 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-800";
+
   return (
     <div className="space-y-6">
       {/* Top actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-     
-          <Button startIcon={<UserPlus size={16} />} onClick={() => navigate("/create-admin")}>
-            Create User
-          </Button>
-    
+        <Button startIcon={<UserPlus size={16} />} onClick={() => navigate("/create-admin")}>
+          Create User
+        </Button>
 
         <div className="relative w-full md:max-w-sm">
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
@@ -321,7 +354,10 @@ export default function AdminsListPage() {
                   <TableCell
                     key={h}
                     isHeader
-                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                    className={cn(
+                      "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                      h === "ACTIONS" ? stickyHeaderCell : ""
+                    )}
                   >
                     {h}
                   </TableCell>
@@ -396,7 +432,8 @@ export default function AdminsListPage() {
                     <span className="line-clamp-1">{row.address || "-"}</span>
                   </TableCell>
 
-                  <TableCell className="px-4 py-4">
+                  {/* ✅ Sticky Actions */}
+                  <TableCell className={cn("px-4 py-4", stickyBodyCell)}>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -414,6 +451,7 @@ export default function AdminsListPage() {
                         onClick={() => openDelete(row)}
                         aria-label="Delete"
                         title="Delete"
+                        disabled={deleting}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -468,10 +506,11 @@ export default function AdminsListPage() {
             ? `Are you sure you want to delete "${deleteTarget.name}"?`
             : "Are you sure you want to delete this admin?"
         }
-        confirmText="Delete"
+        confirmText={deleting ? "Deleting..." : "Delete"}
         cancelText="Cancel"
         tone="danger"
         onClose={() => {
+          if (deleting) return;
           setDeleteOpen(false);
           setDeleteTarget(null);
         }}

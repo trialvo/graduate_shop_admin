@@ -1,18 +1,23 @@
-// src/hooks/useAdmins.ts
-import { useMutation, useQuery, type UseMutationOptions } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import {
   createAdmin,
+  deleteAdmin,
   getAdminById,
   getAdmins,
   uploadProfileImage,
   updateAdmin,
-  type CreateAdminPayload,
-  type CreateAdminResponse,
   type AdminByIdResponse,
   type AdminListResponse,
-  type UploadProfileImageResponse,
+  type CreateAdminPayload,
+  type CreateAdminResponse,
+  type DeleteAdminResponse,
   type UpdateAdminBody,
   type UpdateAdminResponse,
+  type UploadProfileImageResponse,
 } from "@/api/admin.api";
 
 export const adminKeys = {
@@ -47,7 +52,7 @@ export const useAdminById = (id: number | null) => {
  * payload can include: profile?: File | null
  */
 export const useCreateAdmin = (
-  options?: UseMutationOptions<CreateAdminResponse, unknown, CreateAdminPayload>,
+  options?: UseMutationOptions<CreateAdminResponse, unknown, CreateAdminPayload>
 ) => {
   return useMutation<CreateAdminResponse, unknown, CreateAdminPayload>({
     mutationFn: (payload) => createAdmin(payload),
@@ -60,9 +65,13 @@ export const useUpdateAdmin = (
     UpdateAdminResponse,
     unknown,
     { id: number; body: UpdateAdminBody }
-  >,
+  >
 ) => {
-  return useMutation<UpdateAdminResponse, unknown, { id: number; body: UpdateAdminBody }>({
+  return useMutation<
+    UpdateAdminResponse,
+    unknown,
+    { id: number; body: UpdateAdminBody }
+  >({
     mutationFn: ({ id, body }) => updateAdmin(id, body),
     ...options,
   });
@@ -73,10 +82,23 @@ export const useUploadAdminProfile = (
     UploadProfileImageResponse,
     unknown,
     { id: number; file: File }
-  >,
+  >
 ) => {
-  return useMutation<UploadProfileImageResponse, unknown, { id: number; file: File }>({
+  return useMutation<
+    UploadProfileImageResponse,
+    unknown,
+    { id: number; file: File }
+  >({
     mutationFn: ({ id, file }) => uploadProfileImage(id, file),
+    ...options,
+  });
+};
+
+export const useDeleteAdmin = (
+  options?: UseMutationOptions<DeleteAdminResponse, unknown, { id: number }>
+) => {
+  return useMutation<DeleteAdminResponse, unknown, { id: number }>({
+    mutationFn: ({ id }) => deleteAdmin(id),
     ...options,
   });
 };
