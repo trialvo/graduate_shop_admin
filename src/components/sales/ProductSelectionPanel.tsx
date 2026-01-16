@@ -168,7 +168,6 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
     <div className={cn("flex h-full flex-col rounded-2xl border border-gray-200 bg-white", "dark:border-gray-800 dark:bg-white/[0.03]")}>
       <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-6">
         <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Product Section</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Search uses: search=&lt;value&gt; (no q=).</p>
       </div>
 
       <div className="flex-1 overflow-auto custom-scrollbar px-5 py-5 sm:px-6">
@@ -223,7 +222,7 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
               No products found.
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               {products.map((p) => (
                 <ProductCard
                   key={String(p.id)}
