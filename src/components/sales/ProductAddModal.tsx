@@ -7,8 +7,14 @@ import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import { Modal } from "@/components/ui/modal";
 
+import RichTextPreview from "@/components/ui/editor/RichTextPreview";
+
 import type { CartItem, SaleProduct } from "./types";
-import { getProduct, type ProductSingleResponseEntity, type ProductSingleVariation } from "@/api/products.api";
+import {
+  getProduct,
+  type ProductSingleResponseEntity,
+  type ProductSingleVariation,
+} from "@/api/products.api";
 
 // Swiper
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -28,7 +34,6 @@ function formatBdt(n: number) {
 function discountLabel(v: ProductSingleVariation) {
   const d = Number(v.discount ?? 0);
   if (!Number.isFinite(d) || d <= 0) return "-";
-  // discount_type: 1 = percent, 0 = flat (based on your examples)
   return v.discount_type === 1 ? `${d}%` : formatBdt(d);
 }
 
@@ -37,7 +42,12 @@ function getCoverImage(single: ProductSingleResponseEntity) {
   return img ? toPublicUrl(img) : null;
 }
 
-export default function ProductAddModal({ open, onClose, product, onAdd }: Props) {
+export default function ProductAddModal({
+  open,
+  onClose,
+  product,
+  onAdd,
+}: Props) {
   const productId = React.useMemo(() => {
     const raw = product?.id;
     const n = Number(raw);
@@ -65,8 +75,14 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
     if (!open || !single) return;
     setQty(1);
 
-    const initColor = single.available_colors?.[0]?.id ?? single.variations?.[0]?.color?.id ?? null;
-    const initVariant = single.available_variants?.[0]?.id ?? single.variations?.[0]?.variant?.id ?? null;
+    const initColor =
+      single.available_colors?.[0]?.id ??
+      single.variations?.[0]?.color?.id ??
+      null;
+    const initVariant =
+      single.available_variants?.[0]?.id ??
+      single.variations?.[0]?.variant?.id ??
+      null;
 
     setColorId(initColor);
     setVariantId(initVariant);
@@ -74,7 +90,11 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
 
   const selectedVariation = React.useMemo(() => {
     if (!single || !colorId || !variantId) return null;
-    return single.variations?.find((v) => v.color?.id === colorId && v.variant?.id === variantId) ?? null;
+    return (
+      single.variations?.find(
+        (v) => v.color?.id === colorId && v.variant?.id === variantId
+      ) ?? null
+    );
   }, [single, colorId, variantId]);
 
   const images = React.useMemo(() => {
@@ -83,31 +103,47 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
     return list.map((i) => ({ ...i, path: toPublicUrl(i.path) }));
   }, [single]);
 
-  const canAdd = Boolean(selectedVariation?.id) && qty > 0 && selectedVariation?.in_stock !== false;
+  const canAdd =
+    Boolean(selectedVariation?.id) &&
+    qty > 0 &&
+    selectedVariation?.in_stock !== false;
 
   const key = React.useMemo(() => {
     if (!single || !selectedVariation) return "";
     return `p:${single.id}__pv:${selectedVariation.id}`;
   }, [single, selectedVariation]);
 
-  const unitPrice = Number(selectedVariation?.final_price ?? selectedVariation?.selling_price ?? 0);
+  const unitPrice = Number(
+    selectedVariation?.final_price ?? selectedVariation?.selling_price ?? 0
+  );
   const sku = String(selectedVariation?.sku ?? "");
 
   const buyingPrice = Number(selectedVariation?.buying_price ?? 0);
   const sellingPrice = Number(selectedVariation?.selling_price ?? 0);
   const finalPrice = Number(selectedVariation?.final_price ?? sellingPrice);
-  const profit = Number.isFinite(finalPrice - buyingPrice) ? finalPrice - buyingPrice : 0;
+  const profit = Number.isFinite(finalPrice - buyingPrice)
+    ? finalPrice - buyingPrice
+    : 0;
 
-  const title = single?.name ?? String(product?.name ?? product?.title ?? "Product");
+  const title =
+    single?.name ?? String(product?.name ?? product?.title ?? "Product");
 
-  const brandImg = single?.brand?.image ? toPublicUrl(single.brand.image) : null;
+  const brandImg = single?.brand?.image
+    ? toPublicUrl(single.brand.image)
+    : null;
 
   return (
-    <Modal isOpen={open} onClose={onClose} className="w-full max-w-[1100px] overflow-hidden">
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      className="w-full max-w-[1100px] overflow-hidden"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-6 py-5 dark:border-gray-800">
         <div className="min-w-0">
-          <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white/90">{title}</h3>
+          <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white/90">
+            {title}
+          </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Select color & variant then add to cart (BDT).
           </p>
@@ -138,7 +174,11 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
             <div className="col-span-12 lg:col-span-5">
               <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950">
                 {images.length > 0 ? (
-                  <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }}>
+                  <Swiper
+                    modules={[Navigation, Pagination]}
+                    navigation
+                    pagination={{ clickable: true }}
+                  >
                     {images.map((img) => (
                       <SwiperSlide key={img.id}>
                         <img
@@ -163,8 +203,17 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                     </div>
                   </div>
                   <div className="col-span-6 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.04]">
-                    <div className="text-gray-500 dark:text-gray-400">Stock</div>
-                    <div className={cn("mt-1 font-semibold", selectedVariation?.in_stock ? "text-success-700 dark:text-success-300" : "text-error-700 dark:text-error-300")}>
+                    <div className="text-gray-500 dark:text-gray-400">
+                      Stock
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-1 font-semibold",
+                        selectedVariation?.in_stock
+                          ? "text-success-700 dark:text-success-300"
+                          : "text-error-700 dark:text-error-300"
+                      )}
+                    >
                       {selectedVariation ? `${selectedVariation.stock}` : "-"}
                     </div>
                   </div>
@@ -175,13 +224,19 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
               <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950">
                 <div className="flex items-center gap-3">
                   {brandImg ? (
-                    <img src={brandImg} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                    <img
+                      src={brandImg}
+                      alt=""
+                      className="h-10 w-10 rounded-xl object-cover"
+                    />
                   ) : (
                     <div className="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/[0.05]" />
                   )}
 
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Brand</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Brand
+                    </div>
                     <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
                       {single.brand?.name ?? "-"}
                     </div>
@@ -190,15 +245,20 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
 
                 <div className="mt-4 grid grid-cols-12 gap-3 text-sm">
                   <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-white/[0.04]">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Category</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Category
+                    </div>
                     <div className="mt-1 font-semibold text-gray-900 dark:text-white/90">
-                      {single.main_category?.name ?? "-"} • {single.sub_category?.name ?? "-"} •{" "}
+                      {single.main_category?.name ?? "-"} •{" "}
+                      {single.sub_category?.name ?? "-"} •{" "}
                       {single.child_category?.name ?? "-"}
                     </div>
                   </div>
 
                   <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-white/[0.04]">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Attribute</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Attribute
+                    </div>
                     <div className="mt-1 font-semibold text-gray-900 dark:text-white/90">
                       {single.attribute?.name ?? "-"}
                     </div>
@@ -239,7 +299,9 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
               <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950">
                 {/* Colors */}
                 <div>
-                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">Colors</div>
+                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">
+                    Colors
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {(single.available_colors ?? []).map((c) => {
                       const active = c.id === colorId;
@@ -269,7 +331,9 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
 
                 {/* Variants */}
                 <div className="mt-5">
-                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">Variants</div>
+                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">
+                    Variants
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {(single.available_variants ?? []).map((v) => {
                       const active = v.id === variantId;
@@ -301,30 +365,59 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.04]">
                   <div className="grid grid-cols-12 gap-3 text-sm">
                     <div className="col-span-12 md:col-span-5">
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Selected</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Selected
+                      </div>
                       <div className="font-semibold text-gray-900 dark:text-white/90">
-                        {selectedVariation ? `${selectedVariation.color.name} • ${selectedVariation.variant.name}` : "Select color & variant"}
+                        {selectedVariation
+                          ? `${selectedVariation.color.name} • ${selectedVariation.variant.name}`
+                          : "Select color & variant"}
                       </div>
                       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Discount: {selectedVariation ? discountLabel(selectedVariation) : "-"}
+                        Discount:{" "}
+                        {selectedVariation
+                          ? discountLabel(selectedVariation)
+                          : "-"}
                       </div>
                     </div>
 
                     <div className="col-span-6 md:col-span-2">
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Buying</div>
-                      <div className="font-semibold text-gray-900 dark:text-white/90">{formatBdt(buyingPrice)}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Buying
+                      </div>
+                      <div className="font-semibold text-gray-900 dark:text-white/90">
+                        {formatBdt(buyingPrice)}
+                      </div>
                     </div>
 
                     <div className="col-span-6 md:col-span-2">
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Selling</div>
-                      <div className="font-semibold text-gray-900 dark:text-white/90">{formatBdt(sellingPrice)}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Selling
+                      </div>
+                      <div className="font-semibold text-gray-900 dark:text-white/90">
+                        {formatBdt(sellingPrice)}
+                      </div>
                     </div>
 
                     <div className="col-span-6 md:col-span-3">
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Final</div>
-                      <div className="font-semibold text-brand-600 dark:text-brand-400">{formatBdt(finalPrice)}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Final
+                      </div>
+                      <div className="font-semibold text-brand-600 dark:text-brand-400">
+                        {formatBdt(finalPrice)}
+                      </div>
                       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Profit: <span className={cn("font-semibold", profit >= 0 ? "text-success-700 dark:text-success-300" : "text-error-700 dark:text-error-300")}>{formatBdt(profit)}</span>
+                        Profit:{" "}
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            profit >= 0
+                              ? "text-success-700 dark:text-success-300"
+                              : "text-error-700 dark:text-error-300"
+                          )}
+                        >
+                          {formatBdt(profit)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -332,7 +425,9 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
 
                 {/* Qty */}
                 <div className="mt-5">
-                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">Quantity</div>
+                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">
+                    Quantity
+                  </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -346,7 +441,9 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                       type="number"
                       min={1}
                       value={qty}
-                      onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+                      onChange={(e) =>
+                        setQty(Math.max(1, Number(e.target.value)))
+                      }
                       className="h-11 w-24 rounded-xl border border-gray-200 px-3 text-center text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
                     />
 
@@ -357,69 +454,6 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                     >
                       <Plus size={16} />
                     </button>
-                  </div>
-                </div>
-
-                {/* Variation table */}
-                <div className="mt-6">
-                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">All Variations</div>
-
-                  <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
-                    <div className="grid grid-cols-12 bg-gray-50 px-3 py-2 text-[11px] font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-                      <div className="col-span-4">Color • Variant</div>
-                      <div className="col-span-2 text-center">Buying</div>
-                      <div className="col-span-2 text-center">Selling</div>
-                      <div className="col-span-2 text-center">Discount</div>
-                      <div className="col-span-2 text-right">Final • Profit</div>
-                    </div>
-
-                    <div className="max-h-56 overflow-auto custom-scrollbar">
-                      {single.variations.map((v) => {
-                        const active = v.id === selectedVariation?.id;
-                        const vProfit = Number(v.final_price) - Number(v.buying_price);
-                        return (
-                          <button
-                            key={v.id}
-                            type="button"
-                            onClick={() => {
-                              setColorId(v.color.id);
-                              setVariantId(v.variant.id);
-                            }}
-                            className={cn(
-                              "grid w-full grid-cols-12 items-center gap-2 border-t border-gray-200 px-3 py-3 text-left text-sm dark:border-gray-800",
-                              active ? "bg-brand-50 dark:bg-brand-500/10" : "bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                            )}
-                          >
-                            <div className="col-span-4 min-w-0">
-                              <div className="truncate font-semibold text-gray-900 dark:text-white/90">
-                                {v.color.name} • {v.variant.name}
-                              </div>
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                SKU: {v.sku} • Stock: {v.stock}
-                              </div>
-                            </div>
-
-                            <div className="col-span-2 text-center text-sm font-semibold text-gray-900 dark:text-white/90">
-                              {formatBdt(Number(v.buying_price))}
-                            </div>
-                            <div className="col-span-2 text-center text-sm font-semibold text-gray-900 dark:text-white/90">
-                              {formatBdt(Number(v.selling_price))}
-                            </div>
-                            <div className="col-span-2 text-center text-sm font-semibold text-gray-900 dark:text-white/90">
-                              {discountLabel(v)}
-                            </div>
-                            <div className="col-span-2 text-right">
-                              <div className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-                                {formatBdt(Number(v.final_price))}
-                              </div>
-                              <div className={cn("mt-1 text-xs font-semibold", vProfit >= 0 ? "text-success-700 dark:text-success-300" : "text-error-700 dark:text-error-300")}>
-                                Profit: {formatBdt(vProfit)}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
                 </div>
 
@@ -447,7 +481,8 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                         return;
                       }
 
-                      const img = getCoverImage(single) ?? (images[0]?.path ?? "");
+                      const img =
+                        getCoverImage(single) ?? images[0]?.path ?? "";
 
                       const item: CartItem = {
                         key,
@@ -456,10 +491,10 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                         title: single.name,
                         sku: selectedVariation.sku,
                         image: img || "",
-                        unitPrice: Number(selectedVariation.final_price ?? selectedVariation.selling_price ?? 0),
+                        unitPrice,
                         qty,
 
-                        // legacy optional
+                        // legacy optional fields
                         variant: selectedVariation.color.name,
                         size: selectedVariation.variant.name,
                       };
@@ -473,18 +508,20 @@ export default function ProductAddModal({ open, onClose, product, onAdd }: Props
                 </div>
               </div>
 
-              {/* Descriptions */}
-              <div className="mt-4 grid grid-cols-12 gap-4">
-                <div className="col-span-12 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950">
-                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Short Description</div>
-                  <div className="mt-2 text-sm text-gray-800 dark:text-gray-200">
-                    {single.short_description ?? "-"}
+              {/* ✅ Rich preview for HTML short_description */}
+              <div className="mt-4 space-y-4">
+                <div>
+                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">
+                    Short Description
                   </div>
+                  <RichTextPreview html={single.short_description ?? ""} />
+                </div>
 
-                  <div className="mt-4 text-xs font-semibold text-gray-500 dark:text-gray-400">Long Description</div>
-                  <div className="mt-2 text-sm text-gray-800 dark:text-gray-200">
-                    {single.long_description ?? "-"}
+                <div>
+                  <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">
+                    Long Description
                   </div>
+                  <RichTextPreview html={single.long_description ?? ""} />
                 </div>
               </div>
             </div>
