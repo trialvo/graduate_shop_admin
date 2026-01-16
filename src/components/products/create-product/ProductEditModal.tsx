@@ -7,13 +7,45 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 import ProductForm from "./ProductForm";
-import { getProduct } from "@/api/products.api";
+import { getProduct, type ProductEntity, type ProductSingleResponseEntity } from "@/api/products.api";
 
 type Props = {
   open: boolean;
   productId: number | null;
   onClose: () => void;
   onUpdated?: () => void;
+};
+
+const toProductEntity = (product: ProductSingleResponseEntity): ProductEntity => {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    main_category_id: product.main_category?.id ?? 0,
+    sub_category_id: product.sub_category?.id ?? 0,
+    child_category_id: product.child_category?.id ?? 0,
+    brand_id: product.brand?.id ?? 0,
+    status: product.status,
+    featured: product.featured,
+    best_deal: product.best_deal,
+    free_delivery: product.free_delivery,
+    attribute_id: product.attribute?.id,
+    video_path: product.video_path ?? null,
+    short_description: product.short_description ?? null,
+    long_description: product.long_description ?? null,
+    meta_title: product.meta_title ?? null,
+    meta_description: product.meta_description ?? null,
+    meta_keywords: product.meta_keywords ?? null,
+    canonical_url: product.canonical_url ?? null,
+    og_title: product.og_title ?? null,
+    og_description: product.og_description ?? null,
+    robots: product.robots ?? null,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    images: product.images ?? [],
+    product_images: product.images ?? [],
+    variations: [],
+  };
 };
 
 export default function ProductEditModal({ open, productId, onClose, onUpdated }: Props) {
@@ -64,7 +96,7 @@ export default function ProductEditModal({ open, productId, onClose, onUpdated }
             <ProductForm
               mode="edit"
               productId={productId as number}
-              initialProduct={data?.product ?? null}
+              initialProduct={data?.product ? toProductEntity(data.product) : null}
               onClose={onClose}
               onSuccess={() => onUpdated?.()}
             />

@@ -35,7 +35,7 @@ type Props = {
   onAddToCart: (item: CartItem) => void;
 };
 
-const DEFAULT_LIMIT = 20; // ✅ better for pagination + grid
+const DEFAULT_LIMIT = 6; // ✅ max 6 per page
 
 const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
   const [subCategoryId, setSubCategoryId] = React.useState<string>("all");
@@ -48,7 +48,6 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
 
   const debouncedQ = useDebouncedValue(q, 450);
 
-  // ✅ 1) Load all sub categories (always)
   const { data: subRes, isLoading: subLoading } = useQuery({
     queryKey: ["sale-subCategories"],
     queryFn: () => getSubCategories(),
@@ -57,26 +56,15 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
 
   const subCategories = React.useMemo(() => unwrapList<SaleSubCategory>(subRes), [subRes]);
 
-  // ✅ 2) Load child categories DEPENDS on subcategory
   const subIdNum = React.useMemo(() => {
     const n = Number(subCategoryId);
     return Number.isFinite(n) ? n : null;
   }, [subCategoryId]);
 
-  const {
-    data: childRes,
-    isLoading: childLoading,
-  } = useQuery({
+  const { data: childRes, isLoading: childLoading } = useQuery({
     queryKey: ["sale-childCategories", { subCategoryId }],
     queryFn: () => {
-      // ✅ If "all" → fetch all child categories
-      // ✅ If selected sub id → fetch only that sub's child categories
-      if (subCategoryId === "all" || subIdNum === null) {
-        return getChildCategories();
-      }
-
-      // Your categories API already supports params.
-      // We pass sub_category_id so backend returns dependent child categories.
+      if (subCategoryId === "all" || subIdNum === null) return getChildCategories();
       return getChildCategories({ sub_category_id: subIdNum } as any);
     },
     staleTime: 60_000,
@@ -84,13 +72,11 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
 
   const childCategories = React.useMemo(() => unwrapList<SaleChildCategory>(childRes), [childRes]);
 
-  // ✅ If backend returns all even after sub filter, keep UI safe:
   const filteredChildCategories = React.useMemo(() => {
     if (subCategoryId === "all" || subIdNum === null) return childCategories;
     return childCategories.filter((c) => Number(c.sub_category_id) === subIdNum);
   }, [childCategories, subCategoryId, subIdNum]);
 
-  // ✅ Reset child category when sub changes
   React.useEffect(() => {
     setChildCategoryId("all");
   }, [subCategoryId]);
@@ -100,36 +86,35 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
     setPage(1);
   }, [debouncedQ, subCategoryId, childCategoryId]);
 
-  // ✅ 3) Products list (debounced + correct query params)
+  /**
+   * ✅ IMPORTANT (your rule):
+   * - NO q= param
+   * - search text must be in: search=<value>
+   * - If empty -> do NOT send search param
+   *
+   * Examples:
+   * - /products?limit=6&sub_category_id=14
+   * - /products?limit=6&sub_category_id=14&search=fo
+   */
   const productsQuery = useQuery({
-    queryKey: ["sale-products", { q: debouncedQ.trim(), subCategoryId, childCategoryId, limit, offset }],
+    queryKey: ["sale-products", { search: debouncedQ.trim(), subCategoryId, childCategoryId, limit, offset }],
     queryFn: async () => {
-      const params: any = {
-        limit,
-        offset, // you want offset=0 too — we pass it here (api helper may omit, but still OK)
-      };
+      const params: any = { limit, offset };
 
-      const hasText = Boolean(debouncedQ.trim());
-      const hasSub = subCategoryId !== "all" && subIdNum !== null;
-      const childIdNum = Number.isFinite(Number(childCategoryId)) ? Number(childCategoryId) : null;
-      const hasChild = childCategoryId !== "all" && childIdNum !== null;
-
-      // ✅ when any filter/search → must send search=on
-      if (hasText || hasSub || hasChild) {
-        params.search = "on";
-      }
-
-      // ✅ search query key: backend expects q in your current usage
-      if (hasText) {
-        params.q = debouncedQ.trim();
-      }
-
-      if (hasSub) {
+      // filters always apply if selected
+      if (subCategoryId !== "all" && subIdNum !== null) {
         params.sub_category_id = subIdNum;
       }
 
-      if (hasChild) {
+      const childIdNum = Number.isFinite(Number(childCategoryId)) ? Number(childCategoryId) : null;
+      if (childCategoryId !== "all" && childIdNum !== null) {
         params.child_category_id = childIdNum;
+      }
+
+      // ✅ Only send search=<text> when user typed
+      const text = debouncedQ.trim();
+      if (text) {
+        params.search = text; // ✅ NO search=on, NO q=
       }
 
       return getProducts(params);
@@ -180,30 +165,19 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
   const loading = subLoading || childLoading || productsQuery.isLoading;
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col rounded-2xl border border-gray-200 bg-white",
-        "dark:border-gray-800 dark:bg-white/[0.03]"
-      )}
-    >
-      {/* Header */}
+    <div className={cn("flex h-full flex-col rounded-2xl border border-gray-200 bg-white", "dark:border-gray-800 dark:bg-white/[0.03]")}>
       <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-6">
         <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Product Section</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Filter and search products, then add to cart.
-        </p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Search uses: search=&lt;value&gt; (no q=).</p>
       </div>
 
-      {/* Body scroll */}
       <div className="flex-1 overflow-auto custom-scrollbar px-5 py-5 sm:px-6">
-        {/* Filters */}
         <div className="grid grid-cols-12 gap-3">
           <div className="col-span-12 md:col-span-6">
             <ImageSelectDropdown
               value={subCategoryId}
               onChange={(v) => {
                 setSubCategoryId(v);
-                // child resets by effect, but we keep it instant too:
                 setChildCategoryId("all");
               }}
               options={subOptions}
@@ -227,24 +201,20 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search by name or SKU"
+                placeholder="Type to search (search=value)"
                 className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
               />
             </div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Search applies: <span className="font-semibold">/products?search=on</span>
-            </p>
           </div>
         </div>
 
-        {/* Product grid */}
         <div className="mt-5">
           {loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {Array.from({ length: 10 }).map((_, idx) => (
+            <div className="grid grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="h-[170px] animate-pulse rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]"
+                  className="h-[220px] animate-pulse rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]"
                 />
               ))}
             </div>
@@ -253,7 +223,7 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
               No products found.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-3 gap-4">
               {products.map((p) => (
                 <ProductCard
                   key={String(p.id)}
