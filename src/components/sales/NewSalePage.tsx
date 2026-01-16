@@ -3,6 +3,7 @@ import React from "react";
 import ProductSelectionPanel from "@/components/sales/ProductSelectionPanel";
 import BillingPanel from "@/components/sales/BillingPanel";
 import type { CartItem } from "@/components/sales/types";
+import { cn } from "@/lib/utils";
 
 const NewSalePage: React.FC = () => {
   const [cart, setCart] = React.useState<CartItem[]>([]);
@@ -10,14 +11,17 @@ const NewSalePage: React.FC = () => {
   React.useEffect(() => {
     const onClear = () => setCart([]);
     window.addEventListener("new-sale-clear-cart", onClear as any);
-    return () => window.removeEventListener("new-sale-clear-cart", onClear as any);
+    return () =>
+      window.removeEventListener("new-sale-clear-cart", onClear as any);
   }, []);
 
   const addToCart = React.useCallback((item: CartItem) => {
     setCart((prev) => {
       const found = prev.find((x) => x.key === item.key);
       if (!found) return [...prev, item];
-      return prev.map((x) => (x.key === item.key ? { ...x, qty: x.qty + item.qty } : x));
+      return prev.map((x) =>
+        x.key === item.key ? { ...x, qty: x.qty + item.qty } : x
+      );
     });
   }, []);
 
@@ -29,20 +33,29 @@ const NewSalePage: React.FC = () => {
     setCart((prev) => prev.filter((i) => i.key !== key));
   }, []);
 
-  // Fit height on desktop: this ensures panels stretch nicely within viewport.
-  // Adjust the 24/28 if your layout header height differs.
-  const containerClass = "grid grid-cols-12 gap-4 md:gap-6 xl:min-h-[calc(100vh-120px)]";
+  /**
+   * ✅ Desktop height = 100dvh - header
+   * If your header height differs, change 120px.
+   */
+  const containerClass = cn(
+    "grid grid-cols-12 gap-4 md:gap-6",
+    "xl:h-[calc(100dvh-120px)] xl:min-h-[calc(100dvh-120px)]"
+  );
 
   return (
     <div className={containerClass}>
-      {/* 70% */}
-      <div className="col-span-12 xl:col-span-6">
+      {/* Left */}
+      <div className="col-span-12 xl:col-span-6 h-full min-h-0">
         <ProductSelectionPanel onAddToCart={addToCart} />
       </div>
 
-      {/* 30% */}
-      <div className="col-span-12 xl:col-span-6">
-        <BillingPanel cart={cart} onUpdateQty={updateQty} onRemove={removeItem} />
+      {/* Right */}
+      <div className="col-span-12 xl:col-span-6 h-full min-h-0">
+        <BillingPanel
+          cart={cart}
+          onUpdateQty={updateQty}
+          onRemove={removeItem}
+        />
       </div>
     </div>
   );

@@ -58,8 +58,6 @@ function formatCurrencyBDT(n: number) {
 function toPublicUrlSafe(pathOrUrl: string | null | undefined) {
   if (!pathOrUrl) return null;
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-  // if you already have toPublicUrl util, replace this with that.
-  // Example: return toPublicUrl(pathOrUrl)
   return pathOrUrl;
 }
 
@@ -207,7 +205,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       getAdminUsers({
         limit: USERS_LIMIT,
         offset: usersOffset === 0 ? undefined : usersOffset,
-        search: userQ.trim() ? userQ.trim() : undefined, // ✅ default empty: don't send search
+        search: userQ.trim() ? userQ.trim() : undefined,
       }),
     placeholderData: keepPreviousData,
   });
@@ -217,7 +215,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
   const [customerId, setCustomerId] = useState<number | null>(null);
 
-  // Load selected user details for addresses
   const userDetailsQuery = useQuery({
     queryKey: ["adminUser", customerId],
     queryFn: () => getAdminUser(Number(customerId)),
@@ -245,7 +242,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
     setAddressId(first);
   }, [selectedUser, addresses]);
 
-  // Add new customer modal
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
 
   // Manual address modal
@@ -460,14 +456,17 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
   // ---------- UI ----------
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+    <div
+      className={cn(
+        "h-full min-h-0 overflow-auto custom-scrollbar",
+        "rounded-xl border border-gray-200 bg-white p-2",
+        "dark:border-gray-800 dark:bg-gray-950"
+      )}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-base font-semibold text-gray-900 dark:text-white/90">
             Billing
-          </div>
-          <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            Choose customer, delivery, payment, then place the order.
           </div>
         </div>
 
@@ -500,7 +499,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       </div>
 
       {/* Cart summary */}
-      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-gray-800 dark:text-white/90">
             Cart Items
@@ -609,7 +608,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
             {mode === "existing" ? (
               <>
-                {/* Search */}
                 <div className="mt-3">
                   <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                     Search customer
@@ -625,7 +623,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   />
                 </div>
 
-                {/* ✅ Customer list (max 6) */}
                 <div className="mt-3 space-y-2">
                   {usersQuery.isLoading ? (
                     <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
@@ -647,7 +644,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   )}
                 </div>
 
-                {/* Pagination */}
                 <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <div>
                     Showing{" "}
@@ -694,8 +690,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
                 </div>
 
-                {/* Address */}
-                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
                       Address
@@ -849,7 +844,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </select>
             </div>
 
-            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
               <div className="flex items-center justify-between text-sm">
                 <div className="text-gray-600 dark:text-gray-300">Subtotal</div>
                 <div className="font-semibold text-gray-900 dark:text-white/90">
@@ -1027,14 +1022,12 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         </div>
       </div>
 
-      {/* Create customer */}
       <AddCustomerModal
         open={addCustomerOpen}
         onClose={() => setAddCustomerOpen(false)}
         onCreated={(data) => setCustomerId(data.id)}
       />
 
-      {/* Manual address modal */}
       {manualAddressOpen ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-[760px] overflow-hidden rounded-xl bg-white shadow-theme-lg dark:bg-gray-900">
