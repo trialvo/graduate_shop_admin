@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import type { OrderStatus } from "./types";
+import { cn } from "@/lib/utils";
 
 type Props = {
   status: OrderStatus;
@@ -69,6 +70,16 @@ function statusPillClasses(active: boolean) {
   return "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-800 dark:hover:bg-white/[0.03]";
 }
 
+const selectCls = cn(
+  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none",
+  "focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+);
+
+const dateCls = cn(
+  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none",
+  "focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+);
+
 export default function OrderFiltersBar({
   status,
   setStatus,
@@ -78,14 +89,8 @@ export default function OrderFiltersBar({
   search,
   setSearch,
 
-  orderType,
-  setOrderType,
-
   paymentStatus,
   setPaymentStatus,
-
-  paymentType,
-  setPaymentType,
 
   paymentProvider,
   setPaymentProvider,
@@ -93,28 +98,19 @@ export default function OrderFiltersBar({
   fraud,
   setFraud,
 
-  minTotal,
-  setMinTotal,
-
-  maxTotal,
-  setMaxTotal,
-
   dateFrom,
   setDateFrom,
 
   dateTo,
   setDateTo,
 
-  limit,
-  setLimit,
-
   onClear,
   uiOptions,
   loading,
 }: Props) {
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      {/* Status strip */}
+    <div className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+      {/* Status strip (compact) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
         {statusOptions.map((opt) => {
           const active = status === opt.id;
@@ -123,9 +119,10 @@ export default function OrderFiltersBar({
               key={opt.id}
               type="button"
               onClick={() => setStatus(opt.id)}
-              className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${statusPillClasses(
-                active
-              )}`}
+              className={cn(
+                "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                statusPillClasses(active)
+              )}
             >
               {opt.label}{" "}
               <span className={active ? "text-white/90" : "text-gray-400"}>
@@ -136,13 +133,14 @@ export default function OrderFiltersBar({
         })}
       </div>
 
-      {/* Controls */}
-      <div className="mt-4 grid grid-cols-12 gap-3">
+      {/* ✅ 2-line compact controls */}
+      <div className="mt-3 grid grid-cols-12 gap-2">
+        {/* Line 1 */}
         <div className="col-span-12 md:col-span-2">
           <select
             value={paymentStatus}
             onChange={(e) => setPaymentStatus(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            className={selectCls}
           >
             {uiOptions.paymentStatus.map((x) => (
               <option key={x.id} value={x.id}>
@@ -156,7 +154,7 @@ export default function OrderFiltersBar({
           <select
             value={paymentProvider}
             onChange={(e) => setPaymentProvider(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            className={selectCls}
           >
             {uiOptions.paymentProvider.map((x) => (
               <option key={x.id} value={x.id}>
@@ -170,7 +168,7 @@ export default function OrderFiltersBar({
           <select
             value={fraud}
             onChange={(e) => setFraud(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            className={selectCls}
           >
             {uiOptions.fraud.map((x) => (
               <option key={x.id} value={x.id}>
@@ -180,8 +178,8 @@ export default function OrderFiltersBar({
           </select>
         </div>
 
-        <div className="col-span-12 md:col-span-6">
-          <div className="flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-950">
+        <div className="col-span-12 md:col-span-5">
+          <div className="flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-950">
             <Search size={18} className="text-gray-400" />
             <input
               value={search}
@@ -191,15 +189,23 @@ export default function OrderFiltersBar({
             />
           </div>
         </div>
-
-
-
-        <div className="col-span-6 md:col-span-3">
+        <div className="col-span-12 md:col-span-1 flex md:justify-end">
+          <Button
+            variant="outline"
+            onClick={onClear}
+            className="h-10 w-full md:w-auto"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Clear"}
+          </Button>
+        </div>
+        {/* Line 2 */}
+        {/* <div className="col-span-6 md:col-span-3">
           <input
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
             type="date"
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            className={dateCls}
           />
         </div>
 
@@ -208,20 +214,9 @@ export default function OrderFiltersBar({
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
             type="date"
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            className={dateCls}
           />
-        </div>
-
-        <div className="col-span-12 md:col-span-2 flex md:justify-end">
-          <Button
-            variant="outline"
-            onClick={onClear}
-            className="h-11 w-full md:w-auto"
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "Clear"}
-          </Button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

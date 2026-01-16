@@ -36,7 +36,7 @@ function fraudIcon(level: OrderRow["fraudLevel"]) {
 
 const PAYMENT_OPTIONS = [
   { id: "paid", label: "paid" },
-  { id: "partial_paid", label: "partial_paid" },
+  { id: "partial_paid", label: "Partial Paid" },
   { id: "unpaid", label: "unpaid" },
 ] as const;
 
@@ -46,11 +46,11 @@ const STATUS_OPTIONS = [
   { id: "processing", label: "processing" },
   { id: "packaging", label: "packaging" },
   { id: "shipped", label: "shipped" },
-  { id: "out_for_delivery", label: "out_for_delivery" },
+  { id: "out_for_delivery", label: "Out For Delivery" },
   { id: "delivered", label: "delivered" },
   { id: "returned", label: "returned" },
   { id: "cancelled", label: "cancelled" },
-  { id: "on_hold", label: "on_hold" },
+  { id: "on_hold", label: "On Hold" },
   { id: "trash", label: "trash" },
 ] as const;
 
@@ -154,13 +154,13 @@ export default function OrdersTable({ rows }: Props) {
             - vertical scroll with max height
         */}
         <div
-          className={cn("relative overflow-auto", "max-h-[calc(100vh-320px)]")}
+          className={cn("relative overflow-auto", "max-h-[calc(100vh-410px)]")}
         >
           <table className="min-w-[1200px] w-full table-fixed border-collapse">
             <colgroup>
-              <col className="w-[64px]" />
-              <col className="w-[260px]" />
+              <col className="w-[40px]" />
               <col className="w-[220px]" />
+              <col className="w-[240px]" />
               <col className="w-[160px]" />
               <col className="w-[150px]" />
               <col className="w-[170px]" />
@@ -168,7 +168,7 @@ export default function OrdersTable({ rows }: Props) {
               <col className="w-[220px]" />
               <col className="w-[220px]" />
               <col className="w-[220px]" />
-              <col className="w-[120px]" />
+              <col className="w-[80px]" />
             </colgroup>
 
             <thead>
@@ -311,14 +311,16 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Product */}
                   <td className="px-4 py-4">
-                    <div className="min-w-0 space-y-1">
-                      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                        {r.currencySymbol}
-                        {r.total}
-                      </p>
-                      <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                        Items: {r.itemsAmount} • Qty: {r.totalItems}
-                      </p>
+                    <div className="min-w-0 space-y-1 flex items-center gap-4">
+                      <div>
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                          {r.currencySymbol}
+                          {r.total}
+                        </p>
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                          Items: {r.itemsAmount} • Qty: {r.totalItems}
+                        </p>
+                      </div>
                       <p className="truncate text-xs font-semibold text-brand-500">
                         {r.paymentMethod}
                       </p>
@@ -433,13 +435,13 @@ export default function OrdersTable({ rows }: Props) {
                         <Printer size={16} />
                       </button>
 
-                      <button
+                      {/* <button
                         type="button"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                         aria-label="More"
                       >
                         <MoreVertical size={16} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
