@@ -761,7 +761,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       <AddCustomerModal
         open={addCustomerOpen}
         onClose={() => setAddCustomerOpen(false)}
-        onCreated={(id) => setCustomerId(id)}
+        onCreated={(data) => setCustomerId(data.id)}
       />
 
       {/* Inline manual address modal (simple) */}

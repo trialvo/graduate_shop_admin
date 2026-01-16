@@ -30,7 +30,11 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
 
   if (!product) return null;
 
-  const total = useMemo(() => product.price * qty, [product.price, qty]);
+  const unitPrice = Number(product.price ?? 0);
+  const total = useMemo(() => unitPrice * qty, [unitPrice, qty]);
+  const displayTitle = product.title ?? product.name ?? "Product";
+  const displaySku = product.sku ?? "";
+  const displayImage = product.image ?? "";
 
   const titleId = "product-add-modal-title";
 
@@ -63,17 +67,17 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
           <div className="p-6">
             <div className="overflow-hidden rounded-[4px] ring-1 ring-gray-200 dark:ring-gray-800">
               <img
-                src={product.image}
-                alt={product.title}
+                src={displayImage}
+                alt={displayTitle}
                 className="h-64 w-full object-cover md:h-[360px]"
               />
             </div>
 
             <p className="mt-4 text-base font-semibold text-gray-900 dark:text-white">
-              {product.title}
+              {displayTitle}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {product.id} • {product.sku}
+              {product.id} • {displaySku}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -95,7 +99,7 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                   Unit Price
                 </span>
                 <span className="font-semibold text-gray-900 dark:text-white">
-                  ${product.price.toFixed(2)}
+                  ${unitPrice.toFixed(2)}
                 </span>
               </div>
 
@@ -225,10 +229,10 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                   onAdd({
                     key,
                     productId: product.id,
-                    title: product.title,
-                    sku: product.sku,
-                    image: product.image,
-                    unitPrice: product.price,
+                    title: displayTitle,
+                    sku: displaySku,
+                    image: displayImage,
+                    unitPrice,
                     qty,
                     variant: variant || undefined,
                     size: size || undefined,

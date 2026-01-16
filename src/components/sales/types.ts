@@ -75,4 +75,19 @@ export type CartItem = {
   // legacy fields (optional)
   variant?: string;
   size?: string;
+  colorName?: string;
+  variantName?: string;
+};
+
+export type CustomerAddress = {
+  label: string;
+  addressLine: string;
+  phone: string;
+};
+
+export type Customer = {
+  id: number | string;
+  name: string;
+  phone: string;
+  addresses: CustomerAddress[];
 };
