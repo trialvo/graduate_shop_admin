@@ -100,7 +100,7 @@ export default function OrdersSelectionPage({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-      <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
+      <div className="mx-auto w-full space-y-6 px-4 pt-6 md:px-6">
         <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>

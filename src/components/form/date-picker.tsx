@@ -2,24 +2,37 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Props = {
-  value?: string; // ISO: YYYY-MM-DD
-  onChange: (value: string) => void;
-
+type BaseProps = {
   placeholder?: string;
   disabled?: boolean;
   error?: boolean;
   hint?: string;
   className?: string;
 
-  min?: string; // ISO
-  max?: string; // ISO
   showClear?: boolean;
   showToday?: boolean;
 
   /** Year range for quick selection */
   yearRange?: { from: number; to: number };
 };
+
+type IsoProps = BaseProps & {
+  value?: string; // ISO: YYYY-MM-DD
+  onChange: (value: string) => void;
+  min?: string; // ISO
+  max?: string; // ISO
+  valueType?: "iso";
+};
+
+type DateProps = BaseProps & {
+  value?: Date | null;
+  onChange: (value: Date | null) => void;
+  min?: Date;
+  max?: Date;
+  valueType: "date";
+};
+
+type Props = IsoProps | DateProps;
 
 function pad2(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
@@ -41,6 +54,10 @@ function fromISO(v?: string): Date | null {
 function formatDisplay(v?: string) {
   const d = fromISO(v);
   if (!d) return "";
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+function formatDisplayDate(d?: Date | null) {
+  if (!d || Number.isNaN(d.getTime())) return "";
   return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 function startOfMonth(d: Date) {
@@ -79,23 +96,37 @@ const MONTHS = [
 ];
 
 export default function DatePicker({
-  value,
-  onChange,
   placeholder = "Select date",
   disabled = false,
   error = false,
   hint,
   className,
-  min,
-  max,
   showClear = true,
   showToday = true,
   yearRange,
+  ...props
 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
 
-  const selectedDate = useMemo(() => fromISO(value), [value]);
+  const isoValue = (props as IsoProps).value;
+  const dateValue = (props as DateProps).value;
+  const minDateValue = (props as DateProps).min;
+  const maxDateValue = (props as DateProps).max;
+  const minIsoValue = (props as IsoProps).min;
+  const maxIsoValue = (props as IsoProps).max;
+
+  const isDateMode = props.valueType === "date";
+  const valueISO = useMemo(() => {
+    if (isDateMode) {
+      const v = dateValue;
+      if (!v || Number.isNaN(v.getTime())) return "";
+      return toISO(v);
+    }
+    return isoValue ?? "";
+  }, [dateValue, isDateMode, isoValue]);
+
+  const selectedDate = useMemo(() => fromISO(valueISO), [valueISO]);
 
   const [view, setView] = useState<Date>(() => {
     const base = selectedDate ?? new Date();
@@ -108,8 +139,7 @@ export default function DatePicker({
   useEffect(() => {
     if (!selectedDate) return;
     setView(startOfMonth(selectedDate));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [selectedDate]);
 
   // close on outside click
   useEffect(() => {
@@ -138,15 +168,39 @@ export default function DatePicker({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const minISO = useMemo(() => {
+    if (isDateMode) {
+      const minDate = minDateValue;
+      if (!minDate || Number.isNaN(minDate.getTime())) return undefined;
+      return toISO(minDate);
+    }
+    return minIsoValue;
+  }, [isDateMode, minDateValue, minIsoValue]);
+
+  const maxISO = useMemo(() => {
+    if (isDateMode) {
+      const maxDate = maxDateValue;
+      if (!maxDate || Number.isNaN(maxDate.getTime())) return undefined;
+      return toISO(maxDate);
+    }
+    return maxIsoValue;
+  }, [isDateMode, maxDateValue, maxIsoValue]);
+
   const withinRange = (iso: string) => {
-    if (min && isBeforeISO(iso, min)) return false;
-    if (max && isAfterISO(iso, max)) return false;
+    if (minISO && isBeforeISO(iso, minISO)) return false;
+    if (maxISO && isAfterISO(iso, maxISO)) return false;
     return true;
   };
 
   const selectISO = (iso: string) => {
     if (!withinRange(iso)) return;
-    onChange(iso);
+    if (isDateMode) {
+      const dt = fromISO(iso);
+      if (!dt) return;
+      (props as DateProps).onChange(dt);
+    } else {
+      (props as IsoProps).onChange(iso);
+    }
     setOpen(false);
     setMonthOpen(false);
     setYearOpen(false);
@@ -192,7 +246,11 @@ export default function DatePicker({
     el.scrollTop = Math.max(0, idx * 36 - 72);
   }, [yearOpen, years, view]);
 
-  const display = value ? formatDisplay(value) : "";
+  const display = isDateMode
+    ? formatDisplayDate(dateValue)
+    : valueISO
+      ? formatDisplay(valueISO)
+      : "";
   const viewMonth = view.getMonth();
   const viewYear = view.getFullYear();
 
@@ -226,13 +284,17 @@ export default function DatePicker({
           <span className="block truncate text-gray-400">{placeholder}</span>
         )}
 
-        {showClear && value && !disabled ? (
+        {showClear && valueISO && !disabled ? (
           <span className="absolute right-2 top-1/2 -translate-y-1/2">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onChange("");
+                if (isDateMode) {
+                  (props as DateProps).onChange(null);
+                } else {
+                  (props as IsoProps).onChange("");
+                }
               }}
               className={cn(
                 "inline-flex h-7 w-7 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-500",
@@ -404,11 +466,15 @@ export default function DatePicker({
                 </button>
               ) : null}
 
-              {showClear && value ? (
+              {showClear && valueISO ? (
                 <button
                   type="button"
                   onClick={() => {
-                    onChange("");
+                    if (isDateMode) {
+                      (props as DateProps).onChange(null);
+                    } else {
+                      (props as IsoProps).onChange("");
+                    }
                     setOpen(false);
                     setMonthOpen(false);
                     setYearOpen(false);

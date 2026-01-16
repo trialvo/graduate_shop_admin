@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import {
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  User2,
+  Mail,
+  Phone,
+  MapPin,
+} from "lucide-react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -15,7 +23,12 @@ import {
   createManualOrderStranger,
   type ManualAddressPayload,
 } from "@/api/manual-orders.api";
-import { createAdminUser, getAdminUser, getAdminUsers, type AdminUserEntity } from "@/api/admin-users.api";
+import {
+  getAdminUser,
+  getAdminUsers,
+  type AdminUserEntity,
+} from "@/api/admin-users.api";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
   cart: CartItem[];
@@ -31,7 +44,9 @@ function userFullName(u: AdminUserEntity) {
 }
 
 function firstVerifiedPhone(u: AdminUserEntity): string {
-  const verified = u.phones?.find((p) => p.is_verified === true || p.is_verified === 1);
+  const verified = u.phones?.find(
+    (p) => p.is_verified === true || p.is_verified === 1
+  );
   const any = u.phones?.[0];
   return verified?.phone_number || any?.phone_number || "";
 }
@@ -40,21 +55,159 @@ function formatCurrencyBDT(n: number) {
   return `৳${Number.isFinite(n) ? n.toFixed(0) : "0"}`;
 }
 
+function toPublicUrlSafe(pathOrUrl: string | null | undefined) {
+  if (!pathOrUrl) return null;
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  // if you already have toPublicUrl util, replace this with that.
+  // Example: return toPublicUrl(pathOrUrl)
+  return pathOrUrl;
+}
+
+function badgeClass(variant: "ok" | "warn" | "muted") {
+  if (variant === "ok")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20";
+  if (variant === "warn")
+    return "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20";
+  return "bg-gray-50 text-gray-700 ring-gray-200 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10";
+}
+
+function CustomerRow({
+  u,
+  active,
+  onPick,
+}: {
+  u: AdminUserEntity;
+  active: boolean;
+  onPick: () => void;
+}) {
+  const img = toPublicUrlSafe(u.img_path);
+  const phone = firstVerifiedPhone(u);
+  const addrCount = Array.isArray(u.addresses) ? u.addresses.length : 0;
+
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className={cn(
+        "w-full rounded-xl border p-3 text-left transition",
+        active
+          ? "border-brand-500 bg-brand-500/5 dark:border-brand-400 dark:bg-brand-400/10"
+          : "border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="h-10 w-10 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+          {img ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={toPublicUrl(img)}
+              alt={userFullName(u)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-gray-500 dark:text-gray-400">
+              <User2 size={18} />
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
+              {userFullName(u)}
+            </div>
+
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] ring-1",
+                badgeClass(u.status === "active" ? "ok" : "muted")
+              )}
+            >
+              {String(u.status ?? "unknown")}
+            </span>
+
+            {u.is_fully_verified ? (
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] ring-1",
+                  badgeClass("ok")
+                )}
+              >
+                Verified
+              </span>
+            ) : (
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] ring-1",
+                  badgeClass("warn")
+                )}
+              >
+                Not verified
+              </span>
+            )}
+          </div>
+
+          <div className="mt-1 grid grid-cols-12 gap-2 text-xs text-gray-600 dark:text-gray-300">
+            <div className="col-span-12 md:col-span-6 min-w-0">
+              <div className="flex items-center gap-1.5 truncate">
+                <Mail size={14} className="text-gray-400" />
+                <span className="truncate">{u.email}</span>
+              </div>
+            </div>
+
+            <div className="col-span-12 md:col-span-6 min-w-0">
+              <div className="flex items-center gap-1.5 truncate">
+                <Phone size={14} className="text-gray-400" />
+                <span className="truncate">{phone || "No phone"}</span>
+              </div>
+            </div>
+
+            <div className="col-span-12 md:col-span-6">
+              <div className="flex items-center gap-1.5">
+                <MapPin size={14} className="text-gray-400" />
+                <span>{addrCount} address(es)</span>
+              </div>
+            </div>
+
+            <div className="col-span-12 md:col-span-6">
+              <div className="flex items-center justify-between gap-2">
+                <span>Total spent</span>
+                <span className="font-semibold text-gray-900 dark:text-white/90">
+                  {formatCurrencyBDT(Number(u.total_spent ?? 0))}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {active ? (
+          <div className="mt-1 rounded-full bg-brand-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+            Selected
+          </div>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
 export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   const [mode, setMode] = useState<CustomerMode>("existing");
 
   // ---------- EXISTING USER FLOW ----------
   const [userQ, setUserQ] = useState("");
   const [usersOffset, setUsersOffset] = useState(0);
-  const USERS_LIMIT = 20;
+  const USERS_LIMIT = 4;
 
   const usersQuery = useQuery({
-    queryKey: ["adminUsers", { q: userQ.trim(), limit: USERS_LIMIT, offset: usersOffset }],
+    queryKey: [
+      "adminUsers",
+      { q: userQ.trim(), limit: USERS_LIMIT, offset: usersOffset },
+    ],
     queryFn: () =>
       getAdminUsers({
-        search: userQ.trim() || undefined,
         limit: USERS_LIMIT,
         offset: usersOffset === 0 ? undefined : usersOffset,
+        search: userQ.trim() ? userQ.trim() : undefined, // ✅ default empty: don't send search
       }),
     placeholderData: keepPreviousData,
   });
@@ -95,14 +248,16 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   // Add new customer modal
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
 
-  // Manual address modal (simple inline form)
+  // Manual address modal
   const [manualAddressOpen, setManualAddressOpen] = useState(false);
   const [manualAddressName, setManualAddressName] = useState("");
   const [manualAddressPhone, setManualAddressPhone] = useState("");
   const [manualAddressFull, setManualAddressFull] = useState("");
   const [manualAddressCity, setManualAddressCity] = useState("");
   const [manualAddressZip, setManualAddressZip] = useState("");
-  const [manualAddressType, setManualAddressType] = useState<"home" | "office" | "n/a">("n/a");
+  const [manualAddressType, setManualAddressType] = useState<
+    "home" | "office" | "n/a"
+  >("n/a");
 
   useEffect(() => {
     if (!manualAddressOpen) return;
@@ -148,18 +303,22 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   });
 
   const deliveryCharges = deliveryChargesQuery.data?.data ?? [];
-
   const [deliveryChargeId, setDeliveryChargeId] = useState<number | null>(null);
 
   useEffect(() => {
     if (deliveryChargeId) return;
-    const first = deliveryCharges?.[0]?.id ? Number(deliveryCharges[0].id) : null;
+    const first = deliveryCharges?.[0]?.id
+      ? Number(deliveryCharges[0].id)
+      : null;
     setDeliveryChargeId(first);
   }, [deliveryCharges, deliveryChargeId]);
 
   const deliveryCharge = useMemo(() => {
     if (!deliveryChargeId) return null;
-    return deliveryCharges.find((d) => Number(d.id) === Number(deliveryChargeId)) ?? null;
+    return (
+      deliveryCharges.find((d) => Number(d.id) === Number(deliveryChargeId)) ??
+      null
+    );
   }, [deliveryCharges, deliveryChargeId]);
 
   // ---------- PAYMENT ----------
@@ -171,9 +330,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   const [couponCode, setCouponCode] = useState("");
 
   // ---------- TOTALS ----------
-  const subtotal = useMemo(() => cart.reduce((sum, i) => sum + i.unitPrice * i.qty, 0), [cart]);
-
-  const deliveryFee = useMemo(() => Number(deliveryCharge?.customer_charge ?? 0), [deliveryCharge]);
+  const subtotal = useMemo(
+    () => cart.reduce((sum, i) => sum + i.unitPrice * i.qty, 0),
+    [cart]
+  );
+  const deliveryFee = useMemo(
+    () => Number(deliveryCharge?.customer_charge ?? 0),
+    [deliveryCharge]
+  );
   const discount = 0;
   const tax = 0;
   const total = subtotal - discount + deliveryFee + tax;
@@ -195,14 +359,27 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   const canPlaceStranger = useMemo(() => {
     if (cart.length === 0) return false;
     if (!deliveryChargeId) return false;
-    if (!strangerName.trim() || !strangerPhone.trim() || !strangerFullAddress.trim()) return false;
+    if (
+      !strangerName.trim() ||
+      !strangerPhone.trim() ||
+      !strangerFullAddress.trim()
+    )
+      return false;
     if (payBy === "bkash" && trx.trim() === "") return false;
 
     const anyMissingVariation = cart.some((i) => !Number(i.productVariationId));
     if (anyMissingVariation) return false;
 
     return true;
-  }, [cart, deliveryChargeId, strangerName, strangerPhone, strangerFullAddress, payBy, trx]);
+  }, [
+    cart,
+    deliveryChargeId,
+    strangerName,
+    strangerPhone,
+    strangerFullAddress,
+    payBy,
+    trx,
+  ]);
 
   const placeExistingMutation = useMutation({
     mutationFn: async () => {
@@ -214,12 +391,13 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       return createManualOrder({
         customer_id: Number(customerId),
         address_id: Number(addressId),
-        payment_type: "cod",
+        payment_type: payBy === "bkash" ? "bkash" : "cod",
+        trx_id: payBy === "bkash" ? trx.trim() : undefined,
         delivery_charge_id: Number(deliveryChargeId),
         note: note.trim() || undefined,
         coupon_code: couponCode.trim() || undefined,
         order_items,
-      });
+      } as any);
     },
     onSuccess: (data) => {
       if (data?.success === true) {
@@ -227,9 +405,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         window.dispatchEvent(new CustomEvent("new-sale-clear-cart"));
         setNote("");
         setCouponCode("");
+        setTrx("");
         return;
       }
-
       toast.error(data?.error || data?.message || "Failed to place order");
     },
     onError: (err: any) => toast.error(err?.message || "Failed to place order"),
@@ -249,12 +427,13 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         full_address: strangerFullAddress.trim(),
         city: strangerCity.trim() || undefined,
         zip_code: strangerZip.trim() || undefined,
-        payment_type: "cod",
+        payment_type: payBy === "bkash" ? "bkash" : "cod",
+        trx_id: payBy === "bkash" ? trx.trim() : undefined,
         delivery_charge_id: Number(deliveryChargeId),
         note: note.trim() || undefined,
         coupon_code: couponCode.trim() || undefined,
         order_items,
-      });
+      } as any);
     },
     onSuccess: (data) => {
       if (data?.success === true) {
@@ -262,6 +441,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         window.dispatchEvent(new CustomEvent("new-sale-clear-cart"));
         setNote("");
         setCouponCode("");
+        setTrx("");
         setStrangerName("");
         setStrangerPhone("");
         setStrangerEmail("");
@@ -270,20 +450,22 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         setStrangerZip("");
         return;
       }
-
       toast.error(data?.error || data?.message || "Failed to place order");
     },
     onError: (err: any) => toast.error(err?.message || "Failed to place order"),
   });
 
-  const placing = placeExistingMutation.isPending || placeStrangerMutation.isPending;
+  const placing =
+    placeExistingMutation.isPending || placeStrangerMutation.isPending;
 
   // ---------- UI ----------
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-base font-semibold text-gray-900 dark:text-white/90">Billing</div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white/90">
+            Billing
+          </div>
           <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             Choose customer, delivery, payment, then place the order.
           </div>
@@ -320,8 +502,12 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       {/* Cart summary */}
       <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-gray-800 dark:text-white/90">Cart Items</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{cart.length} item(s)</div>
+          <div className="text-sm font-semibold text-gray-800 dark:text-white/90">
+            Cart Items
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {cart.length} item(s)
+          </div>
         </div>
 
         <div className="mt-3 space-y-2">
@@ -336,21 +522,27 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">{i.title}</div>
+                  <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
+                    {i.title}
+                  </div>
                   <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
                     SKU: {i.sku}
                     {i.colorName || i.variantName ? (
                       <>
                         {" "}
-                        • {i.colorName ?? "Color"} • {i.variantName ?? "Variant"}
+                        • {i.colorName ?? "Color"} •{" "}
+                        {i.variantName ?? "Variant"}
                       </>
-                    ) : null}
-                    {" "}
+                    ) : null}{" "}
                     • PV:{" "}
                     {i.productVariationId ? (
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">{i.productVariationId}</span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-200">
+                        {i.productVariationId}
+                      </span>
                     ) : (
-                      <span className="font-semibold text-error-600 dark:text-error-300">(Select variation)</span>
+                      <span className="font-semibold text-error-600 dark:text-error-300">
+                        (Select variation)
+                      </span>
                     )}
                   </div>
                 </div>
@@ -364,11 +556,13 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     >
                       -
                     </button>
-                    <div className="w-8 text-center text-sm font-semibold text-gray-900 dark:text-white/90">{i.qty}</div>
+                    <div className="w-8 text-center text-sm font-semibold text-gray-900 dark:text-white/90">
+                      {i.qty}
+                    </div>
                     <button
                       type="button"
                       onClick={() => onUpdateQty(i.key, i.qty + 1)}
-                      className="h-7 w-7 rounded-md text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600"
+                      className="h-7 w-7 rounded-md bg-brand-500 text-sm font-semibold text-white hover:bg-brand-600"
                     >
                       +
                     </button>
@@ -404,7 +598,10 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </div>
 
               {mode === "existing" ? (
-                <Button onClick={() => setAddCustomerOpen(true)} className="h-9 px-3 text-sm">
+                <Button
+                  onClick={() => setAddCustomerOpen(true)}
+                  className="h-9 px-3 text-sm"
+                >
                   + Add Customer
                 </Button>
               ) : null}
@@ -412,80 +609,97 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
             {mode === "existing" ? (
               <>
-                <div className="mt-3 grid grid-cols-12 gap-3">
-                  <div className="col-span-12 md:col-span-8">
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                      Search customer
-                    </label>
-                    <input
-                      value={userQ}
-                      onChange={(e) => {
-                        setUsersOffset(0);
-                        setUserQ(e.target.value);
-                      }}
-                      placeholder="Search by name/email/phone"
-                      className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div className="col-span-12 md:col-span-4">
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                      Select customer
-                    </label>
-                    <select
-                      value={customerId ?? ""}
-                      onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : null)}
-                      className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                    >
-                      <option value="">{usersQuery.isLoading ? "Loading..." : "Choose customer"}</option>
-                      {users.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {userFullName(u)} {u.email ? `(${u.email})` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                {/* Search */}
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Search customer
+                  </label>
+                  <input
+                    value={userQ}
+                    onChange={(e) => {
+                      setUsersOffset(0);
+                      setUserQ(e.target.value);
+                    }}
+                    placeholder="Search by name/email/phone"
+                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                  />
                 </div>
 
-                {/* pagination */}
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                {/* ✅ Customer list (max 6) */}
+                <div className="mt-3 space-y-2">
+                  {usersQuery.isLoading ? (
+                    <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+                      Loading customers...
+                    </div>
+                  ) : users.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+                      No customers found.
+                    </div>
+                  ) : (
+                    users.map((u) => (
+                      <CustomerRow
+                        key={u.id}
+                        u={u}
+                        active={Number(customerId) === Number(u.id)}
+                        onPick={() => setCustomerId(Number(u.id))}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {/* Pagination */}
+                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <div>
-                    Showing {Math.min(usersOffset + USERS_LIMIT, usersTotal)} / {usersTotal}
+                    Showing{" "}
+                    <span className="font-semibold text-gray-800 dark:text-gray-200">
+                      {usersTotal === 0
+                        ? 0
+                        : Math.min(usersOffset + USERS_LIMIT, usersTotal)}
+                    </span>{" "}
+                    / {usersTotal}
                   </div>
+
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       disabled={usersOffset === 0}
-                      onClick={() => setUsersOffset((o) => Math.max(0, o - USERS_LIMIT))}
+                      onClick={() =>
+                        setUsersOffset((o) => Math.max(0, o - USERS_LIMIT))
+                      }
                       className={cn(
-                        "rounded-md px-2 py-1 ring-1 transition",
+                        "inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 transition",
                         usersOffset === 0
                           ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-800"
                           : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
                       )}
                     >
+                      <ChevronLeft size={14} />
                       Prev
                     </button>
+
                     <button
                       type="button"
                       disabled={usersOffset + USERS_LIMIT >= usersTotal}
                       onClick={() => setUsersOffset((o) => o + USERS_LIMIT)}
                       className={cn(
-                        "rounded-md px-2 py-1 ring-1 transition",
+                        "inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 transition",
                         usersOffset + USERS_LIMIT >= usersTotal
                           ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-800"
                           : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
                       )}
                     >
                       Next
+                      <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
 
-                {/* address */}
+                {/* Address */}
                 <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white/90">Address</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
+                      Address
+                    </div>
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -507,11 +721,19 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     </label>
                     <select
                       value={addressId ?? ""}
-                      onChange={(e) => setAddressId(e.target.value ? Number(e.target.value) : null)}
+                      onChange={(e) =>
+                        setAddressId(
+                          e.target.value ? Number(e.target.value) : null
+                        )
+                      }
                       className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
                       disabled={!selectedUser}
                     >
-                      <option value="">{selectedUser ? "Choose address" : "Select customer first"}</option>
+                      <option value="">
+                        {selectedUser
+                          ? "Choose address"
+                          : "Select customer first"}
+                      </option>
                       {addresses.map((a: any) => (
                         <option key={a.id} value={a.id}>
                           {a?.name ? `${a.name} - ` : ""}
@@ -525,7 +747,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             ) : (
               <div className="mt-3 grid grid-cols-12 gap-3">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Name</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Name
+                  </label>
                   <input
                     value={strangerName}
                     onChange={(e) => setStrangerName(e.target.value)}
@@ -534,7 +758,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Phone</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Phone
+                  </label>
                   <input
                     value={strangerPhone}
                     onChange={(e) => setStrangerPhone(e.target.value)}
@@ -554,7 +780,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">City</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    City
+                  </label>
                   <input
                     value={strangerCity}
                     onChange={(e) => setStrangerCity(e.target.value)}
@@ -563,7 +791,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Zip</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Zip
+                  </label>
                   <input
                     value={strangerZip}
                     onChange={(e) => setStrangerZip(e.target.value)}
@@ -572,7 +802,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Email</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Email
+                  </label>
                   <input
                     value={strangerEmail}
                     onChange={(e) => setStrangerEmail(e.target.value)}
@@ -587,7 +819,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         {/* Delivery + Payment + Notes */}
         <div className="col-span-12 lg:col-span-5">
           <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white/90">Delivery</div>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
+              Delivery
+            </div>
 
             <div className="mt-3">
               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -595,10 +829,18 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </label>
               <select
                 value={deliveryChargeId ?? ""}
-                onChange={(e) => setDeliveryChargeId(e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  setDeliveryChargeId(
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
                 className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               >
-                <option value="">{deliveryChargesQuery.isLoading ? "Loading..." : "Choose delivery charge"}</option>
+                <option value="">
+                  {deliveryChargesQuery.isLoading
+                    ? "Loading..."
+                    : "Choose delivery charge"}
+                </option>
                 {deliveryCharges.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.title} — {formatCurrencyBDT(d.customer_charge)}
@@ -610,27 +852,37 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
               <div className="flex items-center justify-between text-sm">
                 <div className="text-gray-600 dark:text-gray-300">Subtotal</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">{formatCurrencyBDT(subtotal)}</div>
+                <div className="font-semibold text-gray-900 dark:text-white/90">
+                  {formatCurrencyBDT(subtotal)}
+                </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between text-sm">
                 <div className="text-gray-600 dark:text-gray-300">Delivery</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">{formatCurrencyBDT(deliveryFee)}</div>
+                <div className="font-semibold text-gray-900 dark:text-white/90">
+                  {formatCurrencyBDT(deliveryFee)}
+                </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between text-sm">
                 <div className="text-gray-600 dark:text-gray-300">Discount</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">{formatCurrencyBDT(discount)}</div>
+                <div className="font-semibold text-gray-900 dark:text-white/90">
+                  {formatCurrencyBDT(0)}
+                </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between text-sm">
                 <div className="text-gray-600 dark:text-gray-300">Tax</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">{formatCurrencyBDT(tax)}</div>
+                <div className="font-semibold text-gray-900 dark:text-white/90">
+                  {formatCurrencyBDT(0)}
+                </div>
               </div>
 
               <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-800">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-gray-800 dark:text-white/90">Total</div>
+                  <div className="text-sm font-semibold text-gray-800 dark:text-white/90">
+                    Total
+                  </div>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white/90">
                     {formatCurrencyBDT(total)}
                   </div>
@@ -639,7 +891,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             </div>
 
             <div className="mt-4">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">Coupon</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
+                Coupon
+              </div>
               <input
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
@@ -649,7 +903,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             </div>
 
             <div className="mt-4">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">Note</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
+                Note
+              </div>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -659,7 +915,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             </div>
 
             <div className="mt-4">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">Payment</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
+                Payment
+              </div>
               <div className="mt-2 flex items-center gap-2">
                 <button
                   type="button"
@@ -711,7 +969,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))}
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))
+            }
           >
             Clear Cart
           </Button>
@@ -720,17 +980,23 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         <div className="col-span-12 md:col-span-6">
           <button
             type="button"
-            disabled={placing || (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)}
+            disabled={
+              placing ||
+              (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
+            }
             className={cn(
               "h-11 w-full rounded-lg text-sm font-semibold text-white",
-              placing || (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
+              placing ||
+                (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
                 ? "cursor-not-allowed bg-brand-500/60"
                 : "bg-brand-500 hover:bg-brand-600"
             )}
             onClick={() => {
               if (placing) return;
 
-              const anyMissingVariation = cart.some((i) => !Number(i.productVariationId));
+              const anyMissingVariation = cart.some(
+                (i) => !Number(i.productVariationId)
+              );
               if (anyMissingVariation) {
                 toast.error("Select product variation before placing order");
                 return;
@@ -738,7 +1004,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
               if (mode === "existing") {
                 if (!canPlaceExisting) {
-                  toast.error("Please select customer, address, delivery, and variation");
+                  toast.error(
+                    "Please select customer, address, delivery, and variation"
+                  );
                   return;
                 }
                 placeExistingMutation.mutate();
@@ -746,7 +1014,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               }
 
               if (!canPlaceStranger) {
-                toast.error("Please fill stranger info, delivery, and variation");
+                toast.error(
+                  "Please fill stranger info, delivery, and variation"
+                );
                 return;
               }
               placeStrangerMutation.mutate();
@@ -764,12 +1034,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         onCreated={(data) => setCustomerId(data.id)}
       />
 
-      {/* Inline manual address modal (simple) */}
+      {/* Manual address modal */}
       {manualAddressOpen ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-[760px] overflow-hidden rounded-xl bg-white shadow-theme-lg dark:bg-gray-900">
             <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Add Address</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+                Add Address
+              </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Create a manual address for this customer.
               </p>
@@ -778,7 +1050,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             <div className="px-6 py-6">
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Name</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Name
+                  </label>
                   <input
                     value={manualAddressName}
                     onChange={(e) => setManualAddressName(e.target.value)}
@@ -787,7 +1061,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Phone</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Phone
+                  </label>
                   <input
                     value={manualAddressPhone}
                     onChange={(e) => setManualAddressPhone(e.target.value)}
@@ -796,7 +1072,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Full Address</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Full Address
+                  </label>
                   <input
                     value={manualAddressFull}
                     onChange={(e) => setManualAddressFull(e.target.value)}
@@ -805,7 +1083,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">City</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    City
+                  </label>
                   <input
                     value={manualAddressCity}
                     onChange={(e) => setManualAddressCity(e.target.value)}
@@ -814,7 +1094,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Zip</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Zip
+                  </label>
                   <input
                     value={manualAddressZip}
                     onChange={(e) => setManualAddressZip(e.target.value)}
@@ -823,10 +1105,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Type</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Type
+                  </label>
                   <select
                     value={manualAddressType}
-                    onChange={(e) => setManualAddressType(e.target.value as any)}
+                    onChange={(e) =>
+                      setManualAddressType(e.target.value as any)
+                    }
                     className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
                   >
                     <option value="n/a">n/a</option>
@@ -839,7 +1125,10 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
             <div className="border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setManualAddressOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setManualAddressOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
@@ -852,7 +1141,11 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   }
                   onClick={() => {
                     if (!selectedUser) return;
-                    if (!manualAddressName.trim() || !manualAddressPhone.trim() || !manualAddressFull.trim()) {
+                    if (
+                      !manualAddressName.trim() ||
+                      !manualAddressPhone.trim() ||
+                      !manualAddressFull.trim()
+                    ) {
                       toast.error("Name, phone, and address are required");
                       return;
                     }
@@ -868,7 +1161,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     });
                   }}
                 >
-                  {createAddressMutation.isPending ? "Saving..." : "Save Address"}
+                  {createAddressMutation.isPending
+                    ? "Saving..."
+                    : "Save Address"}
                 </Button>
               </div>
             </div>
