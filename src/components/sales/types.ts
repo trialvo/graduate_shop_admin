@@ -1,114 +1,78 @@
-/* =========================
- * Cart
- * ========================= */
-
-export type CartItem = {
-  key: string;
-  productId: number;
-  productVariationId: number;
-  title: string;
-  sku: string;
-  unitPrice: number;
-  qty: number;
-};
-
-/* =========================
- * Customer & Address
- * ========================= */
-
-export type CustomerAddress = {
+export type SaleSubCategory = {
   id: number;
   name: string;
-  address_type: "home" | "office" | "n/a";
-  full_address: string;
-  city?: string | null;
-  zip_code?: string | null;
-  phone_id?: number;
+  img_path: string | null;
+  child_categories?: SaleChildCategory[];
 };
 
-export type CustomerPhone = {
+export type SaleChildCategory = {
   id: number;
-  phone_number: string;
-  is_verified: boolean;
-};
-
-export type Customer = {
-  id: number;
-  email: string | null;
-  first_name: string;
-  last_name: string;
-  img_path?: string | null;
-  status: "active" | "inactive" | "suspended";
-
-  default_phone?: number | null;
-  phones?: CustomerPhone[];
-
-  default_address?: number | null;
-  addresses?: CustomerAddress[];
-
-  created_at?: string;
-};
-
-/* =========================
- * Product (Single Product API)
- * ========================= */
-
-export type ProductColor = {
-  id: number;
+  sub_category_id: number;
   name: string;
-  hex: string;
-  priority?: number;
+  img_path: string | null;
 };
 
-export type ProductVariant = {
+export type SaleProductImage = {
   id: number;
-  name: string;
-  attribute_id?: number;
-  attribute_name?: string;
-};
-
-export type ProductVariation = {
-  id: number;
-  color: ProductColor;
-  variant: ProductVariant;
-
-  selling_price: number;
-  discount: number;
-  discount_type?: number;
-  final_price: number;
-
-  stock: number;
-  sku: string;
-  status: boolean;
-  in_stock: boolean;
-};
-
-export type ProductImage = {
   path: string;
 };
 
-export type ProductSingle = {
+export type SaleProductVariation = {
   id: number;
-  name: string;
+  sku: string;
+  buying_price?: number;
+  selling_price?: number;
+  discount?: number;
+  stock?: number;
+  // legacy/demo fields (if any)
+  name?: string;
+};
 
-  brand?: { id: number; name: string; image?: string };
-  main_category?: { id: number; name: string };
-  sub_category?: { id: number; name: string };
-  child_category?: { id: number; name: string };
-  attribute?: { id: number; name: string };
+/**
+ * SaleProduct is used by both:
+ * - New Sale (API-driven product list)
+ * - Some legacy/demo UIs that use seed data
+ *
+ * So this type is intentionally flexible (optional legacy keys).
+ */
+export type SaleProduct = {
+  id: number | string;
 
-  short_description?: string;
-  long_description?: string;
+  // API fields
+  name?: string;
+  slug?: string;
+  main_category_id?: number;
+  sub_category_id?: number;
+  child_category_id?: number;
+  images?: SaleProductImage[];
+  variations?: SaleProductVariation[];
 
-  images: ProductImage[];
+  // Legacy/demo fields
+  title?: string;
+  sku?: string;
+  image?: string;
+  price?: number;
+  category?: string;
+  subCategory?: string;
+  childCategory?: string;
 
-  variations: ProductVariation[];
-  available_colors: ProductColor[];
-  available_variants: ProductVariant[];
+  variants?: { id: string; name: string }[];
+  sizes?: { id: string; name: string }[];
+};
 
-  summary?: {
-    min_price: number;
-    max_price: number;
-    total_stock: number;
-  };
+export type CartItem = {
+  key: string; // unique per productVariation
+  productId: number | string;
+  /** API required for manual-order endpoints */
+  productVariationId?: number;
+
+  title: string;
+  sku: string;
+  image: string;
+  unitPrice: number;
+  qty: number;
+
+  // legacy fields (optional)
+  variant?: string;
+  size?: string;
 };

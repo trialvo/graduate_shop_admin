@@ -3,6 +3,7 @@ import { api } from "./client";
 
 export type ProductImage = { id: number; path: string };
 
+// OLD list variation (kept)
 export type ProductVariation = {
   id: number;
   color_id: number;
@@ -12,6 +13,45 @@ export type ProductVariation = {
   discount: number;
   stock: number;
   sku: string;
+};
+
+// NEW single product variation shape (from /product/:id)
+export type ProductSingleColor = {
+  id: number;
+  name: string;
+  hex?: string | null;
+  priority?: number;
+  status?: boolean;
+};
+
+export type ProductSingleVariant = {
+  id: number;
+  name: string;
+  priority?: number;
+  status?: boolean;
+  attribute?: {
+    id: number;
+    name: string;
+    priority?: number;
+  };
+};
+
+export type ProductSingleVariation = {
+  id: number;
+  color: ProductSingleColor;
+  variant: ProductSingleVariant;
+
+  buying_price: number;
+  selling_price: number;
+  discount: number;
+  discount_type: number;
+  final_price: number;
+
+  stock: number;
+  sku: string;
+
+  status: boolean;
+  in_stock: boolean;
 };
 
 export type ProductEntity = {
@@ -50,6 +90,76 @@ export type ProductEntity = {
 };
 
 export type Product = ProductEntity;
+
+// Single product response shape
+export type ProductSingleCategoryMini = { id: number; name: string };
+export type ProductSingleBrandMini = { id: number; name: string; image?: string | null };
+export type ProductSingleAttributeMini = { id: number; name: string };
+
+export type ProductSingleResponseEntity = {
+  id: number;
+  name: string;
+  slug: string;
+
+  main_category: ProductSingleCategoryMini;
+  sub_category: ProductSingleCategoryMini;
+  child_category: ProductSingleCategoryMini;
+
+  brand: ProductSingleBrandMini;
+  attribute: ProductSingleAttributeMini;
+
+  video_path: string | null;
+  short_description: string | null;
+  long_description: string | null;
+
+  status: boolean;
+  featured: boolean;
+  free_delivery: boolean;
+  best_deal: boolean;
+
+  view_count: number;
+  sell_count: number;
+
+  meta_title: string | null;
+  canonical_url: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  robots: string | null;
+
+  created_at: string;
+  updated_at: string;
+
+  images: ProductImage[];
+  variations: ProductSingleVariation[];
+
+  available_colors?: Array<{ id: number; name: string; hex?: string | null; priority?: number }>;
+  available_variants?: Array<{ id: number; name: string; attribute_id: number; attribute_name: string }>;
+  related_products?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    image: string | null;
+    featured: boolean;
+    sell_count: number;
+    view_count: number;
+    keyword_match_count: number;
+  }>;
+  summary?: {
+    total_variations: number;
+    total_in_stock: number;
+    total_out_of_stock: number;
+    min_price: number;
+    max_price: number;
+    total_stock: number;
+  };
+};
+
+export type ProductSingleResponse = {
+  success: true;
+  product: ProductSingleResponseEntity;
+};
 
 export type ProductsListParams = {
   search?: string;
@@ -206,7 +316,17 @@ export async function getProducts(params?: ProductsListParams): Promise<Products
   return res.data as ProductsListResponse;
 }
 
-export async function getProduct(id: number): Promise<{ product: ProductEntity }> {
+/**
+ * ✅ Single product (NEW)
+ * GET /product/:id
+ */
+export async function getProduct(id: number): Promise<ProductSingleResponse> {
+  const res = await api.get(`/product/${id}`);
+  return res.data as ProductSingleResponse;
+}
+
+// (kept for backward compatibility if any old usage exists)
+export async function getProductLegacy(id: number): Promise<{ product: ProductEntity }> {
   const res = await api.get(`/product/${id}`);
   return res.data as { product: ProductEntity };
 }

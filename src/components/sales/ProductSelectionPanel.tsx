@@ -1,230 +1,238 @@
+import React from "react";
 import { Search } from "lucide-react";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import ImageSelectDropdown from "@/components/ui/dropdown/ImageSelectDropdown";
-import ProductCard from "./ProductCard";
-import ProductAddModal from "./ProductAddModal";
-
-import { getSubCategories, getChildCategories } from "@/api/categories.api";
-import { getProducts, type Product } from "@/api/products.api";
-import type { CartItem } from "./types";
+import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
-const PAGE_SIZE = 15;
+import ProductCard from "@/components/sales/ProductCard";
+import ProductAddModal from "@/components/sales/ProductAddModal";
+import type { CartItem, SaleChildCategory, SaleProduct, SaleSubCategory } from "@/components/sales/types";
+import ImageSelectDropdown, { type ImageSelectOption } from "@/components/ui/dropdown/ImageSelectDropdown";
 
-interface Props {
-  onAddToCart: (item: CartItem) => void;
+import { getSubCategories, getChildCategories } from "@/api/categories.api";
+import { getProducts } from "@/api/products.api";
+import Pagination from "./Pagination";
+
+function unwrapList<T>(payload: any, key?: string): T[] {
+  if (Array.isArray(payload)) return payload as T[];
+  if (key && Array.isArray(payload?.[key])) return payload[key] as T[];
+  if (Array.isArray(payload?.data)) return payload.data as T[];
+  if (Array.isArray(payload?.rows)) return payload.rows as T[];
+  return [];
 }
 
-export default function ProductSelectionPanel({ onAddToCart }: Props) {
-  /* =========================
-   * Filters & Pagination
-   * ========================= */
-  const [subCategoryId, setSubCategoryId] = useState<string>("all");
-  const [childCategoryId, setChildCategoryId] = useState<string>("all");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debounced, setDebounced] = React.useState<T>(value);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return debounced;
+}
 
-  /* =========================
-   * Modal state
-   * ========================= */
-  const [openModal, setOpenModal] = useState(false);
-  const [activeProductId, setActiveProductId] = useState<number | null>(null);
+type Props = {
+  onAddToCart: (item: CartItem) => void;
+};
 
-  /* =========================
-   * Sub Categories
-   * ========================= */
-  const { data: subRes } = useQuery({
-    queryKey: ["subCategories"],
+const DEFAULT_LIMIT = 15;
+
+const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
+  const [subCategoryId, setSubCategoryId] = React.useState<string>("all");
+  const [childCategoryId, setChildCategoryId] = React.useState<string>("all");
+  const [q, setQ] = React.useState<string>("");
+
+  const [page, setPage] = React.useState(1);
+  const limit = DEFAULT_LIMIT;
+  const offset = (page - 1) * limit;
+
+  const debouncedQ = useDebouncedValue(q, 450);
+
+  const { data: subRes, isLoading: subLoading } = useQuery({
+    queryKey: ["sale-subCategories"],
     queryFn: () => getSubCategories(),
+    staleTime: 60_000,
   });
 
-  const subCategories = subRes?.data ?? [];
-
-  /* =========================
-   * Child Categories
-   * ========================= */
-  const { data: childRes } = useQuery({
-    queryKey: ["childCategories", subCategoryId],
-    queryFn: () =>
-      getChildCategories(
-        subCategoryId === "all"
-          ? undefined
-          : { sub_category_id: Number(subCategoryId) }
-      ),
-    enabled: subCategoryId !== "all",
+  const { data: childRes, isLoading: childLoading } = useQuery({
+    queryKey: ["sale-childCategories"],
+    queryFn: () => getChildCategories(),
+    staleTime: 60_000,
   });
 
-  const childCategories = childRes?.data ?? [];
+  const subCategories = React.useMemo(() => unwrapList<SaleSubCategory>(subRes), [subRes]);
+  const childCategories = React.useMemo(() => unwrapList<SaleChildCategory>(childRes), [childRes]);
 
-  /* =========================
-   * Products
-   * ========================= */
-const { data: productsRes, isLoading } = useQuery({
-  queryKey: [
-    "products",
-    search,
-    subCategoryId,
-    childCategoryId,
-    page,
-  ],
-  queryFn: () =>
-    getProducts({
-      search: search || undefined, // ✅ CHANGED HERE
-      sub_category_id:
-        subCategoryId === "all" ? undefined : Number(subCategoryId),
-      child_category_id:
-        childCategoryId === "all" ? undefined : Number(childCategoryId),
-      limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-    }),
-  placeholderData: (prev) => prev,
-});
+  const filteredChildCategories = React.useMemo(() => {
+    const subId = Number(subCategoryId);
+    if (subCategoryId === "all" || !Number.isFinite(subId)) return childCategories;
+    return childCategories.filter((c) => Number(c.sub_category_id) === subId);
+  }, [childCategories, subCategoryId]);
 
-  const products: Product[] = productsRes?.products ?? [];
-  const total = productsRes?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // reset pagination when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedQ, subCategoryId, childCategoryId]);
 
-  /* =========================
-   * Render
-   * ========================= */
+  const productsQuery = useQuery({
+    queryKey: ["sale-products", { q: debouncedQ, subCategoryId, childCategoryId, limit, offset }],
+    queryFn: async () => {
+      const params: any = {
+        limit,
+        offset,
+      };
+
+      // backend: /products?search=on&sub_category_id=1&child_category_id=5&limit=20&offset=0
+      const anyFilter =
+        Boolean(debouncedQ.trim()) || subCategoryId !== "all" || childCategoryId !== "all";
+      if (anyFilter) params.search = "on";
+
+      if (debouncedQ.trim()) params.q = debouncedQ.trim();
+
+      const subId = Number(subCategoryId);
+      if (subCategoryId !== "all" && Number.isFinite(subId)) params.sub_category_id = subId;
+
+      const childId = Number(childCategoryId);
+      if (childCategoryId !== "all" && Number.isFinite(childId)) params.child_category_id = childId;
+
+      return getProducts(params);
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+  });
+
+  const products = React.useMemo(() => {
+    const list = unwrapList<SaleProduct>(productsQuery.data, "products");
+    if (list.length) return list;
+    return Array.isArray((productsQuery.data as any)?.products)
+      ? ((productsQuery.data as any).products as SaleProduct[])
+      : [];
+  }, [productsQuery.data]);
+
+  const total = React.useMemo(() => {
+    const raw = productsQuery.data as any;
+    const v = Number(raw?.total ?? raw?.count ?? raw?.pagination?.total ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  }, [productsQuery.data]);
+
+  const subOptions = React.useMemo<ImageSelectOption[]>(() => {
+    return [
+      { id: "all", label: "All Sub Categories" },
+      ...subCategories.map((c) => ({
+        id: String(c.id),
+        label: c.name,
+        image: c.img_path ? toPublicUrl(c.img_path) : undefined,
+      })),
+    ];
+  }, [subCategories]);
+
+  const childOptions = React.useMemo<ImageSelectOption[]>(() => {
+    return [
+      { id: "all", label: "All Child Categories" },
+      ...filteredChildCategories.map((c) => ({
+        id: String(c.id),
+        label: c.name,
+        image: c.img_path ? toPublicUrl(c.img_path) : undefined,
+      })),
+    ];
+  }, [filteredChildCategories]);
+
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<SaleProduct | null>(null);
+
+  const loading = subLoading || childLoading || productsQuery.isLoading;
+
   return (
-    <div className="flex h-full flex-col rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">
-        Product Section
-      </h3>
+    <div
+      className={cn(
+        "flex h-full flex-col rounded-[4px] border border-gray-200 bg-white p-5",
+        "dark:border-gray-800 dark:bg-white/[0.03] sm:p-6"
+      )}
+    >
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Product Section</h3>
+      </div>
 
-      {/* =========================
-       * Filters
-       * ========================= */}
+      {/* Filters */}
       <div className="grid grid-cols-12 gap-3">
-        {/* Sub Category */}
-        <div className="col-span-6">
+        <div className="col-span-12 md:col-span-6">
           <ImageSelectDropdown
             value={subCategoryId}
             onChange={(v) => {
               setSubCategoryId(v);
               setChildCategoryId("all");
-              setPage(0);
             }}
+            options={subOptions}
             placeholder="All Sub Categories"
-            options={[
-              { id: "all", label: "All Sub Categories" },
-              ...subCategories.map((s) => ({
-                id: String(s.id),
-                label: s.name,
-                image: toPublicUrl(s.img_path),
-              })),
-            ]}
           />
         </div>
 
-        {/* Child Category */}
-        <div className="col-span-6">
+        <div className="col-span-12 md:col-span-6">
           <ImageSelectDropdown
             value={childCategoryId}
-            onChange={(v) => {
-              setChildCategoryId(v);
-              setPage(0);
-            }}
+            onChange={setChildCategoryId}
+            options={childOptions}
             placeholder="All Child Categories"
-            disabled={subCategoryId === "all"}
-            options={[
-              { id: "all", label: "All Child Categories" },
-              ...childCategories.map((c) => ({
-                id: String(c.id),
-                label: c.name,
-                image: toPublicUrl(c.img_path),
-              })),
-            ]}
+            disabled={subCategoryId === "all" ? childOptions.length <= 1 : false}
           />
         </div>
 
-        {/* Search */}
         <div className="col-span-12">
           <div className="flex h-12 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
             <Search size={18} className="text-gray-400" />
             <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              placeholder="Search by product name / SKU"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search by name or SKU"
               className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
             />
           </div>
         </div>
       </div>
 
-      {/* =========================
-       * Product Grid
-       * ========================= */}
+      {/* Product grid */}
       <div className="mt-4 flex-1 overflow-auto custom-scrollbar">
-        {products.length === 0 && !isLoading ? (
-          <div className="flex h-full items-center justify-center text-sm text-gray-500">
-            No products found
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="h-[156px] rounded-[4px] border border-gray-200 bg-white/70 p-4 animate-pulse dark:border-gray-800 dark:bg-white/[0.03]"
+              />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="rounded-[4px] border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+            No products found.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {products.map((product) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {products.map((p) => (
               <ProductCard
-                key={product.id}
-                product={product}
+                key={String(p.id)}
+                product={p}
                 onClick={() => {
-                  setActiveProductId(product.id);
-                  setOpenModal(true);
+                  setSelected(p);
+                  setModalOpen(true);
                 }}
               />
             ))}
           </div>
         )}
-
-        {isLoading && (
-          <div className="py-6 text-center text-sm text-gray-500">
-            Loading products…
-          </div>
-        )}
       </div>
 
-      {/* =========================
-       * Pagination
-       * ========================= */}
-      <div className="mt-4 flex items-center justify-between">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage((p) => p - 1)}
-          className="rounded px-3 py-1 text-sm disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        <span className="text-sm text-gray-600 dark:text-gray-300">
-          Page {page + 1} / {totalPages}
-        </span>
-
-        <button
-          disabled={page + 1 >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="rounded px-3 py-1 text-sm disabled:opacity-50"
-        >
-          Next
-        </button>
+      <div className="mt-4">
+        <Pagination page={page} pageSize={limit} total={total} onPageChange={setPage} />
       </div>
 
-      {/* =========================
-       * Product Modal
-       * ========================= */}
       <ProductAddModal
-        open={openModal}
-        productId={activeProductId}
-        onClose={() => {
-          setOpenModal(false);
-          setActiveProductId(null);
-        }}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        product={selected}
         onAdd={onAddToCart}
       />
     </div>
   );
-}
+};
+
+export default ProductSelectionPanel;
