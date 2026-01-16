@@ -17,8 +17,15 @@ type Props = {
   /**
    * Optional callbacks (OrdersTable can store override)
    */
-  onUpdateCourier?: (orderId: string, providerId: CourierProviderId, memoNo: string) => void;
-  onRequestCourier?: (orderId: string, providerId: Exclude<CourierProviderId, "select">) => Promise<void> | void;
+  onUpdateCourier?: (
+    orderId: string,
+    providerId: CourierProviderId,
+    memoNo: string
+  ) => void;
+  onRequestCourier?: (
+    orderId: string,
+    providerId: Exclude<CourierProviderId, "select">
+  ) => Promise<void> | void;
 };
 
 type CourierProviderIdSafe = CourierProviderId | "manual" | "unknown";
@@ -40,7 +47,7 @@ function providerLabel(id?: CourierProviderIdSafe) {
     case "paperfly":
       return "Paperfly";
     case "manual":
-      return "Manual Courier";
+      return "Manual";
     case "select":
       return "Select Courier";
     default:
@@ -57,16 +64,19 @@ export default function SendCourierCell({
   const [open, setOpen] = useState(false);
 
   const apiConfigured = Boolean(order.courier?.apiConfigured);
-  const connectedAutoProviders = order.courier?.availableAutoCouriers?.filter((x) => x.connected) ?? [];
+  const connectedAutoProviders =
+    order.courier?.availableAutoCouriers?.filter((x) => x.connected) ?? [];
   const hasAnyAuto = apiConfigured && connectedAutoProviders.length > 0;
 
-  const providerIdFromOrder = (order.courier?.providerId as CourierProviderIdSafe) ?? "select";
+  const providerIdFromOrder =
+    (order.courier?.providerId as CourierProviderIdSafe) ?? "select";
   const memoNoFromOrder = order.courier?.memoNo ?? "";
   const trackingNo = order.courier?.trackingNo ?? "";
 
   // ✅ effective values (override first)
   const providerId: CourierProviderIdSafe =
-    (courierOverride?.providerId as CourierProviderIdSafe) ?? providerIdFromOrder;
+    (courierOverride?.providerId as CourierProviderIdSafe) ??
+    providerIdFromOrder;
 
   const memoNo = courierOverride?.memoNo ?? memoNoFromOrder;
 
@@ -84,11 +94,14 @@ export default function SendCourierCell({
       };
     }
     if (hasAnyAuto) {
-      return {
-        text: "API",
-        cls: "bg-brand-500/10 text-brand-600 ring-brand-500/20 dark:bg-brand-500/15 dark:text-brand-200 dark:ring-brand-500/25",
-      };
+      return null;
     }
+    // if (hasAnyAuto) {
+    //   return {
+    //     text: "Auto",
+    //     cls: "bg-brand-500/10 text-brand-600 ring-brand-500/20 dark:bg-brand-500/15 dark:text-brand-200 dark:ring-brand-500/25",
+    //   };
+    // }
     if (providerId !== "select" || memoNo) {
       return {
         text: "Manual",
@@ -108,29 +121,39 @@ export default function SendCourierCell({
     return "SEND";
   }, [trackingNo, hasAnyAuto, memoNo, providerId]);
 
-  const secondaryLine = trackingNo ? `Tracking: ${trackingNo}` : memoNo ? `Memo: ${memoNo}` : "Not set";
+  const secondaryLine = trackingNo
+    ? `Tracking: ${trackingNo}`
+    : memoNo
+    ? `Memo: ${memoNo}`
+    : "Not set";
 
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{label}</p>
+            <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+              {label}
+            </p>
 
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
-                pill.cls
-              )}
-              title={hasAnyAuto ? "Courier API available" : "Manual courier"}
-            >
-              {pill.text}
-            </span>
+            {pill && (
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
+                  pill.cls
+                )}
+                title={hasAnyAuto ? "Courier API available" : "Manual courier"}
+              >
+                {pill.text}
+              </span>
+            )}
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400">{secondaryLine}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {secondaryLine}
+          </p>
 
-          {hasAnyAuto ? (
+          {/* {hasAnyAuto ? (
             <p className="text-[11px] text-gray-500 dark:text-gray-400">
               Auto available:{" "}
               <span className="font-semibold text-gray-700 dark:text-gray-200">
@@ -139,7 +162,7 @@ export default function SendCourierCell({
                   .reduce((acc, s) => (acc ? `${acc}, ${s}` : s), "")}
               </span>
             </p>
-          ) : null}
+          ) : null} */}
         </div>
 
         <button
@@ -147,7 +170,9 @@ export default function SendCourierCell({
           onClick={() => setOpen(true)}
           className={cn(
             "inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white",
-            hasAnyAuto ? "bg-success-600 hover:bg-success-700" : "bg-brand-500 hover:bg-brand-600"
+            hasAnyAuto
+              ? "bg-success-600 hover:bg-success-700"
+              : "bg-brand-500 hover:bg-brand-600"
           )}
         >
           {actionLabel}

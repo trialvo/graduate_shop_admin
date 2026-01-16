@@ -18,13 +18,19 @@ import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
 import { cn } from "@/lib/utils";
 
-import { ordersKeys, patchOrderPaymentStatus, patchOrderStatus } from "@/api/orders.api";
+import {
+  ordersKeys,
+  patchOrderPaymentStatus,
+  patchOrderStatus,
+} from "@/api/orders.api";
 
 type Props = { rows: OrderRow[] };
 
 function fraudIcon(level: OrderRow["fraudLevel"]) {
-  if (level === "safe") return <CheckCircle2 size={16} className="text-success-500" />;
-  if (level === "medium") return <AlertTriangle size={16} className="text-orange-500" />;
+  if (level === "safe")
+    return <CheckCircle2 size={16} className="text-success-500" />;
+  if (level === "medium")
+    return <AlertTriangle size={16} className="text-orange-500" />;
   return <ShieldAlert size={16} className="text-error-500" />;
 }
 
@@ -52,8 +58,12 @@ export default function OrdersTable({ rows }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [paymentOverride, setPaymentOverride] = useState<Record<string, OrderRow["paymentStatus"]>>({});
-  const [statusOverride, setStatusOverride] = useState<Record<string, OrderRow["status"]>>({});
+  const [paymentOverride, setPaymentOverride] = useState<
+    Record<string, OrderRow["paymentStatus"]>
+  >({});
+  const [statusOverride, setStatusOverride] = useState<
+    Record<string, OrderRow["status"]>
+  >({});
 
   const [courierOverride, setCourierOverride] = useState<
     Record<string, { providerId?: CourierProviderId; memoNo?: string }>
@@ -75,22 +85,31 @@ export default function OrdersTable({ rows }: Props) {
     setViewOpen(true);
   };
 
-  const updateCourier = (orderId: string, providerId: CourierProviderId, memoNo: string) => {
+  const updateCourier = (
+    orderId: string,
+    providerId: CourierProviderId,
+    memoNo: string
+  ) => {
     setCourierOverride((prev) => ({
       ...prev,
       [orderId]: { providerId, memoNo },
     }));
   };
 
-  const requestCourier = async (orderId: string, providerId: Exclude<CourierProviderId, "select">) => {
+  const requestCourier = async (
+    orderId: string,
+    providerId: Exclude<CourierProviderId, "select">
+  ) => {
     // TODO: no endpoint provided yet
     // eslint-disable-next-line no-console
     console.log("Request courier for:", orderId, "provider:", providerId);
   };
 
   const paymentMutation = useMutation({
-    mutationFn: async (payload: { orderId: number; newStatus: "unpaid" | "partial_paid" | "paid" }) =>
-      patchOrderPaymentStatus(payload.orderId, payload.newStatus),
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: "unpaid" | "partial_paid" | "paid";
+    }) => patchOrderPaymentStatus(payload.orderId, payload.newStatus),
     onSuccess: async () => {
       toast.success("Payment status updated");
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
@@ -106,8 +125,10 @@ export default function OrdersTable({ rows }: Props) {
   });
 
   const statusMutation = useMutation({
-    mutationFn: async (payload: { orderId: number; newStatus: OrderRow["status"] }) =>
-      patchOrderStatus(payload.orderId, payload.newStatus),
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: OrderRow["status"];
+    }) => patchOrderStatus(payload.orderId, payload.newStatus),
     onSuccess: async () => {
       toast.success("Order status updated");
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
@@ -125,14 +146,31 @@ export default function OrdersTable({ rows }: Props) {
   return (
     <>
       <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        {/* ✅ responsive scroll container: horizontal + vertical */}
+        {/* ✅ Key fix:
+            - table-layout: fixed => columns don't expand and force height
+            - truncate everywhere => single line
+            - fixed widths for "small" columns + flexible "Customer/Order info"
+            - horizontal scroll for many columns
+            - vertical scroll with max height
+        */}
         <div
-          className={cn(
-            "relative overflow-auto",
-            "max-h-[calc(100vh-320px)]"
-          )}
+          className={cn("relative overflow-auto", "max-h-[calc(100vh-320px)]")}
         >
-          <table className="min-w-[1200px] w-full border-collapse">
+          <table className="min-w-[1200px] w-full table-fixed border-collapse">
+            <colgroup>
+              <col className="w-[64px]" />
+              <col className="w-[260px]" />
+              <col className="w-[220px]" />
+              <col className="w-[160px]" />
+              <col className="w-[150px]" />
+              <col className="w-[170px]" />
+              <col className="w-[150px]" />
+              <col className="w-[220px]" />
+              <col className="w-[220px]" />
+              <col className="w-[220px]" />
+              <col className="w-[120px]" />
+            </colgroup>
+
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
                 <th
@@ -141,7 +179,7 @@ export default function OrdersTable({ rows }: Props) {
                     "sticky top-0 z-20 bg-white dark:bg-gray-900"
                   )}
                 >
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                  {/* ✅ user said avoid check thing, keeping header empty */}
                 </th>
 
                 {[
@@ -166,7 +204,6 @@ export default function OrdersTable({ rows }: Props) {
                   </th>
                 ))}
 
-                {/* ✅ Sticky Action header: top + right */}
                 <th
                   className={cn(
                     "px-4 py-4 text-left text-xs font-semibold text-brand-500",
@@ -181,19 +218,22 @@ export default function OrdersTable({ rows }: Props) {
             </thead>
 
             <tbody>
-              {mergedRows.map((r) => (
+              {mergedRows.map((r, i) => (
                 <tr
                   key={r.id}
                   className="group border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                 >
+                  {/* ✅ remove checkbox */}
                   <td className="px-4 py-4">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      {i + 1}
+                    </span>
                   </td>
 
-                  {/* Customer */}
+                  {/* Customer (single-line content to prevent height growth) */}
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                         {r.customerImage ? (
                           <img
                             src={r.customerImage}
@@ -201,18 +241,24 @@ export default function OrdersTable({ rows }: Props) {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <span className="text-xs font-semibold text-gray-500">IMG</span>
+                          <span className="text-xs font-semibold text-gray-500">
+                            IMG
+                          </span>
                         )}
                       </div>
 
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-brand-500">{r.customerName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{r.customerPhone}</p>
+                        <p className="truncate text-sm font-semibold text-brand-500">
+                          {r.customerName}
+                        </p>
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                          {r.customerPhone}
+                        </p>
 
                         <div className="mt-1 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800">
+                          <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800">
                             {fraudIcon(r.fraudLevel)}
-                            Fraud Check
+                            <span className="truncate">Fraud Check</span>
                           </span>
                         </div>
                       </div>
@@ -221,13 +267,20 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Order Info */}
                   <td className="px-4 py-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.id}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {r.orderDateLabel} • {r.orderTimeLabel}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{r.relativeTimeLabel}</p>
+                    <div className="min-w-0 space-y-1 flex items-center gap-2">
+                      <div>
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                          #{r.id}
+                        </p>
 
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                          {r.orderDateLabel} • {r.orderTimeLabel}
+                        </p>
+
+                        <p className="truncate text-[14px] font-bold text-gray-500 dark:text-gray-400">
+                          {r.relativeTimeLabel}
+                        </p>
+                      </div>
                       <div className="mt-2 flex items-center gap-2">
                         <button
                           type="button"
@@ -242,7 +295,13 @@ export default function OrdersTable({ rows }: Props) {
                           type="button"
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
                           aria-label="Edit"
-                          onClick={() => navigate(`/order-editor?orderId=${encodeURIComponent(r.id)}`)}
+                          onClick={() =>
+                            navigate(
+                              `/order-editor?orderId=${encodeURIComponent(
+                                r.id
+                              )}`
+                            )
+                          }
                         >
                           <Pencil size={16} />
                         </button>
@@ -252,89 +311,104 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Product */}
                   <td className="px-4 py-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="min-w-0 space-y-1">
+                      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                         {r.currencySymbol}
                         {r.total}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                         Items: {r.itemsAmount} • Qty: {r.totalItems}
                       </p>
-                      <p className="text-xs font-semibold text-brand-500">{r.paymentMethod}</p>
+                      <p className="truncate text-xs font-semibold text-brand-500">
+                        {r.paymentMethod}
+                      </p>
                     </div>
                   </td>
 
                   {/* Payment */}
                   <td className="px-4 py-4">
-                    <OrderSelectDropdown
-                      value={r.paymentStatus}
-                      onChange={(v) => {
-                        const next = v as OrderRow["paymentStatus"];
-                        setPaymentOverride((prev) => ({ ...prev, [r.id]: next }));
-                        paymentMutation.mutate({ orderId: Number(r.id), newStatus: next });
-                      }}
-                      options={PAYMENT_OPTIONS as any}
-                      variant="pill"
-                    />
+                    <div className="min-w-0">
+                      <OrderSelectDropdown
+                        value={r.paymentStatus}
+                        onChange={(v) => {
+                          const next = v as OrderRow["paymentStatus"];
+                          setPaymentOverride((prev) => ({
+                            ...prev,
+                            [r.id]: next,
+                          }));
+                          paymentMutation.mutate({
+                            orderId: Number(r.id),
+                            newStatus: next,
+                          });
+                        }}
+                        options={PAYMENT_OPTIONS as any}
+                        variant="pill"
+                      />
+                    </div>
                   </td>
 
                   {/* Status */}
                   <td className="px-4 py-4">
-                    <OrderSelectDropdown
-                      value={r.status}
-                      onChange={(v) => {
-                        const next = v as OrderRow["status"];
-                        setStatusOverride((prev) => ({ ...prev, [r.id]: next }));
-                        statusMutation.mutate({ orderId: Number(r.id), newStatus: next });
-                      }}
-                      options={STATUS_OPTIONS as any}
-                      variant="pill"
-                    />
+                    <div className="min-w-0">
+                      <OrderSelectDropdown
+                        value={r.status}
+                        onChange={(v) => {
+                          const next = v as OrderRow["status"];
+                          setStatusOverride((prev) => ({
+                            ...prev,
+                            [r.id]: next,
+                          }));
+                          statusMutation.mutate({
+                            orderId: Number(r.id),
+                            newStatus: next,
+                          });
+                        }}
+                        options={STATUS_OPTIONS as any}
+                        variant="pill"
+                      />
+                    </div>
                   </td>
 
                   {/* Date Time */}
                   <td className="px-4 py-4">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.orderDateLabel}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{r.orderTimeLabel}</p>
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {r.orderDateLabel}
+                    </p>
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                      {r.orderTimeLabel}
+                    </p>
                   </td>
 
                   {/* Send Currier */}
                   <td className="px-4 py-4">
-                    <SendCourierCell
-                      order={r}
-                      courierOverride={courierOverride[r.id]}
-                      onUpdateCourier={updateCourier}
-                      onRequestCourier={requestCourier}
-                    />
+                    <div className="min-w-0">
+                      <SendCourierCell
+                        order={r}
+                        courierOverride={courierOverride[r.id]}
+                        onUpdateCourier={updateCourier}
+                        onRequestCourier={requestCourier}
+                      />
+                    </div>
                   </td>
 
                   {/* Order Note */}
                   <td className="px-4 py-4">
-                    <p className="max-w-[220px] truncate text-sm text-gray-600 dark:text-gray-300">
+                    <p className="truncate text-sm text-gray-600 dark:text-gray-300">
                       {r.orderNote || "—"}
                     </p>
                   </td>
 
                   {/* Shipping Location */}
                   <td className="px-4 py-4">
-                    {(() => {
-                      const parts = String(r.shippingLocation || "")
-                        .trim()
-                        .split(/\s+/)
-                        .filter(Boolean);
-                      const first = parts[0] ?? "—";
-                      const rest = parts.slice(1).reduce((acc, s) => (acc ? `${acc} ${s}` : s), "");
-
-                      return (
-                        <>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{first}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">{rest}</p>
-                        </>
-                      );
-                    })()}
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {r.shippingArea}
+                    </p>
+                    <p className="truncate text-sm text-gray-600 dark:text-gray-300">
+                      {r.shippingAddress}
+                    </p>
                   </td>
 
-                  {/* ✅ Sticky Action cell: right */}
+                  {/* Sticky Action */}
                   <td
                     className={cn(
                       "px-4 py-4",
@@ -350,7 +424,9 @@ export default function OrdersTable({ rows }: Props) {
                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
                         aria-label="Print"
                         onClick={() => {
-                          const url = `/order-invoice/${encodeURIComponent(r.id)}?print=1`;
+                          const url = `/order-invoice/${encodeURIComponent(
+                            r.id
+                          )}?print=1`;
                           window.open(url, "_blank", "noopener,noreferrer");
                         }}
                       >
@@ -371,7 +447,10 @@ export default function OrdersTable({ rows }: Props) {
 
               {!mergedRows.length ? (
                 <tr>
-                  <td colSpan={11} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={11}
+                    className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
                     No orders found.
                   </td>
                 </tr>
@@ -381,7 +460,11 @@ export default function OrdersTable({ rows }: Props) {
         </div>
       </div>
 
-      <OrderInfoModal open={viewOpen} onClose={() => setViewOpen(false)} order={selectedOrder} />
+      <OrderInfoModal
+        open={viewOpen}
+        onClose={() => setViewOpen(false)}
+        order={selectedOrder}
+      />
     </>
   );
 }

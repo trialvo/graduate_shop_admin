@@ -30,13 +30,7 @@ type Props = {
     | "shurjopay"
     | "rocket";
   setPaymentProvider: (
-    v:
-      | "all"
-      | "sslcommerz"
-      | "bkash"
-      | "nagad"
-      | "shurjopay"
-      | "rocket"
+    v: "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket"
   ) => void;
 
   fraud: "all" | "0" | "1";
@@ -146,20 +140,6 @@ export default function OrderFiltersBar({
       <div className="mt-4 grid grid-cols-12 gap-3">
         <div className="col-span-12 md:col-span-2">
           <select
-            value={orderType}
-            onChange={(e) => setOrderType(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-          >
-            {uiOptions.orderType.map((x) => (
-              <option key={x.id} value={x.id}>
-                Order: {x.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="col-span-12 md:col-span-2">
-          <select
             value={paymentStatus}
             onChange={(e) => setPaymentStatus(e.target.value as any)}
             className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
@@ -167,20 +147,6 @@ export default function OrderFiltersBar({
             {uiOptions.paymentStatus.map((x) => (
               <option key={x.id} value={x.id}>
                 Pay: {x.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="col-span-12 md:col-span-2">
-          <select
-            value={paymentType}
-            onChange={(e) => setPaymentType(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-          >
-            {uiOptions.paymentType.map((x) => (
-              <option key={x.id} value={x.id}>
-                Type: {x.label}
               </option>
             ))}
           </select>
@@ -214,20 +180,6 @@ export default function OrderFiltersBar({
           </select>
         </div>
 
-        <div className="col-span-12 md:col-span-2">
-          <select
-            value={String(limit)}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-          >
-            {[5, 10, 20, 50].map((x) => (
-              <option key={x} value={x}>
-                Limit: {x}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="col-span-12 md:col-span-6">
           <div className="flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-950">
             <Search size={18} className="text-gray-400" />
@@ -240,25 +192,7 @@ export default function OrderFiltersBar({
           </div>
         </div>
 
-        <div className="col-span-6 md:col-span-3">
-          <input
-            value={minTotal}
-            onChange={(e) => setMinTotal(e.target.value)}
-            placeholder="Min total"
-            type="number"
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-          />
-        </div>
 
-        <div className="col-span-6 md:col-span-3">
-          <input
-            value={maxTotal}
-            onChange={(e) => setMaxTotal(e.target.value)}
-            placeholder="Max total"
-            type="number"
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-          />
-        </div>
 
         <div className="col-span-6 md:col-span-3">
           <input
