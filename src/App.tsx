@@ -44,6 +44,7 @@ import NotFound from "./pages/OtherPage/NotFound";
 // ✅ NEW (you should have these from the auth setup)
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
+import OrderInvoice from "./pages/Orders/OrderInvoice";
 
 export default function App() {
   return (
@@ -59,6 +60,8 @@ export default function App() {
 
         {/* ✅ Auth required for everything inside */}
         <Route element={<ProtectedRoute redirectTo="/" />}>
+          <Route path="/order-invoice/:orderId" element={<OrderInvoice />} />
+
           <Route element={<AppLayout />}>
             {/* Dashboard */}
             <Route path="/dashboard" element={<Home />} />

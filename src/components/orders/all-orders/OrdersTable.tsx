@@ -1,3 +1,5 @@
+// src/components/orders/all-orders/OrdersTable.tsx
+
 import { useMemo, useState } from "react";
 import {
   CheckCircle2,
@@ -12,10 +14,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
-import type { OrderRow } from "./types";
+import type { CourierProviderId, OrderRow } from "./types";
 import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
+import { cn } from "@/lib/utils";
 
 import { ordersKeys, patchOrderPaymentStatus, patchOrderStatus } from "@/api/orders.api";
 
@@ -27,19 +30,9 @@ function fraudIcon(level: OrderRow["fraudLevel"]) {
   return <ShieldAlert size={16} className="text-error-500" />;
 }
 
-function readApiError(err: any, fallback: string) {
-  return (
-    err?.response?.data?.error ??
-    err?.response?.data?.message ??
-    err?.response?.data?.flag ??
-    err?.message ??
-    fallback
-  );
-}
-
 const PAYMENT_OPTIONS = [
   { id: "paid", label: "paid" },
-  { id: "partial_paid", label: "Partial Paid" },
+  { id: "partial_paid", label: "partial_paid" },
   { id: "unpaid", label: "unpaid" },
 ] as const;
 
@@ -64,6 +57,10 @@ export default function OrdersTable({ rows }: Props) {
   const [paymentOverride, setPaymentOverride] = useState<Record<string, OrderRow["paymentStatus"]>>({});
   const [statusOverride, setStatusOverride] = useState<Record<string, OrderRow["status"]>>({});
 
+  const [courierOverride, setCourierOverride] = useState<
+    Record<string, { providerId?: CourierProviderId; memoNo?: string }>
+  >({});
+
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
 
@@ -80,6 +77,19 @@ export default function OrdersTable({ rows }: Props) {
     setViewOpen(true);
   };
 
+  const updateCourier = (orderId: string, providerId: CourierProviderId, memoNo: string) => {
+    setCourierOverride((prev) => ({
+      ...prev,
+      [orderId]: { providerId, memoNo },
+    }));
+  };
+
+  const requestCourier = async (orderId: string, providerId: Exclude<CourierProviderId, "select">) => {
+    // TODO: no endpoint provided yet
+    // eslint-disable-next-line no-console
+    console.log("Request courier for:", orderId, "provider:", providerId);
+  };
+
   const paymentMutation = useMutation({
     mutationFn: async (payload: { orderId: number; newStatus: "unpaid" | "partial_paid" | "paid" }) =>
       patchOrderPaymentStatus(payload.orderId, payload.newStatus),
@@ -88,34 +98,37 @@ export default function OrdersTable({ rows }: Props) {
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
-    onError: (err: any) => toast.error(readApiError(err, "Failed to update payment status")),
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update payment status";
+      toast.error(msg);
+    },
   });
 
   const statusMutation = useMutation({
-    mutationFn: async (payload: {
-      orderId: number;
-      newStatus: OrderRow["status"];
-      prevStatus: OrderRow["status"];
-    }) => patchOrderStatus(payload.orderId, payload.newStatus),
-    onSuccess: async (res: any) => {
-      toast.success(res?.message || "Order status updated");
+    mutationFn: async (payload: { orderId: number; newStatus: OrderRow["status"] }) =>
+      patchOrderStatus(payload.orderId, payload.newStatus),
+    onSuccess: async () => {
+      toast.success("Order status updated");
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
-    onError: (err: any, variables) => {
-      setStatusOverride((prev) => ({
-        ...prev,
-        [variables.orderId]: variables.prevStatus,
-      }));
-      toast.error(readApiError(err, "Failed to update order status"));
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update order status";
+      toast.error(msg);
     },
   });
 
   return (
     <>
-      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px] border-collapse">
+      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+        <div className="relative overflow-x-auto">
+          <table className="min-w-[1200px] w-full border-collapse">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
@@ -130,176 +143,201 @@ export default function OrdersTable({ rows }: Props) {
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Send Currier</th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Order Note</th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Shipping Location</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Action</th>
+
+                {/* ✅ Sticky Action header */}
+                <th
+                  className={cn(
+                    "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                    "sticky right-0 z-20 bg-white dark:bg-gray-900",
+                    "border-l border-gray-200 dark:border-gray-800"
+                  )}
+                >
+                  Action
+                </th>
               </tr>
             </thead>
 
             <tbody>
-              {mergedRows.map((r) => {
-                const parts = String(r.shippingLocation || "").trim().split(/\s+/).filter(Boolean);
-                const first = parts[0] ?? "—";
-                const rest = parts.slice(1).reduce((acc, s) => (acc ? `${acc} ${s}` : s), "");
+              {mergedRows.map((r) => (
+                <tr
+                  key={r.id}
+                  className="group border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                >
+                  <td className="px-4 py-4">
+                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                  </td>
 
-                return (
-                  <tr
-                    key={r.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
-                  >
-                    <td className="px-4 py-4">
-                      <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-                    </td>
+                  {/* Customer */}
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        {r.customerImage ? (
+                          <img src={r.customerImage} alt={r.customerName} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-semibold text-gray-500">IMG</span>
+                        )}
+                      </div>
 
-                    {/* Customer */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                          {r.customerImage ? (
-                            <img src={r.customerImage} alt={r.customerName} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="text-xs font-semibold text-gray-500">IMG</span>
-                          )}
-                        </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-brand-500">{r.customerName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{r.customerPhone}</p>
 
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-brand-500">{r.customerName}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{r.customerPhone}</p>
-
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800">
-                              {fraudIcon(r.fraudLevel)}
-                              Fraud Check
-                            </span>
-                          </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-white ring-1 ring-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-950 dark:ring-gray-800 dark:text-gray-300">
+                            {fraudIcon(r.fraudLevel)}
+                            Fraud Check
+                          </span>
                         </div>
                       </div>
-                    </td>
+                    </div>
+                  </td>
 
-                    {/* Order Info */}
-                    <td className="px-4 py-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.id}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {r.orderDateLabel} • {r.orderTimeLabel}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{r.relativeTimeLabel}</p>
-
-                        <div className="mt-2 flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                            aria-label="View"
-                            onClick={() => openView(r)}
-                          >
-                            <Eye size={16} />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                            aria-label="Edit"
-                            onClick={() => navigate(`/order-editor?orderId=${encodeURIComponent(r.id)}`)}
-                          >
-                            <Pencil size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Product */}
-                    <td className="px-4 py-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {r.currencySymbol}
-                          {r.total}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Items: {r.itemsAmount} • Qty: {r.totalItems}
-                        </p>
-                        <p className="text-xs font-semibold text-brand-500">{r.paymentMethod}</p>
-                      </div>
-                    </td>
-
-                    {/* Payment */}
-                    <td className="px-4 py-4">
-                      <OrderSelectDropdown
-                        value={r.paymentStatus}
-                        onChange={(v) => {
-                          const next = v as OrderRow["paymentStatus"];
-                          setPaymentOverride((prev) => ({ ...prev, [r.id]: next }));
-                          paymentMutation.mutate({ orderId: Number(r.id), newStatus: next });
-                        }}
-                        options={PAYMENT_OPTIONS as any}
-                        variant="pill"
-                      />
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-4">
-                      <OrderSelectDropdown
-                        value={r.status}
-                        onChange={(v) => {
-                        const next = v as OrderRow["status"];
-                        const prevStatus = r.status;
-                        setStatusOverride((prev) => ({ ...prev, [r.id]: next }));
-                        statusMutation.mutate({
-                          orderId: Number(r.id),
-                          newStatus: next,
-                          prevStatus,
-                        });
-                      }}
-                        options={STATUS_OPTIONS as any}
-                        variant="pill"
-                      />
-                    </td>
-
-                    {/* Date Time */}
-                    <td className="px-4 py-4">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.orderDateLabel}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{r.orderTimeLabel}</p>
-                    </td>
-
-                    {/* Send Currier */}
-                    <td className="px-4 py-4">
-                      <SendCourierCell order={r} />
-                    </td>
-
-                    {/* Order Note */}
-                    <td className="px-4 py-4">
-                      <p className="max-w-[220px] truncate text-sm text-gray-600 dark:text-gray-300">
-                        {r.orderNote || "—"}
+                  {/* Order Info */}
+                  <td className="px-4 py-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.id}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {r.orderDateLabel} • {r.orderTimeLabel}
                       </p>
-                    </td>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{r.relativeTimeLabel}</p>
 
-                    {/* Shipping Location */}
-                    <td className="px-4 py-4">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{first}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">{rest}</p>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="mt-2 flex items-center gap-2">
                         <button
                           type="button"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                          aria-label="Print"
-                          onClick={() => window.print()}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
+                          aria-label="View"
+                          onClick={() => openView(r)}
                         >
-                          <Printer size={16} />
+                          <Eye size={16} />
                         </button>
 
                         <button
                           type="button"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                          aria-label="More"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
+                          aria-label="Edit"
+                          onClick={() => navigate(`/order-editor?orderId=${encodeURIComponent(r.id)}`)}
                         >
-                          <MoreVertical size={16} />
+                          <Pencil size={16} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+
+                  {/* Product */}
+                  <td className="px-4 py-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {r.currencySymbol}
+                        {r.total}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Items: {r.itemsAmount} • Qty: {r.totalItems}
+                      </p>
+                      <p className="text-xs font-semibold text-brand-500">{r.paymentMethod}</p>
+                    </div>
+                  </td>
+
+                  {/* Payment */}
+                  <td className="px-4 py-4">
+                    <OrderSelectDropdown
+                      value={r.paymentStatus}
+                      onChange={(v) => {
+                        const next = v as OrderRow["paymentStatus"];
+                        setPaymentOverride((prev) => ({ ...prev, [r.id]: next }));
+                        paymentMutation.mutate({ orderId: Number(r.id), newStatus: next });
+                      }}
+                      options={PAYMENT_OPTIONS as any}
+                      variant="pill"
+                    />
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-4 py-4">
+                    <OrderSelectDropdown
+                      value={r.status}
+                      onChange={(v) => {
+                        const next = v as OrderRow["status"];
+                        setStatusOverride((prev) => ({ ...prev, [r.id]: next }));
+                        statusMutation.mutate({ orderId: Number(r.id), newStatus: next });
+                      }}
+                      options={STATUS_OPTIONS as any}
+                      variant="pill"
+                    />
+                  </td>
+
+                  {/* Date Time */}
+                  <td className="px-4 py-4">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.orderDateLabel}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{r.orderTimeLabel}</p>
+                  </td>
+
+                  {/* Send Currier */}
+                  <td className="px-4 py-4">
+                    <SendCourierCell
+                      order={r}
+                      courierOverride={courierOverride[r.id]}
+                      onUpdateCourier={updateCourier}
+                      onRequestCourier={requestCourier}
+                    />
+                  </td>
+
+                  {/* Order Note */}
+                  <td className="px-4 py-4">
+                    <p className="max-w-[220px] truncate text-sm text-gray-600 dark:text-gray-300">
+                      {r.orderNote || "—"}
+                    </p>
+                  </td>
+
+                  {/* Shipping Location */}
+                  <td className="px-4 py-4">
+                    {(() => {
+                      const parts = String(r.shippingLocation || "").trim().split(/\s+/).filter(Boolean);
+                      const first = parts[0] ?? "—";
+                      const rest = parts.slice(1).reduce((acc, s) => (acc ? `${acc} ${s}` : s), "");
+
+                      return (
+                        <>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{first}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{rest}</p>
+                        </>
+                      );
+                    })()}
+                  </td>
+
+                  {/* ✅ Sticky Action cell */}
+                  <td
+                    className={cn(
+                      "px-4 py-4",
+                      "sticky right-0 z-10",
+                      "bg-white dark:bg-gray-900",
+                      "border-l border-gray-200 dark:border-gray-800",
+                      "group-hover:bg-gray-50 dark:group-hover:bg-white/[0.03]"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
+                        aria-label="Print"
+                        onClick={() => {
+                          const url = `/order-invoice/${encodeURIComponent(r.id)}?print=1`;
+                          window.open(url, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        <Printer size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                        aria-label="More"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
 
               {!mergedRows.length ? (
                 <tr>

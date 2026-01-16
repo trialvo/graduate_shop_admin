@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
+import Pagination from "@/components/common/Pagination";
 
 import type { OrderRow, OrderStatus, OrderItemRow } from "./types";
 import {
@@ -278,7 +279,6 @@ export default function AllOrdersView() {
         customerName: (o.customer_name || "").trim() || "—",
         customerPhone: o.customer_phone || "—",
 
-        // ✅ your API uses customer_img
         customerImage: toPublicUrl(o.customer_img ?? null) ?? undefined,
 
         fraudLevel: o.is_fraud ? "high" : "safe",
@@ -312,7 +312,6 @@ export default function AllOrdersView() {
         paymentType: o.payment_type,
         paymentProvider: providerGuess,
 
-        // ✅ IMPORTANT: modal reads these
         items: rowItems,
 
         courier: {
@@ -497,34 +496,18 @@ export default function AllOrdersView() {
       <OrdersTable rows={rows} />
 
       {/* Pagination */}
-      <div className="flex flex-col gap-3 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          Page{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> of{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{totalPages}</span> Total{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{total}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-white/[0.03]"
-            onClick={() => setOffset((p) => Math.max(0, p - 1))}
-            disabled={offset <= 0 || ordersQuery.isFetching}
-          >
-            Prev
-          </button>
-
-          <button
-            type="button"
-            className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-white/[0.03]"
-            onClick={() => setOffset((p) => (p + 1 < totalPages ? p + 1 : p))}
-            disabled={currentPage >= totalPages || ordersQuery.isFetching}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      <Pagination
+        totalItems={total}
+        page={currentPage}
+        pageSize={limit}
+        onPageChange={(nextPage) => setOffset(Math.max(0, nextPage - 1))}
+        onPageSizeChange={(nextPageSize) => {
+          setLimit(nextPageSize);
+          setOffset(0);
+        }}
+        pageSizeOptions={[5, 10, 20, 50]}
+        className="shadow-none"
+      />
     </div>
   );
 }
