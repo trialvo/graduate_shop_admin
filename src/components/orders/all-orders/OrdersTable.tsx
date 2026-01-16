@@ -1,5 +1,3 @@
-// src/components/orders/all-orders/OrdersTable.tsx
-
 import { useMemo, useState } from "react";
 import {
   CheckCircle2,
@@ -126,29 +124,54 @@ export default function OrdersTable({ rows }: Props) {
 
   return (
     <>
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-        <div className="relative overflow-x-auto">
+      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        {/* ✅ responsive scroll container: horizontal + vertical */}
+        <div
+          className={cn(
+            "relative overflow-auto",
+            "max-h-[calc(100vh-320px)]"
+          )}
+        >
           <table className="min-w-[1200px] w-full border-collapse">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Customer</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Order Info</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Product</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Payment</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Status</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Date Time</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Send Currier</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Order Note</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">Shipping Location</th>
-
-                {/* ✅ Sticky Action header */}
                 <th
                   className={cn(
                     "px-4 py-4 text-left text-xs font-semibold text-brand-500",
-                    "sticky right-0 z-20 bg-white dark:bg-gray-900",
+                    "sticky top-0 z-20 bg-white dark:bg-gray-900"
+                  )}
+                >
+                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                </th>
+
+                {[
+                  "Customer",
+                  "Order Info",
+                  "Product",
+                  "Payment",
+                  "Status",
+                  "Date Time",
+                  "Send Currier",
+                  "Order Note",
+                  "Shipping Location",
+                ].map((label) => (
+                  <th
+                    key={label}
+                    className={cn(
+                      "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                      "sticky top-0 z-20 bg-white dark:bg-gray-900"
+                    )}
+                  >
+                    {label}
+                  </th>
+                ))}
+
+                {/* ✅ Sticky Action header: top + right */}
+                <th
+                  className={cn(
+                    "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                    "sticky top-0 right-0 z-30",
+                    "bg-white dark:bg-gray-900",
                     "border-l border-gray-200 dark:border-gray-800"
                   )}
                 >
@@ -161,7 +184,7 @@ export default function OrdersTable({ rows }: Props) {
               {mergedRows.map((r) => (
                 <tr
                   key={r.id}
-                  className="group border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                  className="group border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                 >
                   <td className="px-4 py-4">
                     <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
@@ -170,9 +193,13 @@ export default function OrdersTable({ rows }: Props) {
                   {/* Customer */}
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                         {r.customerImage ? (
-                          <img src={r.customerImage} alt={r.customerName} className="h-full w-full object-cover" />
+                          <img
+                            src={r.customerImage}
+                            alt={r.customerName}
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           <span className="text-xs font-semibold text-gray-500">IMG</span>
                         )}
@@ -183,7 +210,7 @@ export default function OrdersTable({ rows }: Props) {
                         <p className="text-xs text-gray-500 dark:text-gray-400">{r.customerPhone}</p>
 
                         <div className="mt-1 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-white ring-1 ring-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-950 dark:ring-gray-800 dark:text-gray-300">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800">
                             {fraudIcon(r.fraudLevel)}
                             Fraud Check
                           </span>
@@ -291,7 +318,10 @@ export default function OrdersTable({ rows }: Props) {
                   {/* Shipping Location */}
                   <td className="px-4 py-4">
                     {(() => {
-                      const parts = String(r.shippingLocation || "").trim().split(/\s+/).filter(Boolean);
+                      const parts = String(r.shippingLocation || "")
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean);
                       const first = parts[0] ?? "—";
                       const rest = parts.slice(1).reduce((acc, s) => (acc ? `${acc} ${s}` : s), "");
 
@@ -304,7 +334,7 @@ export default function OrdersTable({ rows }: Props) {
                     })()}
                   </td>
 
-                  {/* ✅ Sticky Action cell */}
+                  {/* ✅ Sticky Action cell: right */}
                   <td
                     className={cn(
                       "px-4 py-4",

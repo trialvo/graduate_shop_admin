@@ -5,6 +5,20 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   order: OrderRow;
+
+  /**
+   * Optional local override coming from OrdersTable (optimistic UI)
+   */
+  courierOverride?: {
+    providerId?: CourierProviderId;
+    memoNo?: string;
+  };
+
+  /**
+   * Optional callbacks (OrdersTable can store override)
+   */
+  onUpdateCourier?: (orderId: string, providerId: CourierProviderId, memoNo: string) => void;
+  onRequestCourier?: (orderId: string, providerId: Exclude<CourierProviderId, "select">) => Promise<void> | void;
 };
 
 type CourierProviderIdSafe = CourierProviderId | "manual" | "unknown";
@@ -34,16 +48,27 @@ function providerLabel(id?: CourierProviderIdSafe) {
   }
 }
 
-export default function SendCourierCell({ order }: Props) {
+export default function SendCourierCell({
+  order,
+  courierOverride,
+  onUpdateCourier,
+  onRequestCourier,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   const apiConfigured = Boolean(order.courier?.apiConfigured);
   const connectedAutoProviders = order.courier?.availableAutoCouriers?.filter((x) => x.connected) ?? [];
   const hasAnyAuto = apiConfigured && connectedAutoProviders.length > 0;
 
-  const providerId: CourierProviderIdSafe = (order.courier?.providerId as CourierProviderIdSafe) ?? "select";
-  const memoNo = order.courier?.memoNo ?? "";
+  const providerIdFromOrder = (order.courier?.providerId as CourierProviderIdSafe) ?? "select";
+  const memoNoFromOrder = order.courier?.memoNo ?? "";
   const trackingNo = order.courier?.trackingNo ?? "";
+
+  // ✅ effective values (override first)
+  const providerId: CourierProviderIdSafe =
+    (courierOverride?.providerId as CourierProviderIdSafe) ?? providerIdFromOrder;
+
+  const memoNo = courierOverride?.memoNo ?? memoNoFromOrder;
 
   const label = useMemo(() => {
     const byName = (order.courier?.providerName || "").trim();
@@ -93,7 +118,10 @@ export default function SendCourierCell({ order }: Props) {
             <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{label}</p>
 
             <span
-              className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", pill.cls)}
+              className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
+                pill.cls
+              )}
               title={hasAnyAuto ? "Courier API available" : "Manual courier"}
             >
               {pill.text}
@@ -106,7 +134,9 @@ export default function SendCourierCell({ order }: Props) {
             <p className="text-[11px] text-gray-500 dark:text-gray-400">
               Auto available:{" "}
               <span className="font-semibold text-gray-700 dark:text-gray-200">
-                {connectedAutoProviders.map((x) => x.providerName).reduce((acc, s) => (acc ? `${acc}, ${s}` : s), "")}
+                {connectedAutoProviders
+                  .map((x) => x.providerName)
+                  .reduce((acc, s) => (acc ? `${acc}, ${s}` : s), "")}
               </span>
             </p>
           ) : null}
@@ -124,7 +154,15 @@ export default function SendCourierCell({ order }: Props) {
         </button>
       </div>
 
-      <CourierRequestModal open={open} onClose={() => setOpen(false)} order={order} />
+      {/* ✅ keep same modal, just pass order (your existing modal expects this) */}
+      <CourierRequestModal
+        open={open}
+        onClose={() => setOpen(false)}
+        order={order}
+        // If later your modal supports callbacks, you can wire these:
+        // onUpdateCourier={(providerId, memoNo) => onUpdateCourier?.(String(order.id), providerId, memoNo)}
+        // onRequestCourier={(providerId) => onRequestCourier?.(String(order.id), providerId)}
+      />
     </>
   );
 }
