@@ -46,8 +46,8 @@ export const siteConfig: SiteConfig = {
   logoLightUrl: "/images/logo/my_dark_logo.svg",
   // ✅ Dark theme → light logo (better contrast on dark)
   logoDarkUrl: "/images/logo/my_light_logo.svg",
-  logoIconUrl: "/images/logo/logo-icon.svg",
-  authLogoUrl: "/images/logo/auth-logo.svg",
+  logoIconUrl: "/images/logo/my_dark_logo.svg",
+  authLogoUrl: "/images/logo/my_dark_logo.svg",
 
   // public/favicon.png
   faviconUrl: "/favicon.png",
