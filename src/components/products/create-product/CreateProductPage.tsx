@@ -96,7 +96,7 @@ function ensureMatrixRows(
   selectedVariantIds: number[],
   prev: VariantRow[],
   defaults: { buying: number; selling: number; discount: number },
-  skuBaseParts: string[]
+  skuBaseParts: string[],
 ) {
   const map = new Map(prev.map((r) => [r.key, r] as const));
   const next: VariantRow[] = [];
@@ -121,7 +121,7 @@ function ensureMatrixRows(
             `V${variantId}`,
           ]),
           active: true,
-        }
+        },
       );
     }
   }
@@ -191,7 +191,7 @@ function FloatingErrorBanner({
           "mx-auto w-full max-w-[1200px]",
           "rounded-[4px] border border-error-200 bg-error-50 px-4 py-3",
           "text-sm font-medium text-error-700 shadow-theme-xs",
-          "dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300"
+          "dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300",
         )}
         role="alert"
       >
@@ -203,7 +203,7 @@ function FloatingErrorBanner({
             className={cn(
               "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border",
               "border-error-200 bg-white/70 text-error-700 hover:bg-white",
-              "dark:border-error-900/40 dark:bg-white/[0.03] dark:text-error-300 dark:hover:bg-white/[0.06]"
+              "dark:border-error-900/40 dark:bg-white/[0.03] dark:text-error-300 dark:hover:bg-white/[0.06]",
             )}
             onClick={onDismiss}
             aria-label="Dismiss error"
@@ -359,10 +359,10 @@ export default function CreateProductPage() {
   const [longDescription, setLongDescription] = useState("");
 
   const [flags, setFlags] = useState({
-    status: true,
-    featured: true,
-    free_delivery: true,
-    best_deal: true,
+    status: false,
+    featured: false,
+    free_delivery: false,
+    best_deal: false,
   });
 
   const [seo, setSeo] = useState({
@@ -438,15 +438,15 @@ export default function CreateProductPage() {
 
   const brands = useMemo(
     () => unwrapList<any>(brandRes).filter((b: any) => b.status !== false),
-    [brandRes]
+    [brandRes],
   );
   const colors = useMemo(
     () => unwrapList<any>(colorRes).filter((c: any) => c.status !== false),
-    [colorRes]
+    [colorRes],
   );
   const attributes = useMemo(
     () => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false),
-    [attrRes]
+    [attrRes],
   );
 
   const initialLoading =
@@ -473,7 +473,7 @@ export default function CreateProductPage() {
     setSubCategoryId((p) =>
       subCategories.some((s: any) => Number(s.id) === Number(p))
         ? p
-        : Number(subCategories[0]?.id ?? 0)
+        : Number(subCategories[0]?.id ?? 0),
     );
   }, [subCategories, subLoading]);
 
@@ -491,7 +491,7 @@ export default function CreateProductPage() {
     setChildCategoryId((p) =>
       childCategories.some((c: any) => Number(c.id) === Number(p))
         ? p
-        : Number(childCategories[0]?.id ?? 0)
+        : Number(childCategories[0]?.id ?? 0),
     );
   }, [childCategories, childLoading]);
 
@@ -513,7 +513,7 @@ export default function CreateProductPage() {
   // -------------------- Variants from selected attribute --------------------
   const selectedAttribute = useMemo(
     () => attributes.find((a) => Number(a.id) === Number(attributeId)),
-    [attributes, attributeId]
+    [attributes, attributeId],
   );
 
   const availableVariants: AttributeVariant[] = useMemo(() => {
@@ -551,7 +551,7 @@ export default function CreateProductPage() {
   // -------------------- Ensure matrix rows when selections change --------------------
   useEffect(() => {
     const skuParts = [skuBase || "SKU", productSlug || "PRODUCT"].filter(
-      Boolean
+      Boolean,
     );
 
     const next = ensureMatrixRows(
@@ -559,7 +559,7 @@ export default function CreateProductPage() {
       selectedVariantIds,
       matrix,
       { buying: 0, selling: 0, discount: 0 },
-      skuParts
+      skuParts,
     );
 
     const same =
@@ -576,7 +576,7 @@ export default function CreateProductPage() {
         value: String(c.id),
         label: String(c.name),
       })),
-    [mainCategories]
+    [mainCategories],
   );
 
   const subOptions: Option[] = useMemo(
@@ -585,7 +585,7 @@ export default function CreateProductPage() {
         value: String(s.id),
         label: String(s.name),
       })),
-    [subCategories]
+    [subCategories],
   );
 
   const childOptions: Option[] = useMemo(
@@ -594,25 +594,25 @@ export default function CreateProductPage() {
         value: String(c.id),
         label: String(c.name),
       })),
-    [childCategories]
+    [childCategories],
   );
 
   const brandOptions: Option[] = useMemo(
     () =>
       brands.map((b: any) => ({ value: String(b.id), label: String(b.name) })),
-    [brands]
+    [brands],
   );
 
   const attributeOptions: Option[] = useMemo(
     () =>
       attributes.map((a) => ({ value: String(a.id), label: String(a.name) })),
-    [attributes]
+    [attributes],
   );
 
   // Colors dropdown incremental unique
   const remainingColors = useMemo(
     () => colors.filter((c: any) => !selectedColorIds.includes(Number(c.id))),
-    [colors, selectedColorIds]
+    [colors, selectedColorIds],
   );
 
   const colorOptions: Option[] = useMemo(
@@ -621,7 +621,7 @@ export default function CreateProductPage() {
         value: String(c.id),
         label: String(c.name),
       })),
-    [remainingColors]
+    [remainingColors],
   );
 
   const selectedColors = useMemo(() => {
@@ -632,13 +632,13 @@ export default function CreateProductPage() {
   // -------------------- Matrix helpers --------------------
   const toggleVariantId = (id: number) => {
     setSelectedVariantIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
   const updateRow = (key: string, patch: Partial<VariantRow>) => {
     setMatrix((prev) =>
-      prev.map((r) => (r.key === key ? { ...r, ...patch } : r))
+      prev.map((r) => (r.key === key ? { ...r, ...patch } : r)),
     );
   };
 
@@ -687,7 +687,7 @@ export default function CreateProductPage() {
 
       if (anyRes?.success === true) {
         toast.success(
-          productId ? `Product created (ID: ${productId})` : "Product created"
+          productId ? `Product created (ID: ${productId})` : "Product created",
         );
         setValidationError("");
         setErrorBannerVisible(false);
