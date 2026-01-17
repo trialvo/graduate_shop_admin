@@ -45,6 +45,7 @@ import NotFound from "./pages/OtherPage/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import OrderInvoice from "./pages/Orders/OrderInvoice";
+import SupportPage from "./pages/SupportPage";
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
         <Route element={<PublicOnlyRoute />}>
           <Route path="/" element={<SignIn />} />
         </Route>
+          <Route path="/support" element={<SupportPage />} />
 
         {/* ✅ Auth required for everything inside */}
         <Route element={<ProtectedRoute redirectTo="/" />}>
