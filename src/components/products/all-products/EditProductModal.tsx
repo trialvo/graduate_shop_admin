@@ -10,13 +10,23 @@ import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import { cn } from "@/lib/utils";
 
 import { api } from "@/api/client";
 import { getProduct, updateProduct } from "@/api/products.api";
-import { getMainCategories, getSubCategories, getChildCategories } from "@/api/categories.api";
+import {
+  getMainCategories,
+  getSubCategories,
+  getChildCategories,
+} from "@/api/categories.api";
 import { getAttributes } from "@/api/attributes.api";
 import { getColors } from "@/api/colors.api";
 import BaseModal from "./BaseModal";
@@ -33,17 +43,42 @@ type Option = { value: string; label: string };
 
 type ExistingImage = { id: number; path: string };
 
+type VariationColor = {
+  id: number;
+  name: string;
+  hex?: string | null;
+  priority?: number;
+  status?: boolean;
+};
+
+type VariationVariant = {
+  id: number;
+  name: string;
+  priority?: number;
+  status?: boolean;
+  attribute?: {
+    id: number;
+    name: string;
+    priority?: number;
+  };
+};
+
 type VariationRow = {
   id: number;
-  product_id: number;
-  color_id: number;
-  variant_id: number;
+  product_id?: number;
+  color_id?: number;
+  variant_id?: number;
+  color?: VariationColor | null;
+  variant?: VariationVariant | null;
   buying_price: number;
   selling_price: number;
   discount: number;
+  discount_type?: number | null;
+  final_price?: number;
   stock: number;
   sku: string;
-  status?: number;
+  status?: number | boolean;
+  in_stock?: boolean;
 };
 
 type VariationDraft = {
@@ -84,6 +119,14 @@ function readId(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function getVariationColorId(v: VariationRow) {
+  return readId(v.color_id ?? v.color?.id ?? 0);
+}
+
+function getVariationVariantId(v: VariationRow) {
+  return readId(v.variant_id ?? v.variant?.id ?? 0);
+}
+
 function pickNestedId(payload: any, directKey: string, nestedKey: string) {
   return readId(payload?.[directKey] ?? payload?.[nestedKey]?.id ?? 0);
 }
@@ -106,7 +149,7 @@ function getApiErrorMessage(err: unknown, fallback: string) {
   if (typeof data?.message === "string") return data.message;
   if (Array.isArray(data?.errors)) {
     return data.errors
-      .map((e: any) => (typeof e === "string" ? e : e?.message ?? e?.error))
+      .map((e: any) => (typeof e === "string" ? e : (e?.message ?? e?.error)))
       .filter(Boolean)
       .join(", ");
   }
@@ -122,19 +165,34 @@ function getApiErrorMessage(err: unknown, fallback: string) {
  * - attr.variants: [{id,name}]
  * - attr.values:   [{id,name}] or ["M","L"] (string list)
  */
-function buildVariantOptionsForAttribute(attributeId: number, attributesRaw: any[]): Option[] {
-  const attr = attributesRaw.find((a: any) => Number(a?.id) === Number(attributeId));
+function buildVariantOptionsForAttribute(
+  attributeId: number,
+  attributesRaw: any[],
+): Option[] {
+  const attr = attributesRaw.find(
+    (a: any) => Number(a?.id) === Number(attributeId),
+  );
   if (!attr) return [];
 
   const variants = Array.isArray(attr?.variants) ? attr.variants : null;
   if (variants?.length) {
-    return variants.map((x: any) => ({ value: String(x.id), label: String(x.name ?? x.title ?? x.value ?? x.id) }));
+    return variants.map((x: any) => ({
+      value: String(x.id),
+      label: String(x.name ?? x.title ?? x.value ?? x.id),
+    }));
   }
 
   const values = Array.isArray(attr?.values) ? attr.values : null;
   if (values?.length) {
-    if (typeof values[0] === "object" && values[0] !== null && "id" in values[0]) {
-      return values.map((x: any) => ({ value: String(x.id), label: String(x.name ?? x.title ?? x.value ?? x.id) }));
+    if (
+      typeof values[0] === "object" &&
+      values[0] !== null &&
+      "id" in values[0]
+    ) {
+      return values.map((x: any) => ({
+        value: String(x.id),
+        label: String(x.name ?? x.title ?? x.value ?? x.id),
+      }));
     }
     return [];
   }
@@ -142,7 +200,12 @@ function buildVariantOptionsForAttribute(attributeId: number, attributesRaw: any
   return [];
 }
 
-export default function EditProductModal({ open, productId, onClose, onUpdated }: Props) {
+export default function EditProductModal({
+  open,
+  productId,
+  onClose,
+  onUpdated,
+}: Props) {
   const enabled = open && !!productId;
 
   // lookups (load all, no params)
@@ -180,17 +243,43 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   const subs = React.useMemo(() => unwrapList<any>(subRes), [subRes]);
   const childs = React.useMemo(() => unwrapList<any>(childRes), [childRes]);
 
-  const colorsRaw = React.useMemo(() => unwrapList<any>(colorsRes), [colorsRes]);
+  const colorsRaw = React.useMemo(
+    () => unwrapList<any>(colorsRes),
+    [colorsRes],
+  );
   const attrsRaw = React.useMemo(() => unwrapList<any>(attrsRes), [attrsRes]);
 
   const colorNameById = React.useMemo(
-    () => new Map(colorsRaw.map((c: any) => [Number(c.id), String(c.name ?? c.title ?? `#${c.id}`)])),
+    () =>
+      new Map(
+        colorsRaw.map((c: any) => [
+          Number(c.id),
+          String(c.name ?? c.title ?? `#${c.id}`),
+        ]),
+      ),
+    [colorsRaw],
+  );
+
+  const colorHexById = React.useMemo(
+    () =>
+      new Map(
+        colorsRaw.map((c: any) => [
+          Number(c.id),
+          String(c.hex ?? ""),
+        ]),
+      ),
     [colorsRaw],
   );
 
   const getColorLabel = React.useCallback(
-    (colorId: number) => colorNameById.get(Number(colorId)) ?? `Color #${colorId}`,
+    (colorId: number) =>
+      colorNameById.get(Number(colorId)) ?? `#${colorId}`,
     [colorNameById],
+  );
+
+  const getColorHex = React.useCallback(
+    (colorId: number) => colorHexById.get(Number(colorId)) ?? "",
+    [colorHexById],
   );
 
   // product query
@@ -232,13 +321,18 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   const [ogDescription, setOgDescription] = React.useState<string>("");
   const [robots, setRobots] = React.useState<string>("index, follow");
 
-  const [existingImages, setExistingImages] = React.useState<ExistingImage[]>([]);
+  const [existingImages, setExistingImages] = React.useState<ExistingImage[]>(
+    [],
+  );
   const [deleteImageIds, setDeleteImageIds] = React.useState<number[]>([]);
   const [newFiles, setNewFiles] = React.useState<File[]>([]);
-  const [newPreviews, setNewPreviews] = React.useState<{ id: string; file: File; url: string }[]>([]);
+  const [newPreviews, setNewPreviews] = React.useState<
+    { id: string; file: File; url: string }[]
+  >([]);
 
   // variations
   const [variations, setVariations] = React.useState<VariationRow[]>([]);
+  console.log("🚀 ~ EditProductModal ~ variations:", variations)
   const [varEdit, setVarEdit] = React.useState<InlineEditState>({});
   const [addDraft, setAddDraft] = React.useState<VariationDraft>({
     color_id: 0,
@@ -293,16 +387,18 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     setDeleteImageIds([]);
     setNewFiles([]);
 
-    const vars = Array.isArray((p as any).variations) ? ((p as any).variations as VariationRow[]) : [];
+    const vars = Array.isArray((p as any).variations)
+      ? ((p as any).variations as VariationRow[])
+      : [];
     setVariations(vars);
     setVarEdit({});
 
     setAddDraft({
-      color_id: vars[0]?.color_id ?? 0,
-      variant_id: vars[0]?.variant_id ?? 0,
-      buying_price: vars[0]?.buying_price ?? 0,
-      selling_price: vars[0]?.selling_price ?? 0,
-      discount: vars[0]?.discount ?? 0,
+      color_id: 0,
+      variant_id: 0,
+      buying_price: 0,
+      selling_price: 0,
+      discount: 0,
       stock: 0,
       sku: "",
     });
@@ -324,36 +420,55 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
 
   // dropdown options
   const mainOptions: Option[] = React.useMemo(
-    () => mains.map((c: any) => ({ value: String(c.id), label: String(c.name) })),
+    () =>
+      mains.map((c: any) => ({ value: String(c.id), label: String(c.name) })),
     [mains],
   );
 
   const availableSubs = React.useMemo(() => {
     if (!mainCategoryId) return subs;
-    return subs.filter((s: any) => Number(s.main_category_id) === Number(mainCategoryId));
+    return subs.filter(
+      (s: any) => Number(s.main_category_id) === Number(mainCategoryId),
+    );
   }, [subs, mainCategoryId]);
 
   const subOptions: Option[] = React.useMemo(
-    () => availableSubs.map((c: any) => ({ value: String(c.id), label: String(c.name) })),
+    () =>
+      availableSubs.map((c: any) => ({
+        value: String(c.id),
+        label: String(c.name),
+      })),
     [availableSubs],
   );
 
   const availableChild = React.useMemo(() => {
     if (!subCategoryId) return childs;
-    return childs.filter((c: any) => Number(c.sub_category_id) === Number(subCategoryId));
+    return childs.filter(
+      (c: any) => Number(c.sub_category_id) === Number(subCategoryId),
+    );
   }, [childs, subCategoryId]);
 
   const childOptions: Option[] = React.useMemo(
-    () => availableChild.map((c: any) => ({ value: String(c.id), label: String(c.name) })),
+    () =>
+      availableChild.map((c: any) => ({
+        value: String(c.id),
+        label: String(c.name),
+      })),
     [availableChild],
   );
 
   const attributeOptions: Option[] = React.useMemo(() => {
-    return attrsRaw.map((a: any) => ({ value: String(a.id), label: String(a.name ?? a.title ?? `#${a.id}`) }));
+    return attrsRaw.map((a: any) => ({
+      value: String(a.id),
+      label: String(a.name ?? a.title ?? `#${a.id}`),
+    }));
   }, [attrsRaw]);
 
   const colorOptions: Option[] = React.useMemo(() => {
-    return colorsRaw.map((c: any) => ({ value: String(c.id), label: String(c.name ?? c.title ?? `#${c.id}`) }));
+    return colorsRaw.map((c: any) => ({
+      value: String(c.id),
+      label: String(c.name ?? c.title ?? `#${c.id}`),
+    }));
   }, [colorsRaw]);
 
   const variantOptionsFromAttr = React.useMemo(() => {
@@ -369,7 +484,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       setSubCategoryId(0);
       return;
     }
-    if (!availableSubs.some((s: any) => Number(s.id) === Number(subCategoryId))) {
+    if (
+      !availableSubs.some((s: any) => Number(s.id) === Number(subCategoryId))
+    ) {
       setSubCategoryId(Number(availableSubs[0].id));
     }
   }, [enabled, availableSubs, subCategoryId]);
@@ -381,7 +498,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       setChildCategoryId(0);
       return;
     }
-    if (!availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))) {
+    if (
+      !availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))
+    ) {
       setChildCategoryId(Number(availableChild[0].id));
     }
   }, [enabled, availableChild, childCategoryId]);
@@ -427,7 +546,10 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       } as any);
     },
     onSuccess: async (res: any) => {
-      if (res?.error || (Number(res?.flag) >= 400 && Number.isFinite(Number(res?.flag)))) {
+      if (
+        res?.error ||
+        (Number(res?.flag) >= 400 && Number.isFinite(Number(res?.flag)))
+      ) {
         const msg =
           (typeof res?.error === "string" && res.error.trim()) ||
           (typeof res?.message === "string" && res.message.trim()) ||
@@ -501,7 +623,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   });
 
   const updateVarMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: VariationDraft }) => updateVariation(id, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: VariationDraft }) =>
+      updateVariation(id, payload),
     onSuccess: async () => {
       toast.success("Variation updated");
       setVarEdit({});
@@ -532,8 +655,8 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
     setVarEdit((p) => ({
       ...p,
       [v.id]: {
-        color_id: v.color_id,
-        variant_id: v.variant_id,
+        color_id: getVariationColorId(v),
+        variant_id: getVariationVariantId(v),
         buying_price: v.buying_price,
         selling_price: v.selling_price,
         discount: v.discount,
@@ -600,7 +723,14 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
       <Button
         className="h-11"
         onClick={() => updateMutation.mutate()}
-        disabled={isBusy || !name.trim() || !slug.trim() || !mainCategoryId || !subCategoryId || !childCategoryId}
+        disabled={
+          isBusy ||
+          !name.trim() ||
+          !slug.trim() ||
+          !mainCategoryId ||
+          !subCategoryId ||
+          !childCategoryId
+        }
       >
         Save Changes
       </Button>
@@ -610,7 +740,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
   // initial loading for lookups + product
   const initialLoading =
     productQuery.isLoading ||
-    (!productQuery.data && (mainFetching || subFetching || childFetching || colorsFetching || attrsFetching));
+    (!productQuery.data &&
+      (mainFetching ||
+        subFetching ||
+        childFetching ||
+        colorsFetching ||
+        attrsFetching));
 
   return (
     <>
@@ -632,14 +767,20 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
             <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
           </div>
         ) : productQuery.isError ? (
-          <div className="py-14 text-center text-sm text-error-600">Failed to load product.</div>
+          <div className="py-14 text-center text-sm text-error-600">
+            Failed to load product.
+          </div>
         ) : (
           <div className="space-y-6">
             {/* Basic */}
             <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Basic Info</h3>
-                <span className="text-xs text-gray-500 dark:text-gray-400">ID: {productId}</span>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Basic Info
+                </h3>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  ID: {productId}
+                </span>
               </div>
 
               <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -647,18 +788,28 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Name <span className="text-error-500">*</span>
                   </p>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name" />
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Product name"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Slug <span className="text-error-500">*</span>
                   </p>
-                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="product-slug" />
+                  <Input
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="product-slug"
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Category
+                  </p>
                   <Select
                     key={`main-${mainCategoryId}`}
                     options={mainOptions}
@@ -674,7 +825,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Sub Category</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sub Category
+                  </p>
                   <Select
                     key={`sub-${mainCategoryId}-${subCategoryId}`}
                     options={subOptions}
@@ -688,18 +841,24 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Child Category</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Child Category
+                  </p>
                   <Select
                     key={`child-${subCategoryId}-${childCategoryId}`}
                     options={childOptions}
                     placeholder="Select child category"
-                    defaultValue={childCategoryId ? String(childCategoryId) : ""}
+                    defaultValue={
+                      childCategoryId ? String(childCategoryId) : ""
+                    }
                     onChange={(v) => setChildCategoryId(Number(v))}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Attribute</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Attribute
+                  </p>
                   <Select
                     key={`attr-${attributeId}`}
                     options={attributeOptions}
@@ -713,14 +872,18 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
 
             {/* Media */}
             <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Media</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Media
+              </h3>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Product images and product video URL.
               </p>
 
               <div className="mt-4 space-y-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Product Video URL</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Product Video URL
+                  </p>
                   <Input
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
@@ -730,9 +893,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
 
                 <div>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Images</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Images
+                    </p>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Existing: {existingImages.length} | Marked delete: {deleteImageIds.length} | New: {newFiles.length}
+                      Existing: {existingImages.length} | Marked delete:{" "}
+                      {deleteImageIds.length} | New: {newFiles.length}
                     </span>
                   </div>
 
@@ -747,20 +913,31 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                             onClick={() => toggleDeleteImage(img.id)}
                             className={cn(
                               "relative overflow-hidden rounded-[6px] border bg-gray-50 dark:bg-gray-950",
-                              marked ? "border-error-400" : "border-gray-200 dark:border-gray-800",
+                              marked
+                                ? "border-error-400"
+                                : "border-gray-200 dark:border-gray-800",
                             )}
-                            title={marked ? "Will be deleted" : "Click to mark for delete"}
+                            title={
+                              marked
+                                ? "Will be deleted"
+                                : "Click to mark for delete"
+                            }
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={toPublicUrl(img.path)}
                               alt={`img-${img.id}`}
-                              className={cn("h-20 w-full object-cover", marked && "opacity-40")}
+                              className={cn(
+                                "h-20 w-full object-cover",
+                                marked && "opacity-40",
+                              )}
                             />
                             <div
                               className={cn(
                                 "absolute right-2 top-2 rounded-full px-2 py-1 text-[11px] font-semibold",
-                                marked ? "bg-error-600 text-white" : "bg-black/50 text-white",
+                                marked
+                                  ? "bg-error-600 text-white"
+                                  : "bg-black/50 text-white",
                               )}
                             >
                               {marked ? "Delete" : `#${img.id}`}
@@ -770,20 +947,30 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                       })}
                     </div>
                   ) : (
-                    <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">No existing images.</div>
+                    <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                      No existing images.
+                    </div>
                   )}
 
                   <div className="mt-4 rounded-[6px] border border-dashed border-gray-300 p-4 dark:border-gray-800">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Upload new images</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Upload new images
+                        </p>
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          These will be sent as <code className="font-mono">product_images</code> (multi-file).
+                          These will be sent as{" "}
+                          <code className="font-mono">product_images</code>{" "}
+                          (multi-file).
                         </p>
                       </div>
 
                       {newFiles.length ? (
-                        <Button variant="outline" className="h-10" onClick={() => setNewFiles([])}>
+                        <Button
+                          variant="outline"
+                          className="h-10"
+                          onClick={() => setNewFiles([])}
+                        >
                           Clear all
                         </Button>
                       ) : null}
@@ -809,11 +996,19 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                             className="group relative overflow-hidden rounded-[6px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950"
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={item.url} alt={item.file.name} className="h-20 w-full object-cover" />
+                            <img
+                              src={item.url}
+                              alt={item.file.name}
+                              className="h-20 w-full object-cover"
+                            />
                             <button
                               type="button"
                               className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
-                              onClick={() => setNewFiles((prev) => prev.filter((_, i) => i !== index))}
+                              onClick={() =>
+                                setNewFiles((prev) =>
+                                  prev.filter((_, i) => i !== index),
+                                )
+                              }
                             >
                               Remove
                             </button>
@@ -824,7 +1019,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                         ))}
                       </div>
                     ) : (
-                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">No new images selected yet.</div>
+                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        No new images selected yet.
+                      </div>
                     )}
                   </div>
                 </div>
@@ -836,7 +1033,11 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
               {[
                 { label: "Status", value: status, onChange: setStatus },
                 { label: "Featured", value: featured, onChange: setFeatured },
-                { label: "Free Delivery", value: freeDelivery, onChange: setFreeDelivery },
+                {
+                  label: "Free Delivery",
+                  value: freeDelivery,
+                  onChange: setFreeDelivery,
+                },
                 { label: "Best Deal", value: bestDeal, onChange: setBestDeal },
               ].map((x) => (
                 <div
@@ -844,17 +1045,28 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                   className="rounded-[6px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{x.label}</p>
-                    <Switch key={`${x.label}-${x.value}`} label="" defaultChecked={x.value} onChange={(checked) => x.onChange(checked)} />
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {x.label}
+                    </p>
+                    <Switch
+                      key={`${x.label}-${x.value}`}
+                      label=""
+                      defaultChecked={x.value}
+                      onChange={(checked) => x.onChange(checked)}
+                    />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Toggle for listing & promotions.</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Toggle for listing & promotions.
+                  </p>
                 </div>
               ))}
             </div>
 
             {/* Descriptions (✅ RichTextEditor) */}
             <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Descriptions</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Descriptions
+              </h3>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Use rich text editor for short and long descriptions.
               </p>
@@ -879,9 +1091,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
             <div className="overflow-hidden rounded-[6px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
               <div className="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Variations</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Variations
+                  </h3>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Manage product variations (color + variant + prices + stock + sku).
+                    Manage product variations (color + variant + prices + stock
+                    + sku).
                   </p>
                 </div>
 
@@ -894,78 +1109,140 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
               <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
                   <div className="md:col-span-1">
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Color</p>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Color
+                    </p>
                     <Select
                       key={`add-color-${addDraft.color_id}`}
                       options={colorOptions}
                       placeholder="Color"
-                      defaultValue={addDraft.color_id ? String(addDraft.color_id) : ""}
-                      onChange={(v) => setAddDraft((p) => ({ ...p, color_id: Number(v) }))}
+                      defaultValue={
+                        addDraft.color_id ? String(addDraft.color_id) : ""
+                      }
+                      onChange={(v) =>
+                        setAddDraft((p) => ({ ...p, color_id: Number(v) }))
+                      }
                     />
                   </div>
 
                   <div className="md:col-span-1">
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Variant</p>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Variant
+                    </p>
 
                     {variantOptionsFromAttr.length ? (
                       <Select
                         key={`add-variant-${attributeId}-${addDraft.variant_id}`}
                         options={variantOptionsFromAttr}
                         placeholder="Variant"
-                        defaultValue={addDraft.variant_id ? String(addDraft.variant_id) : ""}
-                        onChange={(v) => setAddDraft((p) => ({ ...p, variant_id: Number(v) }))}
+                        defaultValue={
+                          addDraft.variant_id ? String(addDraft.variant_id) : ""
+                        }
+                        onChange={(v) =>
+                          setAddDraft((p) => ({ ...p, variant_id: Number(v) }))
+                        }
                       />
                     ) : (
                       <Input
                         type="number"
                         value={addDraft.variant_id}
-                        onChange={(e) => setAddDraft((p) => ({ ...p, variant_id: safeNumber(e.target.value, p.variant_id) }))}
+                        onChange={(e) =>
+                          setAddDraft((p) => ({
+                            ...p,
+                            variant_id: safeNumber(
+                              e.target.value,
+                              p.variant_id,
+                            ),
+                          }))
+                        }
                         placeholder="variant_id"
                       />
                     )}
                   </div>
 
                   <div>
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Buy</p>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Buy
+                    </p>
                     <Input
                       type="number"
                       value={addDraft.buying_price}
-                      onChange={(e) => setAddDraft((p) => ({ ...p, buying_price: safeNumber(e.target.value, p.buying_price) }))}
+                      onChange={(e) =>
+                        setAddDraft((p) => ({
+                          ...p,
+                          buying_price: safeNumber(
+                            e.target.value,
+                            p.buying_price,
+                          ),
+                        }))
+                      }
                     />
                   </div>
 
                   <div>
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Sell</p>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Sell
+                    </p>
                     <Input
                       type="number"
                       value={addDraft.selling_price}
-                      onChange={(e) => setAddDraft((p) => ({ ...p, selling_price: safeNumber(e.target.value, p.selling_price) }))}
+                      onChange={(e) =>
+                        setAddDraft((p) => ({
+                          ...p,
+                          selling_price: safeNumber(
+                            e.target.value,
+                            p.selling_price,
+                          ),
+                        }))
+                      }
                     />
                   </div>
 
                   <div>
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Discount</p>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Discount
+                    </p>
                     <Input
                       type="number"
                       value={addDraft.discount}
-                      onChange={(e) => setAddDraft((p) => ({ ...p, discount: safeNumber(e.target.value, p.discount) }))}
+                      onChange={(e) =>
+                        setAddDraft((p) => ({
+                          ...p,
+                          discount: safeNumber(e.target.value, p.discount),
+                        }))
+                      }
                     />
                   </div>
 
                   <div>
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">Stock</p>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Stock
+                    </p>
                     <Input
                       type="number"
                       value={addDraft.stock}
                       onChange={(e) =>
-                        setAddDraft((p) => ({ ...p, stock: Math.max(0, safeNumber(e.target.value, p.stock)) }))
+                        setAddDraft((p) => ({
+                          ...p,
+                          stock: Math.max(
+                            0,
+                            safeNumber(e.target.value, p.stock),
+                          ),
+                        }))
                       }
                     />
                   </div>
 
                   <div className="md:col-span-4">
-                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">SKU</p>
-                    <Input value={addDraft.sku} onChange={(e) => setAddDraft((p) => ({ ...p, sku: e.target.value }))} />
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      SKU
+                    </p>
+                    <Input
+                      value={addDraft.sku}
+                      onChange={(e) =>
+                        setAddDraft((p) => ({ ...p, sku: e.target.value }))
+                      }
+                    />
                   </div>
 
                   <div className="flex items-end justify-end gap-2 md:col-span-2">
@@ -991,9 +1268,12 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                       className="h-11"
                       startIcon={<Plus className="h-4 w-4" />}
                       onClick={() => {
-                        if (!addDraft.color_id) return toast.error("Select a color");
-                        if (!addDraft.variant_id) return toast.error("Set variant_id");
-                        if (addDraft.selling_price <= 0) return toast.error("Selling price required");
+                        if (!addDraft.color_id)
+                          return toast.error("Select a color");
+                        if (!addDraft.variant_id)
+                          return toast.error("Set variant_id");
+                        if (addDraft.selling_price <= 0)
+                          return toast.error("Selling price required");
                         createVarMutation.mutate(addDraft);
                       }}
                       disabled={createVarMutation.isPending}
@@ -1009,8 +1289,21 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                 <Table className="min-w-[1200px] border-collapse">
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
-                      {["Color", "Variant", "Buying", "Selling", "Discount", "Stock", "SKU", "Action"].map((h) => (
-                        <TableCell key={h} isHeader className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
+                      {[
+                        "Color",
+                        "Variant",
+                        "Buying",
+                        "Selling",
+                        "Discount",
+                        "Stock",
+                        "SKU",
+                        "Action",
+                      ].map((h) => (
+                        <TableCell
+                          key={h}
+                          isHeader
+                          className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                        >
                           {h}
                         </TableCell>
                       ))}
@@ -1023,22 +1316,42 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                         const editing = !!varEdit[v.id];
                         const draft = varEdit[v.id];
 
-                        // ✅ fixed undefined
-                        const colorLabel = getColorLabel(v.color_id);
+                        const colorId = getVariationColorId(v);
+                        const variantId = getVariationVariantId(v);
+                        const colorLabel = v.color?.name ?? getColorLabel(colorId);
+                        const colorHex = v.color?.hex ?? getColorHex(colorId);
+                        const variantLabel = v.variant?.name ?? `#${variantId}`;
 
                         return (
-                          <TableRow key={v.id} className="border-b border-gray-100 dark:border-gray-800">
+                          <TableRow
+                            key={v.id}
+                            className="border-b border-gray-100 dark:border-gray-800"
+                          >
                             <TableCell className="px-4 py-4">
                               {editing ? (
                                 <Select
                                   key={`edit-color-${v.id}-${draft?.color_id}`}
                                   options={colorOptions}
                                   placeholder="Color"
-                                  defaultValue={String(draft?.color_id ?? v.color_id)}
-                                  onChange={(val) => patchEditVariation(v.id, { color_id: Number(val) })}
+                                  defaultValue={String(
+                                    draft?.color_id ?? colorId,
+                                  )}
+                                  onChange={(val) =>
+                                    patchEditVariation(v.id, {
+                                      color_id: Number(val),
+                                    })
+                                  }
                                 />
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{colorLabel}</span>
+                                <span className="flex items-center gap-2">
+                                  <span
+                                    className="!w-2 !h-2"
+                                    style={{ background: colorHex || "#e5e7eb" }}
+                                  ></span>
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {colorLabel}
+                                  </span>
+                                </span>
                               )}
                             </TableCell>
 
@@ -1049,20 +1362,33 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                     key={`edit-variant-${v.id}-${draft?.variant_id}-${attributeId}`}
                                     options={variantOptionsFromAttr}
                                     placeholder="Variant"
-                                    defaultValue={String(draft?.variant_id ?? v.variant_id)}
-                                    onChange={(val) => patchEditVariation(v.id, { variant_id: Number(val) })}
+                                    defaultValue={String(
+                                      draft?.variant_id ?? variantId,
+                                    )}
+                                    onChange={(val) =>
+                                      patchEditVariation(v.id, {
+                                        variant_id: Number(val),
+                                      })
+                                    }
                                   />
                                 ) : (
                                   <Input
                                     type="number"
-                                    value={draft?.variant_id ?? v.variant_id}
+                                    value={draft?.variant_id ?? variantId}
                                     onChange={(e) =>
-                                      patchEditVariation(v.id, { variant_id: safeNumber(e.target.value, v.variant_id) })
+                                      patchEditVariation(v.id, {
+                                        variant_id: safeNumber(
+                                          e.target.value,
+                                          variantId,
+                                        ),
+                                      })
                                     }
                                   />
                                 )
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">#{v.variant_id}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {variantLabel}
+                                </span>
                               )}
                             </TableCell>
 
@@ -1073,12 +1399,17 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   value={draft.buying_price}
                                   onChange={(e) =>
                                     patchEditVariation(v.id, {
-                                      buying_price: safeNumber(e.target.value, draft.buying_price),
+                                      buying_price: safeNumber(
+                                        e.target.value,
+                                        draft.buying_price,
+                                      ),
                                     })
                                   }
                                 />
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{v.buying_price}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {v.buying_price}
+                                </span>
                               )}
                             </TableCell>
 
@@ -1089,12 +1420,17 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   value={draft.selling_price}
                                   onChange={(e) =>
                                     patchEditVariation(v.id, {
-                                      selling_price: safeNumber(e.target.value, draft.selling_price),
+                                      selling_price: safeNumber(
+                                        e.target.value,
+                                        draft.selling_price,
+                                      ),
                                     })
                                   }
                                 />
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{v.selling_price}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {v.selling_price}
+                                </span>
                               )}
                             </TableCell>
 
@@ -1105,12 +1441,17 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   value={draft.discount}
                                   onChange={(e) =>
                                     patchEditVariation(v.id, {
-                                      discount: safeNumber(e.target.value, draft.discount),
+                                      discount: safeNumber(
+                                        e.target.value,
+                                        draft.discount,
+                                      ),
                                     })
                                   }
                                 />
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{v.discount}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {v.discount}
+                                </span>
                               )}
                             </TableCell>
 
@@ -1121,20 +1462,34 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                   value={draft.stock}
                                   onChange={(e) =>
                                     patchEditVariation(v.id, {
-                                      stock: Math.max(0, safeNumber(e.target.value, draft.stock)),
+                                      stock: Math.max(
+                                        0,
+                                        safeNumber(e.target.value, draft.stock),
+                                      ),
                                     })
                                   }
                                 />
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{v.stock}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {v.stock}
+                                </span>
                               )}
                             </TableCell>
 
                             <TableCell className="px-4 py-4">
                               {editing ? (
-                                <Input value={draft.sku} onChange={(e) => patchEditVariation(v.id, { sku: e.target.value })} />
+                                <Input
+                                  value={draft.sku}
+                                  onChange={(e) =>
+                                    patchEditVariation(v.id, {
+                                      sku: e.target.value,
+                                    })
+                                  }
+                                />
                               ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{v.sku}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {v.sku}
+                                </span>
                               )}
                             </TableCell>
 
@@ -1183,10 +1538,20 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                                       ariaLabel="Save"
                                       onClick={() => {
                                         const payload = varEdit[v.id];
-                                        if (!payload?.color_id) return toast.error("Color required");
-                                        if (!payload?.variant_id) return toast.error("Variant required");
-                                        if (payload.selling_price <= 0) return toast.error("Selling price required");
-                                        updateVarMutation.mutate({ id: v.id, payload });
+                                        if (!payload?.color_id)
+                                          return toast.error("Color required");
+                                        if (!payload?.variant_id)
+                                          return toast.error(
+                                            "Variant required",
+                                          );
+                                        if (payload.selling_price <= 0)
+                                          return toast.error(
+                                            "Selling price required",
+                                          );
+                                        updateVarMutation.mutate({
+                                          id: v.id,
+                                          payload,
+                                        });
                                       }}
                                       disabled={updateVarMutation.isPending}
                                     >
@@ -1201,7 +1566,10 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <TableCell
+                          colSpan={8}
+                          className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                        >
                           No variations found for this product.
                         </TableCell>
                       </TableRow>
@@ -1211,27 +1579,43 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
               </div>
 
               <div className="border-t border-gray-200 px-5 py-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                Tip: If your Attribute API returns numeric variants, the Variant dropdown will show automatically. Otherwise, you can enter variant_id manually.
+                Tip: If your Attribute API returns numeric variants, the Variant
+                dropdown will show automatically. Otherwise, you can enter
+                variant_id manually.
               </div>
             </div>
 
             {/* SEO (simple) */}
             <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">SEO</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                SEO
+              </h3>
 
               <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Title</p>
-                  <Input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} />
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Meta Title
+                  </p>
+                  <Input
+                    value={metaTitle}
+                    onChange={(e) => setMetaTitle(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Canonical URL</p>
-                  <Input value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)} />
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Canonical URL
+                  </p>
+                  <Input
+                    value={canonicalUrl}
+                    onChange={(e) => setCanonicalUrl(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Description</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Meta Description
+                  </p>
                   <textarea
                     className="min-h-[90px] w-full rounded-[6px] border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     value={metaDescription}
@@ -1240,22 +1624,41 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
                 </div>
 
                 <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Keywords</p>
-                  <Input value={metaKeywords} onChange={(e) => setMetaKeywords(e.target.value)} placeholder="a,b,c" />
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Meta Keywords
+                  </p>
+                  <Input
+                    value={metaKeywords}
+                    onChange={(e) => setMetaKeywords(e.target.value)}
+                    placeholder="a,b,c"
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">OG Title</p>
-                  <Input value={ogTitle} onChange={(e) => setOgTitle(e.target.value)} />
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    OG Title
+                  </p>
+                  <Input
+                    value={ogTitle}
+                    onChange={(e) => setOgTitle(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Robots</p>
-                  <Input value={robots} onChange={(e) => setRobots(e.target.value)} placeholder="index, follow" />
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Robots
+                  </p>
+                  <Input
+                    value={robots}
+                    onChange={(e) => setRobots(e.target.value)}
+                    placeholder="index, follow"
+                  />
                 </div>
 
                 <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">OG Description</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    OG Description
+                  </p>
                   <textarea
                     className="min-h-[80px] w-full rounded-[6px] border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     value={ogDescription}
@@ -1305,7 +1708,9 @@ export default function EditProductModal({ open, productId, onClose, onUpdated }
           </div>
         }
       >
-        <div className="text-sm text-gray-700 dark:text-gray-300">Are you sure you want to delete this variation?</div>
+        <div className="text-sm text-gray-700 dark:text-gray-300">
+          Are you sure you want to delete this variation?
+        </div>
       </BaseModal>
     </>
   );
