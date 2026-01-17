@@ -7,15 +7,19 @@ import TopViewProductsCard from "@/components/dashboard/TopViewProductsCard";
 import TopSellingDistrictCard from "@/components/dashboard/TopSellingDistrictCard";
 import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard";
 import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCard";
+import { useAppBranding } from "@/context/AppBrandingContext";
 
 // ✅ adjust this import to your real data file if different
 import { stockAlertProducts } from "./dashboardSection5Data";
 
 export default function Home() {
+  const { branding } = useAppBranding();
+  const appName = branding.appShortName ?? branding.appName;
+
   return (
     <>
       <PageMeta
-        title="React.js Ecommerce Dashboard | Trialvo - React.js Admin Dashboard Template"
+        title={`Dashboard | ${appName}`}
         description="This is React.js Ecommerce Dashboard page for Trialvo - React.js Tailwind CSS Admin Dashboard Template"
       />
 
