@@ -12,13 +12,6 @@ import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCar
 import { stockAlertProducts } from "./dashboardSection5Data";
 
 export default function Home() {
-  const stockAlertItems = stockAlertProducts.map((p: any) => ({
-    id: String(p.id),
-    name: p.title ?? p.name ?? "Unnamed",
-    stockQty: Number(p.stock ?? p.stockQty ?? 0),
-    sku: p.sku ? String(p.sku) : undefined,
-  }));
-
   return (
     <>
       <PageMeta
@@ -61,13 +54,7 @@ export default function Home() {
         </div>
 
         <div className="col-span-12 xl:col-span-6 flex">
-          <StockAlertProductsCard
-            items={stockAlertItems}
-            onApplyStock={(payload) => {
-              // ✅ send to server + store history here
-              console.log("Stock update request:", payload);
-            }}
-          />
+          <StockAlertProductsCard />
         </div>
       </div>
     </>

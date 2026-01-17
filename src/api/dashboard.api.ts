@@ -147,25 +147,65 @@ export type DashboardYearlyStatisticResponse = {
   data: DashboardYearlyStatisticItem[];
 };
 
+/** =========================
+ *  Low Stock Products (NEW)
+ *  ========================= */
+export type LowStockVariation = {
+  product_variation_id: number;
+  sku_code: string;
+  color: string;
+  variant: string;
+  current_stock: number;
+};
+
+export type LowStockProductItem = {
+  product_id: number;
+  name: string;
+  low_stock_variations: LowStockVariation[];
+};
+
+export type DashboardLowStockResponse = {
+  success: boolean;
+  total: number;
+  limit: number;
+  offset: number;
+  alert_limit_used: number;
+  data: LowStockProductItem[];
+};
+
 export const dashboardKeys = {
   all: ["dashboard"] as const,
 
   overview: () => [...dashboardKeys.all, "overview"] as const,
 
   topViewed: () => [...dashboardKeys.all, "topViewed"] as const,
-  topViewedList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
-    [...dashboardKeys.topViewed(), "list", params] as const,
+  topViewedList: (params: {
+    timeRange: DashboardTimeRange;
+    limit: number;
+    offset: number;
+  }) => [...dashboardKeys.topViewed(), "list", params] as const,
 
   topSelling: () => [...dashboardKeys.all, "topSelling"] as const,
-  topSellingList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
-    [...dashboardKeys.topSelling(), "list", params] as const,
+  topSellingList: (params: {
+    timeRange: DashboardTimeRange;
+    limit: number;
+    offset: number;
+  }) => [...dashboardKeys.topSelling(), "list", params] as const,
 
   topSellingArea: () => [...dashboardKeys.all, "topSellingArea"] as const,
-  topSellingAreaList: (params: { timeRange: DashboardTimeRange; limit: number; offset: number }) =>
-    [...dashboardKeys.topSellingArea(), "list", params] as const,
+  topSellingAreaList: (params: {
+    timeRange: DashboardTimeRange;
+    limit: number;
+    offset: number;
+  }) => [...dashboardKeys.topSellingArea(), "list", params] as const,
 
   yearlyStatistic: () => [...dashboardKeys.all, "yearlyStatistic"] as const,
-  yearlyStatisticByYear: (year: number) => [...dashboardKeys.yearlyStatistic(), "year", year] as const,
+  yearlyStatisticByYear: (year: number) =>
+    [...dashboardKeys.yearlyStatistic(), "year", year] as const,
+
+  lowStock: () => [...dashboardKeys.all, "lowStock"] as const,
+  lowStockList: (params: { limit: number; offset: number }) =>
+    [...dashboardKeys.lowStock(), "list", params] as const,
 };
 
 export async function getDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -200,13 +240,20 @@ export async function getDashboardTopSellingArea(params: {
   return res.data as DashboardTopSellingAreaResponse;
 }
 
-/**
- * ✅ Yearly statistic
- * Endpoint provided: dashboard/yearly-statistic?year=2025
- * Most of your dashboard endpoints are under /admin/dashboard/...
- * So we use: /admin/dashboard/yearly-statistic
- */
-export async function getDashboardYearlyStatistic(year: number): Promise<DashboardYearlyStatisticResponse> {
-  const res = await api.get("/admin/dashboard/yearly-statistic", { params: { year } });
+export async function getDashboardYearlyStatistic(
+  year: number,
+): Promise<DashboardYearlyStatisticResponse> {
+  const res = await api.get("/admin/dashboard/yearly-statistic", {
+    params: { year },
+  });
   return res.data as DashboardYearlyStatisticResponse;
+}
+
+/** ✅ NEW: Low stock products (pagination supported) */
+export async function getDashboardLowStockProducts(params: {
+  limit: number;
+  offset: number;
+}): Promise<DashboardLowStockResponse> {
+  const res = await api.get("/admin/dashboard/low-stock-products", { params });
+  return res.data as DashboardLowStockResponse;
 }

@@ -1,105 +1,222 @@
 "use client";
 
-import React from "react";
-import { Plus } from "lucide-react";
+import * as React from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ChevronLeft, ChevronRight, Package, Plus } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
-import StockUpdateModal, {
-  StockUpdateModalProduct,
-  StockUpdatePayload,
-} from "./StockUpdateModal";
+import { cn } from "@/lib/utils";
 
-type StockAlertItem = {
-  id: string;
-  name: string;
-  stockQty: number;
-  sku?: string;
-};
+import {
+  dashboardKeys,
+  getDashboardLowStockProducts,
+  type LowStockProductItem,
+} from "@/api/dashboard.api";
+import StockAlertUpdateModal from "./StockAlertUpdateModal";
 
-type Props = {
-  /** ✅ required: dashboard must pass items */
-  items: StockAlertItem[];
 
-  /** ✅ professional payload */
-  onApplyStock?: (payload: StockUpdatePayload) => void;
-};
+const PAGE_SIZE = 10;
 
-const StockAlertProductsCard: React.FC<Props> = ({ items, onApplyStock }) => {
+export default function StockAlertProductsCard() {
+  const [page, setPage] = React.useState(1);
   const [open, setOpen] = React.useState(false);
-  const [product, setProduct] = React.useState<StockUpdateModalProduct | null>(null);
+  const [activeProductId, setActiveProductId] = React.useState<number | null>(null);
+  const [activeProductName, setActiveProductName] = React.useState<string>("");
 
-  const openModal = (it: StockAlertItem) => {
-    setProduct({
-      id: it.id,
-      name: it.name,
-      currentStock: it.stockQty,
-    });
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const query = useQuery({
+    queryKey: dashboardKeys.lowStockList({ limit: PAGE_SIZE, offset }),
+    queryFn: () => getDashboardLowStockProducts({ limit: PAGE_SIZE, offset }),
+    staleTime: 20_000,
+    placeholderData: keepPreviousData,
+  });
+
+  const rows: LowStockProductItem[] = query.data?.data ?? [];
+  const total = query.data?.total ?? 0;
+  const alertLimitUsed = query.data?.alert_limit_used ?? 0;
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
+
+  const openModal = (p: LowStockProductItem) => {
+    setActiveProductId(p.product_id);
+    setActiveProductName(p.name);
     setOpen(true);
   };
 
-  const onApply = (payload: StockUpdatePayload) => {
-    onApplyStock?.(payload);
-  };
-
   return (
-    <div className="rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 w-full">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Stock Alert Products
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Quickly update stock for low inventory items.
-        </p>
-      </div>
-
-      <div className="p-4 space-y-3">
-        {items.length === 0 && (
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            No low stock products.
+    <>
+      <div className="rounded-[8px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 w-full">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Stock Alert Products
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Low inventory items based on your alert limit ({alertLimitUsed}).
+            </p>
           </div>
-        )}
 
-        {items.map((it) => (
-          <div
-            key={it.id}
-            className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 dark:border-gray-800 px-3 py-3"
-          >
-            <div className="min-w-0">
-              <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                {it.name}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {it.sku ? it.sku : it.id} • Stock:{" "}
-                <span className="font-semibold text-red-600 dark:text-red-300">
-                  {it.stockQty}
-                </span>
-              </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex h-8 items-center gap-2 rounded-full px-3 text-xs font-semibold",
+                "bg-warning-50 text-warning-700 dark:bg-warning-500/10 dark:text-warning-300"
+              )}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Low stock
+            </span>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-5">
+          {query.isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-16 w-full animate-pulse rounded-lg bg-gray-100 dark:bg-white/[0.04]" />
+              ))}
+            </div>
+          ) : query.isError ? (
+            <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-4 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-200">
+              Failed to load low stock products.
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
+              No low stock products found.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rows.map((p) => {
+                const lowVars = p.low_stock_variations ?? [];
+                const totalLow = lowVars.length;
+
+                return (
+                  <div
+                    key={p.product_id}
+                    className="rounded-lg border border-gray-200 px-4 py-4 dark:border-gray-800"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/[0.04]">
+                            <Package className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                              {p.name}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                              Product ID: {p.product_id} • Low stock variations:{" "}
+                              <span className="font-semibold text-warning-700 dark:text-warning-300">
+                                {totalLow}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Variation chips */}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {lowVars.slice(0, 6).map((v) => (
+                            <span
+                              key={v.product_variation_id}
+                              className={cn(
+                                "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
+                                "bg-gray-100 text-gray-700 dark:bg-white/[0.04] dark:text-gray-200"
+                              )}
+                              title={v.sku_code}
+                            >
+                              <span className="truncate max-w-[140px]">{v.color} • {v.variant}</span>
+                              <span className="text-warning-700 dark:text-warning-300">{v.current_stock}</span>
+                            </span>
+                          ))}
+
+                          {totalLow > 6 ? (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
+                              +{totalLow - 6} more
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          type="button"
+                          onClick={() => openModal(p)}
+                          startIcon={<Plus className="h-4 w-4" />}
+                          className="bg-brand-500 hover:bg-brand-600"
+                        >
+                          Update
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Footer: Pagination */}
+          <div className="mt-5 flex flex-col gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Showing <span className="font-semibold">{rows.length}</span> items • Total{" "}
+              <span className="font-semibold">{total}</span>
             </div>
 
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => openModal(it)}
-              startIcon={<Plus className="h-4 w-4" />}
-              className="bg-brand-500 hover:bg-brand-600 shrink-0"
-              type="button"
-            >
-              Update
-            </Button>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={!canPrev}
+                className={cn(
+                  "inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold",
+                  "border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed",
+                  "dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
+                )}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Prev
+              </button>
+
+              <span className="inline-flex h-9 items-center rounded-lg bg-gray-100 px-3 text-sm font-semibold text-gray-800 dark:bg-white/[0.04] dark:text-gray-100">
+                {page} / {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={!canNext}
+                className={cn(
+                  "inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold",
+                  "border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed",
+                  "dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
+                )}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* ✅ Common Stock Modal */}
-      <StockUpdateModal
+      {/* Modal */}
+      <StockAlertUpdateModal
         open={open}
-        product={product}
+        productId={activeProductId}
+        productName={activeProductName}
         onClose={() => setOpen(false)}
-        onApply={onApply}
-        minStockAfterUpdate={0}
+        onUpdated={() => {
+          query.refetch();
+        }}
       />
-    </div>
+    </>
   );
-};
-
-export default StockAlertProductsCard;
+}

@@ -158,7 +158,12 @@ export type ProductSingleResponseEntity = {
   images: ProductImage[];
   variations: ProductSingleVariation[];
 
-  available_colors?: Array<{ id: number; name: string; hex?: string | null; priority?: number }>;
+  available_colors?: Array<{
+    id: number;
+    name: string;
+    hex?: string | null;
+    priority?: number;
+  }>;
   available_variants?: Array<{
     id: number;
     name: string;
@@ -247,7 +252,9 @@ function boolToStr(v: boolean) {
   return v ? "true" : "false";
 }
 
-function buildProductFormData(payload: CreateProductPayload | UpdateProductPayload) {
+function buildProductFormData(
+  payload: CreateProductPayload | UpdateProductPayload,
+) {
   const fd = new FormData();
 
   payload.product_images?.forEach((file) => {
@@ -289,7 +296,10 @@ function buildProductFormData(payload: CreateProductPayload | UpdateProductPaylo
 
   // update only
   const maybeUpdate = payload as UpdateProductPayload;
-  if (Array.isArray(maybeUpdate.delete_image_ids) && maybeUpdate.delete_image_ids.length > 0) {
+  if (
+    Array.isArray(maybeUpdate.delete_image_ids) &&
+    maybeUpdate.delete_image_ids.length > 0
+  ) {
     fd.append("delete_image_ids", JSON.stringify(maybeUpdate.delete_image_ids));
   }
 
@@ -313,9 +323,14 @@ function cleanParams<T extends Record<string, any>>(params?: T) {
   return Object.keys(next).length ? next : undefined;
 }
 
-export async function getProducts(params?: ProductsListParams): Promise<ProductsListResponse> {
+export async function getProducts(
+  params?: ProductsListParams,
+): Promise<ProductsListResponse> {
   const cleaned = cleanParams(params);
-  const res = await api.get("/products", cleaned ? { params: cleaned } : undefined);
+  const res = await api.get(
+    "/products",
+    cleaned ? { params: cleaned } : undefined,
+  );
   return res.data as ProductsListResponse;
 }
 
@@ -327,19 +342,30 @@ export async function getProduct(id: number): Promise<ProductSingleResponse> {
   return res.data as ProductSingleResponse;
 }
 
-export async function createProduct(payload: CreateProductPayload): Promise<{ success: true; productId: number }> {
+export async function createProduct(
+  payload: CreateProductPayload,
+): Promise<{ success: true; productId: number }> {
   const fd = buildProductFormData(payload);
-  const res = await api.post("/product", fd, { headers: { "Content-Type": "multipart/form-data" } });
+  const res = await api.post("/product", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 }
 
-export async function updateProduct(id: number, payload: UpdateProductPayload): Promise<{ success: true }> {
+export async function updateProduct(
+  id: number,
+  payload: UpdateProductPayload,
+): Promise<{ success: true }> {
   const fd = buildProductFormData(payload);
-  const res = await api.put(`/product/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+  const res = await api.put(`/product/${id}`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 }
 
-export async function deleteProduct(id: number): Promise<{ success: true } | any> {
+export async function deleteProduct(
+  id: number,
+): Promise<{ success: true } | any> {
   const res = await api.delete(`/product/${id}`);
   return res.data;
 }
@@ -349,7 +375,10 @@ export async function deleteProduct(id: number): Promise<{ success: true } | any
  * PUT /api/v1/product/:id  (multipart)
  * body: status=true/false
  */
-export async function updateProductStatus(id: number, status: boolean): Promise<{ success: true } | any> {
+export async function updateProductStatus(
+  id: number,
+  status: boolean,
+): Promise<{ success: true } | any> {
   const fd = new FormData();
   fd.append("status", status ? "true" : "false");
 
