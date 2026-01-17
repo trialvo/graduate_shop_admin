@@ -82,7 +82,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
       isOpen={open}
       onClose={onClose}
       titleId={titleId}
-      className="w-full max-w-[980px] overflow-hidden"
+      className="w-full max-w-[1200px] overflow-hidden"
       showCloseButton={false}
     >
       <div className="bg-white text-gray-900 dark:bg-gray-950 dark:text-white flex flex-col">
