@@ -8,7 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
-import Select from "@/components/form/Select";
+import Select, { type Option } from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { cn } from "@/lib/utils";
 
