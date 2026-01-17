@@ -179,7 +179,7 @@ export default function PaymentGatewayModal({
     // ✅ COD: ONLY send these 2
     if (isCod) {
       const payload: Record<string, any> = {
-        gateway_name: gatewayName.trim() ? gatewayName.trim() : undefined,
+        title: gatewayName.trim() ? gatewayName.trim() : undefined,
         status,
       };
 

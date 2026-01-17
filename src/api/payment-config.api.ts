@@ -18,7 +18,7 @@ const UPDATE_ENDPOINT: Record<PaymentProvider, string> = {
   shurjopay: "/config/editShurjoPayConfig",
   nagad: "/config/editNagadConfig",
   rocket: "/config/editRocketConfig",
-  cod: "/config/editCodStatus",
+  cod: "/config/editCod",
 };
 
 export async function updatePaymentProviderConfig(

@@ -46,6 +46,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import OrderInvoice from "./pages/Orders/OrderInvoice";
 import SupportPage from "./pages/SupportPage";
+import BusinessServicePage from "./pages/BusinessSettings/service";
 
 export default function App() {
   return (
@@ -54,74 +55,81 @@ export default function App() {
         <ScrollToTop />
 
         <Routes>
-        {/* ✅ Public-only: login page (if already logged in -> redirect to /dashboard) */}
-        <Route element={<PublicOnlyRoute />}>
-          <Route path="/" element={<SignIn />} />
-        </Route>
+          {/* ✅ Public-only: login page (if already logged in -> redirect to /dashboard) */}
+          <Route element={<PublicOnlyRoute />}>
+            <Route path="/" element={<SignIn />} />
+          </Route>
           <Route path="/support" element={<SupportPage />} />
 
-        {/* ✅ Auth required for everything inside */}
-        <Route element={<ProtectedRoute redirectTo="/" />}>
-          <Route path="/order-invoice/:orderId" element={<OrderInvoice />} />
+          {/* ✅ Auth required for everything inside */}
+          <Route element={<ProtectedRoute redirectTo="/" />}>
+            <Route path="/order-invoice/:orderId" element={<OrderInvoice />} />
 
-          <Route element={<AppLayout />}>
-            {/* Dashboard */}
-            <Route path="/dashboard" element={<Home />} />
-            <Route path="/new-sale" element={<NewSale />} />
+            <Route element={<AppLayout />}>
+              {/* Dashboard */}
+              <Route path="/dashboard" element={<Home />} />
+              <Route path="/new-sale" element={<NewSale />} />
 
-            {/* Orders */}
-            <Route path="/all-orders" element={<AllOrders />} />
-            <Route path="/order-editor" element={<OrderEditor />} />
-            <Route path="/guest-orders" element={<GuestOrders />} />
+              {/* Orders */}
+              <Route path="/all-orders" element={<AllOrders />} />
+              <Route path="/order-editor" element={<OrderEditor />} />
+              <Route path="/guest-orders" element={<GuestOrders />} />
 
-            {/* Products */}
-            <Route path="/all-products" element={<AllProducts />} />
-            <Route path="/product-category" element={<ProductCategory />} />
-            <Route path="/product-attributes" element={<ProductAttributes />} />
-            <Route path="/create-product" element={<CreateProduct />} />
+              {/* Products */}
+              <Route path="/all-products" element={<AllProducts />} />
+              <Route path="/product-category" element={<ProductCategory />} />
+              <Route
+                path="/product-attributes"
+                element={<ProductAttributes />}
+              />
+              <Route path="/create-product" element={<CreateProduct />} />
 
-            {/* Customers */}
-            <Route path="/customers-list" element={<CustomersList />} />
-            <Route path="/create-customer" element={<CreateCustomerPage />} />
+              {/* Customers */}
+              <Route path="/customers-list" element={<CustomersList />} />
+              <Route path="/create-customer" element={<CreateCustomerPage />} />
 
-            {/* Website Settings */}
-            <Route path="/banners-settings" element={<BannersSettings />} />
-            <Route path="/contact-page" element={<ContactPage />} />
-            <Route path="/footer-settings" element={<FooterSettings />} />
+              {/* Website Settings */}
+              <Route path="/banners-settings" element={<BannersSettings />} />
+              <Route path="/contact-page" element={<ContactPage />} />
+              <Route path="/footer-settings" element={<FooterSettings />} />
 
-            {/* Reports */}
-            <Route path="/product-reports" element={<ProductReports />} />
-            <Route path="/order-reports" element={<OrderReport />} />
-            <Route path="/stock-reports" element={<StockReport />} />
-            <Route path="/visitor-report" element={<VisitorReport />} />
+              {/* Reports */}
+              <Route path="/product-reports" element={<ProductReports />} />
+              <Route path="/order-reports" element={<OrderReport />} />
+              <Route path="/stock-reports" element={<StockReport />} />
+              <Route path="/visitor-report" element={<VisitorReport />} />
 
-            {/* Profile */}
-            <Route path="/my-profile" element={<MyProfile />} />
+              {/* Profile */}
+              <Route path="/my-profile" element={<MyProfile />} />
 
-            {/* ✅ Admin & Permission (example: SUPER_ADMIN + admin.manage permission) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  roles={["SUPER_ADMIN"]}
-                  permissions={["admin.manage"]}
-                  redirectTo="/"
-                />
-              }
-            >
-              <Route path="/admins-list" element={<AdminsList />} />
-              <Route path="/create-admin" element={<CreateAdmin />} />
+              {/* ✅ Admin & Permission (example: SUPER_ADMIN + admin.manage permission) */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    roles={["SUPER_ADMIN"]}
+                    permissions={["admin.manage"]}
+                    redirectTo="/"
+                  />
+                }
+              >
+                <Route path="/admins-list" element={<AdminsList />} />
+                <Route path="/create-admin" element={<CreateAdmin />} />
+              </Route>
+
+              {/* Business Settings (keep protected; you can add more permissions later) */}
+              <Route path="/delivery-settings" element={<DeliverySettings />} />
+              <Route path="/currier-settings" element={<CurrierSettings />} />
+              <Route path="/coupon-code" element={<CouponCode />} />
+              <Route path="/payment-settings" element={<PaymentSettings />} />
+              <Route
+                path="/service-settings"
+                element={<BusinessServicePage />}
+              />
             </Route>
-
-            {/* Business Settings (keep protected; you can add more permissions later) */}
-            <Route path="/delivery-settings" element={<DeliverySettings />} />
-            <Route path="/currier-settings" element={<CurrierSettings />} />
-            <Route path="/coupon-code" element={<CouponCode />} />
-            <Route path="/payment-settings" element={<PaymentSettings />} />
           </Route>
-        </Route>
 
-        {/* Fallback Route */}
-        <Route path="*" element={<NotFound />} />
+          {/* Fallback Route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </Router>
