@@ -131,9 +131,10 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     courier: {
       method: firstCourier?.courier_provider ?? "manual",
       consignmentId:
-        firstCourier?.reference_id !== null && firstCourier?.reference_id !== undefined
+        firstCourier?.reference_id !== null &&
+        firstCourier?.reference_id !== undefined
           ? String(firstCourier.reference_id)
-          : firstCourier?.memo ?? "",
+          : (firstCourier?.memo ?? ""),
       trackingUrl: firstCourier?.tracking_number
         ? `Tracking: ${firstCourier.tracking_number}`
         : undefined,
@@ -149,7 +150,8 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
 
     customerHistory: {
       orderId: `#${o.id}`,
-      shipping: deliveryType === "inside_dhaka" ? "Inside Dhaka" : "Out of Dhaka",
+      shipping:
+        deliveryType === "inside_dhaka" ? "Inside Dhaka" : "Out of Dhaka",
       orderDate: o.created_at,
       totalAmount: Number(o.grand_total ?? 0),
       timeAgo: timeAgoLabel(o.created_at),
@@ -211,7 +213,13 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   const totals = useMemo(() => {
     if (!data) {
-      return { itemCount: 0, subTotal: 0, taxTotal: 0, grandTotal: 0, payable: 0 };
+      return {
+        itemCount: 0,
+        subTotal: 0,
+        taxTotal: 0,
+        grandTotal: 0,
+        payable: 0,
+      };
     }
 
     const lineTotals = data.products.map(calcLineTotals);
@@ -250,8 +258,10 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   });
 
   const statusMutation = useMutation({
-    mutationFn: (payload: { orderId: number; new_status: ApiOrder["order_status"] }) =>
-      patchOrderStatus(payload.orderId, payload.new_status),
+    mutationFn: (payload: {
+      orderId: number;
+      new_status: ApiOrder["order_status"];
+    }) => patchOrderStatus(payload.orderId, payload.new_status),
     onSuccess: async () => {
       toast.success("Order status updated");
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
@@ -264,7 +274,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   const handleChangeForm = <K extends keyof OrderEditorData>(
     key: K,
-    value: OrderEditorData[K]
+    value: OrderEditorData[K],
   ) => {
     setData((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
@@ -279,11 +289,15 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     const jobs: Promise<any>[] = [];
 
     if (prev.orderStatus !== nextStatus) {
-      jobs.push(statusMutation.mutateAsync({ orderId, new_status: nextStatus }));
+      jobs.push(
+        statusMutation.mutateAsync({ orderId, new_status: nextStatus }),
+      );
     }
 
     if (prev.paymentStatus !== nextPay) {
-      jobs.push(paymentMutation.mutateAsync({ orderId, new_payment_status: nextPay }));
+      jobs.push(
+        paymentMutation.mutateAsync({ orderId, new_payment_status: nextPay }),
+      );
     }
 
     if (!jobs.length) {
@@ -306,7 +320,9 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       if (!prev) return prev;
       return {
         ...prev,
-        products: prev.products.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        products: prev.products.map((p) =>
+          p.id === id ? { ...p, ...patch } : p,
+        ),
       };
     });
   };
@@ -350,11 +366,17 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       return {
         ...prev,
         deliveryCharge:
-          patch.deliveryCharge !== undefined ? Number(patch.deliveryCharge) || 0 : prev.deliveryCharge,
+          patch.deliveryCharge !== undefined
+            ? Number(patch.deliveryCharge) || 0
+            : prev.deliveryCharge,
         specialDiscount:
-          patch.specialDiscount !== undefined ? Number(patch.specialDiscount) || 0 : prev.specialDiscount,
+          patch.specialDiscount !== undefined
+            ? Number(patch.specialDiscount) || 0
+            : prev.specialDiscount,
         advancePayment:
-          patch.advancePayment !== undefined ? Number(patch.advancePayment) || 0 : prev.advancePayment,
+          patch.advancePayment !== undefined
+            ? Number(patch.advancePayment) || 0
+            : prev.advancePayment,
       };
     });
   };
@@ -363,7 +385,10 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     toast("No API for products update yet");
   };
 
-  const handleCourierChange = (patch: { method?: string; consignmentId?: string }) => {
+  const handleCourierChange = (patch: {
+    method?: string;
+    consignmentId?: string;
+  }) => {
     setData((prev) => {
       if (!prev) return prev;
       return { ...prev, courier: { ...prev.courier, ...patch } };
@@ -371,20 +396,21 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   };
 
   const handleCourierSend = () => toast("No courier API endpoint provided yet");
-  const handleCourierComplete = () => toast("No courier complete endpoint provided yet");
-  const handleCourierInvoice = () => toast("No courier invoice endpoint provided yet");
+  const handleCourierComplete = () =>
+    toast("No courier complete endpoint provided yet");
+  const handleCourierInvoice = () =>
+    toast("No courier invoice endpoint provided yet");
   const handleInvoiceDownload = () => toast("No invoice endpoint provided yet");
-  const handleOpenStickerGenerator = () => toast("Sticker generator not implemented yet");
+  const handleOpenStickerGenerator = () =>
+    toast("Sticker generator not implemented yet");
 
   if (!orderId) {
     return (
       <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-        <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              Missing orderId in URL. Example:{" "}
-              <span className="font-semibold">/order-editor?orderId=23</span>
-            </div>
+        <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Missing orderId in URL. Example:{" "}
+            <span className="font-semibold">/order-editor?orderId=23</span>
           </div>
         </div>
       </div>
@@ -394,9 +420,9 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   if (detailQuery.isLoading || !data) {
     return (
       <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-        <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <div className="text-sm text-gray-600 dark:text-gray-300">Loading order...</div>
+        <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Loading order...
           </div>
         </div>
       </div>
@@ -407,25 +433,23 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     const msg = (detailQuery.error as any)?.message ?? "Failed to load order";
     return (
       <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-        <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <div className="text-sm font-semibold text-red-600 dark:text-red-400">
-              {msg}
-            </div>
-            <div className="mt-3 flex gap-3">
-              {onBack ? (
-                <Button onClick={onBack} variant="primary" size="sm">
-                  Back to Orders
-                </Button>
-              ) : null}
-              <Button
-                onClick={() => detailQuery.refetch()}
-                variant="outline"
-                size="sm"
-              >
-                Retry
+        <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-sm font-semibold text-red-600 dark:text-red-400">
+            {msg}
+          </div>
+          <div className="mt-3 flex gap-3">
+            {onBack ? (
+              <Button onClick={onBack} variant="primary" size="sm">
+                Back to Orders
               </Button>
-            </div>
+            ) : null}
+            <Button
+              onClick={() => detailQuery.refetch()}
+              variant="outline"
+              size="sm"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </div>
@@ -439,108 +463,111 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-      <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 pt-6 md:px-6">
-        <div className="flex items-center justify-between gap-3">
-          {onBack ? (
-            <Button onClick={onBack} size="sm" variant="outline">
-              ← Back to Orders
-            </Button>
-          ) : (
-            <div />
-          )}
+      <div className="flex items-center justify-between gap-3">
+        {onBack ? (
+          <Button onClick={onBack} size="sm" variant="outline">
+            ← Back to Orders
+          </Button>
+        ) : (
+          <div />
+        )}
 
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Order ID: <span className="font-semibold text-gray-900 dark:text-white">{orderId}</span>
-          </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          Order ID:{" "}
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {orderId}
+          </span>
+        </div>
+      </div>
+
+      <OrderEditorHeader
+        orderNumber={data.orderNumber}
+        orderStatus={data.orderStatus}
+        paymentStatus={data.paymentStatus}
+        orderDateLabel={formatDateLabel(data.orderDate)}
+        paymentLabel={paymentLabel}
+        statusLabel={statusLabel(data.orderStatus)}
+        customerIp={data.customerIp}
+      />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-6">
+          <OrderFormCard
+            values={{
+              billingName: data.billingName,
+              shippingAddress: data.shippingAddress,
+              orderStatus: data.orderStatus,
+              phone: data.phone,
+              altPhone: data.altPhone,
+              paymentStatus: data.paymentStatus,
+              deliveryType: data.deliveryType,
+              city: data.city,
+              postalCode: data.postalCode,
+              email: data.email,
+              paymentMethod: data.paymentMethod,
+              note: data.note,
+            }}
+            onChange={(key, value) => handleChangeForm(key, value as never)}
+            onSubmit={handleSubmitTop}
+          />
+
+          <ProductCalculationsCard
+            products={data.products}
+            onChangeLine={handleChangeLine}
+            onDeleteLine={handleDeleteLine}
+            onAddLine={handleAddLine}
+            deliveryCharge={data.deliveryCharge}
+            specialDiscount={data.specialDiscount}
+            advancePayment={data.advancePayment}
+            onChangeTotals={handleChangeTotals}
+            totals={{
+              itemCount: totals.itemCount,
+              subTotal: totals.subTotal,
+              taxTotal: totals.taxTotal,
+              grandTotal: totals.grandTotal,
+              payable: totals.payable,
+            }}
+            onSubmit={handleSubmitProducts}
+          />
         </div>
 
-        <OrderEditorHeader
-          orderNumber={data.orderNumber}
-          orderStatus={data.orderStatus}
-          paymentStatus={data.paymentStatus}
-          orderDateLabel={formatDateLabel(data.orderDate)}
-          paymentLabel={paymentLabel}
-          statusLabel={statusLabel(data.orderStatus)}
-          customerIp={data.customerIp}
-        />
+        <div className="lg:col-span-4 space-y-6">
+          <SidebarInfoCard
+            name={data.customerInfo.name}
+            phone={data.customerInfo.phone}
+            email={data.customerInfo.email}
+            address={data.customerInfo.address}
+          />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-8 space-y-6">
-            <OrderFormCard
-              values={{
-                billingName: data.billingName,
-                shippingAddress: data.shippingAddress,
-                orderStatus: data.orderStatus,
-                phone: data.phone,
-                altPhone: data.altPhone,
-                paymentStatus: data.paymentStatus,
-                deliveryType: data.deliveryType,
-                city: data.city,
-                postalCode: data.postalCode,
-                email: data.email,
-                paymentMethod: data.paymentMethod,
-                note: data.note,
-              }}
-              onChange={(key, value) => handleChangeForm(key, value as never)}
-              onSubmit={handleSubmitTop}
-            />
+          <SidebarCourierCard
+            method={data.courier.method}
+            consignmentId={data.courier.consignmentId}
+            trackingUrl={data.courier.trackingUrl}
+            lastUpdatedAtLabel={formatDateTimeLabel(data.courier.lastUpdatedAt)}
+            anyAutoAvailable={courierOption?.any_auto_available}
+            providers={courierOption?.available_providers}
+            onChange={handleCourierChange}
+            onSend={handleCourierSend}
+            onComplete={handleCourierComplete}
+            onDownloadInvoice={handleCourierInvoice}
+          />
 
-            <ProductCalculationsCard
-              products={data.products}
-              onChangeLine={handleChangeLine}
-              onDeleteLine={handleDeleteLine}
-              onAddLine={handleAddLine}
-              deliveryCharge={data.deliveryCharge}
-              specialDiscount={data.specialDiscount}
-              advancePayment={data.advancePayment}
-              onChangeTotals={handleChangeTotals}
-              totals={{
-                itemCount: totals.itemCount,
-                subTotal: totals.subTotal,
-                taxTotal: totals.taxTotal,
-                grandTotal: totals.grandTotal,
-                payable: totals.payable,
-              }}
-              onSubmit={handleSubmitProducts}
-            />
-          </div>
+          <SidebarCustomerHistoryCard
+            orderId={data.customerHistory.orderId}
+            shipping={data.customerHistory.shipping}
+            orderDateLabel={formatDateLabel(data.customerHistory.orderDate)}
+            totalAmount={data.customerHistory.totalAmount}
+            timeAgo={data.customerHistory.timeAgo}
+            orderStatus={data.customerHistory.orderStatus}
+            sentBy={data.customerHistory.sentBy}
+            altPhone={data.customerHistory.altPhone}
+            additionalNotes={data.customerHistory.additionalNotes}
+            onDownloadInvoice={handleInvoiceDownload}
+          />
 
-          <div className="lg:col-span-4 space-y-6">
-            <SidebarInfoCard
-              name={data.customerInfo.name}
-              phone={data.customerInfo.phone}
-              email={data.customerInfo.email}
-              address={data.customerInfo.address}
-            />
-
-            <SidebarCourierCard
-              method={data.courier.method}
-              consignmentId={data.courier.consignmentId}
-              trackingUrl={data.courier.trackingUrl}
-              lastUpdatedAtLabel={formatDateTimeLabel(data.courier.lastUpdatedAt)}
-              anyAutoAvailable={courierOption?.any_auto_available}
-              providers={courierOption?.available_providers}
-              onChange={handleCourierChange}
-              onSend={handleCourierSend}
-              onComplete={handleCourierComplete}
-              onDownloadInvoice={handleCourierInvoice}
-            />
-
-            <SidebarCustomerHistoryCard
-              orderId={data.customerHistory.orderId}
-              shipping={data.customerHistory.shipping}
-              orderDateLabel={formatDateLabel(data.customerHistory.orderDate)}
-              totalAmount={data.customerHistory.totalAmount}
-              timeAgo={data.customerHistory.timeAgo}
-              orderStatus={data.customerHistory.orderStatus}
-              sentBy={data.customerHistory.sentBy}
-              altPhone={data.customerHistory.altPhone}
-              additionalNotes={data.customerHistory.additionalNotes}
-              onDownloadInvoice={handleInvoiceDownload}
-            />
-
-            <SidebarShippingStickerCard onOpenGenerator={handleOpenStickerGenerator} />
-          </div>
+          <SidebarShippingStickerCard
+            onOpenGenerator={handleOpenStickerGenerator}
+          />
         </div>
       </div>
     </div>
