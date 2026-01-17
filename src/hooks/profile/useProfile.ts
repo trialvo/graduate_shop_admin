@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import {
@@ -6,17 +6,24 @@ import {
   adminResetPassword,
   getAdminProfile,
   updateAdminProfile,
+  type AdminProfileApiResponse,
   type ForgotPasswordPayload,
   type ResetPasswordPayload,
   type UpdateAdminProfilePayload,
 } from "@/api/admin-profile.api";
 import { profileKeys } from "./profile.keys";
 
-export function useAdminProfile() {
+type AdminProfileQueryOptions = Omit<
+  UseQueryOptions<AdminProfileApiResponse, Error>,
+  "queryKey" | "queryFn"
+>;
+
+export function useAdminProfile(options?: AdminProfileQueryOptions) {
   return useQuery({
     queryKey: profileKeys.admin(),
     queryFn: getAdminProfile,
     staleTime: 30_000,
+    ...options,
   });
 }
 
