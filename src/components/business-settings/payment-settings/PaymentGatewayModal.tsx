@@ -29,7 +29,7 @@ const PROVIDER_OPTIONS: Option[] = PAYMENT_PROVIDER_DEFS.map((d) => ({
   label: d.title,
 }));
 
-const AUTO_TYPE: Record<PaymentProvider, string> = {
+const AUTO_TYPE: Record<Exclude<PaymentProvider, "cod">, string> = {
   bkash: "mobile_banking",
   nagad: "mobile_banking",
   rocket: "mobile_banking",
@@ -38,10 +38,18 @@ const AUTO_TYPE: Record<PaymentProvider, string> = {
 };
 
 function getDef(p: PaymentProvider) {
-  return PAYMENT_PROVIDER_DEFS.find((d) => d.provider === p) ?? PAYMENT_PROVIDER_DEFS[0];
+  return (
+    PAYMENT_PROVIDER_DEFS.find((d) => d.provider === p) ?? PAYMENT_PROVIDER_DEFS[0]
+  );
 }
 
-export default function PaymentGatewayModal({ open, provider, initial, onClose, onSaved }: Props) {
+export default function PaymentGatewayModal({
+  open,
+  provider,
+  initial,
+  onClose,
+  onSaved,
+}: Props) {
   const [currentProvider, setCurrentProvider] = useState<PaymentProvider>("bkash");
 
   const [gatewayName, setGatewayName] = useState("");
@@ -54,13 +62,14 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
 
   const [credentials, setCredentials] = useState<Record<string, string>>({});
 
-  // Prevent “provider change” effect from overwriting values during initial hydrate
   const hydratingRef = useRef(false);
 
   const providerDef = useMemo(() => getDef(currentProvider), [currentProvider]);
-  const autoType = AUTO_TYPE[currentProvider];
+  const isCod = currentProvider === "cod";
+  const autoType = !isCod
+    ? AUTO_TYPE[currentProvider as Exclude<PaymentProvider, "cod">]
+    : "cod";
 
-  // ✅ HYDRATE CORRECTLY (first open fix)
   useEffect(() => {
     if (!open) return;
 
@@ -71,12 +80,19 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
 
     setCurrentProvider(targetProvider);
 
-    const cfg = (initial?.provider === targetProvider ? initial?.config : null) ?? {};
+    const cfg =
+      (initial?.provider === targetProvider ? initial?.config : null) ?? {};
     const common = targetDef.common;
 
-    setGatewayName(String(cfg?.[common.gateway_name] ?? initial?.gateway_name ?? targetDef.title));
+    const gwKey = common.gateway_name;
+    setGatewayName(
+      String(cfg?.[gwKey] ?? initial?.gateway_name ?? targetDef.title),
+    );
+
+    // ✅ cod: we don't care about these (but keep old hydrate for non-cod)
     setNote(String(cfg?.[common.note] ?? initial?.note ?? ""));
     setEnv(((cfg?.[common.env] ?? initial?.env ?? "sandbox") || "sandbox") as any);
+
     setStatus(Boolean(initial?.provider === targetProvider ? initial?.is_active : true));
 
     setSetDefault(Boolean(initial?.provider === targetProvider ? initial?.isDefault : false));
@@ -88,7 +104,6 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
     }
     setCredentials(nextCred);
 
-    // release after a tick (so provider change effect doesn’t clobber)
     const t = setTimeout(() => {
       hydratingRef.current = false;
     }, 0);
@@ -96,7 +111,6 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
     return () => clearTimeout(t);
   }, [open, provider, initial]);
 
-  // ✅ When provider changes (user selects), ensure fields exist but DO NOT override existing values
   useEffect(() => {
     if (!open) return;
     if (hydratingRef.current) return;
@@ -108,11 +122,10 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
     setCredentials((prev) => {
       const next = { ...prev };
 
-      // ensure keys
       for (const f of def.fields) {
         if (next[f.key] === undefined) next[f.key] = "";
       }
-      // remove unknown keys
+
       Object.keys(next).forEach((k) => {
         if (!def.fields.some((f) => f.key === k)) delete next[k];
       });
@@ -120,29 +133,33 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
       return next;
     });
 
-    // reset optional toggles
     setArmWipe(false);
     setSetDefault(false);
   }, [open, providerDef]);
 
   const canSave = useMemo(() => {
-    const anyCredFilled = providerDef.fields.some((f) => String(credentials[f.key] ?? "").trim());
+    if (isCod) return true;
+
+    const anyCredFilled = providerDef.fields.some((f) =>
+      String(credentials[f.key] ?? "").trim(),
+    );
     if (!anyCredFilled) return true;
 
     for (const f of providerDef.fields) {
       if (f.required && !String(credentials[f.key] ?? "").trim()) return false;
     }
     return true;
-  }, [credentials, providerDef.fields]);
+  }, [credentials, providerDef.fields, isCod]);
 
   const changeCred = (key: string, v: string) => {
     setCredentials((prev) => ({ ...prev, [key]: v }));
   };
 
   const mutation = useMutation({
-    mutationFn: (payload: Record<string, any>) => updatePaymentProviderConfig(currentProvider, payload),
+    mutationFn: (payload: Record<string, any>) =>
+      updatePaymentProviderConfig(currentProvider, payload),
     onSuccess: (res: any) => {
-      if (res?.success === true) {
+      if (res?.success === true || res?.status === true) {
         toast.success("Payment config updated");
         onSaved();
         return;
@@ -150,15 +167,33 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
       toast.error(res?.error ?? res?.message ?? "Failed to update");
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update";
       toast.error(msg);
     },
   });
 
   const submit = () => {
+    // ✅ COD: ONLY send these 2
+    if (isCod) {
+      const payload: Record<string, any> = {
+        gateway_name: gatewayName.trim() ? gatewayName.trim() : undefined,
+        status,
+      };
+
+      Object.keys(payload).forEach((k) => {
+        if (payload[k] === undefined) delete payload[k];
+      });
+
+      mutation.mutate(payload);
+      return;
+    }
+
+    // ✅ ORIGINAL payload (unchanged)
     const payload: Record<string, any> = {
       gateway_name: gatewayName.trim() ? gatewayName.trim() : undefined,
-      // ✅ TYPE AUTO SET (no input field)
       type: autoType,
       note: note.trim() ? note.trim() : undefined,
       env,
@@ -166,7 +201,9 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
       setdefault: Boolean(setDefault),
     };
 
-    const anyCredFilled = providerDef.fields.some((f) => String(credentials[f.key] ?? "").trim());
+    const anyCredFilled = providerDef.fields.some((f) =>
+      String(credentials[f.key] ?? "").trim(),
+    );
     if (anyCredFilled) {
       for (const f of providerDef.fields) {
         payload[f.key] = String(credentials[f.key] ?? "").trim();
@@ -187,16 +224,26 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center">
-      <button type="button" className="absolute inset-0 bg-black/60" onClick={onClose} aria-label="Close overlay" />
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/60"
+        onClick={onClose}
+        aria-label="Close overlay"
+      />
 
       <div className="relative w-[95vw] max-w-2xl rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Edit Payment Gateway</h3>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Type auto: <span className="font-mono">{autoType}</span>
-            </p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Edit Payment Gateway
+            </h3>
+
+            {!isCod ? (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Type auto: <span className="font-mono">{autoType}</span>
+              </p>
+            ) : null}
           </div>
 
           <button
@@ -212,10 +259,13 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
         {/* Body */}
         <div className="max-h-[520px] overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {/* Provider */}
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Provider</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Provider
+              </p>
               <Select
-                key={`provider-dd-${currentProvider}`} // important for some Select components
+                key={`provider-dd-${currentProvider}`}
                 options={PROVIDER_OPTIONS}
                 placeholder="Select provider"
                 defaultValue={currentProvider}
@@ -224,110 +274,178 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
               />
             </div>
 
+            {/* Gateway Name */}
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Gateway Name</p>
-              <Input value={gatewayName} onChange={(e) => setGatewayName(e.target.value)} placeholder="Gateway name (optional)" />
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
-              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-sm text-gray-600 dark:text-gray-400">{status ? "Active" : "Inactive"}</p>
-                <Switch label="" defaultChecked={status} onChange={(c) => setStatus(c)} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Environment</p>
-              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-sm text-gray-600 dark:text-gray-400">{env === "sandbox" ? "Sandbox" : "Production"}</p>
-                <Switch label="" defaultChecked={env === "sandbox"} onChange={(c) => setEnv(c ? "sandbox" : "production")} />
-              </div>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Note</p>
-              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Set Default Provider</p>
-              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-sm text-gray-600 dark:text-gray-400">{setDefault ? "Yes (setdefault=true)" : "No"}</p>
-                <Switch label="" defaultChecked={setDefault} onChange={(c) => setSetDefault(c)} />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                This sets <span className="font-mono">PAYMENT_DEFAULT_PROVIDER</span>.
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Gateway Name
               </p>
+              <Input
+                value={gatewayName}
+                onChange={(e) => setGatewayName(e.target.value)}
+                placeholder="Gateway name (optional)"
+              />
             </div>
-          </div>
 
-          {/* Credentials */}
-          <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{providerDef.title} Credentials</h4>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  If you fill 1 field → required credentials must be filled.
+            {/* Status */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Status
+              </p>
+              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {status ? "Active" : "Inactive"}
                 </p>
+                <Switch
+                  label=""
+                  defaultChecked={status}
+                  onChange={(c) => setStatus(c)}
+                />
               </div>
-
-              <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                {providerDef.category}
-              </span>
             </div>
 
-            {!canSave ? (
-              <div className="mt-3 rounded-[4px] border border-warning-200 bg-warning-50 px-4 py-3 text-xs font-semibold text-warning-700 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300">
-                Please fill all required credential fields (since you started entering credentials).
-              </div>
-            ) : null}
-
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              {providerDef.fields.map((f) => (
-                <div key={`${currentProvider}-${f.key}`} className="space-y-2">
+            {/* ✅ ONLY show the rest for NON-COD */}
+            {!isCod ? (
+              <>
+                <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {f.label} {f.required ? <span className="text-error-500">*</span> : null}
+                    Environment
+                  </p>
+                  <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {env === "sandbox" ? "Sandbox" : "Production"}
+                    </p>
+                    <Switch
+                      label=""
+                      defaultChecked={env === "sandbox"}
+                      onChange={(c) => setEnv(c ? "sandbox" : "production")}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Note
                   </p>
                   <Input
-                    type={f.type === "password" ? "password" : "text"}
-                    value={credentials[f.key] ?? ""}
-                    onChange={(e) => changeCred(f.key, e.target.value)}
-                    placeholder={f.placeholder ?? ""}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Optional note"
                   />
-                  {f.helperText ? <p className="text-xs text-gray-500 dark:text-gray-400">{f.helperText}</p> : null}
                 </div>
-              ))}
-            </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Set Default Provider
+                  </p>
+                  <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {setDefault ? "Yes (setdefault=true)" : "No"}
+                    </p>
+                    <Switch
+                      label=""
+                      defaultChecked={setDefault}
+                      onChange={(c) => setSetDefault(c)}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    This sets{" "}
+                    <span className="font-mono">PAYMENT_DEFAULT_PROVIDER</span>.
+                  </p>
+                </div>
+              </>
+            ) : null}
           </div>
 
-          {/* Danger zone */}
-          <div className="mt-6 rounded-[4px] border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 text-error-600 dark:text-error-300">
-                <AlertTriangle size={18} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-error-700 dark:text-error-200">Danger Zone (setnull)</p>
-                <p className="mt-1 text-xs text-error-700/90 dark:text-error-300">
-                  If enabled, it wipes this provider config from database. Use only if you are 100% sure.
-                </p>
+          {/* ✅ NON-COD: keep your previous Credentials + Danger Zone exactly */}
+          {!isCod ? (
+            <>
+              <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {providerDef.title} Credentials
+                    </h4>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      If you fill 1 field → required credentials must be filled.
+                    </p>
+                  </div>
 
-                <div className="mt-3 flex items-center justify-between rounded-[4px] border border-error-200 bg-white px-4 py-3 dark:border-error-900/40 dark:bg-gray-900">
-                  <p className="text-sm font-semibold text-error-700 dark:text-error-200">
-                    {armWipe ? "Armed: setnull=true" : "Not armed"}
-                  </p>
-                  <Switch label="" defaultChecked={armWipe} onChange={(c) => setArmWipe(c)} />
+                  <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    {providerDef.category}
+                  </span>
                 </div>
 
-                {armWipe ? (
-                  <p className="mt-2 text-xs font-semibold text-error-700 dark:text-error-300">
-                    Saving now will send <span className="font-mono">setnull: true</span>.
-                  </p>
+                {!canSave ? (
+                  <div className="mt-3 rounded-[4px] border border-warning-200 bg-warning-50 px-4 py-3 text-xs font-semibold text-warning-700 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300">
+                    Please fill all required credential fields (since you started
+                    entering credentials).
+                  </div>
                 ) : null}
+
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {providerDef.fields.map((f) => (
+                    <div
+                      key={`${currentProvider}-${f.key}`}
+                      className="space-y-2"
+                    >
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {f.label}{" "}
+                        {f.required ? (
+                          <span className="text-error-500">*</span>
+                        ) : null}
+                      </p>
+                      <Input
+                        type={f.type === "password" ? "password" : "text"}
+                        value={credentials[f.key] ?? ""}
+                        onChange={(e) => changeCred(f.key, e.target.value)}
+                        placeholder={f.placeholder ?? ""}
+                      />
+                      {f.helperText ? (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {f.helperText}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
+
+              <div className="mt-6 rounded-[4px] border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 text-error-600 dark:text-error-300">
+                    <AlertTriangle size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-error-700 dark:text-error-200">
+                      Danger Zone (setnull)
+                    </p>
+                    <p className="mt-1 text-xs text-error-700/90 dark:text-error-300">
+                      If enabled, it wipes this provider config from database.
+                      Use only if you are 100% sure.
+                    </p>
+
+                    <div className="mt-3 flex items-center justify-between rounded-[4px] border border-error-200 bg-white px-4 py-3 dark:border-error-900/40 dark:bg-gray-900">
+                      <p className="text-sm font-semibold text-error-700 dark:text-error-200">
+                        {armWipe ? "Armed: setnull=true" : "Not armed"}
+                      </p>
+                      <Switch
+                        label=""
+                        defaultChecked={armWipe}
+                        onChange={(c) => setArmWipe(c)}
+                      />
+                    </div>
+
+                    {armWipe ? (
+                      <p className="mt-2 text-xs font-semibold text-error-700 dark:text-error-300">
+                        Saving now will send{" "}
+                        <span className="font-mono">setnull: true</span>.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : null}
         </div>
 
         {/* Footer */}
@@ -338,9 +456,13 @@ export default function PaymentGatewayModal({ open, provider, initial, onClose, 
           <Button
             onClick={submit}
             disabled={mutation.isPending || !canSave}
-            className={cn(armWipe && "bg-error-600 hover:bg-error-700")}
+            className={cn(!isCod && armWipe && "bg-error-600 hover:bg-error-700")}
           >
-            {mutation.isPending ? "Saving..." : armWipe ? "Wipe & Save" : "Save Changes"}
+            {mutation.isPending
+              ? "Saving..."
+              : !isCod && armWipe
+              ? "Wipe & Save"
+              : "Save Changes"}
           </Button>
         </div>
       </div>

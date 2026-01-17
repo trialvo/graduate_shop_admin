@@ -1,5 +1,12 @@
 // src/components/settings/payment/types.ts
-export type PaymentProvider = "bkash" | "sslcommerz" | "shurjopay" | "nagad" | "rocket";
+
+export type PaymentProvider =
+  | "bkash"
+  | "sslcommerz"
+  | "shurjopay"
+  | "nagad"
+  | "rocket"
+  | "cod";
 
 export type Option = { value: string; label: string };
 
@@ -56,5 +63,6 @@ export function paymentProviderTitle(p: PaymentProvider) {
   if (p === "sslcommerz") return "SSLCommerz";
   if (p === "shurjopay") return "ShurjoPay";
   if (p === "nagad") return "Nagad";
-  return "Rocket";
+  if (p === "rocket") return "Rocket";
+  return "Cash on Delivery";
 }

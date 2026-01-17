@@ -3,18 +3,19 @@
 
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, RefreshCw, Search, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import Button from "@/components/ui/button/Button";
-import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 
 import PaymentGatewayModal from "./PaymentGatewayModal";
 import { PAYMENT_PROVIDER_DEFS } from "./providerDefs";
 import type { PaymentProvider, PaymentProviderConfigCard } from "./types";
 
-import { getPaymentSystemConfig, updatePaymentProviderConfig } from "@/api/payment-config.api";
+import {
+  getPaymentSystemConfig,
+  updatePaymentProviderConfig,
+} from "@/api/payment-config.api";
 import { cn } from "@/lib/utils";
 
 function stampNow(): string {
@@ -37,8 +38,10 @@ export default function PaymentSettingsPage() {
   const [refreshedAt, setRefreshedAt] = useState(stampNow());
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<PaymentProvider | null>(null);
-  const [editingInitial, setEditingInitial] = useState<PaymentProviderConfigCard | null>(null);
+  const [editingProvider, setEditingProvider] =
+    useState<PaymentProvider | null>(null);
+  const [editingInitial, setEditingInitial] =
+    useState<PaymentProviderConfigCard | null>(null);
 
   const paymentQuery = useQuery({
     queryKey: ["systemConfig", "payment"],
@@ -48,9 +51,18 @@ export default function PaymentSettingsPage() {
 
   const cards: PaymentProviderConfigCard[] = useMemo(() => {
     const payment = paymentQuery.data?.payment ?? {};
-    const defaultProvider = safeString(payment?.default?.config?.PAYMENT_DEFAULT_PROVIDER) as PaymentProvider | "";
+    const defaultProvider = safeString(
+      payment?.default?.config?.PAYMENT_DEFAULT_PROVIDER,
+    ) as PaymentProvider | "";
 
-    const providers: PaymentProvider[] = ["bkash", "sslcommerz", "shurjopay", "nagad", "rocket"];
+    const providers: PaymentProvider[] = [
+      "bkash",
+      "sslcommerz",
+      "shurjopay",
+      "nagad",
+      "rocket",
+      "cod",
+    ];
 
     return providers
       .map((p) => {
@@ -59,10 +71,17 @@ export default function PaymentSettingsPage() {
         const cfg = node?.config ?? {};
         const is_active = Boolean(node?.is_active);
 
-        const gateway_name = safeString(cfg?.[def?.common.gateway_name ?? ""] ?? "");
+        const gatewayKey = def?.common.gateway_name ?? "";
+        const gateway_name = safeString(cfg?.[gatewayKey] ?? "");
+
         const type = safeString(cfg?.[def?.common.type ?? ""] ?? "");
         const note = safeString(cfg?.[def?.common.note ?? ""] ?? "");
-        const env = safeString(cfg?.[def?.common.env ?? ""] ?? "sandbox");
+
+        const envRaw =
+          def?.common.env && def.common.env.trim()
+            ? safeString(cfg?.[def.common.env] ?? "sandbox")
+            : "";
+        const env = envRaw || "sandbox";
 
         return {
           provider: p,
@@ -70,7 +89,7 @@ export default function PaymentSettingsPage() {
           config: cfg,
           defaultProvider: (defaultProvider || null) as any,
           isDefault: defaultProvider === p,
-          gateway_name,
+          gateway_name: gateway_name || def?.title || p,
           type,
           note,
           env,
@@ -96,14 +115,16 @@ export default function PaymentSettingsPage() {
   }, [cards, search]);
 
   const invalidate = () =>
-    qc.invalidateQueries({ queryKey: ["systemConfig", "payment"] }).catch(() => undefined);
+    qc
+      .invalidateQueries({ queryKey: ["systemConfig", "payment"] })
+      .catch(() => undefined);
 
-  // quick status toggle (optional fields allowed by backend)
   const toggleMutation = useMutation({
     mutationFn: (payload: { provider: PaymentProvider; status: boolean }) =>
       updatePaymentProviderConfig(payload.provider, { status: payload.status }),
     onSuccess: (res: any) => {
-      if (res?.success === true) {
+      // ✅ supports both {success:true} and {status:true}
+      if (res?.success === true || res?.status === true) {
         toast.success("Status updated");
         invalidate();
         return;
@@ -111,7 +132,10 @@ export default function PaymentSettingsPage() {
       toast.error(res?.error ?? res?.message ?? "Failed to update");
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update";
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update";
       toast.error(msg);
     },
   });
@@ -129,107 +153,98 @@ export default function PaymentSettingsPage() {
 
   return (
     <div className="space-y-6">
-    
-      {/* Toolbar */}
-      {/* <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Button
-          startIcon={<Plus size={16} />}
-          onClick={() => toast("Create not needed. Use View Settings to update providers.")}
-        >
-          Add Payment Gateway
-        </Button>
-
-        <div className="relative w-full md:w-[320px]">
-          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-            <Search size={16} className="text-gray-400" />
-          </div>
-          <Input className="pl-9" placeholder="Search gateway..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-      </div> */}
-
-      {/* Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {paymentQuery.isLoading ? (
-          Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
-            />
-          ))
-        ) : (
-          filtered.map((g) => {
-            const meta = providerMeta(g.provider);
-            const logo = meta?.logoText ?? "PG";
-
-            return (
+        {paymentQuery.isLoading
+          ? Array.from({ length: 8 }).map((_, i) => (
               <div
-                key={g.provider}
-                className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                      {logo}
+                key={i}
+                className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+              />
+            ))
+          : filtered.map((g) => {
+              const meta = providerMeta(g.provider);
+              const logo = meta?.logoText ?? "PG";
+
+              return (
+                <div
+                  key={g.provider}
+                  className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                        {logo}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                          {g.gateway_name || meta?.title || g.provider}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                          Provider:{" "}
+                          <span className="font-semibold">
+                            {meta?.title ?? g.provider}
+                          </span>
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                        {g.gateway_name || meta?.title || g.provider}
-                      </p>
-                      <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                        Provider: <span className="font-semibold">{meta?.title ?? g.provider}</span>
-                      </p>
-                    </div>
+                    <Switch
+                      key={`pay-st-${g.provider}-${g.is_active}`}
+                      label=""
+                      defaultChecked={g.is_active}
+                      disabled={toggleMutation.isPending}
+                      onChange={(checked) =>
+                        toggleMutation.mutate({
+                          provider: g.provider,
+                          status: checked,
+                        })
+                      }
+                    />
                   </div>
 
-                  <Switch
-                    key={`pay-st-${g.provider}-${g.is_active}`}
-                    label=""
-                    defaultChecked={g.is_active}
-                    disabled={toggleMutation.isPending}
-                    onChange={(checked) => toggleMutation.mutate({ provider: g.provider, status: checked })}
-                  />
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Environment:{" "}
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {g.env || "sandbox"}
-                    </span>
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                      {meta?.category ?? "Payment"}
-                    </span>
-
-                    {g.isDefault ? (
-                      <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
-                        Default
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Environment:{" "}
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {g.provider === "cod" ? "—" : g.env || "sandbox"}
                       </span>
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                        {meta?.category ?? "Payment"}
+                      </span>
+
+                      {g.isDefault ? (
+                        <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
+                          Default
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {g.note && g.provider !== "cod" ? (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                        {g.note}
+                      </p>
                     ) : null}
                   </div>
 
-                  {g.note ? (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{g.note}</p>
-                  ) : null}
+                  <div className="mt-5 flex items-center justify-between">
+                    <button
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600",
+                      )}
+                      onClick={() => openEdit(g)}
+                    >
+                      <Settings size={16} />
+                      View Settings
+                    </button>
+                  </div>
                 </div>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <button
-                    type="button"
-                    className={cn("inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600")}
-                    onClick={() => openEdit(g)}
-                  >
-                    <Settings size={16} />
-                    View Settings
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })}
 
         {!paymentQuery.isLoading && filtered.length === 0 ? (
           <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">

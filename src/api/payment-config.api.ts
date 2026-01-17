@@ -18,9 +18,13 @@ const UPDATE_ENDPOINT: Record<PaymentProvider, string> = {
   shurjopay: "/config/editShurjoPayConfig",
   nagad: "/config/editNagadConfig",
   rocket: "/config/editRocketConfig",
+  cod: "/config/editCodStatus",
 };
 
-export async function updatePaymentProviderConfig(provider: PaymentProvider, payload: Record<string, any>) {
+export async function updatePaymentProviderConfig(
+  provider: PaymentProvider,
+  payload: Record<string, any>,
+) {
   const endpoint = UPDATE_ENDPOINT[provider];
   const res = await api.put(endpoint, payload);
   return res.data;
