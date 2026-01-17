@@ -133,7 +133,7 @@ export default function AppToaster({ position = "top-right", offsetTopPx = 12 }:
                     aria-hidden="true"
                   />
 
-                  <div className="relative flex items-start gap-3 px-4 py-3">
+                  <div className="relative flex items-start gap-3 px-2 py-2">
                     <div
                       className={cn(
                         "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
