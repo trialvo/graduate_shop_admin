@@ -50,7 +50,7 @@ export const siteConfig: SiteConfig = {
   authLogoUrl: "/images/logo/my_dark_logo.svg",
 
   // public/favicon.png
-  faviconUrl: "/favicon.png",
+  faviconUrl: "/favicon.ico",
 
   // appleTouchIconUrl: "/apple-touch-icon.png",
   // defaultOgImageUrl: "/og-image.png",
