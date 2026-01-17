@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import Button from "@/components/ui/button/Button";
 import type { ProfileUser } from "../types";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -6,6 +6,8 @@ import { toPublicUrl } from "@/utils/toPublicUrl";
 type Props = {
   user: ProfileUser;
   onLogout: () => void;
+  onSelectAvatarFile: (file: File) => void;
+  uploading?: boolean;
 };
 
 function initials(firstName: string, lastName: string): string {
@@ -15,7 +17,13 @@ function initials(firstName: string, lastName: string): string {
   return out || "U";
 }
 
-export default function ProfileOverviewCard({ user, onLogout }: Props) {
+export default function ProfileOverviewCard({
+  user,
+  onLogout,
+  onSelectAvatarFile,
+  uploading = false,
+}: Props) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const name = useMemo(() => {
     const n = `${user.firstName} ${user.lastName}`.trim();
     return n || "—";
@@ -56,7 +64,30 @@ export default function ProfileOverviewCard({ user, onLogout }: Props) {
           <p className="mt-3 text-sm text-brand-500">last login {user.lastVisitAt}</p>
         ) : null}
 
-        <div className="mt-6 w-full">
+        <div className="mt-5 w-full">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onSelectAvatarFile(file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => fileInputRef.current?.click()}
+            isLoading={uploading}
+            loadingText="Uploading..."
+          >
+            Upload profile picture
+          </Button>
+        </div>
+
+        <div className="mt-3 w-full">
           <Button onClick={onLogout} className="w-full">
             Log Out
           </Button>

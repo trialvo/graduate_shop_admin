@@ -1,7 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
-import { useAdminProfile, useUpdateAdminProfile } from "@/hooks/profile/useProfile";
+import {
+  useAdminProfile,
+  useUpdateAdminProfile,
+} from "@/hooks/profile/useProfile";
+import { useUploadAdminProfile } from "@/hooks/useAdmins";
 import { useAuth } from "@/context/AuthProvider";
 import type { ProfileContact, ProfileUser } from "./types";
 import { formatNow, mapAdminProfileToUi } from "./utils";
@@ -10,6 +14,7 @@ import ProfileOverviewCard from "./components/ProfileOverviewCard";
 import ProfileDetailsForm from "./components/ProfileDetailsForm";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import ProfileContactCard from "./components/ProfileContactCard";
+import ProfileImageCropperModal from "./components/ProfileImageCropperModal";
 
 function SkeletonCard() {
   return (
@@ -27,10 +32,21 @@ function SkeletonCard() {
 export default function MyProfilePage() {
   const [refreshedAt, setRefreshedAt] = useState<string>(() => formatNow());
   const [pwdOpen, setPwdOpen] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
+  const [cropSourceName, setCropSourceName] = useState<string | undefined>(
+    undefined,
+  );
 
   const { logout } = useAuth();
   const { data, isLoading, isFetching, refetch } = useAdminProfile();
   const update = useUpdateAdminProfile();
+  const uploadAvatar = useUploadAdminProfile({
+    onSuccess: async () => {
+      await refetch();
+      setRefreshedAt(formatNow());
+    },
+  });
 
   const user: ProfileUser | null = useMemo(() => {
     if (!data) return null;
@@ -49,6 +65,33 @@ export default function MyProfilePage() {
     await refetch();
     setRefreshedAt(formatNow());
   };
+
+  const openCropForFile = (file: File) => {
+    if (cropSourceUrl) {
+      URL.revokeObjectURL(cropSourceUrl);
+    }
+    const src = URL.createObjectURL(file);
+    setCropSourceUrl(src);
+    setCropSourceName(file.name);
+    setCropOpen(true);
+  };
+
+  const closeCrop = () => {
+    if (cropSourceUrl) {
+      URL.revokeObjectURL(cropSourceUrl);
+    }
+    setCropSourceUrl(null);
+    setCropSourceName(undefined);
+    setCropOpen(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (cropSourceUrl) {
+        URL.revokeObjectURL(cropSourceUrl);
+      }
+    };
+  }, [cropSourceUrl]);
 
   if (isLoading) {
     return (
@@ -83,9 +126,6 @@ export default function MyProfilePage() {
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
             My Profile
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Update your profile details and reset your password using OTP.
-          </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -114,6 +154,8 @@ export default function MyProfilePage() {
           <ProfileOverviewCard
             user={user}
             onLogout={() => logout()}
+            onSelectAvatarFile={openCropForFile}
+            uploading={uploadAvatar.isPending}
           />
           <ProfileContactCard contact={contact} />
         </div>
@@ -138,6 +180,20 @@ export default function MyProfilePage() {
           logout();
         }}
       />
+
+      {cropSourceUrl ? (
+        <ProfileImageCropperModal
+          open={cropOpen}
+          imageUrl={cropSourceUrl}
+          fileName={cropSourceName}
+          aspect={1}
+          onClose={closeCrop}
+          onApply={({ file }) => {
+            closeCrop();
+            uploadAvatar.mutate({ id: user.id, file });
+          }}
+        />
+      ) : null}
     </div>
   );
 }
