@@ -15,6 +15,7 @@ export type SiteConfig = {
   authLogoUrl?: string;
 
   faviconUrl: string;
+  faviconDarkUrl?: string;
   appleTouchIconUrl?: string;
   defaultOgImageUrl?: string;
 
@@ -51,6 +52,8 @@ export const siteConfig: SiteConfig = {
 
   // public/favicon.png
   faviconUrl: "/favicon.ico",
+  // Optional dark-theme favicon (e.g. white icon on dark bg).
+  faviconDarkUrl: "/favicon-dark.ico",
 
   // appleTouchIconUrl: "/apple-touch-icon.png",
   // defaultOgImageUrl: "/og-image.png",
