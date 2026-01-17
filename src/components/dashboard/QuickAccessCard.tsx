@@ -41,12 +41,7 @@ function getBgById(id?: number) {
   return BG_VARIANTS[Math.abs(id) % BG_VARIANTS.length];
 }
 
-const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
-  title,
-  imgUrl,
-  path,
-  id,
-}) => {
+const QuickAccessCard: React.FC<QuickAccessCardProps> = ({ title, imgUrl, path, id }) => {
   const navigate = useNavigate();
   const clickable = Boolean(path);
   const bgClass = getBgById(id);
@@ -67,9 +62,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
       aria-label={clickable ? `Open ${title}` : `${title} (no link)`}
     >
       {/* Icon container */}
-      <div
-        className={cn("flex h-11 w-11 items-center justify-center rounded-lg")}
-      >
+      <div className={cn("flex h-11 w-11 items-center justify-center rounded-lg")}>
         {imgUrl ? (
           <img
             src={imgUrl}
@@ -77,20 +70,16 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
             loading="lazy"
             className={cn(
               "h-full w-full object-contain transition",
-              // 🔁 Auto invert based on theme
-              "invert dark:invert-0"
+              // ✅ Always white icon
+              "brightness-0 invert"
             )}
           />
         ) : (
-          <span className="text-xs font-bold">
-            {title.slice(0, 2).toUpperCase()}
-          </span>
+          <span className="text-xs font-bold">{title.slice(0, 2).toUpperCase()}</span>
         )}
       </div>
 
-      <span className="line-clamp-1 text-xs font-semibold sm:text-sm">
-        {title}
-      </span>
+      <span className="line-clamp-1 text-xs font-semibold sm:text-sm">{title}</span>
     </button>
   );
 };
