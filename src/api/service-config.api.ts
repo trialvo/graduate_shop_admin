@@ -10,9 +10,11 @@ export type SystemEmailConfigResponse = {
   email?: Record<string, any>;
 };
 
+export type SmsProvider = "alphasms" | "bulksms";
+
 export type SmsBalanceResponse = {
   success: boolean;
-  provider?: string;
+  provider?: string; // e.g. "Alpha SMS"
   balance?: number;
   unit?: string; // e.g. "BDT"
 };
@@ -27,6 +29,10 @@ export async function getEmailSystemConfig() {
   return res.data as SystemEmailConfigResponse;
 }
 
+/**
+ * Email Update
+ * PUT /config/updateEmailConfig
+ */
 export async function updateEmailConfig(payload: {
   MAIL_HOST?: string;
   MAIL_PORT?: string;
@@ -38,17 +44,51 @@ export async function updateEmailConfig(payload: {
   return res.data;
 }
 
-export async function updateSmsConfig(payload: {
-  provider: "alphasms" | "bulksms";
-  API_KEY?: string;
-  SENDER_ID?: string;
-  setNull?: boolean;
-}) {
-  const res = await api.put(`/config/updateSmsConfig`, payload);
+/**
+ * SMS Provider Update
+ * - PUT /config/alphaSms
+ * - PUT /config/bulkSms
+ */
+export async function updateSmsProviderConfig(
+  provider: SmsProvider,
+  payload: {
+    status?: boolean;
+    api_key?: string;
+    base_url?: string;
+    sender_id?: string;
+    setNull?: boolean;
+  },
+) {
+  const endpoint = provider === "alphasms" ? "/config/alphaSms" : "/config/bulkSms";
+  const res = await api.put(endpoint, payload);
   return res.data;
 }
 
-export async function getSmsBalance() {
-  const res = await api.get(`/config/getSmsBalance`);
+/**
+ * Set Active SMS Provider (Default)
+ * PATCH /config/setActiveSmsProvider
+ */
+export async function setActiveSmsProvider(payload: { provider: SmsProvider }) {
+  const res = await api.patch(`/config/setActiveSmsProvider`, payload);
+  return res.data;
+}
+
+/**
+ * Get SMS balance for a provider
+ * GET /config/getSmsBalance?provider=bulksms
+ */
+export async function getSmsBalance(provider: SmsProvider) {
+  const res = await api.get(`/config/getSmsBalance`, {
+    params: { provider },
+  });
   return res.data as SmsBalanceResponse;
+}
+
+/**
+ * Test SMS send (uses active provider on backend)
+ * POST /config/testSms
+ */
+export async function testSms(payload: { number: string; message: string }) {
+  const res = await api.post(`/config/testSms`, payload);
+  return res.data;
 }

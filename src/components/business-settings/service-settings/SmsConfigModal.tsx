@@ -8,11 +8,14 @@ import { useMutation } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
-import Select, { type Option } from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { cn } from "@/lib/utils";
 
-import { updateSmsConfig } from "@/api/service-config.api";
+import {
+  setActiveSmsProvider,
+  updateSmsProviderConfig,
+} from "@/api/service-config.api";
+
 import type { SmsProvider, SmsProviderCard } from "./types";
 import { smsProviderTitle } from "./types";
 
@@ -23,13 +26,6 @@ type Props = {
   onClose: () => void;
   onSaved: () => void;
 };
-
-const PROVIDERS: SmsProvider[] = ["alphasms", "bulksms"];
-
-const PROVIDER_OPTIONS: Option[] = PROVIDERS.map((p) => ({
-  value: p,
-  label: smsProviderTitle(p),
-}));
 
 function safeString(v: any) {
   return typeof v === "string" ? v : v == null ? "" : String(v);
@@ -43,24 +39,40 @@ export default function SmsConfigModal({
   onSaved,
 }: Props) {
   const [provider, setProvider] = useState<SmsProvider>("alphasms");
+
+  const [status, setStatus] = useState(true);
+  const [setDefault, setSetDefault] = useState(false);
+
   const [apiKey, setApiKey] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
   const [senderId, setSenderId] = useState("");
+
   const [armWipe, setArmWipe] = useState(false);
 
   const hydratingRef = useRef(false);
 
-  const isDefault = useMemo(() => defaultProvider === provider, [defaultProvider, provider]);
+  const isDefaultNow = useMemo(
+    () => defaultProvider === provider,
+    [defaultProvider, provider],
+  );
 
   useEffect(() => {
     if (!open) return;
 
     hydratingRef.current = true;
 
-    const p = (initial?.provider ?? defaultProvider ?? "alphasms") as SmsProvider;
+    const p = (initial?.provider ??
+      defaultProvider ??
+      "alphasms") as SmsProvider;
     setProvider(p);
 
+    setStatus(Boolean(initial?.is_active ?? true));
+    setSetDefault(Boolean(defaultProvider === p));
+
     setApiKey(safeString(initial?.apiKey));
+    setBaseUrl(safeString(initial?.url));
     setSenderId(safeString(initial?.senderId));
+
     setArmWipe(false);
 
     const t = setTimeout(() => {
@@ -70,43 +82,89 @@ export default function SmsConfigModal({
     return () => clearTimeout(t);
   }, [open, initial, defaultProvider]);
 
-  const mutation = useMutation({
-    mutationFn: (payload: { provider: SmsProvider; API_KEY?: string; SENDER_ID?: string; setNull?: boolean }) =>
-      updateSmsConfig(payload),
+  const updateMutation = useMutation({
+    mutationFn: (payload: {
+      provider: SmsProvider;
+      body: {
+        status?: boolean;
+        api_key?: string;
+        base_url?: string;
+        sender_id?: string;
+        setNull?: boolean;
+      };
+    }) => updateSmsProviderConfig(payload.provider, payload.body),
     onSuccess: (res: any) => {
-      if (res?.success === true || res?.status === true) {
-        toast.success("SMS config updated");
-        onSaved();
-        return;
-      }
-      toast.error(res?.error ?? res?.message ?? "Failed to update");
-    },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error ??
-        err?.response?.data?.message ??
-        "Failed to update";
-      toast.error(msg);
+      if (res?.success === true || res?.status === true) return;
+      throw new Error(res?.error ?? res?.message ?? "Failed to update");
     },
   });
 
+  const defaultMutation = useMutation({
+    mutationFn: (payload: { provider: SmsProvider }) =>
+      setActiveSmsProvider(payload),
+    onSuccess: (res: any) => {
+      if (res?.success === true || res?.status === true) return;
+      // backend might not return success flag; don’t hard fail
+    },
+  });
+
+  const isSaving = updateMutation.isPending || defaultMutation.isPending;
+
   const canSave = useMemo(() => {
     if (armWipe) return true;
-    return Boolean(apiKey.trim());
-  }, [armWipe, apiKey]);
 
-  const submit = () => {
-    if (armWipe) {
-      mutation.mutate({ provider, setNull: true });
-      return;
+    // all optional by backend, but we keep minimal validation:
+    // if user fills anything -> allow, but encourage API key
+    const anyFilled = Boolean(
+      apiKey.trim() || baseUrl.trim() || senderId.trim(),
+    );
+    if (!anyFilled) return true;
+
+    // if they started, API key is recommended (not required by spec)
+    return true;
+  }, [armWipe, apiKey, baseUrl, senderId]);
+
+  const submit = async () => {
+    try {
+      if (armWipe) {
+        await updateMutation.mutateAsync({
+          provider,
+          body: { setNull: true },
+        });
+
+        if (setDefault) {
+          await defaultMutation.mutateAsync({ provider });
+        }
+
+        toast.success("SMS config wiped");
+        onSaved();
+        return;
+      }
+
+      const body: Record<string, any> = {
+        status,
+        api_key: apiKey.trim() ? apiKey.trim() : undefined,
+        base_url: baseUrl.trim() ? baseUrl.trim() : undefined,
+        sender_id: senderId.trim() ? senderId.trim() : undefined,
+        setNull: false,
+      };
+
+      Object.keys(body).forEach((k) => {
+        if (body[k] === undefined) delete body[k];
+      });
+
+      await updateMutation.mutateAsync({ provider, body });
+
+      // set default (active provider)
+      if (setDefault && !isDefaultNow) {
+        await defaultMutation.mutateAsync({ provider });
+      }
+
+      toast.success("SMS config updated");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update");
     }
-
-    mutation.mutate({
-      provider,
-      API_KEY: apiKey.trim(),
-      SENDER_ID: senderId.trim() ? senderId.trim() : undefined,
-      setNull: false,
-    });
   };
 
   if (!open) return null;
@@ -125,10 +183,10 @@ export default function SmsConfigModal({
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              SMS Provider Settings
+              {smsProviderTitle(provider)} Settings
             </h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Update provider key and sender ID. Switching provider will make it active.
+              Update credentials, status and set active provider.
             </p>
           </div>
 
@@ -145,20 +203,16 @@ export default function SmsConfigModal({
         {/* Body */}
         <div className="max-h-[560px] overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {/* Provider (read-only) */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Provider
               </p>
-              <Select
-                key={`sms-provider-${provider}`}
-                options={PROVIDER_OPTIONS}
-                placeholder="Select provider"
-                defaultValue={provider}
-                disabled={mutation.isPending}
-                onChange={(v) => setProvider(v as SmsProvider)}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                {isDefault ? (
+              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {smsProviderTitle(provider)}
+                </p>
+                {isDefaultNow ? (
                   <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
                     Default
                   </span>
@@ -170,80 +224,105 @@ export default function SmsConfigModal({
               </div>
             </div>
 
+            {/* Status */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                API Key <span className="text-error-500">*</span>
+                Status
+              </p>
+              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {status ? "Active" : "Inactive"}
+                </p>
+                <Switch
+                  label=""
+                  defaultChecked={status}
+                  onChange={(c) => setStatus(c)}
+                />
+              </div>
+            </div>
+
+            {/* API Key */}
+            <div className="space-y-2 md:col-span-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                API Key{" "}
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  (optional)
+                </span>
               </p>
               <Input
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter API key"
-                disabled={mutation.isPending || armWipe}
+                placeholder="Enter api key"
+                disabled={isSaving || armWipe}
               />
-              {!armWipe && !apiKey.trim() ? (
-                <p className="text-xs text-error-500">API Key is required.</p>
-              ) : null}
             </div>
 
+            {/* Base URL */}
             <div className="space-y-2 md:col-span-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Sender ID <span className="text-xs font-normal text-gray-500 dark:text-gray-400">(optional)</span>
+                Base URL{" "}
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  (optional)
+                </span>
+              </p>
+              <Input
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="https://api.sms.net.bd"
+                disabled={isSaving || armWipe}
+              />
+            </div>
+
+            {/* Sender ID */}
+            <div className="space-y-2 md:col-span-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Sender ID{" "}
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  (optional)
+                </span>
               </p>
               <Input
                 value={senderId}
                 onChange={(e) => setSenderId(e.target.value)}
-                placeholder="e.g. 8809617618674"
-                disabled={mutation.isPending || armWipe}
+                placeholder="8809617618674"
+                disabled={isSaving || armWipe}
               />
             </div>
-          </div>
 
-          {/* Danger zone */}
-          <div className="mt-6 rounded-[4px] border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 text-error-600 dark:text-error-300">
-                <AlertTriangle size={18} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-error-700 dark:text-error-200">
-                  Danger Zone (setNull)
+            {/* Set Default */}
+            <div className="space-y-2 md:col-span-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Set Active Provider
+              </p>
+              <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {setDefault ? "Yes (make active)" : "No"}
                 </p>
-                <p className="mt-1 text-xs text-error-700/90 dark:text-error-300">
-                  If enabled, it will wipe this provider config. When setNull=true, other fields are not required.
-                </p>
-
-                <div className="mt-3 flex items-center justify-between rounded-[4px] border border-error-200 bg-white px-4 py-3 dark:border-error-900/40 dark:bg-gray-900">
-                  <p className="text-sm font-semibold text-error-700 dark:text-error-200">
-                    {armWipe ? "Armed: setNull=true" : "Not armed"}
-                  </p>
-                  <Switch
-                    label=""
-                    defaultChecked={armWipe}
-                    onChange={(c) => setArmWipe(c)}
-                  />
-                </div>
-
-                {armWipe ? (
-                  <p className="mt-2 text-xs font-semibold text-error-700 dark:text-error-300">
-                    Saving now will send <span className="font-mono">setNull: true</span>.
-                  </p>
-                ) : null}
+                <Switch
+                  label=""
+                  defaultChecked={setDefault}
+                  onChange={(c) => setSetDefault(c)}
+                />
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                This updates{" "}
+                <span className="font-mono">SMS_ACTIVE_PROVIDER</span>.
+              </p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={onClose} disabled={mutation.isPending}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
           <Button
             onClick={submit}
-            disabled={mutation.isPending || !canSave}
+            disabled={isSaving || !canSave}
             className={cn(armWipe && "bg-error-600 hover:bg-error-700")}
           >
-            {mutation.isPending ? "Saving..." : armWipe ? "Wipe & Save" : "Save Changes"}
+            {isSaving ? "Saving..." : armWipe ? "Wipe & Save" : "Save Changes"}
           </Button>
         </div>
       </div>

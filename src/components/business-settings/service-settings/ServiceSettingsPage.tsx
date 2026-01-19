@@ -4,30 +4,35 @@
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Mail, MessageSquareText, Settings } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
+import Switch from "@/components/form/switch/Switch";
 import { cn } from "@/lib/utils";
 
 import {
   getEmailSystemConfig,
-  getSmsBalance,
   getSmsSystemConfig,
+  getSmsBalance,
+  setActiveSmsProvider,
 } from "@/api/service-config.api";
 
 import type { EmailCard, SmsProviderCard, SmsProvider } from "./types";
 import { smsProviderTitle } from "./types";
+
 import SmsConfigModal from "./SmsConfigModal";
 import EmailConfigModal from "./EmailConfigModal";
-
 
 function safeString(v: any) {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
 
-function numberLike(v: any) {
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? n : null;
+function formatBalance(data: any) {
+  if (!data?.success) return "—";
+  const bal = typeof data.balance === "number" ? data.balance : Number(data.balance);
+  if (!Number.isFinite(bal)) return "—";
+  const unit = safeString(data.unit) || "BDT";
+  return `${bal} ${unit}`;
 }
 
 function buildSmsCard(provider: SmsProvider, node: any): SmsProviderCard {
@@ -71,9 +76,15 @@ export default function ServiceSettingsPage() {
     retry: 1,
   });
 
-  const balanceQuery = useQuery({
-    queryKey: ["smsBalance"],
-    queryFn: () => getSmsBalance(),
+  const alphaBalanceQuery = useQuery({
+    queryKey: ["smsBalance", "alphasms"],
+    queryFn: () => getSmsBalance("alphasms"),
+    retry: 1,
+  });
+
+  const bulkBalanceQuery = useQuery({
+    queryKey: ["smsBalance", "bulksms"],
+    queryFn: () => getSmsBalance("bulksms"),
     retry: 1,
   });
 
@@ -109,22 +120,46 @@ export default function ServiceSettingsPage() {
     Promise.allSettled([
       qc.invalidateQueries({ queryKey: ["systemConfig", "sms"] }),
       qc.invalidateQueries({ queryKey: ["systemConfig", "email"] }),
-      qc.invalidateQueries({ queryKey: ["smsBalance"] }),
+      qc.invalidateQueries({ queryKey: ["smsBalance", "alphasms"] }),
+      qc.invalidateQueries({ queryKey: ["smsBalance", "bulksms"] }),
     ]).then(() => undefined);
+
+  const activeProviderMutation = useMutation({
+    mutationFn: (provider: SmsProvider) => setActiveSmsProvider(provider),
+    onSuccess: (res: any) => {
+      if (res?.success === true || res?.status === true) {
+        toast.success("Active SMS provider updated");
+        invalidateAll().catch(() => undefined);
+        return;
+      }
+      toast.error(res?.error ?? res?.message ?? "Failed to update active provider");
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update active provider";
+      toast.error(msg);
+    },
+  });
 
   const openSmsEdit = (card: SmsProviderCard) => {
     setSmsEditing(card);
     setSmsModalOpen(true);
   };
 
-  const balanceLabel = useMemo(() => {
-    const b = balanceQuery.data;
-    if (!b?.success) return null;
-    const bal = numberLike(b.balance);
-    const unit = safeString(b.unit) || "BDT";
-    if (bal == null) return null;
-    return `${bal} ${unit}`;
-  }, [balanceQuery.data]);
+  const balanceFor = (provider: SmsProvider) => {
+    return provider === "alphasms"
+      ? formatBalance(alphaBalanceQuery.data)
+      : formatBalance(bulkBalanceQuery.data);
+  };
+
+  const isRefreshing =
+    smsQuery.isFetching ||
+    emailQuery.isFetching ||
+    alphaBalanceQuery.isFetching ||
+    bulkBalanceQuery.isFetching ||
+    activeProviderMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -137,30 +172,18 @@ export default function ServiceSettingsPage() {
             </div>
 
             <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                SMS Service
-              </h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">SMS Service</h3>
               <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                Manage SMS provider configuration and view active balance.
+                Manage SMS provider configuration, balance and active provider.
               </p>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                  Default:{" "}
+                  Active Provider:{" "}
                   <span className="ml-1 font-bold">
                     {smsDefaultProvider ? smsProviderTitle(smsDefaultProvider) : "—"}
                   </span>
                 </span>
-
-                {balanceLabel ? (
-                  <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
-                    Balance: {balanceLabel}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    Balance: —
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -171,7 +194,7 @@ export default function ServiceSettingsPage() {
               invalidateAll().catch(() => undefined);
               toast.success("Refreshed");
             }}
-            disabled={smsQuery.isFetching || emailQuery.isFetching || balanceQuery.isFetching}
+            disabled={isRefreshing}
           >
             Refresh
           </Button>
@@ -182,7 +205,7 @@ export default function ServiceSettingsPage() {
             ? Array.from({ length: 2 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-[160px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+                  className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
                 />
               ))
             : smsCards.map((c) => {
@@ -203,13 +226,7 @@ export default function ServiceSettingsPage() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        {isDefault ? (
-                          <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
-                            Default
-                          </span>
-                        ) : null}
-
+                      <div className="flex flex-col items-end gap-2">
                         <span
                           className={cn(
                             "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold",
@@ -218,27 +235,41 @@ export default function ServiceSettingsPage() {
                               : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
                           )}
                         >
-                          {c.is_active ? "Active" : "Inactive"}
+                          {c.is_active ? "Enabled" : "Disabled"}
                         </span>
+
+                        {isDefault ? (
+                          <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
+                            Active
+                          </span>
+                        ) : null}
                       </div>
                     </div>
 
                     <div className="mt-4 space-y-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Balance:{" "}
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {balanceFor(c.provider)}
+                        </span>
+                      </p>
+
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Sender ID:{" "}
                         <span className="font-semibold text-gray-900 dark:text-white">
                           {c.senderId || "—"}
                         </span>
                       </p>
+
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        API URL:{" "}
+                        Base URL:{" "}
                         <span className="font-semibold text-gray-900 dark:text-white">
                           {c.url || "—"}
                         </span>
                       </p>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between">
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <button
                         type="button"
                         className={cn(
@@ -249,6 +280,32 @@ export default function ServiceSettingsPage() {
                         <Settings size={16} />
                         View Settings
                       </button>
+
+                      {/* ✅ Set Active Provider toggle */}
+                      <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:w-[240px]">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            Set Active Provider
+                          </p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                            {isDefault ? "Currently active" : "Make active"}
+                          </p>
+                        </div>
+
+                        <Switch
+                          key={`sms-active-${c.provider}-${String(isDefault)}`}
+                          label=""
+                          defaultChecked={isDefault}
+                          disabled={activeProviderMutation.isPending || smsQuery.isLoading}
+                          onChange={(checked) => {
+                            if (!checked) {
+                              toast("To deactivate, select another provider.");
+                              return;
+                            }
+                            activeProviderMutation.mutate(c.provider);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
@@ -265,9 +322,7 @@ export default function ServiceSettingsPage() {
             </div>
 
             <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Email Service
-              </h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Email Service</h3>
               <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                 Configure SMTP credentials used for system emails.
               </p>
@@ -291,10 +346,7 @@ export default function ServiceSettingsPage() {
             </div>
           </div>
 
-          <Button
-            onClick={() => setEmailModalOpen(true)}
-            disabled={emailQuery.isLoading || !emailCard}
-          >
+          <Button onClick={() => setEmailModalOpen(true)} disabled={emailQuery.isLoading || !emailCard}>
             View Settings
           </Button>
         </div>
@@ -310,18 +362,14 @@ export default function ServiceSettingsPage() {
           ) : emailCard ? (
             <>
               <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  MAIL_HOST
-                </p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_HOST</p>
                 <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
                   {emailCard.host || "—"}
                 </p>
               </div>
 
               <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  MAIL_USER
-                </p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_USER</p>
                 <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
                   {emailCard.user || "—"}
                 </p>
