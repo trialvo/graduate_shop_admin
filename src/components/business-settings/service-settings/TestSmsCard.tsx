@@ -14,9 +14,10 @@ import { testSms } from "@/api/service-config.api";
 
 type Props = {
   activeProviderLabel: string;
+  variant?: "card" | "modal";
 };
 
-export default function TestSmsCard({ activeProviderLabel }: Props) {
+export default function TestSmsCard({ activeProviderLabel, variant = "card" }: Props) {
   const [number, setNumber] = useState("");
   const [message, setMessage] = useState("This is a testing message from developer");
 
@@ -49,6 +50,52 @@ export default function TestSmsCard({ activeProviderLabel }: Props) {
     });
   };
 
+  const form = (
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Number</p>
+        <Input
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          placeholder="01629615314"
+        />
+      </div>
+
+      <div className="space-y-2 md:col-span-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Message</p>
+        <Input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="This is a testing message from developer"
+        />
+      </div>
+    </div>
+  );
+
+  if (variant === "modal") {
+    return (
+      <div className="space-y-5">
+        {form}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Active provider:{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {activeProviderLabel}
+            </span>
+          </p>
+          <Button
+            onClick={submit}
+            disabled={mutation.isPending || !canSend}
+            className={cn("inline-flex items-center gap-2")}
+          >
+            <Send size={16} />
+            {mutation.isPending ? "Sending..." : "Send Test"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -72,25 +119,7 @@ export default function TestSmsCard({ activeProviderLabel }: Props) {
         </Button>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Number</p>
-          <Input
-            value={number}
-            onChange={(e) => setNumber(e.target.value)}
-            placeholder="01629615314"
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Message</p>
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="This is a testing message from developer"
-          />
-        </div>
-      </div>
+      <div className="mt-5">{form}</div>
     </div>
   );
 }

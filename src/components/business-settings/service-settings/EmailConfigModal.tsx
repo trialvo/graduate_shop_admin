@@ -175,7 +175,7 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
           ) : null}
 
           {/* Danger zone */}
-          <div className="mt-6 rounded-[4px] border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
+          {/* <div className="mt-6 rounded-[4px] border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-error-600 dark:text-error-300">
                 <AlertTriangle size={18} />
@@ -202,7 +202,7 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
                 ) : null}
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

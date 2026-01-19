@@ -22,6 +22,7 @@ import { smsProviderTitle } from "./types";
 
 import SmsConfigModal from "./SmsConfigModal";
 import EmailConfigModal from "./EmailConfigModal";
+import TestSmsModal from "./TestSmsModal";
 
 function safeString(v: any) {
   return typeof v === "string" ? v : v == null ? "" : String(v);
@@ -63,6 +64,7 @@ export default function ServiceSettingsPage() {
   const [smsEditing, setSmsEditing] = useState<SmsProviderCard | null>(null);
 
   const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [testSmsOpen, setTestSmsOpen] = useState(false);
 
   const smsQuery = useQuery({
     queryKey: ["systemConfig", "sms"],
@@ -125,14 +127,16 @@ export default function ServiceSettingsPage() {
     ]).then(() => undefined);
 
   const activeProviderMutation = useMutation({
-    mutationFn: (provider: SmsProvider) => setActiveSmsProvider(provider),
+    mutationFn: (provider: SmsProvider) => setActiveSmsProvider({ provider }),
     onSuccess: (res: any) => {
       if (res?.success === true || res?.status === true) {
         toast.success("Active SMS provider updated");
         invalidateAll().catch(() => undefined);
         return;
       }
-      toast.error(res?.error ?? res?.message ?? "Failed to update active provider");
+      toast.error(
+        res?.error ?? res?.message ?? "Failed to update active provider",
+      );
     },
     onError: (err: any) => {
       const msg =
@@ -188,16 +192,26 @@ export default function ServiceSettingsPage() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={() => {
-              invalidateAll().catch(() => undefined);
-              toast.success("Refreshed");
-            }}
-            disabled={isRefreshing}
-          >
-            Refresh
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setTestSmsOpen(true)}
+              disabled={smsQuery.isLoading}
+            >
+              Test SMS
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                invalidateAll().catch(() => undefined);
+                toast.success("Refreshed");
+              }}
+              disabled={isRefreshing}
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -407,6 +421,14 @@ export default function ServiceSettingsPage() {
           invalidateAll().catch(() => undefined);
           setEmailModalOpen(false);
         }}
+      />
+
+      <TestSmsModal
+        open={testSmsOpen}
+        activeProviderLabel={
+          smsDefaultProvider ? smsProviderTitle(smsDefaultProvider) : "Unknown"
+        }
+        onClose={() => setTestSmsOpen(false)}
       />
     </div>
   );

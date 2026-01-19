@@ -73,6 +73,7 @@ export async function setActiveSmsProvider(payload: { provider: SmsProvider }) {
   return res.data;
 }
 
+
 /**
  * Get SMS balance for a provider
  * GET /config/getSmsBalance?provider=bulksms

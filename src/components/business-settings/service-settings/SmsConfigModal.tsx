@@ -104,7 +104,7 @@ export default function SmsConfigModal({
       setActiveSmsProvider(payload),
     onSuccess: (res: any) => {
       if (res?.success === true || res?.status === true) return;
-      // backend might not return success flag; don’t hard fail
+      // backend might not return success flag; do not hard fail
     },
   });
 
@@ -233,11 +233,7 @@ export default function SmsConfigModal({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {status ? "Active" : "Inactive"}
                 </p>
-                <Switch
-                  label=""
-                  defaultChecked={status}
-                  onChange={(c) => setStatus(c)}
-                />
+                <Switch label="" checked={status} onChange={(c) => setStatus(c)} />
               </div>
             </div>
 
@@ -298,11 +294,7 @@ export default function SmsConfigModal({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {setDefault ? "Yes (make active)" : "No"}
                 </p>
-                <Switch
-                  label=""
-                  defaultChecked={setDefault}
-                  onChange={(c) => setSetDefault(c)}
-                />
+                <Switch label="" checked={setDefault} onChange={(c) => setSetDefault(c)} />
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 This updates{" "}
