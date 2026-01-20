@@ -6,21 +6,43 @@ function escapeCsvValue(value: string): string {
   return v;
 }
 
+const moneyBdt = (n: number) => `${Number(n || 0).toLocaleString()}৳`;
+
 export function exportOrdersAsCsv(rows: OrderReportRow[], filename = "order-report.csv") {
-  const header = ["Order ID", "Customer", "Phone", "Items", "Amount", "Cost", "Status", "Date"];
+  const header = [
+    "Order ID",
+    "Type",
+    "Customer",
+    "Phone",
+    "Email",
+    "Items",
+    "Grand Total (BDT)",
+    "Total Cost (BDT)",
+    "Profit (BDT)",
+    "Order Status",
+    "Payment Status",
+    "Payment Type",
+    "Placed At",
+  ];
+
   const lines = [header.join(",")];
 
   rows.forEach((r) => {
     lines.push(
       [
-        escapeCsvValue(r.id),
+        escapeCsvValue(r.orderId),
+        escapeCsvValue(String(r.orderType)),
         escapeCsvValue(r.customerName),
         escapeCsvValue(r.phone),
+        escapeCsvValue(r.email ?? "-"),
         String(r.items),
-        String(r.orderAmount),
-        String(r.orderCost),
-        escapeCsvValue(r.status),
-        escapeCsvValue(r.createdAt),
+        escapeCsvValue(moneyBdt(r.grandTotal)),
+        escapeCsvValue(moneyBdt(r.totalCost)),
+        escapeCsvValue(moneyBdt(r.profit)),
+        escapeCsvValue(r.orderStatus),
+        escapeCsvValue(r.paymentStatus),
+        escapeCsvValue(r.paymentType),
+        escapeCsvValue(r.placedAt),
       ].join(",")
     );
   });
@@ -45,14 +67,19 @@ export function exportOrdersAsPrintablePdf(rows: OrderReportRow[], title = "Orde
     .map(
       (r) => `
         <tr>
-          <td>${r.id}</td>
+          <td>${r.orderId}</td>
+          <td>${r.orderType}</td>
           <td>${r.customerName}</td>
           <td>${r.phone}</td>
+          <td>${r.email ?? "-"}</td>
           <td style="text-align:right">${r.items}</td>
-          <td style="text-align:right">${r.orderAmount}</td>
-          <td style="text-align:right">${r.orderCost}</td>
-          <td>${r.status}</td>
-          <td>${r.createdAt}</td>
+          <td style="text-align:right">${moneyBdt(r.grandTotal)}</td>
+          <td style="text-align:right">${moneyBdt(r.totalCost)}</td>
+          <td style="text-align:right">${moneyBdt(r.profit)}</td>
+          <td>${r.orderStatus.replace(/_/g, " ")}</td>
+          <td>${r.paymentStatus.replace(/_/g, " ")}</td>
+          <td>${r.paymentType}</td>
+          <td>${r.placedAt}</td>
         </tr>
       `
     )
@@ -82,13 +109,18 @@ export function exportOrdersAsPrintablePdf(rows: OrderReportRow[], title = "Orde
         <thead>
           <tr>
             <th>Order ID</th>
+            <th>Type</th>
             <th>Customer</th>
             <th>Phone</th>
+            <th>Email</th>
             <th>Items</th>
-            <th>Amount</th>
-            <th>Cost</th>
-            <th>Status</th>
-            <th>Date</th>
+            <th>Total (BDT)</th>
+            <th>Cost (BDT)</th>
+            <th>Profit (BDT)</th>
+            <th>Order Status</th>
+            <th>Payment Status</th>
+            <th>Payment Type</th>
+            <th>Placed At</th>
           </tr>
         </thead>
         <tbody>${bodyRows}</tbody>

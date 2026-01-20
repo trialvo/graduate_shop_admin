@@ -12,19 +12,18 @@ export type OrderStatusKey =
   | "delivered"
   | "returned"
   | "cancelled"
-  | "draft"
   | "on_hold"
   | "trash";
 
 export type OrderReportMetric = {
-  key: "total" | "completed" | "cancelled" | "pending";
+  key: "total" | "delivered" | "cancelled" | "pending";
   label: string;
   qty: number;
 };
 
 export type TodaySummary = {
-  order: number;
-  completed: number;
+  total: number;
+  delivered: number;
   cancelled: number;
   pending: number;
 };
@@ -37,22 +36,32 @@ export type DeliveryFlowItem = {
 };
 
 export type OrderReportRow = {
-  id: string;
+  orderId: string;
+  orderType: "regular" | "guest";
   customerName: string;
   phone: string;
+  email?: string;
+
   items: number;
-  orderAmount: number;
-  orderCost: number;
-  status: "completed" | "pending" | "cancelled";
-  createdAt: string; // yyyy-mm-dd
+
+  grandTotal: number;
+  totalCost: number;
+  profit: number;
+
+  orderStatus: OrderStatusKey;
+  paymentStatus: "unpaid" | "partial_paid" | "paid";
+  paymentType: "cod" | "gateway" | "mixed";
+
+  placedAt: string; // formatted local
 };
 
 export type YearlyBarSeries = {
-  year: "2020" | "2021" | "2022";
+  year: string;
   values: number[]; // 12 months
 };
 
 export type OrderOverall = {
   totalOrderAmount: number;
   totalOrderCost: number;
+  totalProfit: number;
 };

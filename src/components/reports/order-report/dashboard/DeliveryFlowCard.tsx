@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import {
   BadgeCheck,
   Box,
-  Clock3,
   FileText,
   Package,
   PauseCircle,
@@ -15,10 +14,10 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import { DeliveryFlowItem, OrderStatusKey } from "../types";
 
+import type { DeliveryFlowItem, OrderStatusKey } from "../types";
 
-type Props = { items: DeliveryFlowItem[] };
+type Props = { items: DeliveryFlowItem[]; isLoading?: boolean };
 
 const iconByKey: Record<OrderStatusKey, React.ReactNode> = {
   new: <FileText className="h-5 w-5" />,
@@ -30,12 +29,11 @@ const iconByKey: Record<OrderStatusKey, React.ReactNode> = {
   delivered: <BadgeCheck className="h-5 w-5" />,
   returned: <RefreshCcw className="h-5 w-5" />,
   cancelled: <XCircle className="h-5 w-5" />,
-  draft: <FileText className="h-5 w-5" />,
   on_hold: <PauseCircle className="h-5 w-5" />,
   trash: <Trash2 className="h-5 w-5" />,
 };
 
-const DeliveryFlowCard: React.FC<Props> = ({ items }) => {
+const DeliveryFlowCard: React.FC<Props> = ({ items, isLoading }) => {
   return (
     <div
       className={cn(
@@ -47,11 +45,22 @@ const DeliveryFlowCard: React.FC<Props> = ({ items }) => {
       <div className="text-base font-semibold text-gray-900 dark:text-white">Delivery Flow</div>
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {items.map((it) => (
-          <FlowTile key={it.key} item={it} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 12 }).map((_, idx) => (
+            <div key={`sk-${idx}`} className="flex flex-col items-center text-center gap-2">
+              <div className="h-14 w-14 animate-pulse rounded-[4px] bg-gray-200 dark:bg-gray-800" />
+              <div className="h-3 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {items.map((it) => (
+            <FlowTile key={it.key} item={it} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

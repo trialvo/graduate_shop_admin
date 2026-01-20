@@ -2,18 +2,17 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { TodaySummary } from "../types";
+import type { TodaySummary } from "../types";
 
-type Props = { summary: TodaySummary };
+type Props = { summary: TodaySummary; isLoading?: boolean };
 
-const TodaySummaryCard: React.FC<Props> = ({ summary }) => {
-  const total = Math.max(1, summary.order + summary.completed + summary.cancelled + summary.pending);
-  const completedPct = (summary.completed / total) * 100;
-  const orderPct = (summary.order / total) * 100;
+const TodaySummaryCard: React.FC<Props> = ({ summary, isLoading }) => {
+  const total = Math.max(1, summary.total);
+  const deliveredPct = (summary.delivered / total) * 100;
+  const totalPct = 100;
 
-  // Blue + Green (like screenshot)
   const pieStyle: React.CSSProperties = {
-    background: `conic-gradient(#6366F1 0% ${orderPct}%, #10B981 ${orderPct}% ${orderPct + completedPct}%, rgba(255,255,255,0.10) ${orderPct + completedPct}% 100%)`,
+    background: `conic-gradient(#10B981 0% ${deliveredPct}%, rgba(255,255,255,0.10) ${deliveredPct}% ${totalPct}%)`,
   };
 
   return (
@@ -24,29 +23,35 @@ const TodaySummaryCard: React.FC<Props> = ({ summary }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="text-base font-semibold text-gray-900 dark:text-white">Today order Summary</div>
+      <div className="text-base font-semibold text-gray-900 dark:text-white">Order Summary</div>
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
-      <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-12 md:items-center">
-        <div className="md:col-span-5 space-y-3">
-          <Row label="Order" value={summary.order} tone="brand" />
-          <Row label="Complete Order" value={summary.completed} tone="success" />
-          <Row label="Canceled Order" value={summary.cancelled} tone="error" />
-          <Row label="Pending" value={summary.pending} tone="warning" />
-        </div>
+      {isLoading ? (
+        <div className="mt-5 h-[220px] w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+      ) : (
+        <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-12 md:items-center">
+          <div className="md:col-span-5 space-y-3">
+            <Row label="Total" value={summary.total} tone="brand" />
+            <Row label="Delivered" value={summary.delivered} tone="success" />
+            <Row label="Cancelled/Trash" value={summary.cancelled} tone="error" />
+            <Row label="Pending" value={summary.pending} tone="warning" />
+          </div>
 
-        <div className="md:col-span-7 flex items-center justify-center">
-          <div className="relative h-[200px] w-[200px]">
-            <div className="absolute inset-0 rounded-full" style={pieStyle} />
-            <div className="absolute inset-[26px] rounded-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">Total</div>
-                <div className="text-2xl font-extrabold text-gray-900 dark:text-white">{summary.order}</div>
+          <div className="md:col-span-7 flex items-center justify-center">
+            <div className="relative h-[200px] w-[200px]">
+              <div className="absolute inset-0 rounded-full" style={pieStyle} />
+              <div className="absolute inset-[26px] rounded-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">Total</div>
+                  <div className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                    {String(summary.total).padStart(2, "0")}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
