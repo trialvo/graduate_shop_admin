@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils";
 
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,9 +10,11 @@ import type { ProductReportRow } from "../types";
 
 type Props = {
   rows: ProductReportRow[];
+  isLoading?: boolean;
 };
 
-const money = (n: number) => n.toLocaleString();
+const money = (n: number) =>
+  `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT`;
 
 const statusBadge = (status: ProductReportRow["status"]) => {
   return status === "active" ? (
@@ -25,92 +28,64 @@ const statusBadge = (status: ProductReportRow["status"]) => {
   );
 };
 
-const ProductReportsTable: React.FC<Props> = ({ rows }) => {
+const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="w-full overflow-hidden rounded-[4px]">
-        {/*
-          IMPORTANT:
-          - Keep the X scroll INSIDE the table area
-          - Prevent the whole page from getting an X scrollbar
-        */}
         <div className="max-w-full overflow-x-auto custom-scrollbar">
-          <Table className="min-w-[1200px]">
+          <Table className="min-w-[1500px]">
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-950">
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[80px]"
-                >
+                <TableCell isHeader className="w-[70px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Sl
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[280px]"
-                >
+                <TableCell isHeader className="min-w-[320px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Product
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[160px]"
-                >
-                  SKU
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[260px]"
-                >
+                <TableCell isHeader className="min-w-[220px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Category
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[120px] text-right"
-                >
-                  Stock
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[120px] text-right"
-                >
+                <TableCell isHeader className="min-w-[110px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Sold
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px] text-right"
-                >
-                  Revenue
+                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Buying
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px] text-right"
-                >
-                  Cost
+                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Selling
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px] text-right"
-                >
+                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Discount
+                </TableCell>
+                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Net Revenue
+                </TableCell>
+                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Profit
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[120px]"
-                >
+                <TableCell isHeader className="min-w-[120px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Status
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px]"
-                >
+                <TableCell isHeader className="min-w-[140px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Updated
                 </TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {rows.map((r, idx) => {
-                const lowStock = r.stockQty <= 10;
-                return (
+              {isLoading &&
+                Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={`sk-${i}`} className="border-t border-gray-100 dark:border-gray-800">
+                    {Array.from({ length: 11 }).map((__, j) => (
+                      <TableCell key={`sk-${i}-${j}`} className="px-4 py-4">
+                        <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-800" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+
+              {!isLoading &&
+                rows.map((r, idx) => (
                   <TableRow
                     key={r.id}
                     className="border-t border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.04]"
@@ -121,37 +96,17 @@ const ProductReportsTable: React.FC<Props> = ({ rows }) => {
 
                     <TableCell className="px-4 py-3">
                       <div className="min-w-0">
-                        <div className="font-semibold text-gray-900 dark:text-white truncate max-w-[320px]">
+                        <div className="max-w-[380px] truncate text-sm font-semibold text-gray-900 dark:text-white">
                           {r.name}
                         </div>
-                        <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{r.id}</div>
+                        <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          ID: {r.id} • Slug: {r.slug}
+                        </div>
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {r.sku}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    <TableCell className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
                       {r.categoryPath}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-right">
-                      <span
-                        className={[
-                          "font-semibold",
-                          lowStock
-                            ? "text-error-600 dark:text-error-500"
-                            : "text-gray-900 dark:text-white",
-                        ].join(" ")}
-                      >
-                        {r.stockQty}
-                      </span>
-                      {lowStock && (
-                        <span className="ml-2 rounded-full border border-error-100 bg-error-50 px-2 py-0.5 text-xs font-semibold text-error-600 dark:border-error-500/20 dark:bg-error-500/15 dark:text-error-400">
-                          Low
-                        </span>
-                      )}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
@@ -159,14 +114,22 @@ const ProductReportsTable: React.FC<Props> = ({ rows }) => {
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
-                      {money(r.revenue)}
+                      {money(r.buying)}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
-                      {money(r.cost)}
+                      {money(r.selling)}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
+                      {money(r.discount)}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                      {money(r.netRevenue)}
+                    </TableCell>
+
+                    <TableCell className={cn("px-4 py-3 text-right text-sm font-extrabold", r.profit >= 0 ? "text-success-700 dark:text-success-400" : "text-error-700 dark:text-error-400")}>
                       {money(r.profit)}
                     </TableCell>
 
@@ -176,15 +139,11 @@ const ProductReportsTable: React.FC<Props> = ({ rows }) => {
                       {r.updatedAt}
                     </TableCell>
                   </TableRow>
-                );
-              })}
+                ))}
 
-              {rows.length === 0 && (
+              {!isLoading && rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell
-                    colSpan={11}
-                    className="px-4 py-10 text-center text-gray-500 dark:text-gray-400"
-                  >
+                  <TableCell colSpan={11} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     No report data found.
                   </TableCell>
                 </TableRow>

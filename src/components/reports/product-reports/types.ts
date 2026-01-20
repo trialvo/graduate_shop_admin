@@ -1,47 +1,60 @@
 export type TimePeriodKey = "today" | "last7" | "thisMonth" | "thisYear";
-
-export type ProductPublishStatus = "published" | "draft" | "trash" | "coupon";
+export type ProductReportsTabKey = "dashboard" | "report";
 
 export type ReportStatus = "active" | "inactive";
 
-export type CategoryLite = {
-  id: string;
+export type StockAlertConfig = {
+  active: boolean;
+  limit: number;
+};
+
+export type ProductDashboardSummary = {
+  totalActive: number;
+  totalInactive: number;
+  underLimitStock: number;
+  aboveLimitStock: number;
+  couponActive: number;
+  categoryMain: number;
+  categorySub: number;
+  categoryChild: number;
+  totalBuyingValue: number;
+  totalSellingValue: number;
+};
+
+export type TopSellingCategoryItem = {
+  id: number;
   name: string;
-  count: number;
+  image?: string | null;
+  soldCount: number;
+  orderCount: number;
+  revenue: number;
 };
 
-export type BestProduct = {
-  id: string;
-  name: string;
-  imageUrl?: string;
-  soldQty: number;
-  stockQty: number;
-};
-
-export type ProductStatusSummary = {
-  published: number;
-  draft: number;
-  trash: number;
-  coupon: number;
-  inventoryValue: number;
-};
-
-export type ProductReportMetric = {
-  key: string;
-  label: string;
-  qty: number;
+export type TopSellingCategories = {
+  main: TopSellingCategoryItem[];
+  sub: TopSellingCategoryItem[];
+  child: TopSellingCategoryItem[];
 };
 
 export type ProductReportRow = {
   id: string;
   name: string;
-  sku: string;
+  slug: string;
   categoryPath: string;
-  stockQty: number;
   soldQty: number;
-  revenue: number;
-  cost: number;
+  buying: number;
+  selling: number;
+  discount: number;
+  netRevenue: number;
   profit: number;
   status: ReportStatus;
-  updatedAt: string;
+  updatedAt: string; // YYYY-MM-DD
 };
+
+export type PagedMeta = {
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type SelectOption = { value: string; label: string };
