@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import type { TimePeriodKey, StockCategoryLevel, StockCategoryRow, StockHealthSummary, StockReportMetric, StockTrendPoint } from "../types";
 import { clampValidTrendYear, getPeriodRange, safeNumber } from "../stockUtils";
@@ -98,7 +98,7 @@ const StockReportDashboard: React.FC<Props> = ({ period }) => {
   const catQuery = useQuery({
     queryKey: ["item-metrics", "category-stock-summery", range.startDate, range.endDate, limit, offset],
     queryFn: () => getItemMetricsCategoryStockSummery({ startDate: range.startDate, endDate: range.endDate, limit, offset }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const catRows = React.useMemo(() => mapCategoryRows(level, catQuery.data), [level, catQuery.data]);

@@ -6,247 +6,313 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Download, FileDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { api } from "@/api/client";
 
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 
-import type { StockLevelStatus, StockReportRow, TimePeriodKey } from "../types";
-import StockReportTable from "./StockReportTable";
+import type { TimePeriodKey, StockCategoryLevel, StockCategoryReportRow } from "../types";
+import { getPeriodRange, safeNumber } from "../stockUtils";
+import { exportStockCategoryAsCsv, exportStockCategoryAsPrintablePdf } from "../exportUtils";
 
-// ✅ You said: category api already exists, don't recreate.
-// We'll use them for dynamic main/sub/child selects:
+
+// ✅ You already have category API (use existing)
 import { getMainCategories, getSubCategories, getChildCategories } from "@/api/categories.api";
 
-// ✅ Stock report API you already have
-import {
-  getItemMetricsCategoryStockSummery,
-  type CategoryStockSummeryRes,
-} from "@/api/item-metrics.api";
+// ✅ Stock category summary API you already have
+import { getItemMetricsCategoryStockSummery, type CategoryStockSummeryRes } from "@/api/item-metrics.api";
+import StockCategoryTable from "./StockReportTable";
 
 type Props = { period: TimePeriodKey };
 
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function toISO(d: Date) {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
-function toIsoRange(period: TimePeriodKey): { startDate: string; endDate: string } {
-  const now = new Date();
-  const end = new Date(now);
-
-  if (period === "today") return { startDate: toISO(now), endDate: toISO(now) };
-
-  if (period === "last7") {
-    const start = new Date(now);
-    start.setDate(start.getDate() - 6);
-    return { startDate: toISO(start), endDate: toISO(end) };
-  }
-
-  if (period === "thisMonth") {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { startDate: toISO(start), endDate: toISO(end) };
-  }
-
-  const start = new Date(now.getFullYear(), 0, 1);
-  return { startDate: toISO(start), endDate: toISO(end) };
-}
-
-const normalize = (s: string) => s.trim().toLowerCase();
-
-const periodLabel = (p: TimePeriodKey) => {
-  if (p === "today") return "Today";
-  if (p === "last7") return "Last 7 Days";
-  if (p === "thisMonth") return "This Month";
-  return "This Year";
+/** =========================
+ *  Product metrics report (endpoint you provided)
+ *  ========================= */
+type ProductMetricsReportParams = {
+  startDate: string;
+  endDate: string;
+  limit: number;
+  offset: number;
+  main_category_id?: number;
+  sub_category_id?: number;
+  child_category_id?: number;
+  status?: boolean;
+  search?: string;
 };
 
-function buildCategoryPath(opts: { main?: string; sub?: string; child?: string }) {
-  const parts = [opts.main, opts.sub, opts.child].filter(Boolean);
-  return parts.length ? parts.join(" > ") : "-";
-}
-
-// We don't have an items-level report endpoint in your provided item-metrics.
-// So: use category-stock-summery and show rows as "Category" lines.
-// We still keep table shape as StockReportRow by mapping fields.
-function mapToRows(res?: CategoryStockSummeryRes, params?: { mainId?: number; subId?: number; childId?: number }) {
-  const mainId = params?.mainId;
-  const subId = params?.subId;
-  const childId = params?.childId;
-
-  // Decide which level to show based on selected filters:
-  // - if child selected => show only that child
-  // - else if sub selected => show child categories under that sub (fallback to sub itself if none)
-  // - else if main selected => show sub categories under that main (fallback to main itself if none)
-  // - else => show main categories
-  const mains = res?.data?.main_categories ?? [];
-  const subs = res?.data?.sub_categories ?? [];
-  const childs = res?.data?.child_categories ?? [];
-
-  if (typeof childId === "number") {
-    const c = childs.find((x) => Number(x.id) === childId);
-    if (!c) return [];
-    const stockQty = Number(c.metrics?.in_stock ?? 0) + Number(c.metrics?.low_stock ?? 0);
-    const reorderLevel = Number(c.metrics?.low_stock ?? 0);
-    const status: StockLevelStatus =
-      Number(c.metrics?.out_of_stock ?? 0) > 0 ? "out_of_stock" : reorderLevel > 0 ? "low_stock" : "in_stock";
-
-    return [
-      {
-        id: `child-${c.id}`,
-        name: c.name,
-        sku: `SKU: ${Number(c.metrics?.total_variations ?? 0)}`,
-        categoryPath: buildCategoryPath({ child: c.name }),
-        stockQty,
-        reorderLevel,
-        status,
-        lastUpdated: "-",
-      },
-    ];
-  }
-
-  if (typeof subId === "number") {
-    const list = childs.filter((x) => Number(x.sub_category_id) === subId);
-    if (list.length) {
-      return list.map((c) => {
-        const stockQty = Number(c.metrics?.in_stock ?? 0) + Number(c.metrics?.low_stock ?? 0);
-        const reorderLevel = Number(c.metrics?.low_stock ?? 0);
-        const status: StockLevelStatus =
-          Number(c.metrics?.out_of_stock ?? 0) > 0 ? "out_of_stock" : reorderLevel > 0 ? "low_stock" : "in_stock";
-        return {
-          id: `child-${c.id}`,
-          name: c.name,
-          sku: `SKU: ${Number(c.metrics?.total_variations ?? 0)}`,
-          categoryPath: buildCategoryPath({ child: c.name }),
-          stockQty,
-          reorderLevel,
-          status,
-          lastUpdated: "-",
-        };
-      });
-    }
-
-    const s = subs.find((x) => Number(x.id) === subId);
-    if (!s) return [];
-    const stockQty = Number(s.metrics?.in_stock ?? 0) + Number(s.metrics?.low_stock ?? 0);
-    const reorderLevel = Number(s.metrics?.low_stock ?? 0);
-    const status: StockLevelStatus =
-      Number(s.metrics?.out_of_stock ?? 0) > 0 ? "out_of_stock" : reorderLevel > 0 ? "low_stock" : "in_stock";
-
-    return [
-      {
-        id: `sub-${s.id}`,
-        name: s.name,
-        sku: `SKU: ${Number(s.metrics?.total_variations ?? 0)}`,
-        categoryPath: buildCategoryPath({ sub: s.name }),
-        stockQty,
-        reorderLevel,
-        status,
-        lastUpdated: "-",
-      },
-    ];
-  }
-
-  if (typeof mainId === "number") {
-    const list = subs.filter((x) => Number(x.main_category_id) === mainId);
-    if (list.length) {
-      return list.map((s) => {
-        const stockQty = Number(s.metrics?.in_stock ?? 0) + Number(s.metrics?.low_stock ?? 0);
-        const reorderLevel = Number(s.metrics?.low_stock ?? 0);
-        const status: StockLevelStatus =
-          Number(s.metrics?.out_of_stock ?? 0) > 0 ? "out_of_stock" : reorderLevel > 0 ? "low_stock" : "in_stock";
-        return {
-          id: `sub-${s.id}`,
-          name: s.name,
-          sku: `SKU: ${Number(s.metrics?.total_variations ?? 0)}`,
-          categoryPath: buildCategoryPath({ sub: s.name }),
-          stockQty,
-          reorderLevel,
-          status,
-          lastUpdated: "-",
-        };
-      });
-    }
-
-    const m = mains.find((x) => Number(x.id) === mainId);
-    if (!m) return [];
-    const stockQty = Number(m.metrics?.in_stock ?? 0) + Number(m.metrics?.low_stock ?? 0);
-    const reorderLevel = Number(m.metrics?.low_stock ?? 0);
-    const status: StockLevelStatus =
-      Number(m.metrics?.out_of_stock ?? 0) > 0 ? "out_of_stock" : reorderLevel > 0 ? "low_stock" : "in_stock";
-
-    return [
-      {
-        id: `main-${m.id}`,
-        name: m.name,
-        sku: `SKU: ${Number(m.metrics?.total_variations ?? 0)}`,
-        categoryPath: buildCategoryPath({ main: m.name }),
-        stockQty,
-        reorderLevel,
-        status,
-        lastUpdated: "-",
-      },
-    ];
-  }
-
-  return mains.map((m) => {
-    const stockQty = Number(m.metrics?.in_stock ?? 0) + Number(m.metrics?.low_stock ?? 0);
-    const reorderLevel = Number(m.metrics?.low_stock ?? 0);
-    const status: StockLevelStatus =
-      Number(m.metrics?.out_of_stock ?? 0) > 0 ? "out_of_stock" : reorderLevel > 0 ? "low_stock" : "in_stock";
-
-    return {
-      id: `main-${m.id}`,
-      name: m.name,
-      sku: `SKU: ${Number(m.metrics?.total_variations ?? 0)}`,
-      categoryPath: buildCategoryPath({ main: m.name }),
-      stockQty,
-      reorderLevel,
-      status,
-      lastUpdated: "-",
+type ProductMetricsReportRes = {
+  success: true;
+  timeframe: string;
+  meta: { total: number; limit: number; offset: number };
+  note?: string;
+  data: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    last_updated: string; // ISO
+    is_active: boolean;
+    categories: {
+      main?: { id: number; name: string } | null;
+      sub?: { id: number; name: string } | null;
+      child?: { id: number; name: string } | null;
     };
-  });
+    metrics: {
+      quantity_sold: number;
+      total_buying_price: string;
+      total_selling_price: string;
+      total_item_discount: string;
+      net_revenue: string;
+    };
+  }>;
+};
+
+async function getProductMetricsReport(params: ProductMetricsReportParams) {
+  const res = await api.get<ProductMetricsReportRes>("/admin/product-metrics/report", { params });
+  return res.data;
 }
 
+/** =========================
+ *  helpers
+ *  ========================= */
 function unwrapList<T>(payload: any, key?: string): T[] {
   if (Array.isArray(payload)) return payload as T[];
   if (key && Array.isArray(payload?.[key])) return payload[key] as T[];
   if (Array.isArray(payload?.data)) return payload.data as T[];
   if (Array.isArray(payload?.rows)) return payload.rows as T[];
-  // your ListResponse sometimes has .result/.results; keep safe:
   if (Array.isArray(payload?.results)) return payload.results as T[];
   if (Array.isArray(payload?.result)) return payload.result as T[];
   return [];
 }
 
-export default function StockReportReport({ period }: Props) {
-  const range = React.useMemo(() => toIsoRange(period), [period]);
+function normalize(s: string) {
+  return String(s ?? "").trim().toLowerCase();
+}
 
-  // Filters (initially empty => no query params)
-  const [mainId, setMainId] = React.useState<string>(""); // "" means all
+function moneyBDT(v: any) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "0.00";
+  return n.toFixed(2);
+}
+
+function escapeCsvValue(value: string): string {
+  const v = value.replace(/\r\n|\r|\n/g, " ");
+  if (/[",]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
+  return v;
+}
+
+function exportProductMetricsAsCsv(rows: ProductMetricsReportRes["data"], filename = "product-metrics-report.csv") {
+  const header = [
+    "SL",
+    "Product",
+    "Main Category",
+    "Sub Category",
+    "Child Category",
+    "Qty Sold",
+    "Buying Total",
+    "Selling Total",
+    "Item Discount",
+    "Net Revenue",
+    "Active",
+    "Last Updated",
+  ];
+  const lines = [header.join(",")];
+
+  rows.forEach((r, idx) => {
+    lines.push(
+      [
+        String(idx + 1),
+        escapeCsvValue(String(r.name ?? "")),
+        escapeCsvValue(String(r.categories?.main?.name ?? "-")),
+        escapeCsvValue(String(r.categories?.sub?.name ?? "-")),
+        escapeCsvValue(String(r.categories?.child?.name ?? "-")),
+        String(safeNumber(r.metrics?.quantity_sold)),
+        String(r.metrics?.total_buying_price ?? "0.00"),
+        String(r.metrics?.total_selling_price ?? "0.00"),
+        String(r.metrics?.total_item_discount ?? "0.00"),
+        String(r.metrics?.net_revenue ?? "0.00"),
+        r.is_active ? "true" : "false",
+        escapeCsvValue(String(r.last_updated ?? "")),
+      ].join(",")
+    );
+  });
+
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportProductMetricsAsPrintablePdf(rows: ProductMetricsReportRes["data"], title = "Product Metrics Report") {
+  const stamp = new Date().toLocaleString();
+
+  const bodyRows = rows
+    .map(
+      (r, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${String(r.name ?? "")}</td>
+          <td>${String(r.categories?.main?.name ?? "-")}</td>
+          <td>${String(r.categories?.sub?.name ?? "-")}</td>
+          <td>${String(r.categories?.child?.name ?? "-")}</td>
+          <td style="text-align:right">${safeNumber(r.metrics?.quantity_sold)}</td>
+          <td style="text-align:right">${String(r.metrics?.total_buying_price ?? "0.00")}</td>
+          <td style="text-align:right">${String(r.metrics?.total_selling_price ?? "0.00")}</td>
+          <td style="text-align:right">${String(r.metrics?.total_item_discount ?? "0.00")}</td>
+          <td style="text-align:right">${String(r.metrics?.net_revenue ?? "0.00")}</td>
+          <td>${r.is_active ? "Yes" : "No"}</td>
+          <td>${String(r.last_updated ?? "")}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const html = `
+  <!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>${title}</title>
+      <style>
+        :root { color-scheme: light; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; }
+        h1 { margin: 0 0 6px; font-size: 20px; }
+        .meta { color: #6b7280; font-size: 12px; margin-bottom: 18px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 12px; }
+        th { background: #f9fafb; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+        @media print { body { padding: 0; } }
+      </style>
+    </head>
+    <body>
+      <h1>${title}</h1>
+      <div class="meta">Generated: ${stamp} • Rows: ${rows.length}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>SL</th>
+            <th>Product</th>
+            <th>Main</th>
+            <th>Sub</th>
+            <th>Child</th>
+            <th>Qty</th>
+            <th>Buying</th>
+            <th>Selling</th>
+            <th>Discount</th>
+            <th>Net</th>
+            <th>Active</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </body>
+  </html>
+  `;
+
+  const w = window.open("", "_blank", "noopener,noreferrer");
+  if (!w) return;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+/** =========================
+ *  map category summary -> table rows
+ *  ========================= */
+function buildCategoryRows(
+  res: CategoryStockSummeryRes | undefined,
+  level: StockCategoryLevel,
+  selected: { mainId?: number; subId?: number; childId?: number }
+): StockCategoryReportRow[] {
+  const mains = res?.data?.main_categories ?? [];
+  const subs = res?.data?.sub_categories ?? [];
+  const childs = res?.data?.child_categories ?? [];
+
+  let list: Array<{ name: string; metrics: any }> = [];
+
+  if (level === "main") {
+    list = mains.map((m) => ({ name: m.name, metrics: m.metrics }));
+  } else if (level === "sub") {
+    if (typeof selected.mainId === "number") {
+      list = subs
+        .filter((s) => Number(s.main_category_id) === selected.mainId)
+        .map((s) => ({ name: s.name, metrics: s.metrics }));
+    } else {
+      list = subs.map((s) => ({ name: s.name, metrics: s.metrics }));
+    }
+  } else {
+    // child
+    if (typeof selected.subId === "number") {
+      list = childs
+        .filter((c) => Number(c.sub_category_id) === selected.subId)
+        .map((c) => ({ name: c.name, metrics: c.metrics }));
+    } else if (typeof selected.mainId === "number") {
+      list = childs
+        .filter((c) => Number(c.main_category_id) === selected.mainId)
+        .map((c) => ({ name: c.name, metrics: c.metrics }));
+    } else {
+      list = childs.map((c) => ({ name: c.name, metrics: c.metrics }));
+    }
+  }
+
+  return list.map((x, idx) => ({
+    sl: idx + 1,
+    name: x.name,
+    totalSku: safeNumber(x.metrics?.total_variations),
+    inStock: safeNumber(x.metrics?.in_stock),
+    lowStock: safeNumber(x.metrics?.low_stock),
+    outOfStock: safeNumber(x.metrics?.out_of_stock),
+  }));
+}
+
+export default function StockReportReport({ period }: Props) {
+  const range = React.useMemo(() => getPeriodRange(period), [period]);
+
+  /** view mode */
+  const [view, setView] = React.useState<"category" | "product">("category");
+
+  /** common category filters */
+  const [mainId, setMainId] = React.useState<string>("");
   const [subId, setSubId] = React.useState<string>("");
   const [childId, setChildId] = React.useState<string>("");
 
-  const [query, setQuery] = React.useState("");
-  const [status, setStatus] = React.useState<"all" | StockLevelStatus>("all");
+  /** category summary report level */
+  const [level, setLevel] = React.useState<StockCategoryLevel>("main");
 
-  // When main changes, clear sub/child
+  /** product report controls */
+  const [search, setSearch] = React.useState("");
+  const [status, setStatus] = React.useState<"all" | "active" | "inactive">("all");
+  const [limit, setLimit] = React.useState<number>(20);
+  const [offset, setOffset] = React.useState<number>(0);
+
+  // reset dependent selects
   React.useEffect(() => {
     setSubId("");
     setChildId("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mainId]);
 
-  // When sub changes, clear child
   React.useEffect(() => {
     setChildId("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subId]);
 
-  // Categories (dynamic)
+  // when filters change on product view, reset pagination
+  React.useEffect(() => {
+    setOffset(0);
+  }, [view, period, mainId, subId, childId, status, search, limit]);
+
+  /** categories (use existing endpoints) */
   const mainQuery = useQuery({
     queryKey: ["categories", "main", "stock-report"],
     queryFn: () => getMainCategories({ limit: 500, offset: 0 } as any),
@@ -255,22 +321,47 @@ export default function StockReportReport({ period }: Props) {
 
   const subQuery = useQuery({
     queryKey: ["categories", "sub", "stock-report", mainId || "all"],
-    queryFn: () => getSubCategories(mainId ? ({ main_category_id: Number(mainId), limit: 500, offset: 0 } as any) : ({ limit: 500, offset: 0 } as any)),
-    enabled: true,
+    queryFn: () =>
+      getSubCategories(
+        mainId
+          ? ({ main_category_id: Number(mainId), limit: 500, offset: 0 } as any)
+          : ({ limit: 500, offset: 0 } as any)
+      ),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
 
   const childQuery = useQuery({
     queryKey: ["categories", "child", "stock-report", subId || "all"],
-    queryFn: () => getChildCategories(subId ? ({ sub_category_id: Number(subId), limit: 500, offset: 0 } as any) : ({ limit: 500, offset: 0 } as any)),
-    enabled: true,
+    queryFn: () =>
+      getChildCategories(
+        subId
+          ? ({ sub_category_id: Number(subId), limit: 500, offset: 0 } as any)
+          : ({ limit: 500, offset: 0 } as any)
+      ),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
 
-  // Stock category summary (this is the only stock endpoint you gave for report listing)
-  const stockQuery = useQuery({
+  const mainList = React.useMemo(() => unwrapList<any>(mainQuery.data, "data"), [mainQuery.data]);
+  const subList = React.useMemo(() => unwrapList<any>(subQuery.data, "data"), [subQuery.data]);
+  const childList = React.useMemo(() => unwrapList<any>(childQuery.data, "data"), [childQuery.data]);
+
+  const mainOptions = React.useMemo(
+    () => [{ value: "", label: "All Main" }, ...mainList.map((m: any) => ({ value: String(m.id), label: String(m.name) }))],
+    [mainList]
+  );
+  const subOptions = React.useMemo(
+    () => [{ value: "", label: "All Sub" }, ...subList.map((s: any) => ({ value: String(s.id), label: String(s.name) }))],
+    [subList]
+  );
+  const childOptions = React.useMemo(
+    () => [{ value: "", label: "All Child" }, ...childList.map((c: any) => ({ value: String(c.id), label: String(c.name) }))],
+    [childList]
+  );
+
+  /** category stock summary */
+  const categorySummeryQuery = useQuery({
     queryKey: ["item-metrics", "category-stock-summery", range.startDate, range.endDate],
     queryFn: () =>
       getItemMetricsCategoryStockSummery({
@@ -281,119 +372,134 @@ export default function StockReportReport({ period }: Props) {
       }),
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+    enabled: view === "category",
   });
 
-  const mainList = React.useMemo(() => unwrapList<any>(mainQuery.data, "data"), [mainQuery.data]);
-  const subList = React.useMemo(() => unwrapList<any>(subQuery.data, "data"), [subQuery.data]);
-  const childList = React.useMemo(() => unwrapList<any>(childQuery.data, "data"), [childQuery.data]);
+  const selectedIds = React.useMemo(
+    () => ({
+      mainId: mainId ? Number(mainId) : undefined,
+      subId: subId ? Number(subId) : undefined,
+      childId: childId ? Number(childId) : undefined,
+    }),
+    [mainId, subId, childId]
+  );
 
-  const mainOptions = React.useMemo(() => {
-    const opts = [{ value: "", label: "All Main Categories" }];
-    mainList.forEach((m: any) => opts.push({ value: String(m.id), label: String(m.name) }));
-    return opts;
-  }, [mainList]);
+  const categoryRows = React.useMemo(() => {
+    const rows = buildCategoryRows(categorySummeryQuery.data, level, selectedIds);
+    // quick client-side search (optional)
+    const q = normalize(search);
+    if (!q) return rows;
+    return rows.filter((r) => normalize(r.name).includes(q));
+  }, [categorySummeryQuery.data, level, selectedIds, search]);
 
-  const subOptions = React.useMemo(() => {
-    const opts = [{ value: "", label: "All Sub Categories" }];
-    subList.forEach((s: any) => opts.push({ value: String(s.id), label: String(s.name) }));
-    return opts;
-  }, [subList]);
+  /** product metrics report */
+  const productQuery = useQuery({
+    queryKey: [
+      "product-metrics",
+      "report",
+      range.startDate,
+      range.endDate,
+      limit,
+      offset,
+      mainId || "all",
+      subId || "all",
+      childId || "all",
+      status,
+      search,
+    ],
+    queryFn: () =>
+      getProductMetricsReport({
+        startDate: range.startDate,
+        endDate: range.endDate,
+        limit,
+        offset,
+        ...(mainId ? { main_category_id: Number(mainId) } : {}),
+        ...(subId ? { sub_category_id: Number(subId) } : {}),
+        ...(childId ? { child_category_id: Number(childId) } : {}),
+        ...(status === "all" ? {} : { status: status === "active" }),
+        ...(search.trim() ? { search: search.trim() } : {}),
+      }),
+    staleTime: 20_000,
+    placeholderData: keepPreviousData,
+    enabled: view === "product",
+  });
 
-  const childOptions = React.useMemo(() => {
-    const opts = [{ value: "", label: "All Child Categories" }];
-    childList.forEach((c: any) => opts.push({ value: String(c.id), label: String(c.name) }));
-    return opts;
-  }, [childList]);
-
-  const baseRows = React.useMemo(() => {
-    const parsedMain = mainId ? Number(mainId) : undefined;
-    const parsedSub = subId ? Number(subId) : undefined;
-    const parsedChild = childId ? Number(childId) : undefined;
-
-    return mapToRows(stockQuery.data, { mainId: parsedMain, subId: parsedSub, childId: parsedChild });
-  }, [stockQuery.data, mainId, subId, childId]);
-
-  const filtered = React.useMemo(() => {
-    const q = normalize(query);
-
-    return baseRows.filter((r) => {
-      const matchQ =
-        !q ||
-        normalize(r.name).includes(q) ||
-        normalize(r.sku).includes(q) ||
-        normalize(r.categoryPath).includes(q) ||
-        normalize(r.id).includes(q);
-
-      const matchStatus = status === "all" ? true : r.status === status;
-      return matchQ && matchStatus;
-    });
-  }, [baseRows, query, status]);
-
-  const totals = React.useMemo(() => {
-    return filtered.reduce(
-      (acc, r) => {
-        acc.totalStock += Number(r.stockQty ?? 0);
-        acc.lowCount += r.status === "low_stock" ? 1 : 0;
-        acc.outCount += r.status === "out_of_stock" ? 1 : 0;
-        return acc;
-      },
-      { totalStock: 0, lowCount: 0, outCount: 0 }
-    );
-  }, [filtered]);
+  const totalProducts = safeNumber(productQuery.data?.meta?.total);
+  const canPrev = offset > 0;
+  const canNext = offset + limit < totalProducts;
 
   return (
     <div className="mt-6 space-y-5">
-      {/* Toolbar */}
+      {/* Header + mode switch + filters */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">All Reports</div>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">Reports</div>
             <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Period: {periodLabel(period)} • Rows: {filtered.length}
+              Range: {range.startDate} → {range.endDate}
+              {view === "product" && productQuery.data?.note ? ` • ${productQuery.data.note}` : null}
             </div>
           </div>
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+            {/* view switch */}
+            <div className="inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-950">
+              <button
+                type="button"
+                onClick={() => setView("category")}
+                className={cn(
+                  "h-10 px-4 rounded-[4px] text-sm font-semibold transition",
+                  view === "category"
+                    ? "bg-brand-500 text-white shadow-theme-xs"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/[0.04]"
+                )}
+              >
+                Category Stock
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("product")}
+                className={cn(
+                  "h-10 px-4 rounded-[4px] text-sm font-semibold transition",
+                  view === "product"
+                    ? "bg-brand-500 text-white shadow-theme-xs"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/[0.04]"
+                )}
+              >
+                Product Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters row */}
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             {/* Search */}
-            <div className="relative w-full lg:w-[320px]">
+            <div className="relative w-full lg:w-[340px]">
               <Input
-                value={query}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-                placeholder="Search name / sku / category..."
+                value={search}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                placeholder={view === "product" ? "Search product name..." : "Search category..."}
                 className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             </div>
 
-            {/* Status */}
-            <Select
-              options={[
-                { value: "all", label: "All Status" },
-                { value: "in_stock", label: "In Stock" },
-                { value: "low_stock", label: "Low Stock" },
-                { value: "out_of_stock", label: "Out of Stock" },
-              ]}
-              defaultValue={status}
-              onChange={(v) => setStatus(v as any)}
-              className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
-            />
-
-            {/* Category Filters */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Category selectors */}
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
               <Select
                 options={mainOptions}
                 defaultValue={mainId}
                 onChange={(v) => setMainId(String(v))}
                 className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
               />
-
               <Select
                 options={subOptions}
                 defaultValue={subId}
                 onChange={(v) => setSubId(String(v))}
                 className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
               />
-
               <Select
                 options={childOptions}
                 defaultValue={childId}
@@ -402,67 +508,273 @@ export default function StockReportReport({ period }: Props) {
               />
             </div>
 
-            {/* Export */}
-            <Button
-              variant="outline"
-              className="h-11"
-              startIcon={<Download className="h-4 w-4" />}
-              // onClick={() => exportStockAsCsv(filtered)}
-              type="button"
-            >
-              Export Excel
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-11"
-              startIcon={<FileDown className="h-4 w-4" />}
-              // onClick={() => exportStockAsPrintablePdf(filtered, "Stock Report")}
-              type="button"
-            >
-              Export PDF
-            </Button>
+            {/* View-specific filters */}
+            {view === "category" ? (
+              <Select
+                options={[
+                  { value: "main", label: "Main level" },
+                  { value: "sub", label: "Sub level" },
+                  { value: "child", label: "Child level" },
+                ]}
+                defaultValue={level}
+                onChange={(v) => setLevel(v as StockCategoryLevel)}
+                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+              />
+            ) : (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Select
+                  options={[
+                    { value: "all", label: "All Status" },
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" },
+                  ]}
+                  defaultValue={status}
+                  onChange={(v) => setStatus(v as any)}
+                  className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                />
+                <Select
+                  options={[
+                    { value: "10", label: "10 / page" },
+                    { value: "20", label: "20 / page" },
+                    { value: "50", label: "50 / page" },
+                  ]}
+                  defaultValue={String(limit)}
+                  onChange={(v) => setLimit(Number(v))}
+                  className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                />
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Summary */}
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Stock Qty</div>
-            <div className="mt-1 text-lg font-extrabold text-gray-900 dark:text-white">
-              {totals.totalStock.toLocaleString()}
-            </div>
-          </div>
-
-          <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Low Stock Rows</div>
-            <div className="mt-1 text-lg font-extrabold text-amber-600 dark:text-amber-400">
-              {totals.lowCount}
-            </div>
-          </div>
-
-          <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Out of Stock Rows</div>
-            <div className="mt-1 text-lg font-extrabold text-error-600 dark:text-error-500">
-              {totals.outCount}
-            </div>
+          {/* Exports */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            {view === "category" ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="h-11"
+                  startIcon={<Download className="h-4 w-4" />}
+                  type="button"
+                  onClick={() => exportStockCategoryAsCsv(categoryRows)}
+                >
+                  Export Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-11"
+                  startIcon={<FileDown className="h-4 w-4" />}
+                  type="button"
+                  onClick={() => exportStockCategoryAsPrintablePdf(categoryRows, "Stock Category Report")}
+                >
+                  Export PDF
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="h-11"
+                  startIcon={<Download className="h-4 w-4" />}
+                  type="button"
+                  onClick={() => exportProductMetricsAsCsv(productQuery.data?.data ?? [])}
+                >
+                  Export Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-11"
+                  startIcon={<FileDown className="h-4 w-4" />}
+                  type="button"
+                  onClick={() => exportProductMetricsAsPrintablePdf(productQuery.data?.data ?? [], "Product Metrics Report")}
+                >
+                  Export PDF
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
         {/* Loading / Error */}
-        {(mainQuery.isLoading || stockQuery.isLoading) && (
-          <div className="mt-4 text-xs font-semibold text-gray-500 dark:text-gray-400">Loading report...</div>
+        {view === "category" && categorySummeryQuery.isError && (
+          <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+            {String((categorySummeryQuery.error as any)?.message || "Failed to load category stock summary")}
+          </div>
         )}
 
-        {(mainQuery.isError || stockQuery.isError) && (
+        {view === "product" && productQuery.isError && (
           <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-            {String((mainQuery.error as any)?.message || (stockQuery.error as any)?.message || "Failed to load report")}
+            {String((productQuery.error as any)?.message || "Failed to load product report")}
           </div>
         )}
       </div>
 
-      {/* Table */}
-      <StockReportTable rows={filtered as StockReportRow[]} />
+      {/* Body */}
+      {view === "category" ? (
+        <StockCategoryTable rows={categoryRows} isLoading={categorySummeryQuery.isLoading} />
+      ) : (
+        <div className="space-y-3">
+          {/* pagination bar */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+              Total: {totalProducts.toLocaleString()} • Showing {Math.min(offset + 1, totalProducts)}-
+              {Math.min(offset + limit, totalProducts)}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="h-10"
+                type="button"
+                disabled={!canPrev || productQuery.isFetching}
+                onClick={() => setOffset((p) => Math.max(0, p - limit))}
+              >
+                Prev
+              </Button>
+              <Button
+                variant="outline"
+                className="h-10"
+                type="button"
+                disabled={!canNext || productQuery.isFetching}
+                onClick={() => setOffset((p) => p + limit)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+
+          {/* product table */}
+          <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+            <div className="w-full overflow-hidden rounded-[4px]">
+              <div className="max-w-full overflow-x-auto custom-scrollbar">
+                <table className="min-w-[1200px] w-full">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-950">
+                      {[
+                        "SL",
+                        "Product",
+                        "Category",
+                        "Qty Sold",
+                        "Buying",
+                        "Selling",
+                        "Discount",
+                        "Net Revenue",
+                        "Active",
+                        "Updated",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className={cn(
+                            "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider",
+                            "text-gray-500 dark:text-gray-400",
+                            h === "Qty Sold" || h === "Buying" || h === "Selling" || h === "Discount" || h === "Net Revenue"
+                              ? "text-right"
+                              : ""
+                          )}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {productQuery.isLoading &&
+                      Array.from({ length: 8 }).map((_, i) => (
+                        <tr key={`sk-${i}`} className="border-t border-gray-100 dark:border-gray-800">
+                          {Array.from({ length: 10 }).map((__, j) => (
+                            <td key={`sk-${i}-${j}`} className="px-4 py-4">
+                              <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-800" />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+
+                    {!productQuery.isLoading &&
+                      (productQuery.data?.data ?? []).map((r, idx) => {
+                        const cat = [
+                          r.categories?.main?.name,
+                          r.categories?.sub?.name,
+                          r.categories?.child?.name,
+                        ]
+                          .filter(Boolean)
+                          .join(" > ");
+
+                        return (
+                          <tr
+                            key={String(r.id)}
+                            className="border-t border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.04]"
+                          >
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                              {offset + idx + 1}
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <div className="min-w-0">
+                                <div className="max-w-[420px] truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                  {r.name}
+                                </div>
+                                <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">#{r.id}</div>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                              {cat || "-"}
+                            </td>
+
+                            <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                              {safeNumber(r.metrics?.quantity_sold).toLocaleString()}
+                            </td>
+
+                            <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
+                              {moneyBDT(r.metrics?.total_buying_price)}
+                            </td>
+
+                            <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
+                              {moneyBDT(r.metrics?.total_selling_price)}
+                            </td>
+
+                            <td className="px-4 py-3 text-right text-sm text-amber-700 dark:text-amber-400">
+                              {moneyBDT(r.metrics?.total_item_discount)}
+                            </td>
+
+                            <td className="px-4 py-3 text-right text-sm font-semibold text-success-700 dark:text-success-400">
+                              {moneyBDT(r.metrics?.net_revenue)}
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold",
+                                  r.is_active
+                                    ? "border-success-500/20 bg-success-500/10 text-success-700 dark:text-success-400"
+                                    : "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300"
+                                )}
+                              >
+                                {r.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </td>
+
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                              {r.last_updated ? new Date(r.last_updated).toLocaleString() : "-"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                    {!productQuery.isLoading && (productQuery.data?.data ?? []).length === 0 && (
+                      <tr>
+                        <td colSpan={10} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                          No data found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
