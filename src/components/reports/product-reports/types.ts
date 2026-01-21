@@ -40,12 +40,16 @@ export type ProductReportRow = {
   id: string;
   name: string;
   slug: string;
+  sku: string;
   categoryPath: string;
+  stockQty: number;
   soldQty: number;
   buying: number;
   selling: number;
   discount: number;
   netRevenue: number;
+  revenue: number;
+  cost: number;
   profit: number;
   status: ReportStatus;
   updatedAt: string; // YYYY-MM-DD

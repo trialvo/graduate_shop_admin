@@ -1,24 +1,26 @@
 "use client";
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Download, FileDown, Search } from "lucide-react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { Download, FileDown, Search, RefreshCcw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 
-import { getPeriodRange, parseMoney, formatIsoDateTimeToDate } from "../reportUtils";
-import type { SelectOption, TimePeriodKey, ProductReportRow, ReportStatus } from "../types";
-
-import { exportProductReportAsCsv, exportProductReportAsPrintablePdf } from "../exportUtils";
-import ProductReportsTable from "./ProductReportsTable";
-
+import { getMainCategories, getSubCategories, getChildCategories } from "@/api/categories.api";
 import { getProductMetricsReport } from "@/api/product-metrics.api";
-import { getChildCategories, getMainCategories, getSubCategories } from "@/api/categories.api";
+
+import type { TimePeriodKey, ProductReportRow, ReportStatus } from "../types";
+import { exportProductReportAsCsv, exportProductReportAsPrintablePdf } from "../exportUtils";
+import { formatIsoDateTimeToDate, getPeriodRange, parseMoney } from "../reportUtils";
+import ProductReportsTable from "./ProductReportsTable";
+import { toSelectOptions, unwrapList } from "../categoryListUtils";
 
 type Props = { period: TimePeriodKey };
+
+type SelectOption = { value: string; label: string };
 
 const LIMIT_OPTIONS: SelectOption[] = [
   { value: "10", label: "10 rows" },
@@ -27,7 +29,7 @@ const LIMIT_OPTIONS: SelectOption[] = [
   { value: "100", label: "100 rows" },
 ];
 
-const statusOptions: SelectOption[] = [
+const STATUS_OPTIONS: SelectOption[] = [
   { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
@@ -39,6 +41,8 @@ function toRow(apiRow: any): ProductReportRow {
   const discount = parseMoney(apiRow.metrics?.total_item_discount);
   const netRevenue = parseMoney(apiRow.metrics?.net_revenue);
   const profit = netRevenue - buying;
+  const sku = String(apiRow.sku ?? apiRow.slug ?? "-");
+  const slug = String(apiRow.slug ?? apiRow.sku ?? "-");
 
   const main = apiRow.categories?.main?.name ? String(apiRow.categories.main.name) : "";
   const sub = apiRow.categories?.sub?.name ? String(apiRow.categories.sub.name) : "";
@@ -49,17 +53,25 @@ function toRow(apiRow: any): ProductReportRow {
   return {
     id: String(apiRow.id),
     name: String(apiRow.name ?? "-"),
-    slug: String(apiRow.slug ?? "-"),
+    slug,
+    sku, // fallback if sku not provided
     categoryPath,
+    stockQty: Number(apiRow.stock ?? apiRow.stockQty ?? 0), // report API may not include, fallback 0
     soldQty: Number(apiRow.metrics?.quantity_sold ?? 0),
     buying,
     selling,
     discount,
     netRevenue,
+    revenue: netRevenue,
+    cost: buying,
     profit,
     status: apiRow.is_active ? "active" : "inactive",
     updatedAt: formatIsoDateTimeToDate(apiRow.last_updated),
   };
+}
+
+function moneyBDT(n: number) {
+  return `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT`;
 }
 
 const ProductReportsReport: React.FC<Props> = ({ period }) => {
@@ -68,6 +80,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
   const [search, setSearch] = React.useState("");
   const [status, setStatus] = React.useState<"all" | ReportStatus>("all");
 
+  // dependent category filters
   const [mainId, setMainId] = React.useState<string>("all");
   const [subId, setSubId] = React.useState<string>("all");
   const [childId, setChildId] = React.useState<string>("all");
@@ -75,14 +88,13 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
   const [limit, setLimit] = React.useState<number>(20);
   const [offset, setOffset] = React.useState<number>(0);
 
-  // When main changes -> reset sub + child
+  // ✅ reset logic
   React.useEffect(() => {
     setSubId("all");
     setChildId("all");
     setOffset(0);
   }, [mainId]);
 
-  // When sub changes -> reset child
   React.useEffect(() => {
     setChildId("all");
     setOffset(0);
@@ -90,49 +102,54 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
 
   React.useEffect(() => {
     setOffset(0);
-  }, [status, search, limit, childId]);
+  }, [status, limit]);
 
-  // Categories (dynamic)
-  const mainCategoriesQuery = useQuery({
-    queryKey: ["categories-lite", "main"],
-    queryFn: () => getMainCategories(),
+  // ✅ search debounce (UI smoother)
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 350);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  // ======================
+  // Categories (YOUR API)
+  // ======================
+
+  const mainQuery = useQuery({
+    queryKey: ["categories", "main"],
+    queryFn: () => getMainCategories({ limit: 5000, offset: 0 } as any),
   });
 
-  const subCategoriesQuery = useQuery({
-    queryKey: ["categories-lite", "sub", mainId],
-    queryFn: () => getSubCategories({ main_category_id: Number(mainId) }),
+  const subQuery = useQuery({
+    queryKey: ["categories", "sub", mainId],
+    queryFn: () => getSubCategories({ main_category_id: Number(mainId), limit: 5000, offset: 0 } as any),
     enabled: mainId !== "all",
   });
 
-  const childCategoriesQuery = useQuery({
-    queryKey: ["categories-lite", "child", subId],
-    queryFn: () => getChildCategories({ sub_category_id: Number(subId) }),
+  const childQuery = useQuery({
+    queryKey: ["categories", "child", subId],
+    queryFn: () => getChildCategories({ sub_category_id: Number(subId), limit: 5000, offset: 0 } as any),
     enabled: subId !== "all",
   });
 
-  const mainOptions: SelectOption[] = React.useMemo(() => {
-    const items = mainCategoriesQuery.data?.data ?? [];
-    return [
-      { value: "all", label: "All Main Categories" },
-      ...items.map((c) => ({ value: String(c.id), label: c.name })),
-    ];
-  }, [mainCategoriesQuery.data]);
+  const mainOptions = React.useMemo(() => {
+    const items = unwrapList<any>(mainQuery.data);
+    return toSelectOptions(items, "All Main Categories");
+  }, [mainQuery.data]);
 
-  const subOptions: SelectOption[] = React.useMemo(() => {
-    const items = subCategoriesQuery.data?.data ?? [];
-    return [
-      { value: "all", label: "All Sub Categories" },
-      ...items.map((c) => ({ value: String(c.id), label: c.name })),
-    ];
-  }, [subCategoriesQuery.data]);
+  const subOptions = React.useMemo(() => {
+    const items = unwrapList<any>(subQuery.data);
+    return toSelectOptions(items, "All Sub Categories");
+  }, [subQuery.data]);
 
-  const childOptions: SelectOption[] = React.useMemo(() => {
-    const items = childCategoriesQuery.data?.data ?? [];
-    return [
-      { value: "all", label: "All Child Categories" },
-      ...items.map((c) => ({ value: String(c.id), label: c.name })),
-    ];
-  }, [childCategoriesQuery.data]);
+  const childOptions = React.useMemo(() => {
+    const items = unwrapList<any>(childQuery.data);
+    return toSelectOptions(items, "All Child Categories");
+  }, [childQuery.data]);
+
+  // ======================
+  // Report API
+  // ======================
 
   const reportQuery = useQuery({
     queryKey: [
@@ -140,7 +157,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
       "report",
       range.startDate,
       range.endDate,
-      search,
+      debouncedSearch,
       status,
       mainId,
       subId,
@@ -156,7 +173,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
         offset,
       };
 
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (status !== "all") params.status = status === "active";
       if (mainId !== "all") params.main_category_id = Number(mainId);
       if (subId !== "all") params.sub_category_id = Number(subId);
@@ -164,11 +181,12 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
 
       return getProductMetricsReport(params);
     },
+    placeholderData: keepPreviousData,
   });
 
   const rows: ProductReportRow[] = React.useMemo(() => {
-    const data = reportQuery.data?.data ?? [];
-    return data.map(toRow);
+    const apiRows = reportQuery.data?.data ?? [];
+    return apiRows.map(toRow);
   }, [reportQuery.data]);
 
   const meta = reportQuery.data?.meta;
@@ -177,41 +195,31 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
   const totals = React.useMemo(() => {
     return rows.reduce(
       (acc, r) => {
-        acc.buying += r.buying;
-        acc.selling += r.selling;
-        acc.discount += r.discount;
-        acc.net += r.netRevenue;
+        acc.revenue += r.revenue;
+        acc.cost += r.cost;
         acc.profit += r.profit;
         return acc;
       },
-      { buying: 0, selling: 0, discount: 0, net: 0, profit: 0 }
+      { revenue: 0, cost: 0, profit: 0 }
     );
   }, [rows]);
 
   const total = meta?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, limit)));
-  const currentPage = Math.floor(offset / Math.max(1, limit)) + 1;
+  const safeLimit = Math.max(1, limit);
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+  const currentPage = Math.floor((meta?.offset ?? offset) / safeLimit) + 1;
 
-  async function handleExportCsv() {
-    const params: any = {
-      startDate: range.startDate,
-      endDate: range.endDate,
-      limit: 5000,
-      offset: 0,
-    };
-
-    if (search.trim()) params.search = search.trim();
-    if (status !== "all") params.status = status === "active";
-    if (mainId !== "all") params.main_category_id = Number(mainId);
-    if (subId !== "all") params.sub_category_id = Number(subId);
-    if (childId !== "all") params.child_category_id = Number(childId);
-
-    const all = await getProductMetricsReport(params);
-    const allRows = (all.data ?? []).map(toRow);
-    exportProductReportAsCsv(allRows);
+  function clearFilters() {
+    setSearch("");
+    setStatus("all");
+    setMainId("all");
+    setSubId("all");
+    setChildId("all");
+    setLimit(20);
+    setOffset(0);
   }
 
-  async function handleExportPdf() {
+  async function exportAll(kind: "csv" | "pdf") {
     const params: any = {
       startDate: range.startDate,
       endDate: range.endDate,
@@ -219,7 +227,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
       offset: 0,
     };
 
-    if (search.trim()) params.search = search.trim();
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
     if (status !== "all") params.status = status === "active";
     if (mainId !== "all") params.main_category_id = Number(mainId);
     if (subId !== "all") params.sub_category_id = Number(subId);
@@ -227,74 +235,142 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
 
     const all = await getProductMetricsReport(params);
     const allRows = (all.data ?? []).map(toRow);
-    exportProductReportAsPrintablePdf(allRows, "Product Report");
+
+    if (kind === "csv") exportProductReportAsCsv(allRows);
+    else exportProductReportAsPrintablePdf(allRows, "Product Report");
   }
 
   return (
     <div className="mt-6 space-y-5">
+      {/* Toolbar */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-white">All Reports</div>
             <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
               Range: {range.startDate} → {range.endDate} • Total: {total}
             </div>
-            {note ? (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">{note}</div>
-            ) : null}
+            {note ? <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">{note}</div> : null}
           </div>
 
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
-            <div className="relative w-full lg:w-[320px]">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="h-10"
+              startIcon={<RefreshCcw className="h-4 w-4" />}
+              onClick={() => reportQuery.refetch()}
+              type="button"
+            >
+              Refresh
+            </Button>
+
+            <Button variant="outline" className="h-10" onClick={clearFilters} type="button">
+              Reset
+            </Button>
+          </div>
+        </div>
+
+        {/* Controls: ✅ fixed layout */}
+        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
+          {/* Search */}
+          <div className="lg:col-span-4">
+            <div className="relative">
               <Input
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                placeholder="Search product name..."
+                placeholder="Search product..."
                 className="h-11 rounded-[4px] border-gray-200 bg-white pr-10 dark:border-gray-800 dark:bg-gray-950"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             </div>
+          </div>
 
+          {/* Status */}
+          <div className="lg:col-span-2">
             <Select
-              options={statusOptions}
+              options={STATUS_OPTIONS}
               defaultValue={status}
               onChange={(v) => setStatus(v as any)}
               className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
             />
+          </div>
 
+          {/* Main */}
+          <div className="lg:col-span-2">
             <Select
               options={mainOptions}
               defaultValue={mainId}
               onChange={(v) => setMainId(String(v))}
               className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
             />
+          </div>
 
+          {/* Sub */}
+          <div className="lg:col-span-2">
             <Select
               options={subOptions}
               defaultValue={subId}
               onChange={(v) => setSubId(String(v))}
+              disabled={mainId === "all" || subQuery.isLoading}
               className={cn("h-11 rounded-[4px] border-gray-200 dark:border-gray-800", mainId === "all" && "opacity-60")}
             />
+          </div>
 
+          {/* Child */}
+          <div className="lg:col-span-2">
             <Select
               options={childOptions}
               defaultValue={childId}
               onChange={(v) => setChildId(String(v))}
+              disabled={subId === "all" || childQuery.isLoading}
               className={cn("h-11 rounded-[4px] border-gray-200 dark:border-gray-800", subId === "all" && "opacity-60")}
             />
+          </div>
+        </div>
 
+        {/* Export + Pagination */}
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Select
               options={LIMIT_OPTIONS}
               defaultValue={String(limit)}
               onChange={(v) => setLimit(Number(v))}
-              className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+              className="h-11 w-full rounded-[4px] border-gray-200 dark:border-gray-800 sm:w-[160px]"
             />
 
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Page {currentPage} of {totalPages}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="h-10"
+                disabled={currentPage <= 1 || reportQuery.isFetching}
+                onClick={() => setOffset(Math.max(0, offset - safeLimit))}
+                type="button"
+              >
+                Prev
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-10"
+                disabled={currentPage >= totalPages || reportQuery.isFetching}
+                onClick={() => setOffset(offset + safeLimit)}
+                type="button"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Button
               variant="outline"
               className="h-11"
               startIcon={<Download className="h-4 w-4" />}
-              onClick={handleExportCsv}
+              onClick={() => exportAll("csv")}
               type="button"
             >
               Export CSV
@@ -304,7 +380,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               variant="outline"
               className="h-11"
               startIcon={<FileDown className="h-4 w-4" />}
-              onClick={handleExportPdf}
+              onClick={() => exportAll("pdf")}
               type="button"
             >
               Export PDF
@@ -312,49 +388,29 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-5">
-          <SummaryBox label="Buying Total" value={totals.buying} />
-          <SummaryBox label="Selling Total" value={totals.selling} />
-          <SummaryBox label="Discount Total" value={totals.discount} />
-          <SummaryBox label="Net Revenue" value={totals.net} />
-          <SummaryBox label="Profit" value={totals.profit} tone="success" />
+        {/* Summary */}
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SummaryBox label="Total Revenue" value={totals.revenue} />
+          <SummaryBox label="Total Cost" value={totals.cost} />
+          <SummaryBox label="Total Profit" value={totals.profit} tone={totals.profit >= 0 ? "success" : "danger"} />
         </div>
 
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Page {currentPage} of {totalPages}
+        {/* Errors */}
+        {(mainQuery.isError || subQuery.isError || childQuery.isError) && (
+          <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+            Failed to load categories. Please refresh.
           </div>
+        )}
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="h-9"
-              disabled={currentPage <= 1}
-              onClick={() => setOffset(Math.max(0, offset - limit))}
-              type="button"
-            >
-              Prev
-            </Button>
-            <Button
-              variant="outline"
-              className="h-9"
-              disabled={currentPage >= totalPages}
-              onClick={() => setOffset(offset + limit)}
-              type="button"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-
-        {reportQuery.isError ? (
+        {reportQuery.isError && (
           <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
             Failed to load report data. Please try again.
           </div>
-        ) : null}
+        )}
       </div>
 
-      <ProductReportsTable rows={rows} isLoading={reportQuery.isLoading} />
+      {/* Table */}
+      <ProductReportsTable rows={rows} isLoading={reportQuery.isLoading || reportQuery.isFetching} />
     </div>
   );
 };
@@ -366,19 +422,19 @@ function SummaryBox({
 }: {
   label: string;
   value: number;
-  tone?: "success" | "default";
+  tone?: "success" | "danger" | "default";
 }) {
-  const textClass =
+  const cls =
     tone === "success"
       ? "text-success-700 dark:text-success-400"
-      : "text-gray-900 dark:text-white";
+      : tone === "danger"
+        ? "text-error-700 dark:text-error-400"
+        : "text-gray-900 dark:text-white";
 
   return (
     <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
       <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</div>
-      <div className={cn("mt-1 text-lg font-extrabold", textClass)}>
-        {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT
-      </div>
+      <div className={cn("mt-1 text-lg font-extrabold", cls)}>{moneyBDT(value)}</div>
     </div>
   );
 }

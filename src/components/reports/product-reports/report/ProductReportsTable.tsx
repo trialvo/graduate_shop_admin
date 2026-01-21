@@ -33,39 +33,41 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
     <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="w-full overflow-hidden rounded-[4px]">
         <div className="max-w-full overflow-x-auto custom-scrollbar">
-          <Table className="min-w-[1500px]">
+          <Table className="min-w-[1200px]">
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-950">
                 <TableCell isHeader className="w-[70px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Sl
                 </TableCell>
+
                 <TableCell isHeader className="min-w-[320px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Product
                 </TableCell>
-                <TableCell isHeader className="min-w-[220px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+
+                <TableCell isHeader className="min-w-[260px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Category
                 </TableCell>
-                <TableCell isHeader className="min-w-[110px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+
+                <TableCell isHeader className="min-w-[120px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Sold
                 </TableCell>
-                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Buying
+
+                <TableCell isHeader className="min-w-[160px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Revenue
                 </TableCell>
-                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Selling
+
+                <TableCell isHeader className="min-w-[160px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Cost
                 </TableCell>
-                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Discount
-                </TableCell>
-                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Net Revenue
-                </TableCell>
-                <TableCell isHeader className="min-w-[170px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+
+                <TableCell isHeader className="min-w-[160px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Profit
                 </TableCell>
+
                 <TableCell isHeader className="min-w-[120px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Status
                 </TableCell>
+
                 <TableCell isHeader className="min-w-[140px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Updated
                 </TableCell>
@@ -76,7 +78,7 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
               {isLoading &&
                 Array.from({ length: 8 }).map((_, i) => (
                   <TableRow key={`sk-${i}`} className="border-t border-gray-100 dark:border-gray-800">
-                    {Array.from({ length: 11 }).map((__, j) => (
+                    {Array.from({ length: 9 }).map((__, j) => (
                       <TableCell key={`sk-${i}-${j}`} className="px-4 py-4">
                         <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-800" />
                       </TableCell>
@@ -96,11 +98,11 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
 
                     <TableCell className="px-4 py-3">
                       <div className="min-w-0">
-                        <div className="max-w-[380px] truncate text-sm font-semibold text-gray-900 dark:text-white">
+                        <div className="max-w-[420px] truncate text-sm font-semibold text-gray-900 dark:text-white">
                           {r.name}
                         </div>
                         <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          ID: {r.id} • Slug: {r.slug}
+                          ID: {r.id} • SKU: {r.sku}
                         </div>
                       </div>
                     </TableCell>
@@ -114,22 +116,19 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
-                      {money(r.buying)}
+                      {money(r.revenue)}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
-                      {money(r.selling)}
+                      {money(r.cost)}
                     </TableCell>
 
-                    <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">
-                      {money(r.discount)}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                      {money(r.netRevenue)}
-                    </TableCell>
-
-                    <TableCell className={cn("px-4 py-3 text-right text-sm font-extrabold", r.profit >= 0 ? "text-success-700 dark:text-success-400" : "text-error-700 dark:text-error-400")}>
+                    <TableCell
+                      className={cn(
+                        "px-4 py-3 text-right text-sm font-extrabold",
+                        r.profit >= 0 ? "text-success-700 dark:text-success-400" : "text-error-700 dark:text-error-400"
+                      )}
+                    >
                       {money(r.profit)}
                     </TableCell>
 
@@ -143,7 +142,7 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
 
               {!isLoading && rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={11} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <TableCell colSpan={9} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     No report data found.
                   </TableCell>
                 </TableRow>
