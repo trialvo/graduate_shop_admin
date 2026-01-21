@@ -1,10 +1,11 @@
-export type TimePeriodKey = "today" | "last7" | "thisMonth" | "thisYear";
+// src/components/reports/stock-report/types.ts
 
+export type TimePeriodKey = "today" | "last7" | "thisMonth" | "thisYear";
 export type StockReportTabKey = "dashboard" | "report";
 
-export type StockLevelStatus = "in_stock" | "low_stock" | "out_of_stock";
+export type StockCategoryLevel = "main" | "sub" | "child";
 
-export type StockMetricKey = "total_sku" | "in_stock" | "low_stock" | "out_of_stock" | "restock";
+export type StockMetricKey = "total_active_items" | "in_stock" | "low_stock" | "out_of_stock";
 
 export type StockReportMetric = {
   key: StockMetricKey;
@@ -12,44 +13,39 @@ export type StockReportMetric = {
   qty: number;
 };
 
+export type StockAlertConfig = {
+  active: boolean;
+  limit: number;
+};
+
 export type StockHealthSummary = {
+  totalActiveItems: number;
   inStock: number;
   lowStock: number;
   outOfStock: number;
-  stockValue: number;
-};
-
-export type LowStockProduct = {
-  id: string;
-  name: string;
-  sku: string;
-  categoryPath: string;
-  stockQty: number;
-  reorderLevel: number;
-  updatedAt: string;
+  alert: StockAlertConfig;
 };
 
 export type StockCategoryRow = {
   id: string;
   name: string;
-  totalSku: number;
+  totalSku: number;    // total_variations
+  inStock: number;
   lowStock: number;
   outOfStock: number;
 };
 
 export type StockTrendPoint = {
-  month: string; // Jan..Dec
+  month: string;
   in: number;
   out: number;
 };
 
-export type StockReportRow = {
-  id: string;
+export type StockCategoryReportRow = {
+  sl: number;
   name: string;
-  sku: string;
-  categoryPath: string;
-  stockQty: number;
-  reorderLevel: number;
-  status: StockLevelStatus;
-  lastUpdated: string; // yyyy-mm-dd
+  totalSku: number;
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
 };

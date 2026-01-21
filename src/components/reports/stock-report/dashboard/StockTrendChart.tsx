@@ -2,11 +2,15 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { StockTrendPoint, TimePeriodKey } from "../types";
+import type { StockTrendPoint, TimePeriodKey } from "../types";
 
 type Props = {
   period: TimePeriodKey;
   points: StockTrendPoint[];
+  year: number;
+  onYearChange: (y: number) => void;
+  isLoading?: boolean;
+  errorText?: string | null;
 };
 
 const periodLabel = (p: TimePeriodKey) => {
@@ -20,7 +24,6 @@ function toPath(values: number[], w: number, h: number, padding: number) {
   const max = Math.max(1, ...values);
   const min = Math.min(0, ...values);
   const span = Math.max(1, max - min);
-
   const step = (w - padding * 2) / Math.max(1, values.length - 1);
 
   return values
@@ -32,7 +35,9 @@ function toPath(values: number[], w: number, h: number, padding: number) {
     .join(" ");
 }
 
-const StockTrendChart: React.FC<Props> = ({ period, points }) => {
+const YEAR_OPTIONS = [2024, 2025, 2026, 2027];
+
+const StockTrendChart: React.FC<Props> = ({ period, points, year, onYearChange, isLoading, errorText }) => {
   const inValues = points.map((p) => p.in);
   const outValues = points.map((p) => p.out);
 
@@ -40,8 +45,8 @@ const StockTrendChart: React.FC<Props> = ({ period, points }) => {
   const h = 280;
   const pad = 24;
 
-  const inPath = toPath(inValues, w, h, pad);
-  const outPath = toPath(outValues, w, h, pad);
+  const inPath = toPath(inValues.length ? inValues : new Array(12).fill(0), w, h, pad);
+  const outPath = toPath(outValues.length ? outValues : new Array(12).fill(0), w, h, pad);
 
   return (
     <div
@@ -51,76 +56,89 @@ const StockTrendChart: React.FC<Props> = ({ period, points }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="text-base font-semibold text-gray-900 dark:text-white">Stock Trend</div>
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Time period: {periodLabel(period)} • In vs Out movement
+            Time period: {periodLabel(period)} • Year: {year}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-          <LegendDot className="bg-success-500" label="Stock In" />
-          <LegendDot className="bg-error-500" label="Stock Out" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <LegendDot className="bg-success-500" label="Stock In" />
+            <LegendDot className="bg-error-500" label="Stock Out" />
+          </div>
+
+          <select
+            value={String(year)}
+            onChange={(e) => onYearChange(Number(e.target.value))}
+            className={cn(
+              "h-10 rounded-[4px] border border-gray-200 dark:border-gray-800",
+              "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
+              "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
+            )}
+          >
+            {YEAR_OPTIONS.map((y) => (
+              <option key={y} value={String(y)} className="bg-white dark:bg-gray-950">
+                {y}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
+      {errorText ? (
+        <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+          {errorText}
+        </div>
+      ) : null}
+
       <div className="mt-4 w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[980px]">
-          <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[280px]">
-            <defs>
-              <linearGradient id="inFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="currentColor" stopOpacity="0.20" />
-                <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-              </linearGradient>
-              <linearGradient id="outFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="currentColor" stopOpacity="0.18" />
-                <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+          {isLoading ? (
+            <div className="h-[280px] w-full rounded bg-gray-200 dark:bg-gray-800" />
+          ) : (
+            <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[280px]">
+              {[0, 1, 2, 3, 4].map((g) => (
+                <line
+                  key={g}
+                  x1={pad}
+                  x2={w - pad}
+                  y1={pad + (g * (h - pad * 2)) / 4}
+                  y2={pad + (g * (h - pad * 2)) / 4}
+                  className="stroke-gray-200 dark:stroke-white/10"
+                  strokeDasharray="6 6"
+                />
+              ))}
 
-            {/* grid */}
-            {[0, 1, 2, 3, 4].map((g) => (
-              <line
-                key={g}
-                x1={pad}
-                x2={w - pad}
-                y1={pad + (g * (h - pad * 2)) / 4}
-                y2={pad + (g * (h - pad * 2)) / 4}
-                className="stroke-gray-200 dark:stroke-white/10"
-                strokeDasharray="6 6"
-              />
-            ))}
+              <path d={`${inPath} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`} className="fill-success-500/10" />
+              <path d={inPath} className="stroke-success-500" fill="none" strokeWidth="3" />
 
-            {/* in */}
-            <path d={`${inPath} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`} className="fill-success-500/10" />
-            <path d={inPath} className="stroke-success-500" fill="none" strokeWidth="3" />
+              <path d={`${outPath} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`} className="fill-error-500/10" />
+              <path d={outPath} className="stroke-error-500" fill="none" strokeWidth="3" />
 
-            {/* out */}
-            <path d={`${outPath} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`} className="fill-error-500/10" />
-            <path d={outPath} className="stroke-error-500" fill="none" strokeWidth="3" />
-
-            {/* labels */}
-            {points.map((p, i) => {
-              const step = (w - pad * 2) / Math.max(1, points.length - 1);
-              const x = pad + i * step;
-              return (
-                <text
-                  key={p.month}
-                  x={x}
-                  y={h - 6}
-                  textAnchor="middle"
-                  className="fill-gray-500 dark:fill-gray-400"
-                  fontSize="11"
-                  fontWeight="600"
-                >
-                  {p.month}
-                </text>
-              );
-            })}
-          </svg>
+              {points.map((p, i) => {
+                const step = (w - pad * 2) / Math.max(1, points.length - 1);
+                const x = pad + i * step;
+                return (
+                  <text
+                    key={`${p.month}-${i}`}
+                    x={x}
+                    y={h - 6}
+                    textAnchor="middle"
+                    className="fill-gray-500 dark:fill-gray-400"
+                    fontSize="11"
+                    fontWeight="600"
+                  >
+                    {p.month}
+                  </text>
+                );
+              })}
+            </svg>
+          )}
         </div>
       </div>
     </div>

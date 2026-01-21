@@ -2,11 +2,11 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+
 import type { StockReportTabKey, TimePeriodKey } from "./types";
 import StockReportTopBar from "./StockReportTopBar";
 import StockReportDashboard from "./dashboard/StockReportDashboard";
 import StockReportReport from "./report/StockReportReport";
-
 
 const StockReportPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<StockReportTabKey>("dashboard");

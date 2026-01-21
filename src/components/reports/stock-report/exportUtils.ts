@@ -1,4 +1,5 @@
-import type { StockReportRow } from "./types";
+// src/components/reports/stock-report/exportUtils.ts
+import type { StockCategoryReportRow } from "./types";
 
 function escapeCsvValue(value: string): string {
   const v = value.replace(/\r\n|\r|\n/g, " ");
@@ -6,20 +7,19 @@ function escapeCsvValue(value: string): string {
   return v;
 }
 
-export function exportStockAsCsv(rows: StockReportRow[], filename = "stock-report.csv") {
-  const header = ["Product", "SKU", "Category", "Stock", "Reorder", "Status", "Updated"];
+export function exportStockCategoryAsCsv(rows: StockCategoryReportRow[], filename = "stock-category-report.csv") {
+  const header = ["SL", "Category", "Total SKU", "In Stock", "Low Stock", "Out of Stock"];
   const lines = [header.join(",")];
 
   rows.forEach((r) => {
     lines.push(
       [
+        String(r.sl),
         escapeCsvValue(r.name),
-        escapeCsvValue(r.sku),
-        escapeCsvValue(r.categoryPath),
-        String(r.stockQty),
-        String(r.reorderLevel),
-        escapeCsvValue(r.status),
-        escapeCsvValue(r.lastUpdated),
+        String(r.totalSku),
+        String(r.inStock),
+        String(r.lowStock),
+        String(r.outOfStock),
       ].join(",")
     );
   });
@@ -33,24 +33,22 @@ export function exportStockAsCsv(rows: StockReportRow[], filename = "stock-repor
   document.body.appendChild(a);
   a.click();
   a.remove();
-
   URL.revokeObjectURL(url);
 }
 
-export function exportStockAsPrintablePdf(rows: StockReportRow[], title = "Stock Report") {
+export function exportStockCategoryAsPrintablePdf(rows: StockCategoryReportRow[], title = "Stock Category Report") {
   const stamp = new Date().toLocaleString();
 
   const bodyRows = rows
     .map(
       (r) => `
         <tr>
+          <td>${r.sl}</td>
           <td>${r.name}</td>
-          <td>${r.sku}</td>
-          <td>${r.categoryPath}</td>
-          <td style="text-align:right">${r.stockQty}</td>
-          <td style="text-align:right">${r.reorderLevel}</td>
-          <td>${r.status}</td>
-          <td>${r.lastUpdated}</td>
+          <td style="text-align:right">${r.totalSku}</td>
+          <td style="text-align:right">${r.inStock}</td>
+          <td style="text-align:right">${r.lowStock}</td>
+          <td style="text-align:right">${r.outOfStock}</td>
         </tr>
       `
     )
@@ -79,13 +77,12 @@ export function exportStockAsPrintablePdf(rows: StockReportRow[], title = "Stock
       <table>
         <thead>
           <tr>
-            <th>Product</th>
-            <th>SKU</th>
+            <th>SL</th>
             <th>Category</th>
-            <th>Stock</th>
-            <th>Reorder</th>
-            <th>Status</th>
-            <th>Updated</th>
+            <th>Total SKU</th>
+            <th>In Stock</th>
+            <th>Low Stock</th>
+            <th>Out of Stock</th>
           </tr>
         </thead>
         <tbody>${bodyRows}</tbody>

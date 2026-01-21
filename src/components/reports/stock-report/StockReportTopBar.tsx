@@ -26,10 +26,10 @@ const StockReportTopBar: React.FC<Props> = ({ activeTab, onTabChange, period, on
           Stock Report
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Track inventory health, low stock risks, and stock movement insights.
+          Track inventory health, low stock risks, category stock, and stock movement trends.
         </p>
 
-        <div className="mt-4 inline-flex rounded-[4px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-1">
+        <div className="mt-4 inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
           <button
             type="button"
             onClick={() => onTabChange("dashboard")}

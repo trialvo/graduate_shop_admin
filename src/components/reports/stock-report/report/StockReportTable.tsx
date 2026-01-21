@@ -3,129 +3,74 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import Badge from "@/components/ui/badge/Badge";
-import type { StockLevelStatus, StockReportRow } from "../types";
+import type { StockCategoryReportRow } from "../types";
 
-type Props = { rows: StockReportRow[] };
-
-const statusBadge = (s: StockLevelStatus) => {
-  if (s === "in_stock") {
-    return (
-      <Badge size="sm" color="success" variant="light">
-        In Stock
-      </Badge>
-    );
-  }
-  if (s === "low_stock") {
-    return (
-      <Badge size="sm" color="warning" variant="light">
-        Low Stock
-      </Badge>
-    );
-  }
-  return (
-    <Badge size="sm" color="error" variant="light">
-      Out of Stock
-    </Badge>
-  );
+type Props = {
+  rows: StockCategoryReportRow[];
+  isLoading?: boolean;
 };
 
-const StockReportTable: React.FC<Props> = ({ rows }) => {
+const StockCategoryTable: React.FC<Props> = ({ rows, isLoading }) => {
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="w-full overflow-hidden rounded-[4px]">
         <div className="max-w-full overflow-x-auto custom-scrollbar">
-          <Table className="min-w-[1200px]">
+          <Table className="min-w-[1000px]">
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-950">
-                <TableCell isHeader className={cn("px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[80px]")}>
+                <TableCell isHeader className="w-[80px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Sl
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[320px]">
-                  Product
-                </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[160px]">
-                  SKU
-                </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[280px]">
+                <TableCell isHeader className="min-w-[320px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Category
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[120px] text-right">
-                  Stock
+                <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Total SKU
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px] text-right">
-                  Reorder
+                <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  In Stock
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px]">
-                  Status
+                <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Low Stock
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[140px]">
-                  Updated
+                <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Out of Stock
                 </TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {rows.map((r, idx) => {
-                const isLow = r.status === "low_stock";
-                const isOut = r.status === "out_of_stock";
-                return (
+              {isLoading &&
+                Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={`sk-${i}`} className="border-t border-gray-100 dark:border-gray-800">
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <TableCell key={`sk-${i}-${j}`} className="px-4 py-4">
+                        <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-800" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+
+              {!isLoading &&
+                rows.map((r) => (
                   <TableRow
-                    key={r.id}
+                    key={`${r.sl}-${r.name}`}
                     className="border-t border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.04]"
                   >
-                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {idx + 1}
+                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{r.sl}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
+                      {r.name}
                     </TableCell>
-
-                    <TableCell className="px-4 py-3">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-gray-900 dark:text-white truncate max-w-[360px]">
-                          {r.name}
-                        </div>
-                        <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{r.id}</div>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                      {r.sku}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                      {r.categoryPath}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-right">
-                      <span
-                        className={cn(
-                          "text-sm font-extrabold",
-                          isOut
-                            ? "text-error-600 dark:text-error-500"
-                            : isLow
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-gray-900 dark:text-white"
-                        )}
-                      >
-                        {r.stockQty}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                      {r.reorderLevel}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3">{statusBadge(r.status)}</TableCell>
-
-                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {r.lastUpdated}
-                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-200">{r.totalSku}</TableCell>
+                    <TableCell className="px-4 py-3 text-right text-sm font-semibold text-success-700 dark:text-success-400">{r.inStock}</TableCell>
+                    <TableCell className="px-4 py-3 text-right text-sm font-semibold text-amber-700 dark:text-amber-400">{r.lowStock}</TableCell>
+                    <TableCell className="px-4 py-3 text-right text-sm font-semibold text-error-700 dark:text-error-400">{r.outOfStock}</TableCell>
                   </TableRow>
-                );
-              })}
+                ))}
 
-              {rows.length === 0 && (
+              {!isLoading && rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={8} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <TableCell colSpan={6} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     No stock data found.
                   </TableCell>
                 </TableRow>
@@ -138,4 +83,4 @@ const StockReportTable: React.FC<Props> = ({ rows }) => {
   );
 };
 
-export default StockReportTable;
+export default StockCategoryTable;

@@ -2,11 +2,9 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { StockHealthSummary } from "../types";
+import type { StockHealthSummary } from "../types";
 
 type Props = { summary: StockHealthSummary };
-
-const money = (n: number) => `${n.toLocaleString()}৳`;
 
 const StockHealthCard: React.FC<Props> = ({ summary }) => {
   const total = Math.max(1, summary.inStock + summary.lowStock + summary.outOfStock);
@@ -16,11 +14,12 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
   const outPct = (summary.outOfStock / total) * 100;
 
   const ringStyle: React.CSSProperties = {
-    background: `conic-gradient(#10B981 0% ${inPct}%, #F59E0B ${inPct}% ${
-      inPct + lowPct
-    }%, #EF4444 ${inPct + lowPct}% ${inPct + lowPct + outPct}%, rgba(255,255,255,0.10) ${
-      inPct + lowPct + outPct
-    }% 100%)`,
+    background: `conic-gradient(
+      #10B981 0% ${inPct}%,
+      #F59E0B ${inPct}% ${inPct + lowPct}%,
+      #EF4444 ${inPct + lowPct}% ${inPct + lowPct + outPct}%,
+      rgba(255,255,255,0.10) ${inPct + lowPct + outPct}% 100%
+    )`,
   };
 
   return (
@@ -31,7 +30,26 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="text-base font-semibold text-gray-900 dark:text-white">Stock Health</div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-base font-semibold text-gray-900 dark:text-white">Stock Health</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Live stock distribution (in / low / out)
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "rounded-full border px-3 py-1 text-xs font-semibold",
+            summary.alert.active
+              ? "border-success-500/20 bg-success-500/10 text-success-700 dark:text-success-400"
+              : "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300"
+          )}
+        >
+          Alert: {summary.alert.active ? "ON" : "OFF"} • Limit: {summary.alert.limit}
+        </div>
+      </div>
+
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
       <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-12 md:items-center">
@@ -46,11 +64,9 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
             <div className="absolute inset-0 rounded-full" style={ringStyle} />
             <div className="absolute inset-[26px] rounded-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  Stock Value
-                </div>
-                <div className="mt-1 text-xl font-extrabold text-gray-900 dark:text-white">
-                  {money(summary.stockValue)}
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Active Items</div>
+                <div className="mt-1 text-3xl font-extrabold text-gray-900 dark:text-white">
+                  {summary.totalActiveItems}
                 </div>
               </div>
             </div>
