@@ -1,13 +1,15 @@
+// src/components/reports/visitor-report/VisitorsAreaChart.tsx
 "use client";
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { VisitorDayPoint } from "./types";
+import type { VisitorDayPoint } from "./types";
 
 type Props = {
   title: string;
   legend: string;
   points: VisitorDayPoint[];
+  metaText?: string;
 };
 
 function toXY(points: VisitorDayPoint[], w: number, h: number, pad: number) {
@@ -25,7 +27,7 @@ function pathLine(xy: Array<{ x: number; y: number }>) {
   return xy.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
 }
 
-const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
+const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points, metaText }) => {
   const w = 1200;
   const h = 360;
   const pad = 44;
@@ -35,6 +37,7 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
   const area = `${line} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`;
 
   const maxV = Math.max(1, ...points.map((p) => p.visitors));
+  const total = points.reduce((acc, p) => acc + p.visitors, 0);
 
   return (
     <div
@@ -44,11 +47,13 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="text-base font-semibold text-gray-900 dark:text-white">{title}</div>
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Peak: <span className="font-semibold">{maxV}</span> visitors
+            Total: <span className="font-semibold">{total}</span> • Peak:{" "}
+            <span className="font-semibold">{maxV}</span>
+            {metaText ? <span className="ml-2">• {metaText}</span> : null}
           </div>
         </div>
 
@@ -60,7 +65,6 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
 
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
-      {/* Scroll only inside chart on small */}
       <div className="mt-4 w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[980px]">
           <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[360px]">
@@ -71,7 +75,6 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
               </linearGradient>
             </defs>
 
-            {/* grid */}
             {[0, 1, 2, 3, 4, 5].map((g) => (
               <line
                 key={g}
@@ -84,16 +87,13 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
               />
             ))}
 
-            {/* area + line */}
             <path d={area} fill="url(#areaFillVisitors)" />
             <path d={line} className="stroke-brand-500" fill="none" strokeWidth="3" />
 
-            {/* dots */}
             {xy.map((p, idx) => (
               <circle key={idx} cx={p.x} cy={p.y} r="4" className="fill-brand-500" />
             ))}
 
-            {/* x labels (sparse) */}
             {xy.map((p, idx) => {
               const show = idx === 0 || idx === xy.length - 1 || idx % 4 === 0;
               if (!show) return null;
@@ -112,7 +112,6 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points }) => {
               );
             })}
 
-            {/* y labels */}
             {[0, 1, 2, 3, 4, 5].map((g) => {
               const v = Math.round((maxV * (5 - g)) / 5);
               const y = pad + (g * (h - pad * 2)) / 5;
