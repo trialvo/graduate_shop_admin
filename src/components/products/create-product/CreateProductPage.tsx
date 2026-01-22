@@ -307,7 +307,7 @@ function FlagsSection({
           [
             { key: "status", label: "Status" },
             { key: "featured", label: "Featured" },
-            { key: "free_delivery", label: "Free Delivery" },
+            // { key: "free_delivery", label: "Free Delivery" },
             { key: "best_deal", label: "Best Deal" },
           ] as const
         ).map((item) => (
