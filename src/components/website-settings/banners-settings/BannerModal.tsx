@@ -1,7 +1,8 @@
+// src/components/business-settings/banner-settings/BannerModal.tsx
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, UploadCloud, X, Crop as CropIcon } from "lucide-react";
+import { Crop as CropIcon, Image as ImageIcon, Link2, UploadCloud, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -11,15 +12,14 @@ import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import { cn } from "@/lib/utils";
 
-import {
-  createBanner,
-  getBannerById,
-  updateBanner,
-  type BannerApi,
-} from "@/api/banners.api";
+import { createBanner, getBannerById, updateBanner, type BannerApi } from "@/api/banners.api";
+import { getProducts, type ProductEntity } from "@/api/products.api";
+// ✅ adjust this import path if your categories api file name/path is different
+import { getChildCategories } from "@/api/categories.api";
+
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import type { BannerRow, Option } from "./types";
-import { ZONES, TYPES } from "./banner.constants";
+import { TYPES, ZONES } from "./banner.constants";
 import ImageCropperModal from "./BannerImageCropper";
 
 type Props = {
@@ -52,8 +52,32 @@ function getApiErrorMessage(err: unknown): string {
 
 const typeOptions: Option[] = TYPES.map((t) => ({ value: t, label: t }));
 
-function hasOwn(obj: object, key: string) {
-  return Object.prototype.hasOwnProperty.call(obj, key);
+type LinkMode = "manual" | "product" | "category";
+
+function encodePathSegment(v: string) {
+  // matches your example: spaces become %20
+  return encodeURIComponent(v);
+}
+
+function buildProductPath(p: Pick<ProductEntity, "id" | "slug">) {
+  return `/products/${p.slug}/${p.id}/`;
+}
+
+function buildCategoryPath(c: { id: number; name: string }) {
+  return `/category/${encodePathSegment(c.name)}/?childId=${c.id}`;
+}
+
+function detectLinkModeFromPath(path: string): LinkMode {
+  const v = (path ?? "").trim();
+  if (!v) return "manual";
+  if (v.startsWith("/products/")) return "product";
+  if (v.startsWith("/category/")) return "category";
+  return "manual";
+}
+
+function pickList<T>(payload: any, key: string): T[] {
+  const v = payload?.[key];
+  return Array.isArray(v) ? (v as T[]) : [];
 }
 
 export default function BannerModal({ open, mode, initial, onClose }: Props) {
@@ -80,8 +104,13 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   const [zone, setZone] = useState<string>(ZONES[0] ?? "Home Top");
   const [type, setType] = useState<string>("Default");
 
-  // ✅ new
+  // ✅ dynamic path
   const [path, setPath] = useState<string>("");
+  const [linkMode, setLinkMode] = useState<LinkMode>("manual");
+
+  // product/category list state
+  const [productSearch, setProductSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
 
   const [featured, setFeatured] = useState(false);
   const [status, setStatus] = useState(true);
@@ -99,10 +128,60 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
   const [cropSourceName, setCropSourceName] = useState<string | undefined>(undefined);
 
-  const zoneOptions: Option[] = useMemo(
-    () => ZONES.map((z) => ({ value: z, label: z })),
+  const zoneOptions: Option[] = useMemo(() => ZONES.map((z) => ({ value: z, label: z })), []);
+
+  const linkModeOptions: Option[] = useMemo(
+    () => [
+      { value: "manual", label: "Manual" },
+      { value: "product", label: "Product" },
+      { value: "category", label: "Category" },
+    ],
     []
   );
+
+  // ✅ Products list (render list, select -> auto path)
+  const productsQuery = useQuery({
+    queryKey: ["bannerPathProducts", productSearch],
+    queryFn: () =>
+      getProducts({
+        search: productSearch.trim() ? productSearch.trim() : undefined,
+        limit: 50,
+        offset: 0,
+      }),
+    enabled: open && linkMode === "product",
+    staleTime: 15_000,
+    retry: 1,
+  });
+
+  const productList: ProductEntity[] = useMemo(() => {
+    const data = productsQuery.data as any;
+    return pickList<ProductEntity>(data, "products");
+  }, [productsQuery.data]);
+
+  // ✅ Child categories list (render list, select -> auto path)
+  const childCatsQuery = useQuery({
+    queryKey: ["bannerPathChildCategories", categorySearch],
+    queryFn: () =>
+      getChildCategories({
+        search: categorySearch.trim() ? categorySearch.trim() : undefined,
+        limit: 80,
+        offset: 0,
+      } as any),
+    enabled: open && linkMode === "category",
+    staleTime: 15_000,
+    retry: 1,
+  });
+
+  const childCategoryList: Array<{ id: number; name: string; sub_category_id?: number }> = useMemo(() => {
+    const data = childCatsQuery.data as any;
+    return pickList<any>(data, "data")?.length
+      ? (data.data as any[])
+      : pickList<any>(data, "childCategories")?.length
+        ? (data.childCategories as any[])
+        : pickList<any>(data, "categories")?.length
+          ? (data.categories as any[])
+          : Array.isArray(data) ? data : [];
+  }, [childCatsQuery.data]);
 
   useEffect(() => {
     if (!open) return;
@@ -113,6 +192,9 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
       setType("Default");
 
       setPath("");
+      setLinkMode("manual");
+      setProductSearch("");
+      setCategorySearch("");
 
       setFeatured(false);
       setStatus(true);
@@ -157,7 +239,12 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
     setTitle(b.title ?? "");
     setZone(b.zone ?? (ZONES[0] ?? "Home Top"));
     setType(b.type ?? "Default");
-    setPath(b.path ?? "");
+
+    const nextPath = b.path ?? "";
+    setPath(nextPath);
+    setLinkMode(detectLinkModeFromPath(nextPath));
+    setProductSearch("");
+    setCategorySearch("");
 
     setFeatured(Boolean(b.featured));
     setStatus(Boolean(b.status));
@@ -366,6 +453,27 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const onChangeLinkMode = (v: LinkMode) => {
+    setLinkMode(v);
+    if (v === "manual") return;
+
+    // keep current path, but clear searches
+    setProductSearch("");
+    setCategorySearch("");
+  };
+
+  const selectProduct = (p: ProductEntity) => {
+    const next = buildProductPath({ id: p.id, slug: p.slug });
+    setPath(next);
+    toast.success("Product path set");
+  };
+
+  const selectChildCategory = (c: { id: number; name: string }) => {
+    const next = buildCategoryPath({ id: c.id, name: c.name });
+    setPath(next);
+    toast.success("Category path set");
+  };
+
   if (!open) return null;
 
   return (
@@ -380,7 +488,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
 
         <div className="relative w-[96vw] max-w-6xl overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+          <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-4 py-4 dark:border-gray-800 sm:px-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {mode === "create" ? "Add New Banner" : "Edit Banner"}
@@ -405,25 +513,19 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
           </div>
 
           {/* Body */}
-          <div className="max-h-[800px] overflow-y-auto px-6 py-5">
+          <div className="max-h-[80vh] overflow-y-auto px-4 py-5 sm:px-6">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               {/* Left */}
               <div className="space-y-6 lg:col-span-2">
-                <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Banner Information
-                  </h4>
+                <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Banner Information</h4>
 
                   <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                     <div className="space-y-2 md:col-span-2">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Title <span className="text-error-500">*</span>
                       </p>
-                      <Input
-                        placeholder="New banner"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
+                      <Input placeholder="New banner" value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
 
                     <div className="space-y-2">
@@ -450,18 +552,164 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                       />
                     </div>
 
+                    {/* ✅ Dynamic Path Builder */}
                     <div className="space-y-2 md:col-span-2">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Path (optional)
-                      </p>
-                      <Input
-                        placeholder="/campaign/winter-sale or https://..."
-                        value={path}
-                        onChange={(e) => setPath(e.target.value)}
-                      />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Empty রাখলে backend এ <b>null</b> হবে।
-                      </p>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Path (optional)</p>
+
+                        <div className="w-full sm:w-[240px]">
+                          <Select
+                            options={linkModeOptions}
+                            placeholder="Path source"
+                            defaultValue={linkMode}
+                            onChange={(v) => onChangeLinkMode(String(v) as LinkMode)}
+                          />
+                        </div>
+                      </div>
+
+                      {linkMode === "manual" ? (
+                        <>
+                          <Input
+                            placeholder="/campaign/winter-sale or https://..."
+                            value={path}
+                            onChange={(e) => setPath(e.target.value)}
+                          />
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Empty রাখলে backend এ <b>null</b> হবে।
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                                <Link2 size={16} />
+                                {linkMode === "product" ? "Select Product" : "Select Category"}
+                              </div>
+
+                              <div className="w-full sm:w-[320px]">
+                                <Input
+                                  placeholder={linkMode === "product" ? "Search product..." : "Search category..."}
+                                  value={linkMode === "product" ? productSearch : categorySearch}
+                                  onChange={(e) => {
+                                    const v = e.target.value;
+                                    if (linkMode === "product") setProductSearch(v);
+                                    else setCategorySearch(v);
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Selected path preview */}
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="text-xs text-gray-600 dark:text-gray-300">Selected path</div>
+                              <div className="w-full sm:max-w-[520px]">
+                                <div className="truncate rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                                  {path?.trim() ? path.trim() : "—"}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* List */}
+                            <div className="mt-3 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                              <div className="border-b border-gray-200 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                                {linkMode === "product" ? (
+                                  productsQuery.isFetching ? "Loading products..." : `${productList.length} products`
+                                ) : childCatsQuery.isFetching ? (
+                                  "Loading categories..."
+                                ) : (
+                                  `${childCategoryList.length} categories`
+                                )}
+                              </div>
+
+                              <div className="max-h-[260px] overflow-y-auto">
+                                {linkMode === "product" ? (
+                                  productsQuery.isLoading ? (
+                                    <div className="p-3">
+                                      <div className="h-9 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+                                      <div className="mt-2 h-9 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+                                      <div className="mt-2 h-9 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+                                    </div>
+                                  ) : productList.length ? (
+                                    productList.map((p) => (
+                                      <button
+                                        key={p.id}
+                                        type="button"
+                                        className={cn(
+                                          "w-full px-3 py-3 text-left transition",
+                                          "hover:bg-gray-50 dark:hover:bg-white/[0.03]",
+                                          "border-b border-gray-100 dark:border-gray-800 last:border-b-0"
+                                        )}
+                                        onClick={() => selectProduct(p)}
+                                        disabled={pending}
+                                      >
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div className="min-w-0">
+                                            <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                              {p.name}
+                                            </div>
+                                            <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                                              slug: {p.slug} • id: {p.id}
+                                            </div>
+                                          </div>
+
+                                          <div className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                            Set
+                                          </div>
+                                        </div>
+                                      </button>
+                                    ))
+                                  ) : (
+                                    <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No products found.</div>
+                                  )
+                                ) : childCatsQuery.isLoading ? (
+                                  <div className="p-3">
+                                    <div className="h-9 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+                                    <div className="mt-2 h-9 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+                                    <div className="mt-2 h-9 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+                                  </div>
+                                ) : childCategoryList.length ? (
+                                  childCategoryList.map((c) => (
+                                    <button
+                                      key={c.id}
+                                      type="button"
+                                      className={cn(
+                                        "w-full px-3 py-3 text-left transition",
+                                        "hover:bg-gray-50 dark:hover:bg-white/[0.03]",
+                                        "border-b border-gray-100 dark:border-gray-800 last:border-b-0"
+                                      )}
+                                      onClick={() => selectChildCategory({ id: c.id, name: c.name })}
+                                      disabled={pending}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                            {c.name}
+                                          </div>
+                                          <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                                            childId: {c.id}
+                                            {typeof c.sub_category_id === "number" ? ` • subId: ${c.sub_category_id}` : ""}
+                                          </div>
+                                        </div>
+
+                                        <div className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                          Set
+                                        </div>
+                                      </div>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No categories found.</div>
+                                )}
+                              </div>
+                            </div>
+
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                              Select করলে auto path set হবে।
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -469,12 +717,8 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                     <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            Featured
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Highlight this banner
-                          </p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Featured</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Highlight this banner</p>
                         </div>
                         <Switch label="" defaultChecked={featured} onChange={(c) => setFeatured(c)} />
                       </div>
@@ -483,12 +727,8 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                     <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            Status
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {status ? "Active" : "Inactive"}
-                          </p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Status</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{status ? "Active" : "Inactive"}</p>
                         </div>
                         <Switch label="" defaultChecked={status} onChange={(c) => setStatus(c)} />
                       </div>
@@ -496,27 +736,21 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                   </div>
 
                   {mode === "edit" && bannerQuery.isFetching ? (
-                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                      Loading banner...
-                    </p>
+                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">Loading banner...</p>
                   ) : null}
                 </div>
               </div>
 
               {/* Right Upload */}
               <div className="space-y-6">
-                <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Banner Image
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Upload করলে auto crop popup আসবে (3:1)
-                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Banner Image</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Upload করলে auto crop popup আসবে (3:1)</p>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button variant="outline" onClick={pickImage} disabled={pending}>
                         Upload
                       </Button>
@@ -645,7 +879,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-4 py-4 dark:border-gray-800 sm:flex-row sm:justify-end sm:px-6">
             <Button variant="outline" onClick={() => !pending && onClose()} disabled={pending}>
               Cancel
             </Button>
