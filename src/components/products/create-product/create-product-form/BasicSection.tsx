@@ -2,7 +2,7 @@ import Input from "@/components/form/input/InputField";
 import Section from "./Section";
 import Select from "@/components/form/Select";
 
-type Option = { value: string; label: string };
+type Option = { value: string; label: string; status?: boolean };
 type SkuMode = "auto" | "manual";
 
 type VariantRow = {

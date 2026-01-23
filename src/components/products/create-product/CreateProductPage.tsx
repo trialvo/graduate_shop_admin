@@ -575,6 +575,7 @@ export default function CreateProductPage() {
       mainCategories.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
+        status: c.status !== false,
       })),
     [mainCategories],
   );
@@ -584,6 +585,7 @@ export default function CreateProductPage() {
       subCategories.map((s: any) => ({
         value: String(s.id),
         label: String(s.name),
+        status: s.status !== false,
       })),
     [subCategories],
   );
@@ -593,6 +595,7 @@ export default function CreateProductPage() {
       childCategories.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
+        status: c.status !== false,
       })),
     [childCategories],
   );
