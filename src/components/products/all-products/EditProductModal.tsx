@@ -29,6 +29,7 @@ import {
 } from "@/api/categories.api";
 import { getAttributes } from "@/api/attributes.api";
 import { getColors } from "@/api/colors.api";
+import { getBrands } from "@/api/brands.api";
 import BaseModal from "./BaseModal";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
@@ -239,6 +240,12 @@ export default function EditProductModal({
     staleTime: 60_000,
   });
 
+  const { data: brandsRes, isFetching: brandsFetching } = useQuery({
+    queryKey: ["brands-all"],
+    queryFn: () => getBrands({ limit: 500, offset: 0 }),
+    staleTime: 60_000,
+  });
+
   const mains = React.useMemo(() => unwrapList<any>(mainRes), [mainRes]);
   const subs = React.useMemo(() => unwrapList<any>(subRes), [subRes]);
   const childs = React.useMemo(() => unwrapList<any>(childRes), [childRes]);
@@ -248,6 +255,10 @@ export default function EditProductModal({
     [colorsRes],
   );
   const attrsRaw = React.useMemo(() => unwrapList<any>(attrsRes), [attrsRes]);
+  const brandsRaw = React.useMemo(
+    () => unwrapList<any>(brandsRes),
+    [brandsRes],
+  );
 
   const colorNameById = React.useMemo(
     () =>
@@ -449,11 +460,13 @@ export default function EditProductModal({
   }, [childs, subCategoryId]);
 
   const childOptions: Option[] = React.useMemo(
-    () =>
-      availableChild.map((c: any) => ({
+    () => [
+      { value: "", label: "Select child category (optional)" },
+      ...availableChild.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
       })),
+    ],
     [availableChild],
   );
 
@@ -463,6 +476,17 @@ export default function EditProductModal({
       label: String(a.name ?? a.title ?? `#${a.id}`),
     }));
   }, [attrsRaw]);
+
+  const brandOptions: Option[] = React.useMemo(
+    () => [
+      { value: "", label: "Select brand" },
+      ...brandsRaw.map((b: any) => ({
+        value: String(b.id),
+        label: String(b.name ?? b.title ?? `#${b.id}`),
+      })),
+    ],
+    [brandsRaw],
+  );
 
   const colorOptions: Option[] = React.useMemo(() => {
     return colorsRaw.map((c: any) => ({
@@ -498,10 +522,13 @@ export default function EditProductModal({
       setChildCategoryId(0);
       return;
     }
-    if (
-      !availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))
-    ) {
-      setChildCategoryId(Number(availableChild[0].id));
+    // ✅ child category is optional
+    // - keep 0 as "not selected"
+    // - if an invalid child id exists, reset to 0 (do not auto-pick the first)
+    if (!childCategoryId) return;
+
+    if (!availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))) {
+      setChildCategoryId(0);
     }
   }, [enabled, availableChild, childCategoryId]);
 
@@ -728,8 +755,7 @@ export default function EditProductModal({
           !name.trim() ||
           !slug.trim() ||
           !mainCategoryId ||
-          !subCategoryId ||
-          !childCategoryId
+          !subCategoryId
         }
       >
         Save Changes
@@ -745,7 +771,8 @@ export default function EditProductModal({
         subFetching ||
         childFetching ||
         colorsFetching ||
-        attrsFetching));
+        attrsFetching ||
+        brandsFetching));
 
   return (
     <>
@@ -847,11 +874,28 @@ export default function EditProductModal({
                   <Select
                     key={`child-${subCategoryId}-${childCategoryId}`}
                     options={childOptions}
-                    placeholder="Select child category"
-                    defaultValue={
-                      childCategoryId ? String(childCategoryId) : ""
-                    }
-                    onChange={(v) => setChildCategoryId(Number(v))}
+                    placeholder="Select child category (optional)"
+                    defaultValue={childCategoryId ? String(childCategoryId) : ""}
+                    onChange={(v) => {
+                      const id = v ? Number(v) : 0;
+                      setChildCategoryId(id);
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Brand
+                  </p>
+                  <Select
+                    key={`brand-${brandId}`}
+                    options={brandOptions}
+                    placeholder="Select brand"
+                    defaultValue={brandId ? String(brandId) : ""}
+                    onChange={(v) => {
+                      const id = v ? Number(v) : 0;
+                      setBrandId(id);
+                    }}
                   />
                 </div>
 
