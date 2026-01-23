@@ -273,18 +273,12 @@ export default function EditProductModal({
 
   const colorHexById = React.useMemo(
     () =>
-      new Map(
-        colorsRaw.map((c: any) => [
-          Number(c.id),
-          String(c.hex ?? ""),
-        ]),
-      ),
+      new Map(colorsRaw.map((c: any) => [Number(c.id), String(c.hex ?? "")])),
     [colorsRaw],
   );
 
   const getColorLabel = React.useCallback(
-    (colorId: number) =>
-      colorNameById.get(Number(colorId)) ?? `#${colorId}`,
+    (colorId: number) => colorNameById.get(Number(colorId)) ?? `#${colorId}`,
     [colorNameById],
   );
 
@@ -343,7 +337,7 @@ export default function EditProductModal({
 
   // variations
   const [variations, setVariations] = React.useState<VariationRow[]>([]);
-  console.log("🚀 ~ EditProductModal ~ variations:", variations)
+  console.log("🚀 ~ EditProductModal ~ variations:", variations);
   const [varEdit, setVarEdit] = React.useState<InlineEditState>({});
   const [addDraft, setAddDraft] = React.useState<VariationDraft>({
     color_id: 0,
@@ -533,7 +527,9 @@ export default function EditProductModal({
     // - if an invalid child id exists, reset to 0 (do not auto-pick the first)
     if (!childCategoryId) return;
 
-    if (!availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))) {
+    if (
+      !availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))
+    ) {
       setChildCategoryId(0);
     }
   }, [enabled, availableChild, childCategoryId]);
@@ -881,7 +877,9 @@ export default function EditProductModal({
                     key={`child-${subCategoryId}-${childCategoryId}`}
                     options={childOptions}
                     placeholder="Select child category (optional)"
-                    defaultValue={childCategoryId ? String(childCategoryId) : ""}
+                    defaultValue={
+                      childCategoryId ? String(childCategoryId) : ""
+                    }
                     onChange={(v) => {
                       const id = v ? Number(v) : 0;
                       setChildCategoryId(id);
@@ -905,7 +903,7 @@ export default function EditProductModal({
                   />
                 </div>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Attribute
                   </p>
@@ -916,7 +914,7 @@ export default function EditProductModal({
                     defaultValue={attributeId ? String(attributeId) : ""}
                     onChange={(v) => setAttributeId(Number(v))}
                   />
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -1154,6 +1152,18 @@ export default function EditProductModal({
                   Total: {variations.length}
                 </span>
               </div>
+              <div className="px-5 py-1 w-[50%]">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Attribute
+                </p>
+                <Select
+                  key={`attr-${attributeId}`}
+                  options={attributeOptions}
+                  placeholder="Select attribute"
+                  defaultValue={attributeId ? String(attributeId) : ""}
+                  onChange={(v) => setAttributeId(Number(v))}
+                />
+              </div>
 
               {/* Add row */}
               <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
@@ -1368,7 +1378,8 @@ export default function EditProductModal({
 
                         const colorId = getVariationColorId(v);
                         const variantId = getVariationVariantId(v);
-                        const colorLabel = v.color?.name ?? getColorLabel(colorId);
+                        const colorLabel =
+                          v.color?.name ?? getColorLabel(colorId);
                         const colorHex = v.color?.hex ?? getColorHex(colorId);
                         const variantLabel = v.variant?.name ?? `#${variantId}`;
 
@@ -1396,7 +1407,9 @@ export default function EditProductModal({
                                 <span className="flex items-center gap-2">
                                   <span
                                     className="!w-2 !h-2"
-                                    style={{ background: colorHex || "#e5e7eb" }}
+                                    style={{
+                                      background: colorHex || "#e5e7eb",
+                                    }}
                                   ></span>
                                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
                                     {colorLabel}

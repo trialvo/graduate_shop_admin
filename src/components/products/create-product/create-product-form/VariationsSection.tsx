@@ -3,6 +3,7 @@ import Section from "./Section";
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
+import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 
 type Option = { value: string; label: string };
@@ -22,6 +23,10 @@ type VariantRow = {
   active: boolean;
 };
 
+const SKU_MAX_LENGTH = 21;
+const SKU_PRODUCT_LENGTH = 5;
+const SKU_COLOR_LENGTH = 5;
+const SKU_SIZE_LENGTH = 4;
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{children}</p>;
@@ -32,10 +37,40 @@ function safeNumber(input: string, fallback: number) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function cleanSkuPart(input: string) {
+  return input.toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
+function fixedPart(input: string, length: number) {
+  const cleaned = cleanSkuPart(input).slice(0, length);
+  return cleaned.padEnd(length, "X");
+}
+
+function buildSku({
+  productSlug,
+  colorName,
+  variantName,
+  colorId,
+  variantId,
+}: {
+  productSlug: string;
+  colorName?: string;
+  variantName?: string;
+  colorId: number;
+  variantId: number;
+}) {
+  const productPart = fixedPart(productSlug || "PRODUCT", SKU_PRODUCT_LENGTH);
+  const colorPart = fixedPart(colorName ?? `C${colorId}`, SKU_COLOR_LENGTH);
+  const sizePart = fixedPart(variantName ?? `V${variantId}`, SKU_SIZE_LENGTH);
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  const sku = `${productPart}-${colorPart}-${sizePart}-${String(rand)}`;
+  return sku.slice(0, SKU_MAX_LENGTH);
+}
 
 function VariationsSection({
   colors,
   availableVariants,
+  productSlug,
 
   attributeId,
   setAttributeId,
@@ -55,6 +90,7 @@ function VariationsSection({
 }: {
   colors: any[];
   availableVariants: AttributeVariant[];
+  productSlug: string;
 
   attributeId: number;
   setAttributeId: (n: number) => void;
@@ -247,7 +283,35 @@ function VariationsSection({
                         </td>
 
                         <td className="px-4 py-4">
-                          <Input value={r.sku} onChange={(e) => updateRow(r.key, { sku: String(e.target.value) })} />
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={r.sku}
+                              onChange={(e) =>
+                                updateRow(r.key, {
+                                  sku: String(e.target.value).slice(0, SKU_MAX_LENGTH),
+                                })
+                              }
+                              wrapperClassName="min-w-[220px]"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                updateRow(r.key, {
+                                  sku: buildSku({
+                                    productSlug,
+                                    colorName: color?.name,
+                                    variantName,
+                                    colorId: r.colorId,
+                                    variantId: r.variantId,
+                                  }),
+                                })
+                              }
+                            >
+                              Generate
+                            </Button>
+                          </div>
                         </td>
 
                         <td className="px-4 py-4">

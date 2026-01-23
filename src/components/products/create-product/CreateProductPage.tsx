@@ -26,6 +26,10 @@ import SeoSection from "./create-product-form/SeoSection";
 
 type Option = { value: string; label: string };
 type SkuMode = "auto" | "manual";
+const SKU_MAX_LENGTH = 21;
+const SKU_PRODUCT_LENGTH = 5;
+const SKU_COLOR_LENGTH = 5;
+const SKU_SIZE_LENGTH = 4;
 
 type VariantRow = {
   key: string; // `${colorId}__${variantId}`
@@ -57,7 +61,37 @@ function genSkuFromParts(parts: string[]) {
     .filter(Boolean)
     .slice(0, 8);
   const rand = Math.floor(1000 + Math.random() * 9000);
-  return [...cleaned, String(rand)].join("-");
+  const sku = [...cleaned, String(rand)].join("-");
+  return sku.length > SKU_MAX_LENGTH ? sku.slice(0, SKU_MAX_LENGTH) : sku;
+}
+
+function cleanSkuPart(input: string) {
+  return input.toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
+function fixedPart(input: string, length: number) {
+  const cleaned = cleanSkuPart(input).slice(0, length);
+  return cleaned.padEnd(length, "X");
+}
+
+function buildSkuFromNames({
+  productBase,
+  colorName,
+  variantName,
+  colorId,
+  variantId,
+}: {
+  productBase: string;
+  colorName?: string;
+  variantName?: string;
+  colorId: number;
+  variantId: number;
+}) {
+  const productPart = fixedPart(productBase || "PRODUCT", SKU_PRODUCT_LENGTH);
+  const colorPart = fixedPart(colorName ?? `C${colorId}`, SKU_COLOR_LENGTH);
+  const sizePart = fixedPart(variantName ?? `V${variantId}`, SKU_SIZE_LENGTH);
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `${productPart}-${colorPart}-${sizePart}-${String(rand)}`.slice(0, SKU_MAX_LENGTH);
 }
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -80,7 +114,9 @@ function ensureMatrixRows(
   selectedVariantIds: number[],
   prev: VariantRow[],
   defaults: { buying: number; selling: number; discount: number },
-  skuBaseParts: string[],
+  productBase: string,
+  colorNameById: Map<number, string>,
+  variantNameById: Map<number, string>,
 ) {
   const map = new Map(prev.map((r) => [r.key, r] as const));
   const next: VariantRow[] = [];
@@ -99,7 +135,7 @@ function ensureMatrixRows(
           sellingPrice: defaults.selling,
           discount: defaults.discount,
           stock: 0,
-          sku: genSkuFromParts([...skuBaseParts, `C${colorId}`, `V${variantId}`]),
+          sku: "",
           active: true,
         },
       );
@@ -219,12 +255,12 @@ function DescriptionsSection({
   return (
     <Section title="Descriptions" description="Short and long description.">
       <div className="space-y-6">
-        <RichTextEditor
+        {/* <RichTextEditor
           label="Short Description"
           value={shortDescription}
           onChange={setShortDescription}
           heightClassName="min-h-[160px]"
-        />
+        /> */}
         <RichTextEditor
           label="Long Description"
           value={longDescription}
@@ -491,17 +527,6 @@ export default function CreateProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skuMode, productName, brandId, mainCategoryId]);
 
-  // -------------------- Ensure matrix rows when selections change --------------------
-  useEffect(() => {
-    const skuParts = [skuBase || "SKU", productSlug || "PRODUCT"].filter(Boolean);
-
-    const next = ensureMatrixRows(selectedColorIds, selectedVariantIds, matrix, { buying: 0, selling: 0, discount: 0 }, skuParts);
-
-    const same = next.length === matrix.length && next.every((n, i) => matrix[i]?.key === n.key);
-    if (!same) setMatrix(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedColorIds, selectedVariantIds]);
-
   // -------------------- Options --------------------
   const mainOptions: Option[] = useMemo(
     () =>
@@ -560,6 +585,33 @@ export default function CreateProductPage() {
     const byId = new Map(colors.map((c: any) => [Number(c.id), c]));
     return selectedColorIds.map((id) => byId.get(Number(id))).filter(Boolean);
   }, [colors, selectedColorIds]);
+
+  const colorNameById = useMemo(() => {
+    return new Map(colors.map((c: any) => [Number(c.id), String(c.name ?? "")]));
+  }, [colors]);
+
+  const variantNameById = useMemo(() => {
+    return new Map(availableVariants.map((v) => [Number(v.id), String(v.name ?? "")]));
+  }, [availableVariants]);
+
+  // -------------------- Ensure matrix rows when selections change --------------------
+  useEffect(() => {
+    const productBase = productSlug || skuBase || "PRODUCT";
+
+    const next = ensureMatrixRows(
+      selectedColorIds,
+      selectedVariantIds,
+      matrix,
+      { buying: 0, selling: 0, discount: 0 },
+      productBase,
+      colorNameById,
+      variantNameById,
+    );
+
+    const same = next.length === matrix.length && next.every((n, i) => matrix[i]?.key === n.key);
+    if (!same) setMatrix(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedColorIds, selectedVariantIds, productSlug, skuBase, colorNameById, variantNameById]);
 
   // -------------------- Matrix helpers --------------------
   const toggleVariantId = (id: number) => {
@@ -740,6 +792,7 @@ export default function CreateProductPage() {
       <VariationsSection
         colors={colors}
         availableVariants={availableVariants}
+        productSlug={productSlug}
         attributeId={attributeId}
         setAttributeId={setAttributeId}
         attributeOptions={attributeOptions}
