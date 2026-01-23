@@ -28,6 +28,7 @@ import {
   getAdminUsers,
   type AdminUserEntity,
 } from "@/api/admin-users.api";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
@@ -79,6 +80,8 @@ function CustomerRow({
   onPick: () => void;
 }) {
   const img = toPublicUrlSafe(u.img_path);
+  const fallback = imageFallbackSvgDataUri(userFullName(u));
+  const imageSrc = img ? toPublicUrl(img) : fallback;
   const phone = firstVerifiedPhone(u);
   const addrCount = Array.isArray(u.addresses) ? u.addresses.length : 0;
 
@@ -95,18 +98,19 @@ function CustomerRow({
     >
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
-          {img ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={toPublicUrl(img)}
-              alt={userFullName(u)}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-gray-500 dark:text-gray-400">
-              <User2 size={18} />
-            </div>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageSrc}
+            alt={userFullName(u)}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={(event) => {
+              const target = event.currentTarget;
+              if (target.src !== fallback) {
+                target.src = fallback;
+              }
+            }}
+          />
         </div>
 
         <div className="min-w-0 flex-1">

@@ -38,6 +38,7 @@ import {
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 
 import { cn } from "@/lib/utils";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 import {
@@ -480,11 +481,8 @@ export default function CustomersListPage() {
                 </TableRow>
               ) : (
                 filtered.map((row) => {
-                  const avatarLetter =
-                    row.name.trim().slice(0, 1).toUpperCase() || "C";
-                  const imgUrl = row.img_path
-                    ? toPublicUrl(row.img_path)
-                    : null;
+                  const fallback = imageFallbackSvgDataUri(row.name);
+                  const imgUrl = row.img_path ? toPublicUrl(row.img_path) : fallback;
 
                   const verified = Boolean(
                     row.is_fully_verified || row.is_email_verified
@@ -508,18 +506,19 @@ export default function CustomersListPage() {
                       <TableCell className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="relative h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
-                            {imgUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={imgUrl}
-                                alt={row.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                {avatarLetter}
-                              </div>
-                            )}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imgUrl}
+                              alt={row.name}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              onError={(event) => {
+                                const target = event.currentTarget;
+                                if (target.src !== fallback) {
+                                  target.src = fallback;
+                                }
+                              }}
+                            />
                           </div>
 
                           <div className="min-w-0">

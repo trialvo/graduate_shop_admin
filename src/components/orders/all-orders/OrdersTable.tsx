@@ -17,6 +17,8 @@ import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
 import { cn } from "@/lib/utils";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 import {
   ordersKeys,
@@ -232,19 +234,24 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Customer (single-line content to prevent height growth) */}
                   <td className="px-4 py-4">
+                    {(() => {
+                      const fallback = imageFallbackSvgDataUri(r.customerName);
+                      const imageSrc = r.customerImage ? toPublicUrl(r.customerImage) : fallback;
+                      return (
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                        {r.customerImage ? (
-                          <img
-                            src={r.customerImage}
-                            alt={r.customerName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs font-semibold text-gray-500">
-                            IMG
-                          </span>
-                        )}
+                        <img
+                          src={imageSrc}
+                          alt={r.customerName}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          onError={(event) => {
+                            const target = event.currentTarget;
+                            if (target.src !== fallback) {
+                              target.src = fallback;
+                            }
+                          }}
+                        />
                       </div>
 
                       <div className="min-w-0">
@@ -263,6 +270,8 @@ export default function OrdersTable({ rows }: Props) {
                         </div>
                       </div>
                     </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Order Info */}

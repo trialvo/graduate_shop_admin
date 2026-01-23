@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import Button from "@/components/ui/button/Button";
 import type { ProfileUser } from "../types";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
@@ -9,13 +10,6 @@ type Props = {
   onSelectAvatarFile: (file: File) => void;
   uploading?: boolean;
 };
-
-function initials(firstName: string, lastName: string): string {
-  const a = (firstName?.[0] ?? "").toUpperCase();
-  const b = (lastName?.[0] ?? "").toUpperCase();
-  const out = `${a}${b}`.trim();
-  return out || "U";
-}
 
 export default function ProfileOverviewCard({
   user,
@@ -28,6 +22,8 @@ export default function ProfileOverviewCard({
     const n = `${user.firstName} ${user.lastName}`.trim();
     return n || "—";
   }, [user.firstName, user.lastName]);
+  const fallback = useMemo(() => imageFallbackSvgDataUri(name), [name]);
+  const avatarSrc = user.avatarUrl ? toPublicUrl(user.avatarUrl) : fallback;
 
   const statusClass =
     user.status === "active" ? "bg-success-600 text-white" : "bg-gray-600 text-white";
@@ -37,13 +33,18 @@ export default function ProfileOverviewCard({
       <div className="flex flex-col items-center text-center">
         <div className="relative">
           <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
-            {user.avatarUrl ? (
-              <img src={toPublicUrl(user.avatarUrl)} alt={name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-gray-700 dark:text-gray-200">
-                {initials(user.firstName, user.lastName)}
-              </div>
-            )}
+            <img
+              src={avatarSrc}
+              alt={name}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              onError={(event) => {
+                const target = event.currentTarget;
+                if (target.src !== fallback) {
+                  target.src = fallback;
+                }
+              }}
+            />
           </div>
 
           <span
