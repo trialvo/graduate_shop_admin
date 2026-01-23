@@ -115,6 +115,39 @@ function normalizeId(value: number) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+const SKU_MAX_LENGTH = 21;
+const SKU_PRODUCT_LENGTH = 5;
+const SKU_COLOR_LENGTH = 5;
+const SKU_SIZE_LENGTH = 4;
+
+function cleanSkuPart(input: string) {
+  return input.toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
+function fixedPart(input: string, length: number) {
+  const cleaned = cleanSkuPart(input).slice(0, length);
+  return cleaned.padEnd(length, "X");
+}
+
+function buildSku({
+  productBase,
+  colorName,
+  variantName,
+}: {
+  productBase: string;
+  colorName: string;
+  variantName: string;
+}) {
+  const productPart = fixedPart(productBase || "PRODUCT", SKU_PRODUCT_LENGTH);
+  const colorPart = fixedPart(colorName || "COLOR", SKU_COLOR_LENGTH);
+  const sizePart = fixedPart(variantName || "SIZE", SKU_SIZE_LENGTH);
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `${productPart}-${colorPart}-${sizePart}-${String(rand)}`.slice(
+    0,
+    SKU_MAX_LENGTH,
+  );
+}
+
 function readId(value: unknown) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -269,6 +302,17 @@ export default function EditProductModal({
         ]),
       ),
     [colorsRaw],
+  );
+
+  const brandNameById = React.useMemo(
+    () =>
+      new Map(
+        brandsRaw.map((b: any) => [
+          Number(b.id),
+          String(b.name ?? b.title ?? `#${b.id}`),
+        ]),
+      ),
+    [brandsRaw],
   );
 
   const colorHexById = React.useMemo(
@@ -499,6 +543,12 @@ export default function EditProductModal({
     if (!attributeId) return [];
     return buildVariantOptionsForAttribute(attributeId, attrsRaw);
   }, [attributeId, attrsRaw]);
+
+  const variantLabelById = React.useMemo(() => {
+    return new Map(
+      variantOptionsFromAttr.map((v) => [Number(v.value), String(v.label)]),
+    );
+  }, [variantOptionsFromAttr]);
 
   // keep sub/child valid
   React.useEffect(() => {
@@ -1297,12 +1347,45 @@ export default function EditProductModal({
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                       SKU
                     </p>
-                    <Input
-                      value={addDraft.sku}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({ ...p, sku: e.target.value }))
-                      }
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={addDraft.sku}
+                        onChange={(e) =>
+                          setAddDraft((p) => ({
+                            ...p,
+                            sku: String(e.target.value).slice(0, SKU_MAX_LENGTH),
+                          }))
+                        }
+                        wrapperClassName="min-w-[220px]"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const productBase =
+                            name.trim() ||
+                            brandNameById.get(brandId) ||
+                            "PRODUCT";
+                          const colorName =
+                            colorNameById.get(addDraft.color_id) ??
+                            `C${addDraft.color_id}`;
+                          const variantName =
+                            variantLabelById.get(addDraft.variant_id) ??
+                            `V${addDraft.variant_id}`;
+                          setAddDraft((p) => ({
+                            ...p,
+                            sku: buildSku({
+                              productBase,
+                              colorName,
+                              variantName,
+                            }),
+                          }));
+                        }}
+                      >
+                        Generate
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="flex items-end justify-end gap-2 md:col-span-2">
@@ -1541,14 +1624,50 @@ export default function EditProductModal({
 
                             <TableCell className="px-4 py-4">
                               {editing ? (
-                                <Input
-                                  value={draft.sku}
-                                  onChange={(e) =>
-                                    patchEditVariation(v.id, {
-                                      sku: e.target.value,
-                                    })
-                                  }
-                                />
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={draft.sku}
+                                    onChange={(e) =>
+                                      patchEditVariation(v.id, {
+                                        sku: String(e.target.value).slice(
+                                          0,
+                                          SKU_MAX_LENGTH,
+                                        ),
+                                      })
+                                    }
+                                    wrapperClassName="min-w-[220px]"
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const productBase =
+                                        name.trim() ||
+                                        brandNameById.get(brandId) ||
+                                        "PRODUCT";
+                                      const draftColorId =
+                                        draft?.color_id ?? colorId;
+                                      const draftVariantId =
+                                        draft?.variant_id ?? variantId;
+                                      const colorName =
+                                        colorNameById.get(draftColorId) ??
+                                        `C${draftColorId}`;
+                                      const variantName =
+                                        variantLabelById.get(draftVariantId) ??
+                                        variantLabel;
+                                      patchEditVariation(v.id, {
+                                        sku: buildSku({
+                                          productBase,
+                                          colorName,
+                                          variantName,
+                                        }),
+                                      });
+                                    }}
+                                  >
+                                    Generate
+                                  </Button>
+                                </div>
                               ) : (
                                 <span className="text-sm font-semibold text-gray-900 dark:text-white">
                                   {v.sku}
