@@ -1,7 +1,8 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
+import ProductImageCropperModal from "@/components/ui/upload/ProductImageCropperModal";
 
 export type UploadedImage = {
   id: string;
@@ -29,10 +30,40 @@ export default function ImageMultiUploader({
   helperText,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const cropQueueRef = useRef<File[]>([]);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
+  const [cropSourceName, setCropSourceName] = useState<string | undefined>(undefined);
+  const [cropPendingCount, setCropPendingCount] = useState(0);
 
-  const remaining = Math.max(0, max - images.length);
-  const canAdd = images.length < max;
+  const remaining = Math.max(0, max - (images.length + cropPendingCount));
+  const canAdd = images.length + cropPendingCount < max;
   const previews = useMemo(() => images, [images]);
+
+  const startCrop = (files: File[]) => {
+    if (files.length === 0) return;
+    const [current, ...rest] = files;
+    const url = URL.createObjectURL(current);
+    cropQueueRef.current = rest;
+    setCropPendingCount(1 + rest.length);
+    setCropSourceUrl(url);
+    setCropSourceName(current.name);
+    setCropOpen(true);
+  };
+
+  const closeCropper = () => {
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    setCropSourceUrl(null);
+    setCropSourceName(undefined);
+
+    if (cropQueueRef.current.length > 0) {
+      startCrop(cropQueueRef.current);
+      return;
+    }
+
+    setCropOpen(false);
+    setCropPendingCount(0);
+  };
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
@@ -40,13 +71,15 @@ export default function ImageMultiUploader({
       .filter((f) => f.type.startsWith("image/"))
       .slice(0, remaining);
 
-    const next: UploadedImage[] = list.map((file) => ({
-      id: makeId(),
-      file,
-      url: URL.createObjectURL(file),
-    }));
+    if (list.length === 0) return;
 
-    onChange([...images, ...next]);
+    if (cropOpen) {
+      cropQueueRef.current = [...cropQueueRef.current, ...list];
+      setCropPendingCount((prev) => prev + list.length);
+      return;
+    }
+
+    startCrop(list);
   };
 
   const remove = (id: string) => {
@@ -110,9 +143,9 @@ export default function ImageMultiUploader({
             {previews.map((img) => (
               <div
                 key={img.id}
-                className="group relative overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
+                className="group relative h-[120px] w-[120px] overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
               >
-                <img src={img.url} alt={img.file.name} className="h-28 w-full object-cover" />
+                <img src={img.url} alt={img.file.name} className="h-full w-full object-cover" />
                 <button
                   type="button"
                   className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs opacity-0 transition group-hover:opacity-100 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400"
@@ -128,6 +161,25 @@ export default function ImageMultiUploader({
       </div>
 
       {helperText ? <p className="text-xs text-gray-500 dark:text-gray-400">{helperText}</p> : null}
+
+      <ProductImageCropperModal
+        open={cropOpen}
+        imageUrl={cropSourceUrl ?? ""}
+        fileName={cropSourceName}
+        aspect={1}
+        onClose={closeCropper}
+        onApply={({ file, previewUrl }) => {
+          onChange([
+            ...images,
+            {
+              id: makeId(),
+              file,
+              url: previewUrl,
+            },
+          ]);
+          closeCropper();
+        }}
+      />
     </div>
   );
 }
