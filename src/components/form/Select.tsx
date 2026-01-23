@@ -2,7 +2,11 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "re
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type Option = { value: string; label: string };
+export type Option = {
+  value: string;
+  label: string;
+  status?: boolean | "active" | "inactive";
+};
 
 type MenuPlacement = "auto" | "top" | "bottom";
 
@@ -172,6 +176,16 @@ export default function Select({
   }, [open, options.length, menuMaxHeight, menuPlacement]);
 
   const triggerText = isLoading ? "Loading..." : selected?.label ?? placeholder;
+  const selectedStatus =
+    selected?.status === "active"
+      ? true
+      : selected?.status === "inactive"
+        ? false
+        : typeof selected?.status === "boolean"
+          ? selected.status
+          : undefined;
+  const selectedStatusLabel =
+    typeof selectedStatus === "boolean" ? (selectedStatus ? "Active" : "Inactive") : null;
 
   return (
     <div className={cn("relative", className)}>
@@ -189,8 +203,23 @@ export default function Select({
         )}
         aria-expanded={open}
       >
-        <span className={cn("truncate", !selected && "text-gray-500 dark:text-gray-400")}>
-          {triggerText}
+        <span
+          className={cn(
+            "flex min-w-0 items-center gap-2",
+            !selected && "text-gray-500 dark:text-gray-400",
+          )}
+        >
+          <span className="truncate">{triggerText}</span>
+          {selectedStatusLabel ? (
+            <span
+              className={cn(
+                "text-xs font-semibold",
+                selectedStatus ? "text-success-600 dark:text-success-400" : "text-error-600 dark:text-error-400",
+              )}
+            >
+              {selectedStatusLabel}
+            </span>
+          ) : null}
         </span>
         <ChevronDown
           size={16}
@@ -235,6 +264,20 @@ export default function Select({
               ) : (
                 options.map((opt) => {
                   const active = opt.value === selectedValue;
+                  const optionStatus =
+                    opt.status === "active"
+                      ? true
+                      : opt.status === "inactive"
+                        ? false
+                        : typeof opt.status === "boolean"
+                          ? opt.status
+                          : undefined;
+                  const optionStatusLabel =
+                    typeof optionStatus === "boolean"
+                      ? optionStatus
+                        ? "Active"
+                        : "Inactive"
+                      : null;
                   return (
                     <button
                       key={opt.value}
@@ -250,7 +293,21 @@ export default function Select({
                       role="option"
                       aria-selected={active}
                     >
-                      <span className="truncate">{opt.label}</span>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate">{opt.label}</span>
+                        {optionStatusLabel ? (
+                          <span
+                            className={cn(
+                              "text-xs font-semibold",
+                              optionStatus
+                                ? "text-success-600 dark:text-success-400"
+                                : "text-error-600 dark:text-error-400",
+                            )}
+                          >
+                            {optionStatusLabel}
+                          </span>
+                        ) : null}
+                      </span>
                       {active ? (
                         <span className="text-xs font-semibold text-brand-600 dark:text-brand-400">
                           Selected

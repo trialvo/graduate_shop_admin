@@ -40,7 +40,7 @@ type Props = {
   onUpdated?: () => void;
 };
 
-type Option = { value: string; label: string };
+type Option = { value: string; label: string; status?: boolean };
 
 type ExistingImage = { id: number; path: string };
 
@@ -432,7 +432,11 @@ export default function EditProductModal({
   // dropdown options
   const mainOptions: Option[] = React.useMemo(
     () =>
-      mains.map((c: any) => ({ value: String(c.id), label: String(c.name) })),
+      mains.map((c: any) => ({
+        value: String(c.id),
+        label: String(c.name),
+        status: c.status !== false,
+      })),
     [mains],
   );
 
@@ -448,6 +452,7 @@ export default function EditProductModal({
       availableSubs.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
+        status: c.status !== false,
       })),
     [availableSubs],
   );
@@ -465,6 +470,7 @@ export default function EditProductModal({
       ...availableChild.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
+        status: c.status !== false,
       })),
     ],
     [availableChild],
