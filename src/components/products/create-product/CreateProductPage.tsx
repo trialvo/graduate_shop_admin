@@ -1,3 +1,4 @@
+// CreateProductPage.tsx
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -7,25 +8,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import Switch from "@/components/form/switch/Switch";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
-import ImageMultiUploader, {
-  type UploadedImage,
-} from "@/components/ui/upload/ImageMultiUploader";
+import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
 import VideoUploader from "@/components/ui/upload/VideoUploader";
 import { cn } from "@/lib/utils";
 
 import { getBrands } from "@/api/brands.api";
 import { getColors } from "@/api/colors.api";
-import {
-  getAttributes,
-  type Attribute,
-  type AttributeVariant,
-} from "@/api/attributes.api";
-import {
-  getChildCategories,
-  getMainCategories,
-  getSubCategories,
-} from "@/api/categories.api";
+import { getAttributes, type Attribute, type AttributeVariant } from "@/api/attributes.api";
+import { getChildCategories, getMainCategories, getSubCategories } from "@/api/categories.api";
 import { createProduct } from "@/api/products.api";
+
 import SubmitBar from "./create-product-form/SubmitBar";
 import Section from "./create-product-form/Section";
 import BasicSection from "./create-product-form/BasicSection";
@@ -48,14 +40,6 @@ type VariantRow = {
 
   active: boolean;
 };
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-      {children}
-    </p>
-  );
-}
 
 function slugify(input: string) {
   return input
@@ -115,11 +99,7 @@ function ensureMatrixRows(
           sellingPrice: defaults.selling,
           discount: defaults.discount,
           stock: 0,
-          sku: genSkuFromParts([
-            ...skuBaseParts,
-            `C${colorId}`,
-            `V${variantId}`,
-          ]),
+          sku: genSkuFromParts([...skuBaseParts, `C${colorId}`, `V${variantId}`]),
           active: true,
         },
       );
@@ -133,24 +113,17 @@ function getApiErrorMessage(err: unknown): string {
   const anyErr = err as any;
   const data = anyErr?.response?.data;
 
-  if (typeof data?.error === "string" && data.error.trim())
-    return data.error.trim();
-  if (typeof data?.message === "string" && data.message.trim())
-    return data.message.trim();
-  if (typeof anyErr?.message === "string" && anyErr.message.trim())
-    return anyErr.message.trim();
+  if (typeof data?.error === "string" && data.error.trim()) return data.error.trim();
+  if (typeof data?.message === "string" && data.message.trim()) return data.message.trim();
+  if (typeof anyErr?.message === "string" && anyErr.message.trim()) return anyErr.message.trim();
 
   return "Failed to create product";
 }
 
 function getSuccessProductId(res: unknown): number | null {
   const anyRes = res as any;
-
-  if (anyRes?.success === true && Number.isFinite(Number(anyRes?.productId)))
-    return Number(anyRes.productId);
-  if (Number.isFinite(Number(anyRes?.productId)))
-    return Number(anyRes.productId);
-
+  if (anyRes?.success === true && Number.isFinite(Number(anyRes?.productId))) return Number(anyRes.productId);
+  if (Number.isFinite(Number(anyRes?.productId))) return Number(anyRes.productId);
   return null;
 }
 
@@ -159,12 +132,9 @@ function getSuccessProductId(res: unknown): number | null {
 function PageHeader() {
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-        Create Product
-      </h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Product</h1>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Dynamic load: category, brand, color, attribute & attribute variants
-        from API.
+        Dynamic load: category, brand, color, attribute & attribute variants from API.
       </p>
     </div>
   );
@@ -182,10 +152,7 @@ function FloatingErrorBanner({
   if (!message || !visible) return null;
 
   return (
-    <div
-      className={cn("fixed left-0 right-0 z-[60] px-4")}
-      style={{ top: "calc(var(--app-header-height, 72px) + 12px)" }}
-    >
+    <div className={cn("fixed left-0 right-0 z-[60] px-4")} style={{ top: "calc(var(--app-header-height, 72px) + 12px)" }}>
       <div
         className={cn(
           "mx-auto w-full max-w-[1200px]",
@@ -229,22 +196,10 @@ function MediaSection({
   setVideoUrl: (v: string) => void;
 }) {
   return (
-    <Section
-      title="Media"
-      description="Upload product images + paste a video URL (YouTube or direct video link)."
-    >
+    <Section title="Media" description="Upload product images + paste a video URL (YouTube or direct video link).">
       <div className="space-y-6">
-        <ImageMultiUploader
-          label="Product Images"
-          images={images}
-          onChange={setImages}
-          max={10}
-        />
-        <VideoUploader
-          label="Product Video URL"
-          value={videoUrl}
-          onChange={setVideoUrl}
-        />
+        <ImageMultiUploader label="Product Images" images={images} onChange={setImages} max={10} />
+        <VideoUploader label="Product Video URL" value={videoUrl} onChange={setVideoUrl} />
       </div>
     </Section>
   );
@@ -307,7 +262,6 @@ function FlagsSection({
           [
             { key: "status", label: "Status" },
             { key: "featured", label: "Featured" },
-            // { key: "free_delivery", label: "Free Delivery" },
             { key: "best_deal", label: "Best Deal" },
           ] as const
         ).map((item) => (
@@ -316,16 +270,12 @@ function FlagsSection({
             className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                {item.label}
-              </p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
               <Switch
                 key={`flag-${item.key}-${flags[item.key]}`}
                 label=""
                 defaultChecked={flags[item.key]}
-                onChange={(checked) =>
-                  setFlags((p) => ({ ...p, [item.key]: checked }))
-                }
+                onChange={(checked) => setFlags((p) => ({ ...p, [item.key]: checked }))}
               />
             </div>
           </div>
@@ -344,9 +294,13 @@ export default function CreateProductPage() {
 
   const [mainCategoryId, setMainCategoryId] = useState<number>(0);
   const [subCategoryId, setSubCategoryId] = useState<number>(0);
-  const [childCategoryId, setChildCategoryId] = useState<number>(0);
-  const [brandId, setBrandId] = useState<number>(0);
 
+  // ✅ Child Category is OPTIONAL now
+  // - initially null
+  // - admin may keep it empty
+  const [childCategoryId, setChildCategoryId] = useState<number | null>(null);
+
+  const [brandId, setBrandId] = useState<number>(0);
   const [attributeId, setAttributeId] = useState<number>(0);
 
   const [skuMode, setSkuMode] = useState<SkuMode>("auto");
@@ -436,21 +390,11 @@ export default function CreateProductPage() {
   const subCategories = useMemo(() => unwrapList<any>(subRes), [subRes]);
   const childCategories = useMemo(() => unwrapList<any>(childRes), [childRes]);
 
-  const brands = useMemo(
-    () => unwrapList<any>(brandRes).filter((b: any) => b.status !== false),
-    [brandRes],
-  );
-  const colors = useMemo(
-    () => unwrapList<any>(colorRes).filter((c: any) => c.status !== false),
-    [colorRes],
-  );
-  const attributes = useMemo(
-    () => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false),
-    [attrRes],
-  );
+  const brands = useMemo(() => unwrapList<any>(brandRes).filter((b: any) => b.status !== false), [brandRes]);
+  const colors = useMemo(() => unwrapList<any>(colorRes).filter((c: any) => c.status !== false), [colorRes]);
+  const attributes = useMemo(() => unwrapList<Attribute>(attrRes).filter((a) => a.status !== false), [attrRes]);
 
-  const initialLoading =
-    mainLoading || brandLoading || colorLoading || attrLoading;
+  const initialLoading = mainLoading || brandLoading || colorLoading || attrLoading;
 
   // -------------------- Default selections when lookups load --------------------
   useEffect(() => {
@@ -461,39 +405,44 @@ export default function CreateProductPage() {
   // when main changes -> reset dependent fields fast
   useEffect(() => {
     setSubCategoryId(0);
-    setChildCategoryId(0);
+    // ✅ child optional: reset to null
+    setChildCategoryId(null);
   }, [mainCategoryId]);
 
   useEffect(() => {
     if (subLoading) return;
+
     if (!subCategories.length) {
       setSubCategoryId(0);
       return;
     }
+
     setSubCategoryId((p) =>
-      subCategories.some((s: any) => Number(s.id) === Number(p))
-        ? p
-        : Number(subCategories[0]?.id ?? 0),
+      subCategories.some((s: any) => Number(s.id) === Number(p)) ? p : Number(subCategories[0]?.id ?? 0),
     );
   }, [subCategories, subLoading]);
 
   // when sub changes -> reset child fast
   useEffect(() => {
-    setChildCategoryId(0);
+    setChildCategoryId(null);
   }, [subCategoryId]);
 
+  // ✅ IMPORTANT: do NOT auto select first child
+  // - keep null unless admin selected something
+  // - only clear if currently selected is not available anymore
   useEffect(() => {
     if (childLoading) return;
+
     if (!childCategories.length) {
-      setChildCategoryId(0);
+      setChildCategoryId(null);
       return;
     }
-    setChildCategoryId((p) =>
-      childCategories.some((c: any) => Number(c.id) === Number(p))
-        ? p
-        : Number(childCategories[0]?.id ?? 0),
-    );
-  }, [childCategories, childLoading]);
+
+    if (childCategoryId === null) return;
+
+    const exists = childCategories.some((c: any) => Number(c.id) === Number(childCategoryId));
+    if (!exists) setChildCategoryId(null);
+  }, [childCategories, childLoading, childCategoryId]);
 
   useEffect(() => {
     if (!brands.length) return;
@@ -517,9 +466,7 @@ export default function CreateProductPage() {
   );
 
   const availableVariants: AttributeVariant[] = useMemo(() => {
-    const list = Array.isArray(selectedAttribute?.variants)
-      ? selectedAttribute.variants
-      : [];
+    const list = Array.isArray(selectedAttribute?.variants) ? selectedAttribute.variants : [];
     return list.filter((v) => v && v.status !== false);
   }, [selectedAttribute]);
 
@@ -531,12 +478,8 @@ export default function CreateProductPage() {
 
   // -------------------- SKU base generator --------------------
   const generateSkuBase = () => {
-    const brand =
-      brands.find((b: any) => Number(b.id) === Number(brandId))?.name ??
-      "BRAND";
-    const cat =
-      mainCategories.find((c: any) => Number(c.id) === Number(mainCategoryId))
-        ?.name ?? "CAT";
+    const brand = brands.find((b: any) => Number(b.id) === Number(brandId))?.name ?? "BRAND";
+    const cat = mainCategories.find((c: any) => Number(c.id) === Number(mainCategoryId))?.name ?? "CAT";
     const name = productName || "PRODUCT";
     setSkuBase(genSkuFromParts([brand, cat, name]));
   };
@@ -550,21 +493,11 @@ export default function CreateProductPage() {
 
   // -------------------- Ensure matrix rows when selections change --------------------
   useEffect(() => {
-    const skuParts = [skuBase || "SKU", productSlug || "PRODUCT"].filter(
-      Boolean,
-    );
+    const skuParts = [skuBase || "SKU", productSlug || "PRODUCT"].filter(Boolean);
 
-    const next = ensureMatrixRows(
-      selectedColorIds,
-      selectedVariantIds,
-      matrix,
-      { buying: 0, selling: 0, discount: 0 },
-      skuParts,
-    );
+    const next = ensureMatrixRows(selectedColorIds, selectedVariantIds, matrix, { buying: 0, selling: 0, discount: 0 }, skuParts);
 
-    const same =
-      next.length === matrix.length &&
-      next.every((n, i) => matrix[i]?.key === n.key);
+    const same = next.length === matrix.length && next.every((n, i) => matrix[i]?.key === n.key);
     if (!same) setMatrix(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedColorIds, selectedVariantIds]);
@@ -590,6 +523,7 @@ export default function CreateProductPage() {
     [subCategories],
   );
 
+  // ✅ For child select, we keep options normal (no auto select)
   const childOptions: Option[] = useMemo(
     () =>
       childCategories.map((c: any) => ({
@@ -601,22 +535,17 @@ export default function CreateProductPage() {
   );
 
   const brandOptions: Option[] = useMemo(
-    () =>
-      brands.map((b: any) => ({ value: String(b.id), label: String(b.name) })),
+    () => brands.map((b: any) => ({ value: String(b.id), label: String(b.name) })),
     [brands],
   );
 
   const attributeOptions: Option[] = useMemo(
-    () =>
-      attributes.map((a) => ({ value: String(a.id), label: String(a.name) })),
+    () => attributes.map((a) => ({ value: String(a.id), label: String(a.name) })),
     [attributes],
   );
 
   // Colors dropdown incremental unique
-  const remainingColors = useMemo(
-    () => colors.filter((c: any) => !selectedColorIds.includes(Number(c.id))),
-    [colors, selectedColorIds],
-  );
+  const remainingColors = useMemo(() => colors.filter((c: any) => !selectedColorIds.includes(Number(c.id))), [colors, selectedColorIds]);
 
   const colorOptions: Option[] = useMemo(
     () =>
@@ -634,15 +563,11 @@ export default function CreateProductPage() {
 
   // -------------------- Matrix helpers --------------------
   const toggleVariantId = (id: number) => {
-    setSelectedVariantIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedVariantIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const updateRow = (key: string, patch: Partial<VariantRow>) => {
-    setMatrix((prev) =>
-      prev.map((r) => (r.key === key ? { ...r, ...patch } : r)),
-    );
+    setMatrix((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   };
 
   // group rows by color (for rowspan view)
@@ -664,13 +589,15 @@ export default function CreateProductPage() {
     if (!productSlug.trim()) return "Slug is required.";
     if (!mainCategoryId) return "Main category is required.";
     if (!subCategoryId) return "Sub category is required.";
-    if (!childCategoryId) return "Child category is required.";
+
+    // ✅ child category এখন optional, তাই আর required না
+    // if (!childCategoryId) return "Child category is required.";
+
     if (!brandId) return "Brand is required.";
     if (!attributeId) return "Attribute is required.";
 
     if (selectedColorIds.length === 0) return "Select at least 1 color.";
-    if (selectedVariantIds.length === 0)
-      return "Select at least 1 variant (from attribute).";
+    if (selectedVariantIds.length === 0) return "Select at least 1 variant (from attribute).";
 
     const activeRows = matrix.filter((r) => r.active);
     if (!activeRows.length) return "At least 1 active variation required.";
@@ -689,9 +616,7 @@ export default function CreateProductPage() {
       const anyRes = res as any;
 
       if (anyRes?.success === true) {
-        toast.success(
-          productId ? `Product created (ID: ${productId})` : "Product created",
-        );
+        toast.success(productId ? `Product created (ID: ${productId})` : "Product created");
         setValidationError("");
         setErrorBannerVisible(false);
         return;
@@ -734,14 +659,19 @@ export default function CreateProductPage() {
         sku: r.sku,
       }));
 
-    // ✅ matches your POST payload fields + variations + images
+    // ✅ Child Category rules:
+    // - if not selected => null
+    // - if selected => id
     createMutation.mutate({
       product_images: images.map((i) => i.file),
       name: productName.trim(),
       slug: productSlug.trim(),
       main_category_id: mainCategoryId,
       sub_category_id: subCategoryId,
-      child_category_id: childCategoryId,
+
+      // ✅ send null when not selected
+      child_category_id: childCategoryId ?? null,
+
       brand_id: brandId,
       attribute_id: attributeId,
       video_path: videoUrl.trim() ? videoUrl.trim() : undefined,
@@ -763,7 +693,8 @@ export default function CreateProductPage() {
       robots: seo.robots,
 
       variations,
-    });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
   };
 
   // -------------------- UI --------------------
@@ -779,11 +710,7 @@ export default function CreateProductPage() {
 
   return (
     <div className="space-y-6">
-      <FloatingErrorBanner
-        message={validationError}
-        visible={errorBannerVisible}
-        onDismiss={() => setErrorBannerVisible(false)}
-      />
+      <FloatingErrorBanner message={validationError} visible={errorBannerVisible} onDismiss={() => setErrorBannerVisible(false)} />
 
       <PageHeader />
 
@@ -795,8 +722,9 @@ export default function CreateProductPage() {
         setMainCategoryId={setMainCategoryId}
         subCategoryId={subCategoryId}
         setSubCategoryId={setSubCategoryId}
-        childCategoryId={childCategoryId}
-        setChildCategoryId={setChildCategoryId}
+        // ✅ BasicSection is still number-based, so map null <-> 0
+        childCategoryId={childCategoryId ?? 0}
+        setChildCategoryId={(n) => setChildCategoryId(n ? Number(n) : null)}
         brandId={brandId}
         setBrandId={setBrandId}
         mainOptions={mainOptions}
@@ -805,6 +733,8 @@ export default function CreateProductPage() {
         brandOptions={brandOptions}
         subLoading={subLoading}
         childLoading={childLoading}
+        // ✅ if you update BasicSection placeholder text, it will show:
+        // "Select child category (optional)"
       />
 
       <VariationsSection
@@ -824,12 +754,7 @@ export default function CreateProductPage() {
         updateRow={updateRow}
       />
 
-      <MediaSection
-        images={images}
-        setImages={setImages}
-        videoUrl={videoUrl}
-        setVideoUrl={setVideoUrl}
-      />
+      <MediaSection images={images} setImages={setImages} videoUrl={videoUrl} setVideoUrl={setVideoUrl} />
 
       <DescriptionsSection
         shortDescription={shortDescription}

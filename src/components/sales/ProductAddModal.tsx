@@ -510,12 +510,12 @@ export default function ProductAddModal({
 
               {/* ✅ Rich preview for HTML short_description */}
               <div className="mt-4 space-y-4">
-                <div>
+                {/* <div>
                   <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">
                     Short Description
                   </div>
                   <RichTextPreview html={single.short_description ?? ""} />
-                </div>
+                </div> */}
 
                 <div>
                   <div className="mb-2 text-sm font-semibold text-gray-900 dark:text-white/90">

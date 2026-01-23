@@ -827,7 +827,7 @@ export default function FooterSettingsPage() {
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              {/* <div className="space-y-2 md:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description
                 </p>
@@ -836,7 +836,7 @@ export default function FooterSettingsPage() {
                   onChange={(v) => updateNewsletter("description", v)}
                   placeholder="Short description..."
                 />
-              </div>
+              </div> */}
 
               <div className="space-y-2 md:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">

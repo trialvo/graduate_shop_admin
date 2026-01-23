@@ -1122,12 +1122,12 @@ export default function EditProductModal({
               </p>
 
               <div className="mt-4 space-y-6">
-                <RichTextEditor
+                {/* <RichTextEditor
                   label="Short Description"
                   value={shortDescription}
                   onChange={setShortDescription}
                   heightClassName="min-h-[160px]"
-                />
+                /> */}
                 <RichTextEditor
                   label="Long Description"
                   value={longDescription}

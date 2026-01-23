@@ -600,13 +600,13 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
       <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Descriptions</h2>
 
-        <RichTextEditor
+        {/* <RichTextEditor
           label="Short Description"
           value={shortDescription}
           onChange={setShortDescription}
           placeholder="Short description"
           heightClassName="min-h-[160px]"
-        />
+        /> */}
 
         <RichTextEditor
           label="Long Description"
