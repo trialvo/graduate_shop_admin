@@ -147,8 +147,30 @@ export default function CreateCustomerPage() {
         is_active: form.is_active,
       });
     },
-    onSuccess: () => {
-      toast.success("Customer created successfully");
+    onSuccess: (res: any) => {
+      if (res?.flag && Number(res.flag) !== 200) {
+        const errMsg =
+          (typeof res?.error === "string" && res.error.trim()) ||
+          (typeof res?.message === "string" && res.message.trim()) ||
+          "Failed to create customer";
+        toast.error(errMsg);
+        return;
+      }
+
+      if (res?.success === false) {
+        const errMsg =
+          (typeof res?.error === "string" && res.error.trim()) ||
+          (typeof res?.message === "string" && res.message.trim()) ||
+          "Failed to create customer";
+        toast.error(errMsg);
+        return;
+      }
+
+      const msg =
+        (typeof res?.message === "string" && res.message.trim()) ||
+        (typeof res?.data?.message === "string" && res.data.message.trim()) ||
+        "Customer created successfully";
+      toast.success(msg);
       setForm(INITIAL_FORM);
 
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -157,9 +179,11 @@ export default function CreateCustomerPage() {
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
     onError: (err: any) => {
+      const data = err?.response?.data;
       const msg =
-        err?.response?.data?.error ??
-        err?.response?.data?.message ??
+        (typeof data?.error === "string" && data.error.trim()) ||
+        (typeof data?.message === "string" && data.message.trim()) ||
+        (typeof err?.message === "string" && err.message.trim()) ||
         "Failed to create customer";
       toast.error(msg);
     },

@@ -86,7 +86,9 @@ export default function CreateAdminPage() {
   const roles = rolesQuery.data ?? [];
 
   const roleOptions: Option[] = useMemo(() => {
-    return roles.map((r) => {
+    return roles
+      .filter((r) => normalizeRoleLabel(r.name) !== "Super Admin")
+      .map((r) => {
       const label = normalizeRoleLabel(r.name);
       return { value: label, label };
     });
