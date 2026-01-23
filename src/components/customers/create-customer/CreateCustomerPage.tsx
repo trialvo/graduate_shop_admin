@@ -24,6 +24,7 @@ import DatePicker from "@/components/form/date-picker";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import StatusToggle from "@/components/ui/button/StatusToggle";
+import CustomerImageCropperModal from "@/components/customers/create-customer/CustomerImageCropperModal";
 import { cn } from "@/lib/utils";
 
 import { createAdminUser, type AdminUserGender } from "@/api/admin-users.api";
@@ -65,6 +66,9 @@ export default function CreateCustomerPage() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
+  const [cropSourceName, setCropSourceName] = useState<string | undefined>(undefined);
 
   const fullName = useMemo(() => {
     return `${form.first_name} ${form.last_name}`.trim();
@@ -81,6 +85,12 @@ export default function CreateCustomerPage() {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    };
+  }, [cropSourceUrl]);
 
   const errors = useMemo(() => {
     const emailErr = !form.email.trim()
@@ -176,16 +186,26 @@ export default function CreateCustomerPage() {
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0] ?? null;
 
-    setForm((p) => ({ ...p, user_profile: file }));
-
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
 
     if (file) {
       const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+      setCropSourceUrl(url);
+      setCropSourceName(file.name);
+      setCropOpen(true);
     } else {
-      setPreviewUrl(null);
+      setCropSourceUrl(null);
+      setCropSourceName(undefined);
+      setCropOpen(false);
     }
+  };
+
+  const closeCropper = () => {
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    setCropSourceUrl(null);
+    setCropSourceName(undefined);
+    setCropOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const requiredLabel =
@@ -631,6 +651,20 @@ export default function CreateCustomerPage() {
           </div>
         </div>
       </div>
+
+      <CustomerImageCropperModal
+        open={cropOpen}
+        imageUrl={cropSourceUrl ?? ""}
+        fileName={cropSourceName}
+        aspect={1}
+        onClose={closeCropper}
+        onApply={({ file, previewUrl: croppedUrl }) => {
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          setForm((p) => ({ ...p, user_profile: file }));
+          setPreviewUrl(croppedUrl);
+          closeCropper();
+        }}
+      />
     </div>
   );
 }
