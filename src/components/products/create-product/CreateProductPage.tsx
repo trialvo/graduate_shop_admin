@@ -359,7 +359,7 @@ export default function CreateProductPage() {
   const [longDescription, setLongDescription] = useState("");
 
   const [flags, setFlags] = useState({
-    status: false,
+    status: true,
     featured: false,
     free_delivery: false,
     best_deal: false,

@@ -11,6 +11,7 @@ import {
   type DashboardTimeRange,
 } from "@/api/dashboard.api";
 import { cn } from "@/lib/utils";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 const PAGE_SIZE = 10;
@@ -19,16 +20,6 @@ function formatBDT(n: number): string {
   if (!Number.isFinite(n)) return "৳0";
   const formatted = new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 }).format(n);
   return `৳${formatted}`;
-}
-
-function imageFallbackSvgDataUri(title: string) {
-  const safe = title.replace(/</g, "").replace(/>/g, "").slice(0, 2).toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
-    <rect width="100%" height="100%" rx="16" ry="16" fill="#E5E7EB"/>
-    <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
-      font-family="Arial" font-size="28" font-weight="700" fill="#6B7280">${safe}</text>
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 function bestVariationPrice(item: DashboardTopSellingItem): number {
@@ -118,7 +109,8 @@ const TopSellingProductsCard: React.FC = () => {
             <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
           ) : (
             preview.map((p) => {
-              const img = p.first_image ? toPublicUrl(p.first_image) : imageFallbackSvgDataUri(p.product_name);
+              const fallback = imageFallbackSvgDataUri(p.product_name);
+              const img = p.first_image ? toPublicUrl(p.first_image) : fallback;
               const price = bestVariationPrice(p);
 
               return (
@@ -129,6 +121,12 @@ const TopSellingProductsCard: React.FC = () => {
                       alt={p.product_name}
                       className="h-11 w-11 rounded-xl object-cover ring-1 ring-gray-200 dark:ring-gray-800"
                       loading="lazy"
+                      onError={(event) => {
+                        const target = event.currentTarget;
+                        if (target.src !== fallback) {
+                          target.src = fallback;
+                        }
+                      }}
                     />
 
                     <div className="min-w-0">

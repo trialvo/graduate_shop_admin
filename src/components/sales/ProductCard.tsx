@@ -1,6 +1,7 @@
 import React from "react";
 import { BadgeCheck, Package, Tag, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import type { SaleProduct } from "./types";
 
@@ -36,7 +37,8 @@ export default function ProductCard({ product, onClick }: Props) {
   const p: any = product;
 
   const name = String(p?.name ?? p?.title ?? "Untitled Product");
-  const cover = getCoverImage(p);
+  const fallback = imageFallbackSvgDataUri(name);
+  const cover = getCoverImage(p) ?? fallback;
 
   const range = computePriceRange(p);
   const discount = hasAnyDiscount(p);
@@ -59,17 +61,18 @@ export default function ProductCard({ product, onClick }: Props) {
       {/* Image */}
       <div className="relative">
         <div className="aspect-[4/3] w-full overflow-hidden bg-gray-50 dark:bg-white/[0.04]">
-          {cover ? (
-            <img
-              src={cover}
-              alt={name}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-              No image
-            </div>
-          )}
+          <img
+            src={cover}
+            alt={name}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+            onError={(event) => {
+              const target = event.currentTarget;
+              if (target.src !== fallback) {
+                target.src = fallback;
+              }
+            }}
+          />
         </div>
 
         {/* Top badges */}

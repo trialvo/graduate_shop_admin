@@ -1033,11 +1033,11 @@ export default function EditProductModal({
               {[
                 { label: "Status", value: status, onChange: setStatus },
                 { label: "Featured", value: featured, onChange: setFeatured },
-                {
-                  label: "Free Delivery",
-                  value: freeDelivery,
-                  onChange: setFreeDelivery,
-                },
+                // {
+                //   label: "Free Delivery",
+                //   value: freeDelivery,
+                //   onChange: setFreeDelivery,
+                // },
                 { label: "Best Deal", value: bestDeal, onChange: setBestDeal },
               ].map((x) => (
                 <div

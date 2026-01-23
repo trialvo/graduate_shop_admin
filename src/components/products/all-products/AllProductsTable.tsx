@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 import StatusToggle from "@/components/ui/button/StatusToggle";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
   products: Product[];
@@ -113,6 +115,8 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
           <TableBody>
             {products.map((p, idx) => {
               const lowStock = p.stockQty <= 10;
+              const fallback = imageFallbackSvgDataUri(p.name);
+              const imageSrc = p.imageUrl ? toPublicUrl(p.imageUrl) : fallback;
 
               return (
                 <TableRow
@@ -126,12 +130,19 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                   <TableCell className="px-4 py-4">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-                        {p.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="h-7 w-7 rounded-full bg-brand-500/20" />
-                        )}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageSrc}
+                          alt={p.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          onError={(event) => {
+                            const target = event.currentTarget;
+                            if (target.src !== fallback) {
+                              target.src = fallback;
+                            }
+                          }}
+                        />
                       </div>
 
                       <div className="min-w-0">

@@ -11,6 +11,7 @@ import {
   type TopViewedTimeRange,
 } from "@/api/dashboard.api";
 import { cn } from "@/lib/utils";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 const PAGE_SIZE = 10;
@@ -32,16 +33,6 @@ function formatLastViewed(iso: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function imageFallbackSvgDataUri(title: string) {
-  const safe = title.replace(/</g, "").replace(/>/g, "").slice(0, 2).toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
-    <rect width="100%" height="100%" rx="16" ry="16" fill="#E5E7EB"/>
-    <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
-      font-family="Arial" font-size="28" font-weight="700" fill="#6B7280">${safe}</text>
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 const TopViewProductsCard: React.FC = () => {
@@ -119,7 +110,8 @@ const TopViewProductsCard: React.FC = () => {
             <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
           ) : (
             preview.map((p) => {
-              const img = p.image ? toPublicUrl(p.image) : imageFallbackSvgDataUri(p.name);
+              const fallback = imageFallbackSvgDataUri(p.name);
+              const img = p.image ? toPublicUrl(p.image) : fallback;
 
               return (
                 <div key={p.id} className="grid grid-cols-12 gap-2 px-4 py-4">
@@ -129,6 +121,12 @@ const TopViewProductsCard: React.FC = () => {
                       alt={p.name}
                       className="h-12 w-12 rounded-xl object-cover ring-1 ring-gray-200 dark:ring-gray-800"
                       loading="lazy"
+                      onError={(event) => {
+                        const target = event.currentTarget;
+                        if (target.src !== fallback) {
+                          target.src = fallback;
+                        }
+                      }}
                     />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-brand-600 dark:text-brand-400">{p.name}</p>
