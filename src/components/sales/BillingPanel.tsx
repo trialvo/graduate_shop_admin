@@ -694,7 +694,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+                <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
                       Address
@@ -848,7 +848,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </select>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
               <div className="flex items-center justify-between text-sm">
                 <div className="text-gray-600 dark:text-gray-300">Subtotal</div>
                 <div className="font-semibold text-gray-900 dark:text-white/90">

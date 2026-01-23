@@ -8,11 +8,11 @@
 // export const API_ORIGIN = "https://shop-api.trialvo.com";
 // export const PUBLIC_ORIGIN = "https://shop-api.trialvo.com";
 
-export const API_ORIGIN = "https://shop-api.shoplinkbd.com";
-export const PUBLIC_ORIGIN = "https://shop-api.shoplinkbd.com";
+// export const API_ORIGIN = "https://shop-api.shoplinkbd.com";
+// export const PUBLIC_ORIGIN = "https://shop-api.shoplinkbd.com";
 
-// export const API_ORIGIN = "https://api.graduatefashionbd.com";
-// export const PUBLIC_ORIGIN = "https://api.graduatefashionbd.com";
+export const API_ORIGIN = "https://api.graduatefashionbd.com";
+export const PUBLIC_ORIGIN = "https://api.graduatefashionbd.com";
 
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api/v1";
 
