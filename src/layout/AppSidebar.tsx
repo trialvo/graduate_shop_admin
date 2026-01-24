@@ -114,7 +114,7 @@ const othersItems: NavItem[] = [
       //   pro: false,
       // },
       // { name: "Footer", path: "/footer-settings", pro: false },
-      // { name: "Contact Page", path: "/contact-page", pro: false },
+      { name: "Contact Message", path: "/contact-page", pro: false },
     ],
   },
   {

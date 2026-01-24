@@ -1,5 +1,5 @@
 import PageMeta from "@/components/common/PageMeta";
-import ContactPageSettingsPage from "@/components/website-settings/contact-page/ContactPageSettingsPage";
+import ContactMessagesPage from "@/components/website-settings/contact-messages/ContactMessagesPage";
 
 export default function ContactPage() {
   return (
@@ -8,7 +8,7 @@ export default function ContactPage() {
         title="Contact Page"
         description="Admin - Contact page settings"
       />
-      <ContactPageSettingsPage />
+      <ContactMessagesPage  />
     </>
   );
 }
