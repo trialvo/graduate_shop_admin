@@ -1,6 +1,12 @@
 // src/hooks/contact-messages/useContactMessages.ts
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import {
@@ -42,7 +48,7 @@ export function useContactMessages(
     queryFn: () => getContactMessages(params),
     enabled: opts?.enabled ?? true,
     refetchInterval: opts?.refetchIntervalMs,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 }
 
