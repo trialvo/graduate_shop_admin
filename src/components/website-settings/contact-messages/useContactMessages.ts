@@ -35,12 +35,13 @@ export function useContactMessageCounts(opts?: {
 
 export function useContactMessages(
   params: GetContactMessagesParams,
-  opts?: { enabled?: boolean }
+  opts?: { enabled?: boolean; refetchIntervalMs?: number }
 ): UseQueryResult<GetContactMessagesResponse> {
   return useQuery<GetContactMessagesResponse>({
     queryKey: contactMessageKeys.list(params),
     queryFn: () => getContactMessages(params),
     enabled: opts?.enabled ?? true,
+    refetchInterval: opts?.refetchIntervalMs,
     keepPreviousData: true,
   });
 }

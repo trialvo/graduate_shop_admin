@@ -28,7 +28,7 @@ export default function NotificationDropdown() {
       is_read: "false",
       is_replied: "all",
     },
-    { enabled: isOpen }
+    { enabled: isOpen, refetchIntervalMs: 5_000 }
   );
 
   const items = unreadListQuery.data?.data ?? [];

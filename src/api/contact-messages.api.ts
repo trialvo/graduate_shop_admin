@@ -107,16 +107,21 @@ function normalizeBoolFilterParam(
 export async function getContactMessages(
   params: GetContactMessagesParams
 ): Promise<GetContactMessagesResponse> {
+  const subject =
+    params.subject && params.subject.trim().length > 0 ? params.subject.trim() : undefined;
+  const search =
+    params.search && params.search.trim().length > 0 ? params.search.trim() : undefined;
+  const queryParams: Record<string, string | number | undefined> = {
+    status: normalizeStatusParam(params.status),
+    offset: params.offset,
+    limit: params.limit,
+    subject,
+    search,
+    is_read: normalizeBoolFilterParam(params.is_read),
+    is_replied: normalizeBoolFilterParam(params.is_replied),
+  };
   const res = await api.get("/admin/contact-messages", {
-    params: {
-      status: normalizeStatusParam(params.status),
-      offset: params.offset ?? 0,
-      limit: params.limit ?? 20,
-      subject: params.subject ?? "",
-      search: params.search ?? "",
-      is_read: normalizeBoolFilterParam(params.is_read),
-      is_replied: normalizeBoolFilterParam(params.is_replied),
-    },
+    params: queryParams,
   });
   return res.data;
 }
