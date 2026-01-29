@@ -593,10 +593,8 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
               <div className="mt-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="relative w-full md:w-[340px]">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                      <Search size={16} className="text-gray-400" />
-                    </div>
                     <Input
+                      startIcon={<Search size={16} className="text-gray-400" />}
                       className="pl-9"
                       placeholder="Search product by sku / name..."
                       value={productSearch}
@@ -708,10 +706,8 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
               <div className="mt-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="relative w-full md:w-[340px]">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                      <Search size={16} className="text-gray-400" />
-                    </div>
                     <Input
+                      startIcon={<Search size={16} className="text-gray-400" />}
                       className="pl-9"
                       placeholder="Search customer by name / phone..."
                       value={customerSearch}

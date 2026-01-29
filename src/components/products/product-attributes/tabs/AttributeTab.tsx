@@ -790,10 +790,8 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
               Search
             </p>
             <div className="relative">
-              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                <Search size={16} className="text-gray-400" />
-              </div>
               <Input
+                startIcon={<Search size={16} className="text-gray-400" />}
                 className="pl-9"
                 placeholder="Search attribute name"
                 value={search}

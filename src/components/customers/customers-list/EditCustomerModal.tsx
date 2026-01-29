@@ -395,10 +395,8 @@ export default function EditCustomerModal({
                     Email <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Mail size={16} />
-                    </div>
                     <Input
+                      startIcon={<Mail size={16} className="text-gray-400" />}
                       className="pl-9"
                       value={form.email}
                       onChange={(e) => setForm((p) => (p ? { ...p, email: String(e.target.value) } : p))}
@@ -428,10 +426,8 @@ export default function EditCustomerModal({
                     First Name <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <User2 size={16} />
-                    </div>
                     <Input
+                      startIcon={<User2 size={16} className="text-gray-400" />}
                       className="pl-9"
                       value={form.first_name}
                       onChange={(e) => setForm((p) => (p ? { ...p, first_name: String(e.target.value) } : p))}
@@ -458,10 +454,8 @@ export default function EditCustomerModal({
                     Phone <span className="text-error-500">*</span>
                   </p>
                   <div className="relative">
-                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Phone size={16} />
-                    </div>
                     <Input
+                      startIcon={<Phone size={16} className="text-gray-400" />}
                       className="pl-9"
                       value={form.phone}
                       onChange={(e) => setForm((p) => (p ? { ...p, phone: String(e.target.value) } : p))}

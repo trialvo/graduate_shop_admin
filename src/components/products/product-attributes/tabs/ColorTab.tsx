@@ -476,10 +476,8 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           <div className="md:col-span-5">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Search</p>
             <div className="relative">
-              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                <Search size={16} className="text-gray-400" />
-              </div>
               <Input
+                startIcon={<Search size={16} className="text-gray-400" />}
                 className="pl-9"
                 placeholder="Search by name or hex"
                 value={search}

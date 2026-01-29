@@ -267,10 +267,8 @@ export default function BannersSettingsPage() {
         <div className="flex w-full flex-col gap-3 xl:w-auto">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <div className="relative sm:col-span-2 xl:col-span-2">
-              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                <Search size={16} className="text-gray-400" />
-              </div>
               <Input
+                startIcon={<Search size={16} className="text-gray-400" />}
                 className="pl-9"
                 placeholder="Search"
                 value={search}

@@ -43,10 +43,8 @@ const GuestOrdersToolbar: React.FC<Props> = ({
       {/* Search + Clear */}
       <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <div className="relative w-full sm:w-[320px]">
-          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-            <Search size={16} className="text-gray-400" />
-          </div>
           <Input
+            startIcon={<Search size={16} className="text-gray-400" />}
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
             placeholder="Search by name, phone, email, tour..."

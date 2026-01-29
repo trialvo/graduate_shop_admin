@@ -331,10 +331,8 @@ export default function AdminsListPage() {
         </Button>
 
         <div className="relative w-full md:max-w-sm">
-          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-            <Search size={16} className="text-gray-400" />
-          </div>
           <Input
+            startIcon={<Search size={16} className="text-gray-400" />}
             className="pl-9"
             placeholder="Search"
             value={search}
