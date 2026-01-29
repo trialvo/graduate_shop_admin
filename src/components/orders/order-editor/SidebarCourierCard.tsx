@@ -11,7 +11,7 @@ interface SidebarCourierCardProps {
   trackingUrl?: string;
   lastUpdatedAtLabel?: string;
 
-  // ✅ NEW: from API (courierOption)
+  // NEW: from API (courierOption)
   anyAutoAvailable?: boolean;
   providers?: ProviderItem[];
 
@@ -54,15 +54,20 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
         ];
 
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
-      <div className="flex items-start justify-between gap-4">
-        <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
-          Currier:
+    <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
+            Courier
+          </div>
+          <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            Shipment handling
+          </div>
         </div>
 
         {providers?.length ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+            <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
               Providers: {providers.length}
             </span>
             {anyAutoAvailable ? (
@@ -78,49 +83,49 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
         ) : null}
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-5 space-y-4">
         <div>
-          <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
             Select Method
           </div>
           <Select
             options={options}
             defaultValue={method}
             onChange={(v) => onChange({ method: v })}
-            className="bg-white dark:bg-gray-900"
+            className="bg-white/90 dark:bg-gray-900/70"
           />
         </div>
 
         <div className="flex justify-end">
           <Button onClick={onSend} size="sm" variant="primary">
-            Send
+            Send to courier
           </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
               Consignment ID
             </div>
             <Input
               value={consignmentId}
               onChange={(e) => onChange({ consignmentId: e.target.value })}
-              className="bg-white dark:bg-gray-900"
+              className="bg-white/90 dark:bg-gray-900/70"
               placeholder="Consignment ID"
             />
           </div>
 
           <div>
-            <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
               Tracking Link
             </div>
-            <div className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+            <div className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
               {trackingUrl ? (
                 <a
                   href={trackingUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="truncate text-brand-600 underline-offset-2 hover:underline dark:text-brand-400"
+                  className="block truncate text-brand-600 underline-offset-2 hover:underline dark:text-brand-400"
                 >
                   {trackingUrl}
                 </a>
@@ -137,22 +142,22 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
           <button
             type="button"
             onClick={onComplete}
-            className="inline-flex items-center rounded-lg bg-success-500 px-4 py-2 text-xs font-semibold text-white shadow-theme-xs hover:bg-success-600"
+            className="inline-flex items-center rounded-lg bg-success-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-success-600"
           >
             Complete
           </button>
           <button
             type="button"
             onClick={onDownloadInvoice}
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-theme-xs hover:bg-purple-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
           >
-            Currier invoice <span aria-hidden>⬇</span>
+            Courier invoice
           </button>
         </div>
 
         {lastUpdatedAtLabel ? (
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {lastUpdatedAtLabel}
+            Updated {lastUpdatedAtLabel}
           </div>
         ) : null}
       </div>

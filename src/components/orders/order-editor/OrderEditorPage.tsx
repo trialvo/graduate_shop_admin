@@ -56,7 +56,7 @@ const formatDateTimeLabel = (iso?: string): string | undefined => {
 
 const timeAgoLabel = (iso: string) => {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "N/A";
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
@@ -90,8 +90,8 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     serialNo: it.brand_name ? String(it.brand_name) : it.product_name,
     name: it.product_name,
     imageUrl: toPublicUrl(it.product_image ?? null) ?? undefined,
-    color: it.color_name ?? "—",
-    size: it.variant_name ?? it.attribute_name ?? "—",
+    color: it.color_name ?? "N/A",
+    size: it.variant_name ?? it.attribute_name ?? "N/A",
     discount: Number(it.discount ?? 0),
     unitPrice: Number(it.selling_price ?? 0),
     quantity: Number(it.quantity ?? 1),
@@ -105,14 +105,14 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     orderNumber: String(o.id),
     orderDate: o.created_at,
 
-    billingName: (o.customer_name || "").trim() || "—",
-    email: o.customer_email || "—",
+    billingName: (o.customer_name || "").trim() || "N/A",
+    email: o.customer_email || "N/A",
 
-    shippingAddress: o.full_address || "—",
-    city: o.city || "—",
-    postalCode: o.zip_code || "—",
+    shippingAddress: o.full_address || "N/A",
+    city: o.city || "N/A",
+    postalCode: o.zip_code || "N/A",
 
-    phone: o.customer_phone || "—",
+    phone: o.customer_phone || "N/A",
     altPhone: "",
 
     orderStatus: o.order_status,
@@ -142,10 +142,10 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     },
 
     customerInfo: {
-      name: (o.customer_name || "").trim() || "—",
-      phone: o.customer_phone || "—",
-      email: o.customer_email || "—",
-      address: `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—",
+      name: (o.customer_name || "").trim() || "N/A",
+      phone: o.customer_phone || "N/A",
+      email: o.customer_email || "N/A",
+      address: `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "N/A",
     },
 
     customerHistory: {
@@ -158,14 +158,14 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
       orderStatus: o.order_status,
       sentBy: "manually",
       altPhone: "",
-      additionalNotes: o.note ?? "—",
+      additionalNotes: o.note ?? "N/A",
     },
   };
 }
 
 type Props = {
   orderId: number | null;
-  onBack?: () => void; // ✅ NEW
+  onBack?: () => void; // NEW
 };
 
 const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
@@ -189,7 +189,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     paymentStatus: undefined,
   });
 
-  // ✅ Reset when orderId changes
+  // Reset when orderId changes
   useEffect(() => {
     hydratedRef.current = false;
     setData(null);
@@ -406,11 +406,13 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   if (!orderId) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-        <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            Missing orderId in URL. Example:{" "}
-            <span className="font-semibold">/order-editor?orderId=23</span>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+        <div className="mx-auto w-full">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              Missing orderId in URL. Example:{" "}
+              <span className="font-semibold">/order-editor?orderId=23</span>
+            </div>
           </div>
         </div>
       </div>
@@ -419,10 +421,12 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   if (detailQuery.isLoading || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-        <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            Loading order...
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+        <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              Loading order...
+            </div>
           </div>
         </div>
       </div>
@@ -432,24 +436,26 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   if (detailQuery.isError) {
     const msg = (detailQuery.error as any)?.message ?? "Failed to load order";
     return (
-      <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-        <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-sm font-semibold text-red-600 dark:text-red-400">
-            {msg}
-          </div>
-          <div className="mt-3 flex gap-3">
-            {onBack ? (
-              <Button onClick={onBack} variant="primary" size="sm">
-                Back to Orders
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+        <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
+            <div className="text-sm font-semibold text-red-600 dark:text-red-400">
+              {msg}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {onBack ? (
+                <Button onClick={onBack} variant="primary" size="sm">
+                  Back to Orders
+                </Button>
+              ) : null}
+              <Button
+                onClick={() => detailQuery.refetch()}
+                variant="outline"
+                size="sm"
+              >
+                Retry
               </Button>
-            ) : null}
-            <Button
-              onClick={() => detailQuery.refetch()}
-              variant="outline"
-              size="sm"
-            >
-              Retry
-            </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -462,112 +468,120 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   const courierOption = detailQuery.data?.courierOption;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-      <div className="flex items-center justify-between gap-3">
-        {onBack ? (
-          <Button onClick={onBack} size="sm" variant="outline">
-            ← Back to Orders
-          </Button>
-        ) : (
-          <div />
-        )}
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+      <div className="mx-auto w-full">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {onBack ? (
+              <Button onClick={onBack} size="sm" variant="outline">
+                Back to Orders
+              </Button>
+            ) : null}
+          </div>
 
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          Order ID:{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {orderId}
-          </span>
-        </div>
-      </div>
-
-      <OrderEditorHeader
-        orderNumber={data.orderNumber}
-        orderStatus={data.orderStatus}
-        paymentStatus={data.paymentStatus}
-        orderDateLabel={formatDateLabel(data.orderDate)}
-        paymentLabel={paymentLabel}
-        statusLabel={statusLabel(data.orderStatus)}
-        customerIp={data.customerIp}
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-8 space-y-6">
-          <OrderFormCard
-            values={{
-              billingName: data.billingName,
-              shippingAddress: data.shippingAddress,
-              orderStatus: data.orderStatus,
-              phone: data.phone,
-              altPhone: data.altPhone,
-              paymentStatus: data.paymentStatus,
-              deliveryType: data.deliveryType,
-              city: data.city,
-              postalCode: data.postalCode,
-              email: data.email,
-              paymentMethod: data.paymentMethod,
-              note: data.note,
-            }}
-            onChange={(key, value) => handleChangeForm(key, value as never)}
-            onSubmit={handleSubmitTop}
-          />
-
-          <ProductCalculationsCard
-            products={data.products}
-            onChangeLine={handleChangeLine}
-            onDeleteLine={handleDeleteLine}
-            onAddLine={handleAddLine}
-            deliveryCharge={data.deliveryCharge}
-            specialDiscount={data.specialDiscount}
-            advancePayment={data.advancePayment}
-            onChangeTotals={handleChangeTotals}
-            totals={{
-              itemCount: totals.itemCount,
-              subTotal: totals.subTotal,
-              taxTotal: totals.taxTotal,
-              grandTotal: totals.grandTotal,
-              payable: totals.payable,
-            }}
-            onSubmit={handleSubmitProducts}
-          />
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:text-gray-300">
+            <span className="uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Order ID
+            </span>
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {orderId}
+            </span>
+          </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-6">
-          <SidebarInfoCard
-            name={data.customerInfo.name}
-            phone={data.customerInfo.phone}
-            email={data.customerInfo.email}
-            address={data.customerInfo.address}
+        <div className="mt-6 space-y-6">
+          <OrderEditorHeader
+            orderNumber={data.orderNumber}
+            orderStatus={data.orderStatus}
+            paymentStatus={data.paymentStatus}
+            orderDateLabel={formatDateLabel(data.orderDate)}
+            paymentLabel={paymentLabel}
+            statusLabel={statusLabel(data.orderStatus)}
+            customerIp={data.customerIp}
           />
 
-          <SidebarCourierCard
-            method={data.courier.method}
-            consignmentId={data.courier.consignmentId}
-            trackingUrl={data.courier.trackingUrl}
-            lastUpdatedAtLabel={formatDateTimeLabel(data.courier.lastUpdatedAt)}
-            anyAutoAvailable={courierOption?.any_auto_available}
-            providers={courierOption?.available_providers}
-            onChange={handleCourierChange}
-            onSend={handleCourierSend}
-            onComplete={handleCourierComplete}
-            onDownloadInvoice={handleCourierInvoice}
-          />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="space-y-6 lg:col-span-8">
+              <OrderFormCard
+                values={{
+                  billingName: data.billingName,
+                  shippingAddress: data.shippingAddress,
+                  orderStatus: data.orderStatus,
+                  phone: data.phone,
+                  altPhone: data.altPhone,
+                  paymentStatus: data.paymentStatus,
+                  deliveryType: data.deliveryType,
+                  city: data.city,
+                  postalCode: data.postalCode,
+                  email: data.email,
+                  paymentMethod: data.paymentMethod,
+                  note: data.note,
+                }}
+                onChange={(key, value) => handleChangeForm(key, value as never)}
+                onSubmit={handleSubmitTop}
+              />
 
-          <SidebarCustomerHistoryCard
-            orderId={data.customerHistory.orderId}
-            shipping={data.customerHistory.shipping}
-            orderDateLabel={formatDateLabel(data.customerHistory.orderDate)}
-            totalAmount={data.customerHistory.totalAmount}
-            timeAgo={data.customerHistory.timeAgo}
-            orderStatus={data.customerHistory.orderStatus}
-            sentBy={data.customerHistory.sentBy}
-            altPhone={data.customerHistory.altPhone}
-            additionalNotes={data.customerHistory.additionalNotes}
-            onDownloadInvoice={handleInvoiceDownload}
-          />
+              <ProductCalculationsCard
+                products={data.products}
+                onChangeLine={handleChangeLine}
+                onDeleteLine={handleDeleteLine}
+                onAddLine={handleAddLine}
+                deliveryCharge={data.deliveryCharge}
+                specialDiscount={data.specialDiscount}
+                advancePayment={data.advancePayment}
+                onChangeTotals={handleChangeTotals}
+                totals={{
+                  itemCount: totals.itemCount,
+                  subTotal: totals.subTotal,
+                  taxTotal: totals.taxTotal,
+                  grandTotal: totals.grandTotal,
+                  payable: totals.payable,
+                }}
+                onSubmit={handleSubmitProducts}
+              />
+            </div>
 
-          {/* <SidebarShippingStickerCard
-            onOpenGenerator={handleOpenStickerGenerator}
-          /> */}
+            <div className="space-y-6 lg:col-span-4">
+              <SidebarInfoCard
+                name={data.customerInfo.name}
+                phone={data.customerInfo.phone}
+                email={data.customerInfo.email}
+                address={data.customerInfo.address}
+              />
+
+              <SidebarCourierCard
+                method={data.courier.method}
+                consignmentId={data.courier.consignmentId}
+                trackingUrl={data.courier.trackingUrl}
+                lastUpdatedAtLabel={formatDateTimeLabel(
+                  data.courier.lastUpdatedAt,
+                )}
+                anyAutoAvailable={courierOption?.any_auto_available}
+                providers={courierOption?.available_providers}
+                onChange={handleCourierChange}
+                onSend={handleCourierSend}
+                onComplete={handleCourierComplete}
+                onDownloadInvoice={handleCourierInvoice}
+              />
+
+              <SidebarCustomerHistoryCard
+                orderId={data.customerHistory.orderId}
+                shipping={data.customerHistory.shipping}
+                orderDateLabel={formatDateLabel(data.customerHistory.orderDate)}
+                totalAmount={data.customerHistory.totalAmount}
+                timeAgo={data.customerHistory.timeAgo}
+                orderStatus={data.customerHistory.orderStatus}
+                sentBy={data.customerHistory.sentBy}
+                altPhone={data.customerHistory.altPhone}
+                additionalNotes={data.customerHistory.additionalNotes}
+                onDownloadInvoice={handleInvoiceDownload}
+              />
+
+              {/* <SidebarShippingStickerCard
+                onOpenGenerator={handleOpenStickerGenerator}
+              /> */}
+            </div>
+          </div>
         </div>
       </div>
     </div>

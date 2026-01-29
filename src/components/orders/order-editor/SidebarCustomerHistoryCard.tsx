@@ -39,12 +39,17 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
   onDownloadInvoice,
 }) => {
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
-      <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
-        Customer History:
+    <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
+          History
+        </div>
+        <div className="text-lg font-semibold text-gray-900 dark:text-white">
+          Customer timeline
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+      <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div className="text-gray-500 dark:text-gray-400">Order ID</div>
         <div className="text-right font-semibold text-gray-900 dark:text-white">
           {orderId}
@@ -62,7 +67,7 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
 
         <div className="text-gray-500 dark:text-gray-400">Total Amount</div>
         <div className="text-right font-extrabold text-gray-900 dark:text-white">
-          {formatBDT(totalAmount)}৳
+          {formatBDT(totalAmount)} BDT
         </div>
 
         <div className="text-gray-500 dark:text-gray-400">Time</div>
@@ -85,7 +90,7 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
           {altPhone}
         </div>
 
-        <div className="col-span-2 rounded-[4px] border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div className="col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300">
           {additionalNotes}
         </div>
 

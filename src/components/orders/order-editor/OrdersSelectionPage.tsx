@@ -93,21 +93,22 @@ export default function OrdersSelectionPage({
   const canPrev = Boolean(pagination) && (pagination?.offset ?? 0) > 0;
   const canNext =
     Boolean(pagination) &&
-    (pagination?.offset ?? 0) + (pagination?.limit ?? 0) < (pagination?.total ?? 0);
+    (pagination?.offset ?? 0) + (pagination?.limit ?? 0) <
+      (pagination?.total ?? 0);
 
   const courierProviders =
     data?.courierOption?.available_providers?.map((p) => p.provider) ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-950">
-      <div className="mx-auto w-full space-y-6 px-4 pt-6 md:px-6">
-        <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+      <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 pt-6 md:px-6">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
                 Orders
               </div>
-              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
                 Select an Order to Edit
               </h1>
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
@@ -123,7 +124,7 @@ export default function OrdersSelectionPage({
                   {courierProviders.slice(0, 6).map((p) => (
                     <span
                       key={p}
-                      className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                      className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
                     >
                       {p}
                     </span>
@@ -179,10 +180,10 @@ export default function OrdersSelectionPage({
         </div>
 
         {/* Filters */}
-        <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Order Type
               </div>
               <Select
@@ -191,13 +192,15 @@ export default function OrdersSelectionPage({
                   { value: "regular", label: "Regular" },
                 ]}
                 defaultValue={local.order_type ?? ""}
-                onChange={(v) => setLocal((p) => ({ ...p, order_type: v || undefined }))}
-                className="bg-white dark:bg-gray-900"
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, order_type: v || undefined }))
+                }
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Order Status
               </div>
               <Select
@@ -219,12 +222,12 @@ export default function OrdersSelectionPage({
                 onChange={(v) =>
                   setLocal((p) => ({ ...p, order_status: v || undefined }))
                 }
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Payment Status
               </div>
               <Select
@@ -238,12 +241,12 @@ export default function OrdersSelectionPage({
                 onChange={(v) =>
                   setLocal((p) => ({ ...p, payment_status: v || undefined }))
                 }
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Payment Type
               </div>
               <Select
@@ -257,68 +260,80 @@ export default function OrdersSelectionPage({
                 onChange={(v) =>
                   setLocal((p) => ({ ...p, payment_type: v || undefined }))
                 }
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Phone
               </div>
               <Input
                 value={local.customer_phone ?? ""}
                 onChange={(e) =>
-                  setLocal((p) => ({ ...p, customer_phone: e.target.value || undefined }))
+                  setLocal((p) => ({
+                    ...p,
+                    customer_phone: e.target.value || undefined,
+                  }))
                 }
                 placeholder="Search phone"
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Email
               </div>
               <Input
                 value={local.customer_email ?? ""}
                 onChange={(e) =>
-                  setLocal((p) => ({ ...p, customer_email: e.target.value || undefined }))
+                  setLocal((p) => ({
+                    ...p,
+                    customer_email: e.target.value || undefined,
+                  }))
                 }
                 placeholder="Search email"
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-3">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Date From
               </div>
               <Input
                 type="date"
                 value={local.date_from ?? ""}
                 onChange={(e) =>
-                  setLocal((p) => ({ ...p, date_from: e.target.value || undefined }))
+                  setLocal((p) => ({
+                    ...p,
+                    date_from: e.target.value || undefined,
+                  }))
                 }
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-3">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Date To
               </div>
               <Input
                 type="date"
                 value={local.date_to ?? ""}
                 onChange={(e) =>
-                  setLocal((p) => ({ ...p, date_to: e.target.value || undefined }))
+                  setLocal((p) => ({
+                    ...p,
+                    date_to: e.target.value || undefined,
+                  }))
                 }
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Limit
               </div>
               <Select
@@ -330,30 +345,33 @@ export default function OrdersSelectionPage({
                 ]}
                 defaultValue={String(local.limit ?? params.limit ?? 10)}
                 onChange={(v) => setLocal((p) => ({ ...p, limit: Number(v) }))}
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
 
             <div className="lg:col-span-2">
-              <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
                 Offset
               </div>
               <Input
                 type="number"
                 value={String(local.offset ?? params.offset ?? 0)}
                 onChange={(e) =>
-                  setLocal((p) => ({ ...p, offset: Number(e.target.value) || 0 }))
+                  setLocal((p) => ({
+                    ...p,
+                    offset: Number(e.target.value) || 0,
+                  }))
                 }
-                className="bg-white dark:bg-gray-900"
+                className="bg-white/90 dark:bg-gray-900/70"
               />
             </div>
           </div>
         </div>
 
         {/* Table */}
-        <div className="rounded-[4px] border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
               Orders List
             </div>
 
@@ -365,7 +383,10 @@ export default function OrdersSelectionPage({
                 </span>{" "}
                 -{" "}
                 <span className="font-semibold text-gray-900 dark:text-white">
-                  {Math.min(pagination.offset + pagination.limit, pagination.total)}
+                  {Math.min(
+                    pagination.offset + pagination.limit,
+                    pagination.total,
+                  )}
                 </span>{" "}
                 of{" "}
                 <span className="font-semibold text-gray-900 dark:text-white">
@@ -376,30 +397,30 @@ export default function OrdersSelectionPage({
           </div>
 
           {listQuery.isLoading ? (
-            <div className="rounded-[4px] border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-300">
               Loading orders...
             </div>
           ) : listQuery.isError ? (
-            <div className="rounded-[4px] border border-gray-200 bg-white p-6 text-sm text-red-600 dark:border-gray-800 dark:bg-gray-900 dark:text-red-400">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 text-sm text-red-600 shadow-sm dark:border-gray-800 dark:bg-gray-900/80 dark:text-red-400">
               {(listQuery.error as any)?.message ?? "Failed to load orders"}
             </div>
           ) : orders.length === 0 ? (
-            <div className="rounded-[4px] border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-300">
               No orders found for current filters.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-gray-800">
               <table className="min-w-[980px] w-full border-separate border-spacing-0">
-                <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    <th className="pb-3">Order</th>
-                    <th className="pb-3">Customer</th>
-                    <th className="pb-3">Phone</th>
-                    <th className="pb-3">Payment</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3 text-right">Total</th>
-                    <th className="pb-3">Created</th>
-                    <th className="pb-3 text-right">Action</th>
+                <thead className="bg-slate-50/80 dark:bg-gray-900/60">
+                  <tr className="text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3">Order</th>
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Phone</th>
+                    <th className="px-4 py-3">Payment</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Total</th>
+                    <th className="px-4 py-3">Created</th>
+                    <th className="px-4 py-3 text-right">Action</th>
                   </tr>
                 </thead>
 
@@ -407,18 +428,18 @@ export default function OrdersSelectionPage({
                   {orders.map((o) => (
                     <tr
                       key={o.id}
-                      className="border-t border-gray-200 text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/40"
+                      className="border-t border-slate-200/80 text-sm hover:bg-slate-50/70 dark:border-gray-800 dark:hover:bg-gray-900/40"
                     >
-                      <td className="py-4 pr-3 align-top">
+                      <td className="px-4 py-4 align-top">
                         <div className="font-extrabold text-gray-900 dark:text-white">
                           #{o.id}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {o.order_type} • {o.payment_type}
+                          {o.order_type} | {o.payment_type}
                         </div>
                       </td>
 
-                      <td className="py-4 pr-3 align-top">
+                      <td className="px-4 py-4 align-top">
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {o.customer_name}
                         </div>
@@ -427,44 +448,44 @@ export default function OrdersSelectionPage({
                         </div>
                       </td>
 
-                      <td className="py-4 pr-3 align-top text-gray-700 dark:text-gray-200">
+                      <td className="px-4 py-4 align-top text-gray-700 dark:text-gray-200">
                         {o.customer_phone}
                       </td>
 
-                      <td className="py-4 pr-3 align-top">
+                      <td className="px-4 py-4 align-top">
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${badgeClass(
-                            paymentKind(o.payment_status)
+                            paymentKind(o.payment_status),
                           )}`}
                         >
                           {o.payment_status}
                         </span>
                       </td>
 
-                      <td className="py-4 pr-3 align-top">
+                      <td className="px-4 py-4 align-top">
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${badgeClass(
-                            statusKind(o.order_status)
+                            statusKind(o.order_status),
                           )}`}
                         >
                           {o.order_status}
                         </span>
                       </td>
 
-                      <td className="py-4 pr-3 align-top text-right">
+                      <td className="px-4 py-4 align-top text-right">
                         <div className="font-extrabold text-gray-900 dark:text-white">
-                          {formatBDT(o.grand_total)}৳
+                          {formatBDT(o.grand_total)} BDT
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Due: {formatBDT(o.due_amount)}৳
+                          Due: {formatBDT(o.due_amount)} BDT
                         </div>
                       </td>
 
-                      <td className="py-4 pr-3 align-top text-gray-700 dark:text-gray-200">
+                      <td className="px-4 py-4 align-top text-gray-700 dark:text-gray-200">
                         {dateLabel(o.created_at)}
                       </td>
 
-                      <td className="py-4 align-top text-right">
+                      <td className="px-4 py-4 align-top text-right">
                         <Button
                           size="sm"
                           variant="primary"
@@ -484,7 +505,8 @@ export default function OrdersSelectionPage({
           {pagination ? (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Offset: <span className="font-semibold">{pagination.offset}</span> •
+                Offset: <span className="font-semibold">{pagination.offset}</span>
+                {" | "}
                 Limit: <span className="font-semibold">{pagination.limit}</span>
               </div>
 
@@ -495,7 +517,10 @@ export default function OrdersSelectionPage({
                   disabled={!canPrev || listQuery.isFetching}
                   onClick={() => {
                     onChangeParams({
-                      offset: Math.max(0, (pagination.offset ?? 0) - (pagination.limit ?? 10)),
+                      offset: Math.max(
+                        0,
+                        (pagination.offset ?? 0) - (pagination.limit ?? 10),
+                      ),
                       limit: pagination.limit,
                     });
                     onApply();
