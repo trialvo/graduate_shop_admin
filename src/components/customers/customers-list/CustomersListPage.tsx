@@ -8,17 +8,17 @@ import {
   Pencil,
   RefreshCcw,
   Search,
-  Trash2,
   Mail,
   Phone,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
   XCircle,
   ShieldCheck,
   ShieldX,
   KeyRound,
   KeySquare,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -277,7 +277,7 @@ export default function CustomersListPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteAdminUser(id),
     onSuccess: () => {
-      toast.success("Customer deleted (soft)");
+      toast.success("User deactivated");
       setDeleteOpen(false);
       setDeleteTarget(null);
       invalidate();
@@ -286,7 +286,7 @@ export default function CustomersListPage() {
       const msg =
         err?.response?.data?.error ??
         err?.response?.data?.message ??
-        "Failed to delete customer";
+        "Failed to deactivate user";
       toast.error(msg);
     },
   });
@@ -294,7 +294,7 @@ export default function CustomersListPage() {
   const restoreMutation = useMutation({
     mutationFn: (id: number) => restoreAdminUser(id),
     onSuccess: () => {
-      toast.success("Customer restored");
+      toast.success("User restored");
       setRestoreOpen(false);
       setRestoreTarget(null);
       invalidate();
@@ -303,7 +303,7 @@ export default function CustomersListPage() {
       const msg =
         err?.response?.data?.error ??
         err?.response?.data?.message ??
-        "Failed to restore customer";
+        "Failed to restore user";
       toast.error(msg);
     },
   });
@@ -344,54 +344,56 @@ export default function CustomersListPage() {
   return (
     <div className="space-y-6">
       {/* Tabs + Filters */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 custom-scrollbar lg:w-auto">
-          {TABS.map((t) => {
-            const active = activeTab === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setActiveTab(t.key)}
-                className={cn(
-                  "inline-flex items-center gap-2 whitespace-nowrap rounded-[4px] px-4 py-2 text-sm font-semibold transition",
-                  active
-                    ? "bg-brand-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
-                )}
-              >
-                <span>{t.label}</span>
-                <span
+      <div className="rounded-[6px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 custom-scrollbar lg:w-auto">
+            {TABS.map((t) => {
+              const active = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setActiveTab(t.key)}
                   className={cn(
-                    active ? "text-white/90" : "text-gray-500 dark:text-gray-400",
+                    "inline-flex items-center gap-2 whitespace-nowrap rounded-[6px] px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm",
+                    active
+                      ? "bg-brand-500 text-white shadow-theme-xs"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
                   )}
                 >
-                  ({counts[t.key] ?? 0})
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span>{t.label}</span>
+                  <span
+                    className={cn(
+                      active
+                        ? "text-white/90"
+                        : "text-gray-500 dark:text-gray-400",
+                    )}
+                  >
+                    ({counts[t.key] ?? 0})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="w-full lg:max-w-sm">
-          <div className="relative">
-            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-              <Search size={16} className="text-gray-400" />
+          <div className="w-full lg:max-w-sm">
+            <div className="relative">
+              <Input
+                startIcon={<Search size={16} className="text-gray-400" />}
+                className="h-11 rounded-[6px] border border-gray-200 bg-white pl-9 dark:border-gray-800 dark:bg-gray-950"
+                placeholder="Search name, email, phone, id..."
+                value={search}
+                onChange={(e) => setSearch(String(e.target.value))}
+              />
             </div>
-            <Input
-              className="pl-9"
-              placeholder="Search name, email, phone, id..."
-              value={search}
-              onChange={(e) => setSearch(String(e.target.value))}
-            />
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-[6px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
-          <Table className="min-w-[1500px] border-collapse whitespace-nowrap">
+          <Table className="min-w-[1500px] border-collapse whitespace-nowrap text-sm">
             <TableHeader>
               <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                 {[
@@ -408,7 +410,7 @@ export default function CustomersListPage() {
                   <TableCell
                     key={h}
                     isHeader
-                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                    className="px-3 py-3 text-left text-xs font-semibold text-brand-500"
                   >
                     {h}
                   </TableCell>
@@ -452,9 +454,9 @@ export default function CustomersListPage() {
                       className="border-b border-gray-100 dark:border-gray-800"
                     >
                       {/* CUSTOMER */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="relative h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                          <div className="relative h-10 w-10 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={imgUrl}
@@ -537,7 +539,7 @@ export default function CustomersListPage() {
                       </TableCell>
 
                       {/* STATUS (Toggle Only) */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <StatusToggle
                           value={toggleValue}
                           disabled={disableToggle}
@@ -554,7 +556,7 @@ export default function CustomersListPage() {
                       </TableCell>
 
                       {/* DELETED */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <div className="flex flex-col gap-2">
                           <Badge
                             variant="solid"
@@ -575,7 +577,7 @@ export default function CustomersListPage() {
                       </TableCell>
 
                       {/* ✅ VERIFICATION (replace text badges with icon tiles) */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <IconBadge
                             ok={row.is_email_verified}
@@ -601,7 +603,7 @@ export default function CustomersListPage() {
                       </TableCell>
 
                       {/* TOTAL SPENT */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {formatBdt(row.total_spent)}{" "}
                           <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -611,14 +613,14 @@ export default function CustomersListPage() {
                       </TableCell>
 
                       {/* GENDER */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {row.gender}
                         </p>
                       </TableCell>
 
                       {/* DOB */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {row.dob
                             ? new Date(row.dob).toLocaleDateString()
@@ -627,19 +629,19 @@ export default function CustomersListPage() {
                       </TableCell>
 
                       {/* CREATED */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {new Date(row.created_at).toLocaleString()}
                         </p>
                       </TableCell>
 
                       {/* ACTIONS */}
-                      <TableCell className="px-4 py-4">
+                      <TableCell className="px-3 py-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
                             className={cn(
-                              "inline-flex h-10 w-10 items-center justify-center rounded-[4px] border shadow-theme-xs",
+                              "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border shadow-theme-xs",
                               row.isDeleted
                                 ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
                                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]",
@@ -661,24 +663,22 @@ export default function CustomersListPage() {
                           {row.isDeleted ? (
                             <button
                               type="button"
-                              className="inline-flex h-10 items-center justify-center gap-2 rounded-[4px] border border-success-200 bg-success-50 px-4 text-sm font-semibold text-success-700 shadow-theme-xs hover:bg-success-100 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300 dark:hover:bg-success-500/20"
+                              className="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-[4px] border border-success-200 bg-success-50 text-success-700 shadow-theme-xs hover:bg-success-100 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300 dark:hover:bg-success-500/20"
                               onClick={() => openRestore(row)}
-                              aria-label="Restore"
+                              aria-label="Restore user"
                               title="Restore user"
                             >
-                              <RotateCcw size={16} />
-                              Restore
+                              <UserCheck size={16} />
                             </button>
                           ) : (
                             <button
                               type="button"
-                              className="inline-flex h-10 items-center justify-center gap-2 rounded-[4px] border border-error-200 bg-error-50 px-4 text-sm font-semibold text-error-700 shadow-theme-xs hover:bg-error-100 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300 dark:hover:bg-error-500/20"
+                              className="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-[4px] border border-warning-200 bg-warning-50 text-warning-700 shadow-theme-xs hover:bg-warning-100 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300 dark:hover:bg-warning-500/20"
                               onClick={() => openDelete(row)}
-                              aria-label="Soft Delete"
-                              title="Soft delete user"
+                              aria-label="Deactivate user"
+                              title="Deactivate user"
                             >
-                              <Trash2 size={16} />
-                              Delete
+                              <UserX size={16} />
                             </button>
                           )}
                         </div>
@@ -714,16 +714,18 @@ export default function CustomersListPage() {
         />
       </div>
 
-      {/* Delete Confirm */}
+      {/* Deactivate Confirm */}
       <ConfirmDialog
         open={deleteOpen}
-        title="Soft Delete Customer"
+        title="Deactivate User"
         message={
           deleteTarget
-            ? `Are you sure you want to delete "${deleteTarget.name}"? This is a soft delete.`
-            : "Are you sure you want to delete this customer?"
+            ? `Are you sure you want to deactivate "${deleteTarget.name}"?`
+            : "Are you sure you want to deactivate this user?"
         }
-        confirmText={deleteMutation.isPending ? "Deleting..." : "Delete"}
+        confirmText={
+          deleteMutation.isPending ? "Deactivating..." : "Deactivate"
+        }
         cancelText="Cancel"
         tone="danger"
         onClose={() => {
@@ -740,11 +742,11 @@ export default function CustomersListPage() {
       {/* Restore Confirm */}
       <ConfirmDialog
         open={restoreOpen}
-        title="Restore Customer"
+        title="Restore User"
         message={
           restoreTarget
             ? `Do you want to restore "${restoreTarget.name}"?`
-            : "Do you want to restore this customer?"
+            : "Do you want to restore this user?"
         }
         confirmText={restoreMutation.isPending ? "Restoring..." : "Restore"}
         cancelText="Cancel"
