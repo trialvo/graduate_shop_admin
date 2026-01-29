@@ -11,7 +11,8 @@ type Props = {
 };
 
 function statusPill(status: OrderRow["status"]) {
-  const base = "inline-flex items-center rounded-full px-4 py-1 text-xs font-semibold";
+  const base =
+    "inline-flex items-center rounded-full px-4 py-1 text-xs font-semibold";
   switch (status) {
     case "new":
       return `${base} bg-blue-light-500 text-white`;
@@ -89,10 +90,15 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
         {/* Header (fixed) */}
         <div className="flex items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-950">
           <div className="flex items-center gap-4 min-w-0">
-            <h3 id={titleId} className="truncate text-xl sm:text-2xl font-extrabold tracking-wide">
+            <h3
+              id={titleId}
+              className="truncate text-xl sm:text-2xl font-extrabold tracking-wide"
+            >
               ORDER {order.id}
             </h3>
-            <span className={statusPill(order.status)}>{formatStatusLabel(order.status)}</span>
+            <span className={statusPill(order.status)}>
+              {formatStatusLabel(order.status)}
+            </span>
           </div>
 
           <button
@@ -121,7 +127,9 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-xs font-semibold text-gray-500">IMG</span>
+                      <span className="text-xs font-semibold text-gray-500">
+                        IMG
+                      </span>
                     )}
                   </div>
 
@@ -129,7 +137,9 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                     <p className="truncate text-lg font-semibold text-gray-900 dark:text-white">
                       {order.customerName}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{order.customerPhone}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {order.customerPhone}
+                    </p>
 
                     <div className="mt-3 grid grid-cols-12 gap-3">
                       <div className="col-span-12 sm:col-span-6">
@@ -146,7 +156,8 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                           PAYMENT
                         </p>
                         <p className="text-sm text-gray-900 dark:text-white">
-                          {paymentLabel(order.paymentMethod)} • {order.paymentStatus}
+                          {paymentLabel(order.paymentMethod)} •{" "}
+                          {order.paymentStatus}
                         </p>
                       </div>
                     </div>
@@ -184,7 +195,10 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                       AREA
                     </p>
                     <p className="text-sm text-gray-900 dark:text-white">
-                      {shippingArea || (shippingLocation ? shippingLocation.split(" ")[0] : "—")}
+                      {shippingArea ||
+                        (shippingLocation
+                          ? shippingLocation.split(" ")[0]
+                          : "—")}
                     </p>
                   </div>
 
@@ -204,7 +218,9 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                       COURIER
                     </p>
                     <p className="text-sm text-gray-900 dark:text-white">
-                      {order.courier?.providerName || order.courier?.providerId || "—"}
+                      {order.courier?.providerName ||
+                        order.courier?.providerId ||
+                        "—"}
                     </p>
                   </div>
 
@@ -227,7 +243,9 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                     <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
                       NOTE
                     </p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">{orderNote}</p>
+                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                      {orderNote}
+                    </p>
                   </div>
                 ) : null}
               </div>
@@ -270,7 +288,10 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                 <tbody>
                   {items.length ? (
                     items.map((it, idx) => (
-                      <tr key={it.id} className="border-b border-gray-100 dark:border-gray-900">
+                      <tr
+                        key={it.id}
+                        className="border-b border-gray-100 dark:border-gray-900"
+                      >
                         <td className="px-5 py-5 text-sm text-gray-900 dark:text-white">
                           {idx + 1}
                         </td>
@@ -291,7 +312,10 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                                   <span className="inline-flex items-center gap-1">
                                     <span
                                       className="h-3 w-3 rounded-full ring-1 ring-gray-300 dark:ring-gray-700"
-                                      style={{ backgroundColor: it.colorHex || "#e5e7eb" }}
+                                      style={{
+                                        backgroundColor:
+                                          it.colorHex || "#e5e7eb",
+                                      }}
                                     />
                                     {it.colorName}
                                   </span>
@@ -375,7 +399,9 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
 
                   <tr className="border-t border-gray-100 dark:border-gray-900">
                     <td className="px-5 py-4" colSpan={6} />
-                    <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-200">Paid</td>
+                    <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-200">
+                      Paid
+                    </td>
                     <td className="px-5 py-4 text-right text-sm text-gray-900 dark:text-white">
                       {order.currencySymbol}
                       {paid.toLocaleString()}
@@ -417,15 +443,6 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
         {/* Footer (fixed) */}
         <div className="border-t border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-950">
           <div className="flex items-center justify-end gap-3">
-            <button
-              type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-white/[0.03]"
-              aria-label="Print"
-              onClick={() => window.print()}
-            >
-              <Printer size={18} />
-            </button>
-
             <Button className="h-11" onClick={onClose}>
               Close
             </Button>

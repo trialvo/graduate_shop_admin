@@ -9,6 +9,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 import Select from "@/components/form/Select";
+import Pagination from "@/components/common/Pagination";
 import { cn } from "@/lib/utils";
 
 import {
@@ -183,8 +184,7 @@ export default function BannersSettingsPage() {
     return `${from}-${to} of ${total}`;
   }, [effectiveOffset, effectiveLimit, total]);
 
-  const canPrev = effectiveOffset > 0;
-  const canNext = effectiveOffset + effectiveLimit < total;
+  const currentPage = Math.floor(effectiveOffset / Math.max(1, effectiveLimit)) + 1;
 
   const openCreate = () => {
     setModalMode("create");
@@ -259,14 +259,14 @@ export default function BannersSettingsPage() {
       </div>
 
       {/* Actions + Filters */}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-        <Button onClick={openCreate} startIcon={<Plus size={16} />}>
-          Add New Banner
-        </Button>
+      <div className="rounded-[6px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <Button onClick={openCreate} startIcon={<Plus size={16} />}>
+              Add New Banner
+            </Button>
 
-        <div className="flex w-full flex-col gap-3 xl:w-auto">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
-            <div className="relative sm:col-span-2 xl:col-span-2">
+            <div className="w-full lg:max-w-sm">
               <Input
                 startIcon={<Search size={16} className="text-gray-400" />}
                 className="pl-9"
@@ -279,7 +279,9 @@ export default function BannersSettingsPage() {
                 }}
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Select
               options={zoneOptions}
               placeholder="Zone"
@@ -325,7 +327,7 @@ export default function BannersSettingsPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-[6px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <Select
                 options={[
@@ -374,32 +376,7 @@ export default function BannersSettingsPage() {
                 }}
               />
 
-              <div className="text-xs text-gray-500 dark:text-gray-400">{pageLabel}</div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (!canPrev) return;
-                    setLimit((p) => p ?? effectiveLimit);
-                    setOffset((p) => Math.max(0, (p ?? effectiveOffset) - effectiveLimit));
-                  }}
-                  disabled={!canPrev}
-                >
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (!canNext) return;
-                    setLimit((p) => p ?? effectiveLimit);
-                    setOffset((p) => (p ?? effectiveOffset) + effectiveLimit);
-                  }}
-                  disabled={!canNext}
-                >
-                  Next
-                </Button>
-              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{pageLabel}</span>
             </div>
 
             <Button
@@ -566,6 +543,21 @@ export default function BannersSettingsPage() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          totalItems={total}
+          page={currentPage}
+          pageSize={effectiveLimit}
+          onPageChange={(next) => {
+            setLimit((p) => p ?? effectiveLimit);
+            setOffset(Math.max(0, (next - 1) * effectiveLimit));
+          }}
+          onPageSizeChange={(next) => {
+            setLimit(next);
+            setOffset(0);
+          }}
+          className="shadow-none"
+        />
       </div>
 
       <BannerModal
