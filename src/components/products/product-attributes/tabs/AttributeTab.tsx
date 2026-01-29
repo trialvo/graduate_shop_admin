@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { Download, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import Pagination from "@/components/common/Pagination";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
@@ -36,13 +37,6 @@ const STATUS_OPTIONS: Option[] = [
   { value: "all", label: "All Status" },
   { value: "true", label: "Active" },
   { value: "false", label: "Inactive" },
-];
-
-const LIMIT_OPTIONS: Option[] = [
-  { value: "10", label: "10 / page" },
-  { value: "20", label: "20 / page" },
-  { value: "50", label: "50 / page" },
-  { value: "100", label: "100 / page" },
 ];
 
 // attribute + variant priority: 1 Normal, 2 Medium, 3 High
@@ -449,7 +443,7 @@ export default function AttributeTab() {
       name: search.trim() ? search.trim() : undefined,
       status: status === "all" ? undefined : status === "true",
       priority: priority === "all" ? undefined : safeNumber(priority, 1),
-      offset: page > 1 ? page : undefined,
+      offset: page > 1 ? (page - 1) * limit : undefined,
     };
   }, [limit, search, status, priority, page]);
 
@@ -468,9 +462,6 @@ export default function AttributeTab() {
   );
 
   const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
 
   const attributeOptions: Option[] = useMemo(
     () => rows.map((r) => ({ value: String(r.id), label: r.name })),
@@ -850,21 +841,6 @@ export default function AttributeTab() {
             />
           </div>
 
-          <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Limit
-            </p>
-            <Select
-              options={LIMIT_OPTIONS}
-              placeholder="Limit"
-              defaultValue={String(limit)}
-              onChange={(v) => {
-                setPage(1);
-                setLimit(safeNumber(String(v), 10));
-              }}
-            />
-          </div>
-
           <div className="md:col-span-1">
             <Button
               variant="outline"
@@ -1083,44 +1059,16 @@ export default function AttributeTab() {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="flex flex-col gap-3 border-t border-gray-200 p-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Page{" "}
-                <span className="font-semibold text-gray-900 dark:text-white">{page}</span> of{" "}
-                <span className="font-semibold text-gray-900 dark:text-white">{totalPages}</span>
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className={cn(
-                    "inline-flex h-9 items-center justify-center rounded-lg border px-3 text-sm font-semibold shadow-theme-xs",
-                    canPrev
-                      ? "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-600",
-                  )}
-                  onClick={() => canPrev && setPage((p) => Math.max(1, p - 1))}
-                  disabled={!canPrev}
-                >
-                  Prev
-                </button>
-
-                <button
-                  type="button"
-                  className={cn(
-                    "inline-flex h-9 items-center justify-center rounded-lg border px-3 text-sm font-semibold shadow-theme-xs",
-                    canNext
-                      ? "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-600",
-                  )}
-                  onClick={() => canNext && setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={!canNext}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+            <Pagination
+              totalItems={total}
+              page={page}
+              pageSize={limit}
+              onPageChange={setPage}
+              onPageSizeChange={(next) => {
+                setLimit(next);
+                setPage(1);
+              }}
+            />
           </>
         )}
       </div>

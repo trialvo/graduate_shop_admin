@@ -177,7 +177,7 @@ export default function CreateEditCategoryModal({
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {mode === "edit" ? "Loaded via TanStack Query (single fetch + cache)" : "Create with multipart/form-data"}
+              {mode === "edit" ? "Loaded via TanStack Query" : "Create with multipart/form-data"}
             </p>
           </div>
 
