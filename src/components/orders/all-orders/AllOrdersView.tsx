@@ -106,7 +106,7 @@ function mapApiItemsToRowItems(items: any[]): OrderItemRow[] {
 export default function AllOrdersView() {
   const queryClient = useQueryClient();
 
-  const [status, setStatus] = useState<OrderStatus>("all");
+  const [status, setStatus] = useState<OrderStatus>("new");
 
   const [search, setSearch] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -195,6 +195,8 @@ export default function AllOrdersView() {
     queryKey: ordersKeys.list(listParams),
     queryFn: () => getAdminOrders(listParams),
     placeholderData: keepPreviousData,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
     retry: 1,
   });
 
@@ -214,6 +216,8 @@ export default function AllOrdersView() {
           offset: 0,
         }),
       enabled: true,
+      refetchInterval: 5000,
+      refetchIntervalInBackground: true,
       retry: 1,
       staleTime: 30_000,
     })),
@@ -338,7 +342,7 @@ export default function AllOrdersView() {
   }, [ordersQuery.dataUpdatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onClear = () => {
-    setStatus("all");
+    setStatus("new");
     setSearch("");
     setOrderType("all");
     setPaymentStatus("all");

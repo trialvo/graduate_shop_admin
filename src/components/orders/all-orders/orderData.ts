@@ -3,8 +3,8 @@
 import type { OrderStatus } from "./types";
 
 export const STATUS_OPTIONS: { id: OrderStatus; label: string }[] = [
-  { id: "all", label: "All" },
   { id: "new", label: "New" },
+  { id: "all", label: "All" },
   { id: "approved", label: "Approved" },
   { id: "processing", label: "Processing" },
   { id: "packaging", label: "Packaging" },
