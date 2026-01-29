@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
+import Pagination from "@/components/common/Pagination";
 
 import AllProductsTable from "./AllProductsTable";
 import type { Product, ProductListFilters } from "./types";
@@ -243,8 +244,7 @@ const AllProductsPage: React.FC = () => {
   const limit = filters.limit;
   const offset = filters.offset;
 
-  const canPrev = offset > 0;
-  const canNext = offset + limit < total;
+  const currentPage = Math.floor(offset / Math.max(1, limit)) + 1;
 
   return (
     <div className="w-full min-w-0 space-y-4">
@@ -371,29 +371,19 @@ const AllProductsPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          variant="outline"
-          className="h-10"
-          onClick={() => setFilters((p) => ({ ...p, offset: Math.max(0, p.offset - p.limit) }))}
-          disabled={!canPrev}
-        >
-          Prev
-        </Button>
-
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          {total === 0 ? "0" : `${offset + 1} - ${Math.min(offset + limit, total)}`} of {total}
-        </div>
-
-        <Button
-          variant="outline"
-          className="h-10"
-          onClick={() => setFilters((p) => ({ ...p, offset: p.offset + p.limit }))}
-          disabled={!canNext}
-        >
-          Next
-        </Button>
-      </div>
+      <Pagination
+        totalItems={total}
+        page={currentPage}
+        pageSize={limit}
+        onPageChange={(nextPage) =>
+          setFilters((p) => ({ ...p, offset: Math.max(0, (nextPage - 1) * p.limit) }))
+        }
+        onPageSizeChange={(nextPageSize) =>
+          setFilters((p) => ({ ...p, limit: nextPageSize, offset: 0 }))
+        }
+        pageSizeOptions={[10, 20, 50, 100]}
+        className="shadow-none"
+      />
 
       {/* ✅ Stock modal (variations) */}
       <StockVariantsModal

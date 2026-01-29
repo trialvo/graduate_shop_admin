@@ -130,19 +130,19 @@ export default function Pagination({
   return (
     <div
       className={cn(
-        "rounded-[4px] border border-gray-200 bg-white px-4 py-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900",
+        "rounded-[4px] border border-gray-200 bg-white px-3 py-3 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:px-4 sm:py-4",
         "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
         className
       )}
     >
       {/* Left summary */}
       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <span>
+        <span className="inline-flex items-center gap-1">
           Page{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-200">
             {safePage}
           </span>{" "}
-          /{" "}
+          of{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-200">
             {totalPages}
           </span>
@@ -150,28 +150,20 @@ export default function Pagination({
 
         <span className="hidden h-3 w-px bg-gray-200 dark:bg-gray-800 sm:inline-block" />
 
-        {/* Quick jump (nice on long lists) */}
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:inline">Jump:</span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => go(1)}
-              disabled={safePage <= 1}
-            >
-              First
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => go(totalPages)}
-              disabled={safePage >= totalPages}
-            >
-              Last
-            </Button>
-          </div>
-        </div>
+        <span className="inline-flex items-center gap-1">
+          Showing{" "}
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {start}
+          </span>
+          –
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {end}
+          </span>{" "}
+          of{" "}
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {totalItems}
+          </span>
+        </span>
       </div>
 
       {/* Right controls */}
@@ -200,7 +192,7 @@ export default function Pagination({
             disabled={safePage <= 1}
             startIcon={<ChevronLeft size={16} />}
           >
-            Prev
+            <span className="hidden sm:inline">Prev</span>
           </Button>
 
           {/* Pages (desktop) */}
@@ -240,7 +232,27 @@ export default function Pagination({
             disabled={safePage >= totalPages}
             endIcon={<ChevronRight size={16} />}
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
+          </Button>
+        </div>
+
+        {/* Quick jump (desktop) */}
+        <div className="hidden items-center gap-1 lg:flex">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => go(1)}
+            disabled={safePage <= 1}
+          >
+            First
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => go(totalPages)}
+            disabled={safePage >= totalPages}
+          >
+            Last
           </Button>
         </div>
       </div>
