@@ -89,7 +89,7 @@ function toCustomerRow(u: AdminUserEntity): CustomerRow {
   const phone = firstPhone?.phone_number ?? null;
 
   const phone_verified = Boolean(
-    firstPhone?.is_verified === true || firstPhone?.is_verified === 1
+    firstPhone?.is_verified === true || firstPhone?.is_verified === 1,
   );
 
   const deleted_at = u.deleted_at ?? null;
@@ -140,7 +140,7 @@ function VerifyIcon({
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold",
-        ok ? "bg-success-600 text-white" : "bg-error-600 text-white"
+        ok ? "bg-success-600 text-white" : "bg-error-600 text-white",
       )}
       title={label}
       aria-label={label}
@@ -167,7 +167,7 @@ function IconBadge({
         "inline-flex items-center gap-2 rounded-[4px] border px-3 py-2 text-xs font-semibold",
         ok
           ? "border-success-200 bg-success-50 text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300"
-          : "border-error-200 bg-error-50 text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300"
+          : "border-error-200 bg-error-50 text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300",
       )}
       title={label}
       aria-label={label}
@@ -343,90 +343,37 @@ export default function CustomersListPage() {
 
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Customers List" />
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            Customers
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage status, verification and soft delete/restore.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>Data Refreshed</span>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={() => {
-                setRefreshedAt(new Date());
-                usersQuery.refetch().catch(() => undefined);
-              }}
-              aria-label="Refresh"
-              title="Refresh"
-            >
-              <RefreshCcw size={16} />
-            </button>
-          </div>
-
-          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-            {headerTime}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2">
-        {TABS.map((t) => {
-          const active = activeTab === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setActiveTab(t.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-[4px] px-4 py-2 text-sm font-semibold transition",
-                active
-                  ? "bg-brand-500 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              )}
-            >
-              <span>{t.label}</span>
-              <span
+      {/* Tabs + Filters */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 custom-scrollbar lg:w-auto">
+          {TABS.map((t) => {
+            const active = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setActiveTab(t.key)}
                 className={cn(
-                  active ? "text-white/90" : "text-gray-500 dark:text-gray-400"
+                  "inline-flex items-center gap-2 whitespace-nowrap rounded-[4px] px-4 py-2 text-sm font-semibold transition",
+                  active
+                    ? "bg-brand-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
                 )}
               >
-                ({counts[t.key] ?? 0})
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Page Size
-          </p>
-          <Select
-            key={`ps-${pageSize}`}
-            options={PAGE_SIZE_OPTIONS}
-            placeholder="Select"
-            defaultValue={String(pageSize)}
-            onChange={(v) => setPageSize(Number(v))}
-          />
+                <span>{t.label}</span>
+                <span
+                  className={cn(
+                    active ? "text-white/90" : "text-gray-500 dark:text-gray-400",
+                  )}
+                >
+                  ({counts[t.key] ?? 0})
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Search
-          </p>
+        <div className="w-full lg:max-w-sm">
           <div className="relative">
             <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
               <Search size={16} className="text-gray-400" />
@@ -444,7 +391,7 @@ export default function CustomersListPage() {
       {/* Table */}
       <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
-          <Table className="min-w-[1500px] border-collapse">
+          <Table className="min-w-[1500px] border-collapse whitespace-nowrap">
             <TableHeader>
               <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                 {[
@@ -482,10 +429,12 @@ export default function CustomersListPage() {
               ) : (
                 filtered.map((row) => {
                   const fallback = imageFallbackSvgDataUri(row.name);
-                  const imgUrl = row.img_path ? toPublicUrl(row.img_path) : fallback;
+                  const imgUrl = row.img_path
+                    ? toPublicUrl(row.img_path)
+                    : fallback;
 
                   const verified = Boolean(
-                    row.is_fully_verified || row.is_email_verified
+                    row.is_fully_verified || row.is_email_verified,
                   );
                   const statusLower = String(row.status).toLowerCase();
                   const isSuspended = statusLower === "suspended";
@@ -532,7 +481,7 @@ export default function CustomersListPage() {
 
                               <span
                                 className={cn(
-                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 )}
                                 title={
                                   row.is_email_verified
@@ -562,7 +511,7 @@ export default function CustomersListPage() {
 
                               <span
                                 className={cn(
-                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 )}
                                 title={
                                   row.phone_verified
@@ -618,7 +567,7 @@ export default function CustomersListPage() {
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {row.isDeleted && row.deleted_at
                               ? `Deleted at: ${new Date(
-                                  row.deleted_at
+                                  row.deleted_at,
                                 ).toLocaleString()}`
                               : "—"}
                           </p>
@@ -649,7 +598,6 @@ export default function CustomersListPage() {
                             badIcon={<KeySquare size={16} />}
                           />
                         </div>
-
                       </TableCell>
 
                       {/* TOTAL SPENT */}
@@ -694,7 +642,7 @@ export default function CustomersListPage() {
                               "inline-flex h-10 w-10 items-center justify-center rounded-[4px] border shadow-theme-xs",
                               row.isDeleted
                                 ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
-                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]",
                             )}
                             onClick={() => {
                               if (row.isDeleted) return;
