@@ -31,9 +31,11 @@ function statusUi(status: GuestOrder["status"]) {
 
 type Props = {
   orders: GuestOrder[];
+  onDelete?: (id: string) => void;
+  deletingId?: string | null;
 };
 
-const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
+const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => {
   const onCopy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -152,14 +154,14 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                       </div>
                     </div>
 
-                    {/* Tour preference */}
+                    {/* Location */}
                     <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <MapPin className="h-4 w-4" />
-                        Tour Preference
+                        Location
                       </div>
                       <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
-                        {o.tourPreference}
+                        {o.locationLabel}
                       </div>
                     </div>
 
@@ -169,8 +171,9 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                         variant="outline"
                         size="icon"
                         ariaLabel="Delete order"
-                        onClick={() => console.log("delete", o.id)}
+                        onClick={() => onDelete?.(o.id)}
                         className="h-10 w-10 text-error-500 hover:text-error-600"
+                        disabled={Boolean(deletingId && deletingId === o.id)}
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -230,14 +233,17 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                   isHeader
                   className="hidden xl:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
                 >
-                  TOUR
+                  LOCATION
                 </TableCell>
 
                 <TableCell isHeader className="w-[130px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
                   STATUS
                 </TableCell>
 
-                <TableCell isHeader className="w-[90px] px-4 py-4 text-right text-xs font-semibold text-brand-500">
+                <TableCell
+                  isHeader
+                  className="sticky right-0 z-20 w-[90px] bg-gray-50 px-4 py-4 text-right text-xs font-semibold text-brand-500 dark:bg-gray-950"
+                >
                   ACTION
                 </TableCell>
               </TableRow>
@@ -320,9 +326,9 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                       {o.cartTotal}
                     </TableCell>
 
-                    {/* Tour (xl+) */}
+                    {/* Location (xl+) */}
                     <TableCell className="hidden xl:table-cell px-4 py-4 text-sm text-gray-700 dark:text-gray-200 truncate">
-                      {o.tourPreference}
+                      {o.locationLabel}
                     </TableCell>
 
                     <TableCell className="px-4 py-4">
@@ -335,13 +341,14 @@ const GuestOrdersTable: React.FC<Props> = ({ orders }) => {
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="px-4 py-4 text-right">
+                    <TableCell className="sticky right-0 z-10 bg-white px-4 py-4 text-right dark:bg-gray-900">
                       <Button
                         variant="outline"
                         size="icon"
                         ariaLabel="Delete order"
-                        onClick={() => console.log("delete", o.id)}
+                        onClick={() => onDelete?.(o.id)}
                         className="h-9 w-9 text-error-500 hover:text-error-600"
+                        disabled={Boolean(deletingId && deletingId === o.id)}
                       >
                         <Trash2 size={16} />
                       </Button>

@@ -60,19 +60,6 @@ const SidebarInfoCard: React.FC<SidebarInfoCardProps> = ({
           </div>
         </div>
 
-        <div className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-          <div className="grid h-[112px] w-[112px] grid-cols-9 gap-[2px] rounded-lg bg-gray-900/5 p-2 dark:bg-white/5">
-            {Array.from({ length: 81 }).map((_, i) => (
-              <span
-                key={i}
-                className="rounded-[2px] bg-gray-900 dark:bg-white"
-                style={{
-                  opacity: i % 5 === 0 || i % 7 === 0 ? 0.95 : 0.1,
-                }}
-              />
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

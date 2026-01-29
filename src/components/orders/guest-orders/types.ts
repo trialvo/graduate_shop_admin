@@ -1,9 +1,10 @@
 export type GuestOrderStatus = "pending" | "complete" | "cancelled";
 
-export type SortBy = "date_desc" | "date_asc" | "total_desc" | "total_asc";
+export type SortBy = "date_desc" | "date_asc";
 
 export type GuestOrder = {
   id: string;
+  orderId?: number | null;
   customerName: string;
   email: string;
   phone: string;
@@ -11,5 +12,8 @@ export type GuestOrder = {
   timeLabel: string;
   cartTotal: string;
   status: GuestOrderStatus;
-  tourPreference: string;
+  locationLabel: string;
+  paymentStatus?: string;
+  paymentType?: string;
+  isDeleted?: boolean;
 };

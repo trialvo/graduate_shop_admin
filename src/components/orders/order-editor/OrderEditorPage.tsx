@@ -565,9 +565,9 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
             onDownloadInvoice={handleInvoiceDownload}
           />
 
-          <SidebarShippingStickerCard
+          {/* <SidebarShippingStickerCard
             onOpenGenerator={handleOpenStickerGenerator}
-          />
+          /> */}
         </div>
       </div>
     </div>

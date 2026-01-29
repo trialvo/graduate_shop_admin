@@ -2,13 +2,22 @@
 
 import React from "react";
 import { RefreshCcw } from "lucide-react";
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import type { GuestOrder, GuestOrderStatus, SortBy } from "./types";
-import { demoGuestOrders } from "./data";
 
 import GuestOrdersHeader from "./GuestOrdersHeader";
 import GuestOrdersToolbar from "./GuestOrdersToolbar";
 import GuestOrdersTable from "./GuestOrdersTable";
+import Pagination from "@/components/common/Pagination";
+
+import {
+  deleteGuestOrder,
+  getGuestOrders,
+  guestOrdersKeys,
+  type GuestOrderListItem,
+} from "@/api/guest-orders.api";
 
 const statusTabs: Array<{ label: string; value: "all" | GuestOrderStatus }> = [
   { label: "Total", value: "all" },
@@ -20,8 +29,6 @@ const statusTabs: Array<{ label: string; value: "all" | GuestOrderStatus }> = [
 const sortOptions: Array<{ label: string; value: SortBy }> = [
   { label: "by: Date", value: "date_desc" },
   { label: "by: Date (Oldest)", value: "date_asc" },
-  { label: "by: Total (High)", value: "total_desc" },
-  { label: "by: Total (Low)", value: "total_asc" },
 ];
 
 function refreshedLabel(d: Date) {
@@ -32,80 +39,116 @@ function refreshedLabel(d: Date) {
   return `${month} ${day}, ${year} at ${time}`;
 }
 
-const normalize = (v: string) => v.trim().toLowerCase();
-
-const matchesSearch = (order: GuestOrder, q: string) => {
-  if (!q) return true;
-  const query = normalize(q);
-  return (
-    normalize(order.customerName).includes(query) ||
-    normalize(order.email).includes(query) ||
-    normalize(order.phone).includes(query) ||
-    normalize(order.tourPreference).includes(query) ||
-    normalize(order.id).includes(query)
-  );
+const formatTime = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 };
 
-const sortOrders = (orders: GuestOrder[], sortBy: SortBy) => {
-  const copy = [...orders];
+const formatAmount = (n: number) => {
+  const v = Number(n ?? 0);
+  if (!Number.isFinite(v)) return "0 BDT";
+  return `${v.toLocaleString("en-US")} BDT`;
+};
 
-  const toNumber = (s: string) => {
-    const n = Number(s.replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) ? n : 0;
+const toRow = (o: GuestOrderListItem): GuestOrder => {
+  const name = o.name?.trim() || "Guest";
+  const location = [o.city, o.full_address].filter(Boolean).join(", ") || "-";
+  return {
+    id: o.id,
+    orderId: o.order_id,
+    customerName: name,
+    email: o.email || "-",
+    phone: o.phone || "-",
+    createdAt: new Date(o.created_at),
+    timeLabel: formatTime(o.created_at),
+    cartTotal: formatAmount(o.grand_total),
+    status: o.status,
+    locationLabel: location,
+    paymentStatus: o.payment_status,
+    paymentType: o.payment_type,
+    isDeleted: Boolean(o.deleted_at),
   };
-
-  switch (sortBy) {
-    case "date_desc":
-      copy.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      break;
-    case "date_asc":
-      copy.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-      break;
-    case "total_desc":
-      copy.sort((a, b) => toNumber(b.cartTotal) - toNumber(a.cartTotal));
-      break;
-    case "total_asc":
-      copy.sort((a, b) => toNumber(a.cartTotal) - toNumber(b.cartTotal));
-      break;
-    default:
-      break;
-  }
-
-  return copy;
 };
 
 const GuestOrdersPage: React.FC = () => {
+  const qc = useQueryClient();
+
   const [activeTab, setActiveTab] = React.useState<"all" | GuestOrderStatus>("all");
   const [sortBy, setSortBy] = React.useState<SortBy>("date_desc");
   const [search, setSearch] = React.useState<string>("");
+  const [page, setPage] = React.useState(1);
+  const pageSize = 20;
   const [refreshedAt, setRefreshedAt] = React.useState<Date>(new Date());
 
   const onClear = () => {
     setActiveTab("all");
     setSortBy("date_desc");
     setSearch("");
+    setPage(1);
   };
 
+  const baseParams = React.useMemo(() => {
+    const sortOrder = sortBy === "date_asc" ? "asc" : "desc";
+    const trimmed = search.trim();
+    const hasBase = Boolean(trimmed) || sortBy !== "date_desc";
+
+    if (!hasBase) return undefined;
+
+    return {
+      search: trimmed ? trimmed : undefined,
+      sort_order: sortOrder,
+    };
+  }, [search, sortBy]);
+
+  const listParams = React.useMemo(() => {
+    if (!baseParams && page === 1 && activeTab === "all") return undefined;
+
+    return {
+      ...(baseParams ?? {}),
+      status: activeTab === "all" ? undefined : activeTab,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    };
+  }, [baseParams, activeTab, page, pageSize]);
+
+  const listQuery = useQuery({
+    queryKey: guestOrdersKeys.list(listParams ?? {}),
+    queryFn: () => getGuestOrders(listParams ?? {}),
+    placeholderData: keepPreviousData,
+    retry: 1,
+  });
+
+  const allCountQuery = useQuery({
+    queryKey: guestOrdersKeys.list({ ...(baseParams ?? {}), limit: 1, offset: 0 }),
+    queryFn: () => getGuestOrders({ ...(baseParams ?? {}), limit: 1, offset: 0 }),
+    retry: 1,
+    staleTime: 30_000,
+  });
+
+  const countsQueries = useQueries({
+    queries: (["pending", "complete", "cancelled"] as GuestOrderStatus[]).map((s) => ({
+      queryKey: guestOrdersKeys.list({ ...(baseParams ?? {}), status: s, limit: 1, offset: 0 }),
+      queryFn: () => getGuestOrders({ ...(baseParams ?? {}), status: s, limit: 1, offset: 0 }),
+      retry: 1,
+      staleTime: 30_000,
+    })),
+  });
+
   const counts = React.useMemo(() => {
-    const all = demoGuestOrders.length;
-    const pending = demoGuestOrders.filter((o: GuestOrder) => o.status === "pending").length;
-    const complete = demoGuestOrders.filter((o: GuestOrder) => o.status === "complete").length;
-    const cancelled = demoGuestOrders.filter((o: GuestOrder) => o.status === "cancelled").length;
+    const pending = countsQueries[0]?.data?.total ?? 0;
+    const complete = countsQueries[1]?.data?.total ?? 0;
+    const cancelled = countsQueries[2]?.data?.total ?? 0;
+    const all = allCountQuery.data?.total ?? pending + complete + cancelled;
     return { all, pending, complete, cancelled };
-  }, []);
+  }, [countsQueries, allCountQuery.data?.total]);
 
-  const filtered = React.useMemo(() => {
-    let list: GuestOrder[] = [...demoGuestOrders];
+  const rows = React.useMemo(() => {
+    const list = listQuery.data?.guest_orders ?? [];
+    return list.map(toRow);
+  }, [listQuery.data]);
 
-    if (activeTab !== "all") {
-      list = list.filter((o: GuestOrder) => o.status === activeTab);
-    }
-
-    list = list.filter((o: GuestOrder) => matchesSearch(o, search));
-    list = sortOrders(list, sortBy);
-
-    return list;
-  }, [activeTab, search, sortBy]);
+  const totalItems = listQuery.data?.total ?? 0;
 
   const tabBadges: Record<"all" | GuestOrderStatus, number> = {
     all: counts.all,
@@ -116,6 +159,18 @@ const GuestOrdersPage: React.FC = () => {
 
   const refreshedAtText = React.useMemo(() => refreshedLabel(refreshedAt), [refreshedAt]);
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteGuestOrder(id),
+    onSuccess: () => {
+      toast.success("Guest order deleted");
+      qc.invalidateQueries({ queryKey: guestOrdersKeys.all }).catch(() => undefined);
+    },
+    onError: (err: any) => {
+      const msg = err?.message ?? "Failed to delete guest order";
+      toast.error(msg);
+    },
+  });
+
   return (
     <div className="space-y-4">
       {/* Title + Tabs + Refresh */}
@@ -124,7 +179,10 @@ const GuestOrdersPage: React.FC = () => {
           title="Guest Orders"
           tabs={statusTabs}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(v) => {
+            setActiveTab(v);
+            setPage(1);
+          }}
           badgeCounts={tabBadges}
         />
 
@@ -134,7 +192,10 @@ const GuestOrdersPage: React.FC = () => {
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={() => setRefreshedAt(new Date())}
+              onClick={() => {
+                qc.invalidateQueries({ queryKey: guestOrdersKeys.all }).catch(() => undefined);
+                setRefreshedAt(new Date());
+              }}
               aria-label="Refresh"
               title="Refresh"
             >
@@ -153,15 +214,33 @@ const GuestOrdersPage: React.FC = () => {
         <GuestOrdersToolbar
           sortOptions={sortOptions}
           sortBy={sortBy}
-          onSortChange={setSortBy}
+          onSortChange={(v) => {
+            setSortBy(v);
+            setPage(1);
+          }}
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
           onClear={onClear}
         />
       </div>
 
       {/* Table */}
-      <GuestOrdersTable orders={filtered} />
+      <GuestOrdersTable
+        orders={rows}
+        onDelete={(id) => deleteMutation.mutate(id)}
+        deletingId={deleteMutation.isPending ? deleteMutation.variables : null}
+      />
+
+      <Pagination
+        totalItems={totalItems}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        className="shadow-none"
+      />
     </div>
   );
 };

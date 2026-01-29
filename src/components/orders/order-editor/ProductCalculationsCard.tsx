@@ -97,29 +97,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                     {String(idx + 1).padStart(2, "0")}
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <div className="w-[82px] rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
-                        <div className="h-10 w-full rounded-md bg-gray-900/5 dark:bg-white/5">
-                          <div className="flex h-full items-center justify-center gap-[1px] px-1">
-                            {Array.from({ length: 22 }).map((_, i) => (
-                              <span
-                                key={i}
-                                className={`h-7 ${i % 4 === 0 ? "w-[2px]" : "w-[1px]"} bg-gray-900 dark:bg-white`}
-                                style={{ opacity: i % 6 === 0 ? 0.6 : 0.95 }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-center text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                          {p.sku}
-                        </div>
-                      </div>
-                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                        {p.serialNo}
-                      </div>
-                    </div>
-                  </td>
+                  <td className="py-4 pr-3 align-top">{p.id}</td>
 
                   <td className="py-4 pr-3 align-top">
                     <div className="flex items-start gap-3">
