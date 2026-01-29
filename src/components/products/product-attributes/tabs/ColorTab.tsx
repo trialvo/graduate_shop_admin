@@ -260,7 +260,7 @@ function ColorModal({
   );
 }
 
-export default function ColorTab() {
+export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode }) {
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -455,28 +455,24 @@ export default function ColorTab() {
 
   return (
     <div className="space-y-6">
-      {/* Top actions */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Color</h2>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            Create and manage product colors with HEX code.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Button variant="outline" startIcon={<Download size={16} />} onClick={onExport}>
-            Export CSV
-          </Button>
-          <Button startIcon={<Plus size={16} />} onClick={openCreate}>
-            Create Color
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
+        {/* Header + Actions */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">{tabsHeader}</div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button variant="outline" startIcon={<Download size={16} />} onClick={onExport}>
+                Export CSV
+              </Button>
+              <Button startIcon={<Plus size={16} />} onClick={openCreate}>
+                Create Color
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
           <div className="md:col-span-5">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Search</p>
             <div className="relative">
