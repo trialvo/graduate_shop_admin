@@ -16,6 +16,7 @@ import {
   deleteGuestOrder,
   getGuestOrders,
   guestOrdersKeys,
+  type GuestOrdersListParams,
   type GuestOrderListItem,
 } from "@/api/guest-orders.api";
 
@@ -88,8 +89,9 @@ const GuestOrdersPage: React.FC = () => {
     setPage(1);
   };
 
-  const baseParams = React.useMemo(() => {
-    const sortOrder = sortBy === "date_asc" ? "asc" : "desc";
+  const baseParams = React.useMemo<GuestOrdersListParams | undefined>(() => {
+    const sortOrder: GuestOrdersListParams["sort_order"] =
+      sortBy === "date_asc" ? "asc" : "desc";
     const trimmed = search.trim();
     const hasBase = Boolean(trimmed) || sortBy !== "date_desc";
 
@@ -101,7 +103,7 @@ const GuestOrdersPage: React.FC = () => {
     };
   }, [search, sortBy]);
 
-  const listParams = React.useMemo(() => {
+  const listParams = React.useMemo<GuestOrdersListParams | undefined>(() => {
     if (!baseParams && page === 1 && activeTab === "all") return undefined;
 
     return {
@@ -112,9 +114,11 @@ const GuestOrdersPage: React.FC = () => {
     };
   }, [baseParams, activeTab, page, pageSize]);
 
+  const queryParams: GuestOrdersListParams = listParams ?? {};
+
   const listQuery = useQuery({
-    queryKey: guestOrdersKeys.list(listParams ?? {}),
-    queryFn: () => getGuestOrders(listParams ?? {}),
+    queryKey: guestOrdersKeys.list(queryParams),
+    queryFn: () => getGuestOrders(queryParams),
     placeholderData: keepPreviousData,
     retry: 1,
   });

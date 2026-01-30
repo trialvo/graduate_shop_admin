@@ -46,7 +46,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
 
   return (
     <div className="w-full max-w-full min-w-0 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-      {/* ✅ Mobile / Small screens: Card list */}
+      {/*  Mobile / Small screens: Card list */}
       <div className="block md:hidden">
         {orders.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -186,7 +186,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
         )}
       </div>
 
-      {/* ✅ Desktop / md+ screens: FULL table but container-safe */}
+      {/*  Desktop / md+ screens: FULL table but container-safe */}
       <div className="hidden md:block w-full max-w-full min-w-0">
         <div className="w-full max-w-full overflow-x-auto">
           <Table className="w-full table-fixed border-collapse">
@@ -200,7 +200,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                   NAME
                 </TableCell>
 
-                {/* ✅ hide email on md, show on lg+ */}
+                {/*  hide email on md, show on lg+ */}
                 <TableCell
                   isHeader
                   className="hidden lg:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
@@ -216,7 +216,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                   DATE
                 </TableCell>
 
-                {/* ✅ hide time on md, show on lg+ */}
+                {/*  hide time on md, show on lg+ */}
                 <TableCell
                   isHeader
                   className="hidden lg:table-cell w-[120px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
@@ -228,7 +228,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                   TOTAL
                 </TableCell>
 
-                {/* ✅ hide tour on md/lg, show on xl+ */}
+                {/*  hide tour on md/lg, show on xl+ */}
                 <TableCell
                   isHeader
                   className="hidden xl:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
