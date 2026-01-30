@@ -8,6 +8,7 @@ import Input from "@/components/form/input/InputField";
 import { cn } from "@/lib/utils";
 import type { ApiQuickAccessItem, UpdateQuickAccessPayload } from "@/api/quick-access.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -54,6 +55,7 @@ const QuickAccessManageModal: React.FC<Props> = ({
   onUpdateItem,
   updatingId,
 }) => {
+  const { t } = useTranslation();
   const pinnedCount = items.filter((i) => i.is_pinned).length;
 
   const sorted = React.useMemo(() => {
@@ -90,7 +92,7 @@ const QuickAccessManageModal: React.FC<Props> = ({
 
     const nextSort = toNumberOrNull(form.sort_order);
     if (form.sort_order.trim() && nextSort === null) {
-      toast.error("Sort order must be a valid number.");
+      toast.error(t("dashboard.manageQuickAccess.sortOrderInvalid"));
       return;
     }
 
@@ -115,8 +117,12 @@ const QuickAccessManageModal: React.FC<Props> = ({
       >
         {/* Header */}
         <div className="border-b px-6 py-4 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Manage Quick Access</h3>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">You can pin up to {MAX_PIN} items.</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t("dashboard.manageQuickAccess.title")}
+          </h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {t("dashboard.manageQuickAccess.subtitle", { count: MAX_PIN })}
+          </p>
         </div>
 
         {/* Scrollable Content */}
@@ -160,15 +166,25 @@ const QuickAccessManageModal: React.FC<Props> = ({
 
                         {item.is_pinned ? (
                           <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
-                            Pinned
+                            {t("dashboard.manageQuickAccess.pinned")}
                           </span>
                         ) : null}
                       </div>
 
                       <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                        <span>ID: {item.id}</span>
-                        {typeof item.sort_order === "number" ? <span>Order: {item.sort_order}</span> : null}
-                        {item.path ? <span className="truncate">Path: {item.path}</span> : null}
+                        <span>
+                          {t("dashboard.manageQuickAccess.idLabel")}: {item.id}
+                        </span>
+                        {typeof item.sort_order === "number" ? (
+                          <span>
+                            {t("dashboard.manageQuickAccess.orderLabel")}: {item.sort_order}
+                          </span>
+                        ) : null}
+                        {item.path ? (
+                          <span className="truncate">
+                            {t("dashboard.manageQuickAccess.pathLabel")}: {item.path}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -181,7 +197,7 @@ const QuickAccessManageModal: React.FC<Props> = ({
                       disabled={isUpdating}
                       onClick={() => openEdit(item)}
                       className="px-2"
-                      title="Edit"
+                      title={t("dashboard.manageQuickAccess.edit")}
                     >
                       <Pencil size={16} />
                     </Button>
@@ -193,7 +209,7 @@ const QuickAccessManageModal: React.FC<Props> = ({
                       disabled={disablePin || isUpdating}
                       onClick={() => {
                         if (disablePin) {
-                          toast.error(`Maximum ${MAX_PIN} shortcuts can be pinned.`);
+                          toast.error(t("dashboard.manageQuickAccess.maxPinnedNotice", { count: MAX_PIN }));
                           return;
                         }
                         onTogglePin(item);
@@ -203,7 +219,7 @@ const QuickAccessManageModal: React.FC<Props> = ({
                         item.is_pinned ? "text-red-600 ring-red-300 hover:bg-red-50 dark:text-red-400" : ""
                       )}
                       isLoading={isUpdating}
-                      title={item.is_pinned ? "Unpin" : "Pin"}
+                      title={item.is_pinned ? t("dashboard.manageQuickAccess.unpin") : t("dashboard.manageQuickAccess.pin")}
                     >
                       {item.is_pinned ? <PinOff size={16} /> : <Pin size={16} />}
                     </Button>
@@ -214,12 +230,14 @@ const QuickAccessManageModal: React.FC<Props> = ({
 
             {items.length === 0 ? (
               <div className="rounded-xl border p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                No quick access items found.
+                {t("dashboard.manageQuickAccess.noItems")}
               </div>
             ) : null}
 
             {pinnedCount >= MAX_PIN ? (
-              <p className="pt-1 text-xs text-red-500">Maximum {MAX_PIN} shortcuts can be pinned.</p>
+              <p className="pt-1 text-xs text-red-500">
+                {t("dashboard.manageQuickAccess.maxPinnedNotice", { count: MAX_PIN })}
+              </p>
             ) : null}
           </div>
         </div>
@@ -232,61 +250,75 @@ const QuickAccessManageModal: React.FC<Props> = ({
         className={cn("w-full max-w-[640px] overflow-hidden")}
       >
         <div className="border-b px-6 py-4 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Update Quick Access</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t("dashboard.manageQuickAccess.updateTitle")}
+          </h3>
           {editing ? (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">ID: {editing.id}</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t("dashboard.manageQuickAccess.idLabel")}: {editing.id}
+            </p>
           ) : null}
         </div>
 
         <div className="px-6 py-5">
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12">
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Title</label>
+              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("dashboard.manageQuickAccess.titleLabel")}
+              </label>
               <Input
                 value={form.title}
                 onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                placeholder="e.g. User Profile"
+                placeholder={t("dashboard.manageQuickAccess.titlePlaceholder")}
               />
             </div>
 
             <div className="col-span-12 sm:col-span-6">
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Sort order</label>
+              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("dashboard.manageQuickAccess.sortOrderLabel")}
+              </label>
               <Input
                 type="number"
                 value={form.sort_order}
                 onChange={(e) => setForm((p) => ({ ...p, sort_order: e.target.value }))}
-                placeholder="e.g. 3"
+                placeholder={t("dashboard.manageQuickAccess.sortOrderPlaceholder")}
               />
-              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">Leave empty to keep null.</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                {t("dashboard.manageQuickAccess.sortOrderHint")}
+              </p>
             </div>
 
             <div className="col-span-12 sm:col-span-6">
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Path</label>
+              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("dashboard.manageQuickAccess.pathInputLabel")}
+              </label>
               <Input
                 value={form.path}
                 onChange={(e) => setForm((p) => ({ ...p, path: e.target.value }))}
-                placeholder="e.g. /testing/path"
+                placeholder={t("dashboard.manageQuickAccess.pathPlaceholder")}
               />
             </div>
 
             <div className="col-span-12">
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Image path</label>
+              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("dashboard.manageQuickAccess.imagePathLabel")}
+              </label>
               <Input
                 value={form.img_path}
                 onChange={(e) => setForm((p) => ({ ...p, img_path: e.target.value }))}
-                placeholder="e.g. /images/user-profile.png"
+                placeholder={t("dashboard.manageQuickAccess.imagePathPlaceholder")}
               />
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                Should match your backend static path (example: <span className="font-medium">/images/xxx.png</span>).
+                {t("dashboard.manageQuickAccess.imagePathHint", { example: "/images/xxx.png" })}
               </p>
             </div>
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-2">
             <Button variant="outline" onClick={closeEdit}>
-              Cancel
+              {t("dashboard.manageQuickAccess.cancel")}
             </Button>
-            <Button onClick={handleSave}>Update</Button>
+            <Button onClick={handleSave}>{t("dashboard.manageQuickAccess.update")}</Button>
           </div>
         </div>
       </Modal>

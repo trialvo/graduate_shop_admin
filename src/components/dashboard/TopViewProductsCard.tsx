@@ -1,5 +1,6 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import TopViewProductsModal from "./TopViewProductsModal";
 import TopViewedRangeFilter from "./TopViewedRangeFilter";
@@ -36,6 +37,7 @@ function formatLastViewed(iso: string | null): string {
 }
 
 const TopViewProductsCard: React.FC = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [timeRange, setTimeRange] = React.useState<TopViewedTimeRange>("all");
 
@@ -54,9 +56,11 @@ const TopViewProductsCard: React.FC = () => {
       {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Top View Products</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+            {t("dashboard.topViewed.title")}
+          </h3>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {query.isError ? "Failed to load data." : `Showing top ${PAGE_SIZE} items.`}
+            {query.isError ? t("dashboard.topViewed.failed") : t("dashboard.topViewed.showingTop", { count: PAGE_SIZE })}
           </p>
         </div>
 
@@ -73,16 +77,16 @@ const TopViewProductsCard: React.FC = () => {
             onClick={() => setOpen(true)}
             className={cn("text-sm font-semibold text-brand-600 hover:text-brand-700", "dark:text-brand-400")}
           >
-            View More
+            {t("dashboard.topViewed.viewMore")}
           </button>
         </div>
       </div>
 
       {/* Table Header */}
       <div className="grid grid-cols-12 rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-        <div className="col-span-7">Product</div>
-        <div className="col-span-2 text-center">View</div>
-        <div className="col-span-3 text-right">Last visit</div>
+        <div className="col-span-7">{t("dashboard.topViewed.tableProduct")}</div>
+        <div className="col-span-2 text-center">{t("dashboard.topViewed.tableView")}</div>
+        <div className="col-span-3 text-right">{t("dashboard.topViewed.tableLastVisit")}</div>
       </div>
 
       {/* Body */}
@@ -107,7 +111,9 @@ const TopViewProductsCard: React.FC = () => {
               </div>
             ))
           ) : preview.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
+            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+              {t("dashboard.topViewed.noData")}
+            </div>
           ) : (
             preview.map((p) => {
               const fallback = imageFallbackSvgDataUri(p.name);
@@ -131,9 +137,13 @@ const TopViewProductsCard: React.FC = () => {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-brand-600 dark:text-brand-400">{p.name}</p>
                       <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="truncate">Slug: {p.slug}</span>
+                        <span className="truncate">
+                          {t("dashboard.topViewed.slug")}: {p.slug}
+                        </span>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <span>Price: {formatBDT(p.selling_price)}</span>
+                        <span>
+                          {t("dashboard.topViewed.price")}: {formatBDT(p.selling_price)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -154,7 +164,7 @@ const TopViewProductsCard: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <span>Total {totalCount} entries</span>
+        <span>{t("dashboard.topViewed.totalEntries", { count: totalCount })}</span>
         <span className="text-gray-400">→</span>
       </div>
 

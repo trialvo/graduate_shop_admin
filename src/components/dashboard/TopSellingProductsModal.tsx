@@ -1,5 +1,6 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { Modal } from "../ui/modal";
 import PaginationFooter from "./PaginationFooter";
@@ -49,6 +50,7 @@ function topVariation(item: DashboardTopSellingItem) {
 }
 
 const TopSellingProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onChangeTimeRange }) => {
+  const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
 
   React.useEffect(() => {
@@ -79,9 +81,11 @@ const TopSellingProductsModal: React.FC<Props> = ({ open, onClose, timeRange, on
       <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Top Selling Products</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+              {t("dashboard.topSellingProducts.title")}
+            </h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {query.isError ? "Failed to load data." : `Total ${total} items`}
+              {query.isError ? t("dashboard.topSellingProducts.failed") : t("dashboard.topSellingProducts.totalEntries", { count: total })}
             </p>
           </div>
 
@@ -91,10 +95,10 @@ const TopSellingProductsModal: React.FC<Props> = ({ open, onClose, timeRange, on
 
       <div className="max-h-[calc(720px-72px)] overflow-y-auto px-6 py-4">
         <div className="grid grid-cols-12 rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-          <div className="col-span-6">Product</div>
-          <div className="col-span-2 text-center">Sold</div>
-          <div className="col-span-2 text-center">Stock</div>
-          <div className="col-span-2 text-right">Best SKU</div>
+          <div className="col-span-6">{t("dashboard.topSellingProducts.tableProduct")}</div>
+          <div className="col-span-2 text-center">{t("dashboard.topSellingProducts.tableSold")}</div>
+          <div className="col-span-2 text-center">{t("dashboard.topSellingProducts.tableStock")}</div>
+          <div className="col-span-2 text-right">{t("dashboard.topSellingProducts.tableBestSku")}</div>
         </div>
 
         <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -120,7 +124,7 @@ const TopSellingProductsModal: React.FC<Props> = ({ open, onClose, timeRange, on
               </div>
             ))
           ) : rows.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
+            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">{t("dashboard.topSellingProducts.noData")}</div>
           ) : (
             rows.map((p) => {
               const fallback = imageFallbackSvgDataUri(p.product_name);
@@ -152,7 +156,9 @@ const TopSellingProductsModal: React.FC<Props> = ({ open, onClose, timeRange, on
                       <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span className="truncate">{categoryLine(p)}</span>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <span>Max price: {formatBDT(price)}</span>
+                        <span>
+                          {t("dashboard.topSellingProducts.maxPrice")}: {formatBDT(price)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -170,7 +176,7 @@ const TopSellingProductsModal: React.FC<Props> = ({ open, onClose, timeRange, on
                       {topSku?.sku ?? "—"}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Sold: {topSku?.sell_count ?? 0}
+                      {t("dashboard.topSellingProducts.soldLabel")}: {topSku?.sell_count ?? 0}
                     </span>
                   </div>
                 </div>

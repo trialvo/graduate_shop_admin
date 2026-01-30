@@ -1,10 +1,12 @@
 import { StatusItem } from "../../pages/Dashboard/dashboardStatusData";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   item: StatusItem;
 }
 
 const OrderStatusCard = ({ item }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
       {/* Header */}
@@ -16,19 +18,19 @@ const OrderStatusCard = ({ item }: Props) => {
         </div>
 
         <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90">
-          {item.title}
+          {t(item.titleKey)}
         </h4>
       </div>
 
       {/* Stats */}
       <div className="space-y-4">
         {item.stats.map((stat) => (
-          <div key={stat.label}>
+          <div key={stat.labelKey}>
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">
               {String(stat.value).padStart(2, "0")}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {stat.label}
+              {t(stat.labelKey)}
             </p>
           </div>
         ))}

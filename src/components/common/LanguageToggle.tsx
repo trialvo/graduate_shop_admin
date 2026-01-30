@@ -20,7 +20,7 @@ const LanguageToggle = () => {
       <button
         type="button"
         onClick={() => handleSelect("en")}
-        className={`relative z-10 flex h-8 flex-1 items-center justify-center rounded-full px-3 text-xs font-semibold transition ${
+        className={`relative z-10 flex h-8 flex-1 items-center justify-center rounded-full text-xs font-semibold transition ${
           !isBangla
             ? "text-brand-600 dark:text-brand-400"
             : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -31,7 +31,7 @@ const LanguageToggle = () => {
       <button
         type="button"
         onClick={() => handleSelect("bn")}
-        className={`relative z-10 flex h-8 flex-1 items-center justify-center rounded-full px-3 text-xs font-semibold transition ${
+        className={`relative z-10 flex h-8 flex-1 items-center justify-center rounded-full text-xs font-semibold transition ${
           isBangla
             ? "text-brand-600 dark:text-brand-400"
             : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"

@@ -1,19 +1,21 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { MetricsRange } from "./MetricCard";
+import { useTranslation } from "react-i18next";
 interface Props {
   value: MetricsRange;
   onChange: (value: MetricsRange) => void;
 }
 
-const options: { label: string; value: MetricsRange }[] = [
-  { label: "Day", value: "day" },
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "Year", value: "year" },
-];
-
 const MetricsFilter: React.FC<Props> = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  const options: { label: string; value: MetricsRange }[] = [
+    { label: t("dashboard.filters.day"), value: "day" },
+    { label: t("dashboard.filters.week"), value: "week" },
+    { label: t("dashboard.filters.month"), value: "month" },
+    { label: t("dashboard.filters.year"), value: "year" },
+  ];
+
   return (
     <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
       {options.map((opt) => (

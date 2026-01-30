@@ -1,6 +1,7 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { DollarSign, ShoppingCart, Users, XCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import MetricsFilter from "./MetricsFilter";
 import MetricCard, { MetricsRange } from "./MetricCard";
@@ -43,14 +44,14 @@ function formatPercent(n: number): number {
   return n;
 }
 
-function rangeLabel(range: MetricsRange): string {
-  if (range === "day") return "today";
-  return `this ${range}`;
+function rangeLabel(range: MetricsRange, t: (key: string, options?: any) => string): string {
+  if (range === "day") return t("dashboard.range.today");
+  return t("dashboard.range.this", { range: t(`dashboard.range.${range}`) });
 }
 
-function lastRangeLabel(range: MetricsRange): string {
-  if (range === "day") return "yesterday";
-  return `last ${range}`;
+function lastRangeLabel(range: MetricsRange, t: (key: string, options?: any) => string): string {
+  if (range === "day") return t("dashboard.range.yesterday");
+  return t("dashboard.range.last", { range: t(`dashboard.range.${range}`) });
 }
 
 function getTrendUp(pct: number): boolean {
@@ -59,6 +60,7 @@ function getTrendUp(pct: number): boolean {
 }
 
 const DashboardMetrics: React.FC = () => {
+  const { t } = useTranslation();
   const [range, setRange] = React.useState<MetricsRange>("month");
 
   const overviewQuery = useQuery({
@@ -102,59 +104,63 @@ const DashboardMetrics: React.FC = () => {
     return [
       {
         key: "orders",
-        title: "Total Orders",
+        title: t("dashboard.metrics.totalOrders"),
         value: formatCompactNumber(safeCurrent.total_orders),
         changePercent: formatPercent(safeChange.total_orders),
-        subLeftText: `${formatCompactNumber(safeCurrent.total_orders)} ${rangeLabel(range)}`,
-        subRightText: `vs ${lastRangeLabel(range)}`,
+        subLeftText: `${formatCompactNumber(safeCurrent.total_orders)} ${rangeLabel(range, t)}`,
+        subRightText: t("dashboard.metrics.vsLast", { range: lastRangeLabel(range, t) }),
         trendUp: getTrendUp(safeChange.total_orders),
         icon: <ShoppingCart size={16} />,
         lastValue: safeLast.total_orders,
       },
       {
         key: "sales",
-        title: "Total Sales",
-        value: formatBDT(safeCurrent.total_sales), // ✅ full BDT amount
+        title: t("dashboard.metrics.totalSales"),
+        value: formatBDT(safeCurrent.total_sales),
         changePercent: formatPercent(safeChange.total_sales),
-        subLeftText: `${formatBDT(safeCurrent.total_sales)} ${rangeLabel(range)}`, // ✅ full BDT amount
-        subRightText: `vs ${lastRangeLabel(range)}`,
+        subLeftText: `${formatBDT(safeCurrent.total_sales)} ${rangeLabel(range, t)}`,
+        subRightText: t("dashboard.metrics.vsLast", { range: lastRangeLabel(range, t) }),
         trendUp: getTrendUp(safeChange.total_sales),
         icon: <DollarSign size={16} />,
         lastValue: safeLast.total_sales,
       },
       {
         key: "cancelled",
-        title: "Cancelled Orders",
+        title: t("dashboard.metrics.cancelledOrders"),
         value: formatCompactNumber(safeCurrent.total_cancelled),
         changePercent: formatPercent(safeChange.total_cancelled),
-        subLeftText: `${formatCompactNumber(safeCurrent.total_cancelled)} ${rangeLabel(range)}`,
-        subRightText: `vs ${lastRangeLabel(range)}`,
+        subLeftText: `${formatCompactNumber(safeCurrent.total_cancelled)} ${rangeLabel(range, t)}`,
+        subRightText: t("dashboard.metrics.vsLast", { range: lastRangeLabel(range, t) }),
         trendUp: getTrendUp(safeChange.total_cancelled),
         icon: <XCircle size={16} />,
         lastValue: safeLast.total_cancelled,
       },
       {
         key: "views",
-        title: "Total Visitor",
+        title: t("dashboard.metrics.totalVisitor"),
         value: formatCompactNumber(safeCurrent.total_views),
         changePercent: formatPercent(safeChange.total_views),
-        subLeftText: `${formatCompactNumber(safeCurrent.total_views)} ${rangeLabel(range)}`,
-        subRightText: `vs ${lastRangeLabel(range)}`,
+        subLeftText: `${formatCompactNumber(safeCurrent.total_views)} ${rangeLabel(range, t)}`,
+        subRightText: t("dashboard.metrics.vsLast", { range: lastRangeLabel(range, t) }),
         trendUp: getTrendUp(safeChange.total_views),
         icon: <Users size={16} />,
         lastValue: safeLast.total_views,
       },
     ];
-  }, [bucket, range]);
+  }, [bucket, range, t]);
 
   return (
     <section className="mb-6">
       {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Overview</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            {t("dashboard.metrics.overviewTitle")}
+          </h2>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {overviewQuery.isError ? "Failed to load overview data." : `Showing ${rangeLabel(range)} summary.`}
+            {overviewQuery.isError
+              ? t("dashboard.metrics.failedOverview")
+              : t("dashboard.metrics.showingSummary", { range: rangeLabel(range, t) })}
           </p>
         </div>
 

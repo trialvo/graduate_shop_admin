@@ -16,6 +16,7 @@ import {
 } from "@/api/quick-access.api";
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+import { useTranslation } from "react-i18next";
 
 const MAX_PIN = 6;
 
@@ -43,6 +44,7 @@ function mergeUpdatePayload(
 }
 
 const QuickAccess: React.FC = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [open, setOpen] = React.useState(false);
   const [updatingId, setUpdatingId] = React.useState<number | null>(null);
@@ -125,10 +127,10 @@ const QuickAccess: React.FC = () => {
       if (ctx?.prevPinned)
         qc.setQueryData(quickAccessKeys.list(pinnedParams), ctx.prevPinned);
       if (ctx?.prevAll) qc.setQueryData(quickAccessKeys.list({}), ctx.prevAll);
-      toast.error("Failed to update quick access item.");
+      toast.error(t("dashboard.quickAccess.updateFailed"));
     },
     onSuccess: (res) => {
-      toast.success(res.message || "Updated.");
+      toast.success(res.message || t("dashboard.quickAccess.updated"));
     },
     onSettled: async () => {
       setUpdatingId(null);
@@ -143,7 +145,7 @@ const QuickAccess: React.FC = () => {
     const nextPinned = !item.is_pinned;
 
     if (nextPinned && pinnedCount >= MAX_PIN) {
-      toast.error(`Maximum ${MAX_PIN} shortcuts can be pinned.`);
+      toast.error(t("dashboard.quickAccess.maxPinned", { count: MAX_PIN }));
       return;
     }
 
@@ -164,7 +166,7 @@ const QuickAccess: React.FC = () => {
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          Quick Access
+          {t("dashboard.quickAccess.title")}
         </h2>
 
         <button
@@ -174,7 +176,7 @@ const QuickAccess: React.FC = () => {
             "rounded-lg p-2 text-gray-700 transition hover:bg-gray-100",
             "dark:text-gray-200 dark:hover:bg-white/[0.06]"
           )}
-          aria-label="Manage quick access"
+          aria-label={t("dashboard.quickAccess.manageAria")}
         >
           <Settings size={18} />
         </button>
@@ -195,11 +197,11 @@ const QuickAccess: React.FC = () => {
         </div>
       ) : pinnedQuery.isError ? (
         <div className="rounded-xl border bg-white p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-          Failed to load quick access.
+          {t("dashboard.quickAccess.loadFailed")}
         </div>
       ) : pinnedItems.length === 0 ? (
         <div className="rounded-xl border bg-white p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-          No pinned shortcuts yet. Click the settings icon to pin items.
+          {t("dashboard.quickAccess.emptyPinned")}
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 lg:grid-cols-6">

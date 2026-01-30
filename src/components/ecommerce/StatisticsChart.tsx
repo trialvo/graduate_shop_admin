@@ -1,7 +1,8 @@
-import * as React from "react";
+﻿import * as React from "react";
 import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import {
@@ -23,14 +24,14 @@ function formatBDT(n: number): string {
   return `৳${formatted}`;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const MONTH_KEYS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 
 function normalizeYearlyRows(rows: DashboardYearlyStatisticItem[] | undefined) {
   const byMonth = new Map<string, DashboardYearlyStatisticItem>();
   (rows ?? []).forEach((r) => byMonth.set(r.month, r));
 
-  const revenue = MONTHS.map((m) => parseMoney(byMonth.get(m)?.revenue ?? "0"));
-  const profit = MONTHS.map((m) => parseMoney(byMonth.get(m)?.profit ?? "0"));
+  const revenue = MONTH_KEYS.map((m) => parseMoney(byMonth.get(m)?.revenue ?? "0"));
+  const profit = MONTH_KEYS.map((m) => parseMoney(byMonth.get(m)?.profit ?? "0"));
 
   return { revenue, profit };
 }
@@ -42,7 +43,8 @@ function buildYearsList(currentYear: number) {
   return years;
 }
 
-export default function StatisticsChart() {
+const StatisticsChart: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const currentYear = React.useMemo(() => new Date().getFullYear(), []);
   const [year, setYear] = React.useState<number>(currentYear);
 
@@ -57,6 +59,12 @@ export default function StatisticsChart() {
 
   const { revenue, profit } = React.useMemo(() => normalizeYearlyRows(query.data?.data), [query.data?.data]);
 
+  const monthLabels = React.useMemo(() => {
+    const translated = t("dashboard.statistics.months", { returnObjects: true }) as string[] | string;
+    if (Array.isArray(translated) && translated.length === 12) return translated;
+    return [...MONTH_KEYS];
+  }, [t, i18n.language]);
+
   const options: ApexOptions = React.useMemo(
     () => ({
       legend: {
@@ -69,7 +77,7 @@ export default function StatisticsChart() {
       },
       colors: ["#465FFF", "#9CB9FF"],
       chart: {
-        fontFamily: "Outfit, sans-serif",
+        fontFamily: "var(--font-base), Outfit, sans-serif",
         height: 310,
         type: "line",
         toolbar: { show: false },
@@ -108,7 +116,7 @@ export default function StatisticsChart() {
       },
       xaxis: {
         type: "category",
-        categories: [...MONTHS],
+        categories: monthLabels,
         axisBorder: { show: false },
         axisTicks: { show: false },
         tooltip: { enabled: false },
@@ -120,7 +128,6 @@ export default function StatisticsChart() {
             colors: ["#6B7280"],
           },
           formatter: (val: number) => {
-            // show readable ticks (still full number format)
             if (!Number.isFinite(val)) return "0";
             return new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 }).format(val);
           },
@@ -128,22 +135,26 @@ export default function StatisticsChart() {
         title: { text: "", style: { fontSize: "0px" } },
       },
     }),
-    []
+    [monthLabels]
   );
 
   const series = React.useMemo(
     () => [
-      { name: "Revenue", data: revenue },
-      { name: "Profit", data: profit },
+      { name: t("dashboard.statistics.revenue"), data: revenue },
+      { name: t("dashboard.statistics.profit"), data: profit },
     ],
-    [revenue, profit]
+    [revenue, profit, t]
   );
 
   const headerRight = (
     <div className="flex items-center gap-3">
       <div className="text-right">
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {query.isError ? "Failed to load data" : query.isFetching ? "Updating..." : "Yearly summary"}
+          {query.isError
+            ? t("dashboard.statistics.failed")
+            : query.isFetching
+              ? t("dashboard.statistics.updating")
+              : t("dashboard.statistics.yearlySummary")}
         </p>
       </div>
 
@@ -169,9 +180,11 @@ export default function StatisticsChart() {
     <div className="rounded-[4px] border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Statistics</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+            {t("dashboard.statistics.title")}
+          </h3>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Revenue & Profit by month • {query.data?.year ?? year}
+            {t("dashboard.statistics.subtitle", { year: query.data?.year ?? year })}
           </p>
         </div>
 
@@ -190,4 +203,6 @@ export default function StatisticsChart() {
       </div>
     </div>
   );
-}
+};
+
+export default StatisticsChart;

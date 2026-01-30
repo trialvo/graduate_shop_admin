@@ -1,52 +1,53 @@
+import type React from "react";
 import { Truck, CreditCard, Package, XCircle } from "lucide-react";
 
 export interface StatusItem {
   id: number;
-  title: string;
+  titleKey: string;
   icon: React.ReactNode;
   iconBg: string; // tailwind class
-  stats: { label: string; value: number }[];
+  stats: { labelKey: string; value: number }[];
 }
 
 export const dashboardStatusData: StatusItem[] = [
   {
     id: 1,
-    title: "Delivery",
+    titleKey: "dashboard.status.delivery",
     icon: <Truck size={18} />,
     iconBg: "bg-brand-500",
     stats: [
-      { label: "Processing", value: 210 },
-      { label: "Processed", value: 14 },
+      { labelKey: "dashboard.status.processing", value: 210 },
+      { labelKey: "dashboard.status.processed", value: 14 },
     ],
   },
   {
     id: 2,
-    title: "Payment",
+    titleKey: "dashboard.status.payment",
     icon: <CreditCard size={18} />,
     iconBg: "bg-brand-600",
     stats: [
-      { label: "Not yet paid", value: 50 },
-      { label: "Paid", value: 10 },
+      { labelKey: "dashboard.status.notPaid", value: 50 },
+      { labelKey: "dashboard.status.paid", value: 10 },
     ],
   },
   {
     id: 3,
-    title: "Product",
+    titleKey: "dashboard.status.product",
     icon: <Package size={18} />,
     iconBg: "bg-success-500",
     stats: [
-      { label: "Product Block", value: 6 },
-      { label: "Sold-out", value: 4 },
+      { labelKey: "dashboard.status.productBlock", value: 6 },
+      { labelKey: "dashboard.status.soldOut", value: 4 },
     ],
   },
   {
     id: 4,
-    title: "Cancel",
+    titleKey: "dashboard.status.cancel",
     icon: <XCircle size={18} />,
     iconBg: "bg-success-500",
     stats: [
-      { label: "Cancellation", value: 40 },
-      { label: "Return", value: 4 },
+      { labelKey: "dashboard.status.cancellation", value: 40 },
+      { labelKey: "dashboard.status.return", value: 4 },
     ],
   },
 ];

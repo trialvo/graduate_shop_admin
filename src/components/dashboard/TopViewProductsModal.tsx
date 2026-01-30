@@ -1,5 +1,6 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { Modal } from "../ui/modal";
 import PaginationFooter from "./PaginationFooter";
@@ -11,7 +12,6 @@ import {
   type DashboardTopViewedItem,
   type TopViewedTimeRange,
 } from "@/api/dashboard.api";
-import { cn } from "@/lib/utils";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
@@ -45,6 +45,7 @@ function formatBDT(n: number): string {
 }
 
 const TopViewProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onChangeTimeRange }) => {
+  const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
 
   React.useEffect(() => {
@@ -75,9 +76,11 @@ const TopViewProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onCha
       <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Top View Products</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+              {t("dashboard.topViewed.title")}
+            </h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {query.isError ? "Failed to load data." : `Total ${total} items`}
+              {query.isError ? t("dashboard.topViewed.failed") : t("dashboard.topViewed.totalItems", { count: total })}
             </p>
           </div>
 
@@ -92,9 +95,9 @@ const TopViewProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onCha
 
       <div className="max-h-[calc(720px-72px)] overflow-y-auto px-6 py-4">
         <div className="grid grid-cols-12 rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-          <div className="col-span-7">Product</div>
-          <div className="col-span-2 text-center">View</div>
-          <div className="col-span-3 text-right">Last visit</div>
+          <div className="col-span-7">{t("dashboard.topViewed.tableProduct")}</div>
+          <div className="col-span-2 text-center">{t("dashboard.topViewed.tableView")}</div>
+          <div className="col-span-3 text-right">{t("dashboard.topViewed.tableLastVisit")}</div>
         </div>
 
         <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -117,7 +120,9 @@ const TopViewProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onCha
               </div>
             ))
           ) : rows.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
+            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+              {t("dashboard.topViewed.noData")}
+            </div>
           ) : (
             rows.map((p) => {
               const fallback = imageFallbackSvgDataUri(p.name);
@@ -141,9 +146,13 @@ const TopViewProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onCha
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-brand-600 dark:text-brand-400">{p.name}</p>
                       <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="truncate">Slug: {p.slug}</span>
+                        <span className="truncate">
+                          {t("dashboard.topViewed.slug")}: {p.slug}
+                        </span>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <span>Price: {formatBDT(p.selling_price)}</span>
+                        <span>
+                          {t("dashboard.topViewed.price")}: {formatBDT(p.selling_price)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -161,13 +170,7 @@ const TopViewProductsModal: React.FC<Props> = ({ open, onClose, timeRange, onCha
           )}
         </div>
 
-        <PaginationFooter
-          total={total}
-          page={page}
-          pageSize={PAGE_SIZE}
-          onPrev={onPrev}
-          onNext={onNext}
-        />
+        <PaginationFooter total={total} page={page} pageSize={PAGE_SIZE} onPrev={onPrev} onNext={onNext} />
       </div>
     </Modal>
   );

@@ -8,6 +8,7 @@ import TopSellingDistrictCard from "@/components/dashboard/TopSellingDistrictCar
 import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard";
 import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCard";
 import { useAppBranding } from "@/context/AppBrandingContext";
+import { useTranslation } from "react-i18next";
 
 // ✅ adjust this import to your real data file if different
 import { stockAlertProducts } from "./dashboardSection5Data";
@@ -15,12 +16,13 @@ import { stockAlertProducts } from "./dashboardSection5Data";
 export default function Home() {
   const { branding } = useAppBranding();
   const appName = branding.appShortName ?? branding.appName;
+  const { t } = useTranslation();
 
   return (
     <>
       <PageMeta
-        title={`Dashboard | ${appName}`}
-        description="This is React.js Ecommerce Dashboard page for Trialvo - React.js Tailwind CSS Admin Dashboard Template"
+        title={t("dashboard.pageTitle", { appName })}
+        description={t("dashboard.pageDescription", { appName })}
       />
 
       {/* Section 1 */}

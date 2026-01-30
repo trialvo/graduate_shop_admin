@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -39,6 +40,7 @@ function getFirstImage(product: any) {
 }
 
 export default function StockAlertUpdateModal({ open, productId, productName, onClose, onUpdated }: Props) {
+  const { t } = useTranslation();
   const enabled = open && !!productId;
 
   const productQuery = useQuery({
@@ -111,12 +113,12 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
       }
     },
     onSuccess: () => {
-      toast.success("Stock updated successfully");
+      toast.success(t("dashboard.stockUpdate.updateSuccess"));
       onUpdated?.();
       onClose();
     },
     onError: (err: any) => {
-      toast.error(err?.message ?? "Failed to update stock");
+      toast.error(err?.message ?? t("dashboard.stockUpdate.updateFailed"));
     },
   });
 
@@ -134,7 +136,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
           if (updateMutation.isPending) return;
           onClose();
         }}
-        aria-label="Close"
+        aria-label={t("dashboard.stockUpdate.close")}
       />
 
       {/* modal */}
@@ -142,9 +144,11 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
         {/* header */}
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold text-gray-900 dark:text-gray-100">Update Stock</h3>
+            <h3 className="truncate text-base font-semibold text-gray-900 dark:text-gray-100">
+              {t("dashboard.stockUpdate.title")}
+            </h3>
             <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-              {product?.name ?? productName ?? (productId ? `Product #${productId}` : "Product")}
+              {product?.name ?? productName ?? (productId ? `${t("dashboard.stockUpdate.productLabel")} #${productId}` : t("dashboard.stockUpdate.productLabel"))}
             </p>
           </div>
 
@@ -170,9 +174,11 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
               <div className="h-56 w-full animate-pulse rounded-lg bg-gray-100 dark:bg-white/[0.04]" />
             </div>
           ) : productQuery.isError ? (
-            <div className="py-10 text-center text-sm text-error-600">Failed to load product.</div>
+            <div className="py-10 text-center text-sm text-error-600">{t("dashboard.stockUpdate.loadFailed")}</div>
           ) : !product ? (
-            <div className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">No product found.</div>
+            <div className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              {t("dashboard.stockUpdate.noProduct")}
+            </div>
           ) : (
             <div className="space-y-5">
               {/* top info */}
@@ -189,9 +195,9 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{product.name}</p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Total variations: {variations.length}
+                      {t("dashboard.stockUpdate.totalVariations")}: {variations.length}
                       {typeof product?.summary?.total_stock === "number"
-                        ? ` • Total stock: ${product.summary.total_stock}`
+                        ? ` • ${t("dashboard.stockUpdate.totalStock")}: ${product.summary.total_stock}`
                         : ""}
                     </p>
                   </div>
@@ -206,7 +212,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
                         : "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
                     )}
                   >
-                    {changedCount > 0 ? `${changedCount} changed` : "No changes"}
+                    {changedCount > 0 ? t("dashboard.stockUpdate.changed", { count: changedCount }) : t("dashboard.stockUpdate.noChanges")}
                   </span>
 
                   <Button
@@ -222,7 +228,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
                     }}
                     disabled={updateMutation.isPending}
                   >
-                    Reset
+                    {t("dashboard.stockUpdate.reset")}
                   </Button>
                 </div>
               </div>
@@ -230,10 +236,10 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
               {/* table */}
               <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
                 <div className="grid grid-cols-12 gap-2 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-                  <div className="col-span-4">Variant</div>
-                  <div className="col-span-4">SKU</div>
-                  <div className="col-span-2 text-center">Current</div>
-                  <div className="col-span-2 text-right">New stock</div>
+                  <div className="col-span-4">{t("dashboard.stockUpdate.tableVariant")}</div>
+                  <div className="col-span-4">{t("dashboard.stockUpdate.tableSku")}</div>
+                  <div className="col-span-2 text-center">{t("dashboard.stockUpdate.tableCurrent")}</div>
+                  <div className="col-span-2 text-right">{t("dashboard.stockUpdate.tableNewStock")}</div>
                 </div>
 
                 <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -246,10 +252,10 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
                       <div key={v.id} className="grid grid-cols-12 items-center gap-2 px-4 py-3">
                         <div className="col-span-4 min-w-0">
                           <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            {v.color?.name ?? "Color"} • {v.variant?.name ?? "Variant"}
+                            {v.color?.name ?? t("dashboard.stockUpdate.color")} • {v.variant?.name ?? t("dashboard.stockUpdate.variant")}
                           </p>
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Final price: {formatBDT(Number(v.final_price ?? v.selling_price))}
+                            {t("dashboard.stockUpdate.finalPrice")}: {formatBDT(Number(v.final_price ?? v.selling_price))}
                           </p>
                         </div>
 
@@ -293,7 +299,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
 
                   {!variations.length ? (
                     <div className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                      No variations found.
+                      {t("dashboard.stockUpdate.noVariations")}
                     </div>
                   ) : null}
                 </div>
@@ -312,7 +318,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
               onClose();
             }}
           >
-            Cancel
+            {t("dashboard.stockUpdate.cancel")}
           </Button>
 
           <Button
@@ -322,7 +328,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
             disabled={updateMutation.isPending || changedCount === 0 || productQuery.isLoading}
             className="bg-brand-500 hover:bg-brand-600"
           >
-            {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateMutation.isPending ? t("dashboard.stockUpdate.saving") : t("dashboard.stockUpdate.saveChanges")}
           </Button>
         </div>
       </div>

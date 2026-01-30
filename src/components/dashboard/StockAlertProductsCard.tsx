@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ChevronLeft, ChevronRight, Package, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
@@ -14,10 +15,10 @@ import {
 } from "@/api/dashboard.api";
 import StockAlertUpdateModal from "./StockAlertUpdateModal";
 
-
 const PAGE_SIZE = 10;
 
 export default function StockAlertProductsCard() {
+  const { t } = useTranslation();
   const [page, setPage] = React.useState(1);
   const [open, setOpen] = React.useState(false);
   const [activeProductId, setActiveProductId] = React.useState<number | null>(null);
@@ -53,10 +54,10 @@ export default function StockAlertProductsCard() {
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              Stock Alert Products
+              {t("dashboard.stockAlert.title")}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Low inventory items based on your alert limit ({alertLimitUsed}).
+              {t("dashboard.stockAlert.subtitle", { alertLimitUsed })}
             </p>
           </div>
 
@@ -68,7 +69,7 @@ export default function StockAlertProductsCard() {
               )}
             >
               <AlertTriangle className="h-4 w-4" />
-              Low stock
+              {t("dashboard.stockAlert.lowStock")}
             </span>
           </div>
         </div>
@@ -83,11 +84,11 @@ export default function StockAlertProductsCard() {
             </div>
           ) : query.isError ? (
             <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-4 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-200">
-              Failed to load low stock products.
+              {t("dashboard.stockAlert.loadFailed")}
             </div>
           ) : rows.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
-              No low stock products found.
+              {t("dashboard.stockAlert.empty")}
             </div>
           ) : (
             <div className="space-y-3">
@@ -112,7 +113,7 @@ export default function StockAlertProductsCard() {
                               {p.name}
                             </p>
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                              Product ID: {p.product_id} • Low stock variations:{" "}
+                              {t("dashboard.stockAlert.productId")}: {p.product_id} • {t("dashboard.stockAlert.lowStockVariations")}: {" "}
                               <span className="font-semibold text-warning-700 dark:text-warning-300">
                                 {totalLow}
                               </span>
@@ -138,7 +139,7 @@ export default function StockAlertProductsCard() {
 
                           {totalLow > 6 ? (
                             <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-                              +{totalLow - 6} more
+                              +{totalLow - 6} {t("dashboard.stockAlert.more")}
                             </span>
                           ) : null}
                         </div>
@@ -153,7 +154,7 @@ export default function StockAlertProductsCard() {
                           startIcon={<Plus className="h-4 w-4" />}
                           className="bg-brand-500 hover:bg-brand-600"
                         >
-                          Update
+                          {t("dashboard.stockAlert.update")}
                         </Button>
                       </div>
                     </div>
@@ -166,8 +167,7 @@ export default function StockAlertProductsCard() {
           {/* Footer: Pagination */}
           <div className="mt-5 flex flex-col gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Showing <span className="font-semibold">{rows.length}</span> items • Total{" "}
-              <span className="font-semibold">{total}</span>
+              {t("dashboard.stockAlert.showingItems", { count: rows.length, total })}
             </div>
 
             <div className="flex items-center justify-end gap-2">
@@ -182,7 +182,7 @@ export default function StockAlertProductsCard() {
                 )}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Prev
+                {t("dashboard.stockAlert.prev")}
               </button>
 
               <span className="inline-flex h-9 items-center rounded-lg bg-gray-100 px-3 text-sm font-semibold text-gray-800 dark:bg-white/[0.04] dark:text-gray-100">
@@ -199,7 +199,7 @@ export default function StockAlertProductsCard() {
                   "dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
                 )}
               >
-                Next
+                {t("dashboard.stockAlert.next")}
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>

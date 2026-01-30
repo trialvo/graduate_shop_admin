@@ -1,5 +1,6 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import TopSellingProductsModal from "./TopSellingProductsModal";
 import TopViewedRangeFilter from "./TopViewedRangeFilter";
@@ -35,6 +36,7 @@ function categoryLine(item: DashboardTopSellingItem): string {
 }
 
 const TopSellingProductsCard: React.FC = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
 
   // ✅ default all (as you requested)
@@ -55,9 +57,11 @@ const TopSellingProductsCard: React.FC = () => {
       {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Top Selling Products</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+            {t("dashboard.topSellingProducts.title")}
+          </h3>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {query.isError ? "Failed to load data." : `Showing top ${PAGE_SIZE} items.`}
+            {query.isError ? t("dashboard.topSellingProducts.failed") : t("dashboard.topSellingProducts.showingTop", { count: PAGE_SIZE })}
           </p>
         </div>
 
@@ -72,16 +76,16 @@ const TopSellingProductsCard: React.FC = () => {
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
             )}
           >
-            View All
+            {t("dashboard.topSellingProducts.viewAll")}
           </button>
         </div>
       </div>
 
       {/* Table Header */}
       <div className="grid grid-cols-12 rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-        <div className="col-span-7">Product</div>
-        <div className="col-span-2 text-center">Sold</div>
-        <div className="col-span-3 text-right">Stock</div>
+        <div className="col-span-7">{t("dashboard.topSellingProducts.tableProduct")}</div>
+        <div className="col-span-2 text-center">{t("dashboard.topSellingProducts.tableSold")}</div>
+        <div className="col-span-3 text-right">{t("dashboard.topSellingProducts.tableStock")}</div>
       </div>
 
       {/* Body */}
@@ -106,7 +110,7 @@ const TopSellingProductsCard: React.FC = () => {
               </div>
             ))
           ) : preview.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
+            <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">{t("dashboard.topSellingProducts.noData")}</div>
           ) : (
             preview.map((p) => {
               const fallback = imageFallbackSvgDataUri(p.product_name);
@@ -137,7 +141,9 @@ const TopSellingProductsCard: React.FC = () => {
                       <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span className="truncate">{categoryLine(p)}</span>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <span>Max price: {formatBDT(price)}</span>
+                        <span>
+                          {t("dashboard.topSellingProducts.maxPrice")}: {formatBDT(price)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -158,7 +164,7 @@ const TopSellingProductsCard: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <span>Total {totalCount} entries</span>
+        <span>{t("dashboard.topSellingProducts.totalEntries", { count: totalCount })}</span>
         <span className="text-gray-400">→</span>
       </div>
 

@@ -1,6 +1,7 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { MapPin } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import TopSellingDistrictModal from "./TopSellingDistrictModal";
 import TopViewedRangeFilter from "./TopViewedRangeFilter";
@@ -37,6 +38,7 @@ function revenueNumber(v: string): number {
 }
 
 const TopSellingDistrictCard: React.FC = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
 
   // ✅ API default is all
@@ -62,9 +64,13 @@ const TopSellingDistrictCard: React.FC = () => {
       {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">Top Selling by District</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+            {t("dashboard.topSellingDistrict.title")}
+          </h3>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {query.isError ? "Failed to load data." : `Showing top ${PAGE_SIZE} areas by revenue.`}
+            {query.isError
+              ? t("dashboard.topSellingDistrict.failed")
+              : t("dashboard.topSellingDistrict.showingTop", { count: PAGE_SIZE })}
           </p>
         </div>
 
@@ -76,7 +82,7 @@ const TopSellingDistrictCard: React.FC = () => {
             onClick={() => setOpen(true)}
             className={cn("text-sm font-semibold text-brand-600 hover:text-brand-700", "dark:text-brand-400")}
           >
-            View More
+            {t("dashboard.topSellingDistrict.viewMore")}
           </button>
         </div>
       </div>
@@ -96,7 +102,7 @@ const TopSellingDistrictCard: React.FC = () => {
               </div>
             ))
           ) : rows.length === 0 ? (
-            <div className="py-6 text-sm text-gray-500 dark:text-gray-400">No data found.</div>
+            <div className="py-6 text-sm text-gray-500 dark:text-gray-400">{t("dashboard.topSellingDistrict.noData")}</div>
           ) : (
             rows.map((d) => {
               const revenue = revenueNumber(d.total_revenue);
@@ -115,9 +121,10 @@ const TopSellingDistrictCard: React.FC = () => {
                       </p>
 
                       <p className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                        Orders: <span className="font-semibold text-gray-800 dark:text-gray-200">{d.total_orders}</span>
+                        {t("dashboard.topSellingDistrict.orders")}: {" "}
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{d.total_orders}</span>
                         <span className="mx-2 text-gray-300 dark:text-gray-700">•</span>
-                        Items:{" "}
+                        {t("dashboard.topSellingDistrict.items")}: {" "}
                         <span className="font-semibold text-gray-800 dark:text-gray-200">{d.total_items_sold}</span>
                       </p>
                     </div>
@@ -145,7 +152,7 @@ const TopSellingDistrictCard: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <span>Total {totalCount} entries</span>
+        <span>{t("dashboard.topSellingDistrict.totalEntries", { count: totalCount })}</span>
         <span className="text-gray-400">→</span>
       </div>
 

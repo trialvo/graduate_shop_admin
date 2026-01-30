@@ -1,13 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import type { DashboardTimeRange } from "@/api/dashboard.api";
-
-const options: { label: string; value: DashboardTimeRange }[] = [
-  { label: "Month", value: "month" },
-  { label: "Week", value: "week" },
-  { label: "Year", value: "year" },
-  { label: "All", value: "all" },
-];
+import { useTranslation } from "react-i18next";
 
 type Props = {
   value: DashboardTimeRange;
@@ -16,6 +10,14 @@ type Props = {
 };
 
 const TopViewedRangeFilter: React.FC<Props> = ({ value, onChange, className }) => {
+  const { t } = useTranslation();
+  const options: { label: string; value: DashboardTimeRange }[] = [
+    { label: t("dashboard.filters.month"), value: "month" },
+    { label: t("dashboard.filters.week"), value: "week" },
+    { label: t("dashboard.filters.year"), value: "year" },
+    { label: t("dashboard.filters.all"), value: "all" },
+  ];
+
   return (
     <div className={cn("flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800", className)}>
       {options.map((opt) => (
