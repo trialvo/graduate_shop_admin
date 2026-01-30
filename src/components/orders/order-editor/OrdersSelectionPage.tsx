@@ -101,42 +101,12 @@ export default function OrdersSelectionPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
-      <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 pt-6 md:px-6">
+      <div className="mx-auto w-full  space-y-6">
         <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
-                Orders
-              </div>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                Select an Order to Edit
-              </h1>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Click any row to open the editor. Filters are applied via{" "}
-                <span className="font-semibold">/admin/orders</span>.
-              </div>
-
-              {courierProviders.length ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Courier providers (from API):
-                  </span>
-                  {courierProviders.slice(0, 6).map((p) => (
-                    <span
-                      key={p}
-                      className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                    >
-                      {p}
-                    </span>
-                  ))}
-                  {courierProviders.length > 6 ? (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      +{courierProviders.length - 6} more
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              Select an Order to Edit
+            </h1>
 
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -505,7 +475,8 @@ export default function OrdersSelectionPage({
           {pagination ? (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Offset: <span className="font-semibold">{pagination.offset}</span>
+                Offset:{" "}
+                <span className="font-semibold">{pagination.offset}</span>
                 {" | "}
                 Limit: <span className="font-semibold">{pagination.limit}</span>
               </div>
@@ -535,7 +506,8 @@ export default function OrdersSelectionPage({
                   disabled={!canNext || listQuery.isFetching}
                   onClick={() => {
                     onChangeParams({
-                      offset: (pagination.offset ?? 0) + (pagination.limit ?? 10),
+                      offset:
+                        (pagination.offset ?? 0) + (pagination.limit ?? 10),
                       limit: pagination.limit,
                     });
                     onApply();

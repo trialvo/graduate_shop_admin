@@ -29,6 +29,7 @@ import CouponCode from "./pages/BusinessSettings/CouponCode";
 import PaymentSettings from "./pages/BusinessSettings/PaymentSettings";
 
 import BannersSettings from "./pages/WebsiteSettings/BannersSettings";
+import BannerVideoSettings from "./pages/WebsiteSettings/BannerVideoSettings";
 import ContactPage from "./pages/WebsiteSettings/ContactPage";
 import FooterSettings from "./pages/WebsiteSettings/footer-settings";
 
@@ -90,6 +91,10 @@ export default function App() {
 
               {/* Website Settings */}
               <Route path="/banners-settings" element={<BannersSettings />} />
+              <Route
+                path="/banner-video-settings"
+                element={<BannerVideoSettings />}
+              />
               <Route path="/contact-page" element={<ContactPage />} />
               <Route path="/footer-settings" element={<FooterSettings />} />
 
