@@ -8,7 +8,7 @@
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
   --font-hind-siliguri: "Hind Siliguri", sans-serif;
-  --font-base: var(--font-outfit);
+  --font-base: var(--font-hind-siliguri);
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -186,12 +186,15 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  html.lang-bn {
-    --font-base: var(--font-hind-siliguri);
-  }
   body {
     @apply relative font-normal z-1 bg-gray-50;
     font-family: var(--font-base);
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
   }
 }
 

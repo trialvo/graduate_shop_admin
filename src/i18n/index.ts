@@ -21,9 +21,14 @@ const applyDocumentLanguage = (lng: string | undefined | null) => {
   if (typeof document === "undefined") return;
   const resolved = normalizeLang(lng);
   const root = document.documentElement;
+  const body = document.body;
   root.lang = resolved;
   root.classList.toggle("lang-bn", resolved === "bn");
   root.classList.toggle("lang-en", resolved === "en");
+  if (body) {
+    body.classList.toggle("lang-bn", resolved === "bn");
+    body.classList.toggle("lang-en", resolved === "en");
+  }
 };
 
 i18n
