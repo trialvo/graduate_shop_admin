@@ -10,11 +10,11 @@ const SUPPORTED_LANGS = ["en", "bn"] as const;
 type SupportedLang = (typeof SUPPORTED_LANGS)[number];
 
 const normalizeLang = (lng: string | undefined | null): SupportedLang => {
-  if (!lng) return "bn";
+  if (!lng) return "en";
   const base = lng.split("-")[0].toLowerCase();
   return (SUPPORTED_LANGS.includes(base as SupportedLang)
     ? (base as SupportedLang)
-    : "bn");
+    : "en");
 };
 
 const applyDocumentLanguage = (lng: string | undefined | null) => {
@@ -34,7 +34,7 @@ i18n
       en: { translation: en },
       bn: { translation: bn }
     },
-    fallbackLng: "bn",
+    fallbackLng: "en",
     supportedLngs: SUPPORTED_LANGS as unknown as string[],
     interpolation: {
       escapeValue: false
