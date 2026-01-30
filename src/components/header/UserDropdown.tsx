@@ -63,7 +63,7 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
         aria-label="Open user menu"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
+        <span className="mr-2 h-9 w-9 overflow-hidden rounded-full sm:mr-3 sm:h-11 sm:w-11">
           <img
             src={avatarSrc}
             alt={displayName}
@@ -76,7 +76,7 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">
+        <span className="mr-1 block text-xs font-medium sm:text-theme-sm">
           {displayName}
         </span>
 

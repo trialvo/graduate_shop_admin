@@ -148,14 +148,16 @@ const AppHeader: React.FC = () => {
         <div
           className={`${
             isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          } w-full flex-nowrap items-center justify-between gap-2 px-3 py-3 shadow-theme-md sm:gap-4 sm:px-5 sm:py-4 lg:flex lg:justify-end lg:px-0 lg:shadow-none`}
         >
-          <div className="flex items-center gap-2 2xsm:gap-3">
+          <div className="flex w-full items-center gap-2 2xsm:gap-3 sm:w-auto">
             <LanguageToggle />
             <ThemeToggleButton />
             <NotificationDropdown />
           </div>
-          <UserDropdown />
+          <div className="flex w-auto justify-end">
+            <UserDropdown />
+          </div>
         </div>
       </div>
     </header>
