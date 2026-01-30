@@ -1,0 +1,12 @@
+﻿{
+  "header": {
+    "searchPlaceholder": "খুঁজুন বা কমান্ড লিখুন...",
+    "languageToggle": "ভাষা",
+    "languageEnglish": "ইংরেজি",
+    "languageBangla": "বাংলা"
+  },
+  "common": {
+    "englishShort": "EN",
+    "banglaShort": "বাংলা"
+  }
+}

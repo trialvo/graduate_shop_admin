@@ -8,6 +8,7 @@ import App from "./App.tsx";
 import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { AppBrandingProvider } from "./context/AppBrandingContext.tsx";
+import "./i18n";
 
 import AppProviders from "./providers/AppProviders.tsx";
 

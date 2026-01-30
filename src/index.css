@@ -1,13 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap")
-layer(base);
-
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --font-hind-siliguri: "Hind Siliguri", sans-serif;
+  --font-base: var(--font-outfit);
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -185,8 +186,12 @@ layer(base);
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  html.lang-bn {
+    --font-base: var(--font-hind-siliguri);
+  }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal z-1 bg-gray-50;
+    font-family: var(--font-base);
   }
 }
 

@@ -1,0 +1,12 @@
+﻿{
+  "header": {
+    "searchPlaceholder": "Search or type command...",
+    "languageToggle": "Language",
+    "languageEnglish": "English",
+    "languageBangla": "Bangla"
+  },
+  "common": {
+    "englishShort": "EN",
+    "banglaShort": "বাংলা"
+  }
+}
