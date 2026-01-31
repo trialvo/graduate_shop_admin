@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
+import Select, { type Option } from "@/components/form/Select";
 import {
   dashboardKeys,
   getDashboardYearlyStatistic,
@@ -49,6 +50,10 @@ const StatisticsChart: React.FC = () => {
   const [year, setYear] = React.useState<number>(currentYear);
 
   const years = React.useMemo(() => buildYearsList(currentYear), [currentYear]);
+  const yearOptions = React.useMemo<Option[]>(
+    () => years.map((y) => ({ value: String(y), label: String(y) })),
+    [years],
+  );
 
   const query = useQuery({
     queryKey: dashboardKeys.yearlyStatisticByYear(year),
@@ -158,21 +163,13 @@ const StatisticsChart: React.FC = () => {
         </p>
       </div>
 
-      <select
-        value={year}
-        onChange={(e) => setYear(Number(e.target.value))}
-        className={cn(
-          "h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm",
-          "focus:outline-none focus:ring-2 focus:ring-brand-500/30",
-          "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-        )}
-      >
-        {years.map((y) => (
-          <option key={y} value={y}>
-            {y}
-          </option>
-        ))}
-      </select>
+      <Select
+        options={yearOptions}
+        value={String(year)}
+        onChange={(value) => setYear(Number(value))}
+        className={cn("min-w-[120px]")}
+        menuClassName="max-h-56"
+      />
     </div>
   );
 

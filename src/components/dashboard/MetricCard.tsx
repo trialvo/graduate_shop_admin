@@ -18,6 +18,7 @@ interface MetricCardProps {
   trendUp?: boolean;
   icon: React.ReactNode;
   loading?: boolean;
+  sparkline?: number[];
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -29,6 +30,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   trendUp = true,
   icon,
   loading = false,
+  sparkline,
 }) => {
   if (loading) {
     return (
@@ -57,6 +59,29 @@ const MetricCard: React.FC<MetricCardProps> = ({
   }
 
   const color = trendUp ? "success" : "danger";
+  const sparklineLineId = React.useId();
+  const sparklineFillId = React.useId();
+
+  const sparklinePoints =
+    sparkline && sparkline.length >= 2
+      ? sparkline
+      : trendUp
+        ? [12, 10, 13, 9, 11, 8, 10, 6, 7]
+        : [8, 10, 9, 11, 10, 12, 11, 13, 12];
+  const minPoint = Math.min(...sparklinePoints);
+  const maxPoint = Math.max(...sparklinePoints);
+  const range = Math.max(maxPoint - minPoint, 1);
+  const normalized = sparklinePoints.map((value) => (value - minPoint) / range);
+  const step = 96 / (normalized.length - 1);
+  const path = normalized
+    .map((value, index) => {
+      const x = Math.round(index * step * 100) / 100;
+      const y = Math.round((30 - value * 24) * 100) / 100;
+      return `${index === 0 ? "M" : "L"}${x} ${y}`;
+    })
+    .join(" ");
+  const lastX = Math.round((normalized.length - 1) * step * 100) / 100;
+  const lastY = Math.round((30 - normalized[normalized.length - 1] * 24) * 100) / 100;
 
   return (
     <div
@@ -74,8 +99,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
           className={cn(
             "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold",
             trendUp
-              ? "border-success-200/60 bg-success-50 text-success-700 dark:border-success-500/20 dark:bg-success-500/10 dark:text-success-300"
-              : "border-danger-200/60 bg-danger-50 text-danger-700 dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-300"
+              ? "border-success-200/70 bg-success-50 text-success-700 dark:border-success-400/30 dark:bg-success-500/10 dark:text-success-200"
+              : "border-danger-200/70 bg-danger-50 text-danger-700 dark:border-danger-400/30 dark:bg-danger-500/10 dark:text-danger-200"
           )}
         >
           <span className="inline-flex items-center gap-1">
@@ -100,8 +125,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
             "relative h-8 w-24 overflow-hidden rounded-lg border bg-gray-50/80",
             "dark:bg-white/5",
             color === "success"
-              ? "border-success-200/60"
-              : "border-danger-200/60"
+              ? "border-success-200/70 dark:border-success-400/30"
+              : "border-danger-200/70 dark:border-danger-400/30"
           )}
           aria-hidden="true"
         >
@@ -111,7 +136,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
             preserveAspectRatio="none"
           >
             <defs>
-              <linearGradient id="metric-line" x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id={sparklineLineId} x1="0" y1="0" x2="1" y2="0">
                 <stop
                   offset="0%"
                   stopColor={color === "success" ? "rgb(16 185 129)" : "rgb(239 68 68)"}
@@ -123,7 +148,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
                   stopOpacity="0.7"
                 />
               </linearGradient>
-              <linearGradient id="metric-fill" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={sparklineFillId} x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
                   stopColor={color === "success" ? "rgb(16 185 129)" : "rgb(239 68 68)"}
@@ -137,18 +162,18 @@ const MetricCard: React.FC<MetricCardProps> = ({
               </linearGradient>
             </defs>
             <path
-              d="M0 26 L12 22 L24 24 L36 18 L48 16 L60 19 L72 12 L84 8 L96 10 L96 32 L0 32 Z"
-              fill="url(#metric-fill)"
+              d={`${path} L${lastX} 32 L0 32 Z`}
+              fill={`url(#${sparklineFillId})`}
             />
             <path
-              d="M0 26 L12 22 L24 24 L36 18 L48 16 L60 19 L72 12 L84 8 L96 10"
-              stroke="url(#metric-line)"
+              d={path}
+              stroke={`url(#${sparklineLineId})`}
               strokeWidth="2"
               fill="none"
             />
             <circle
-              cx="84"
-              cy="8"
+              cx={lastX}
+              cy={lastY}
               r="2"
               fill={color === "success" ? "rgb(16 185 129)" : "rgb(239 68 68)"}
             />
