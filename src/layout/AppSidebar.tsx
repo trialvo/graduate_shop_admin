@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 
 import {
@@ -21,64 +22,69 @@ import { HorizontaLDots } from "../icons";
 import BrandLogo from "../components/common/BrandLogo";
 
 type NavItem = {
-  name: string;
+  nameKey: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  subItems?: {
+    nameKey: string;
+    path: string;
+    pro?: boolean;
+    new?: boolean;
+  }[];
 };
 
 const navItems: NavItem[] = [
   {
     icon: <LayoutDashboard />,
-    name: "Dashboard",
+    nameKey: "dashboard",
     path: "/dashboard",
   },
   {
     icon: <ShoppingCart />,
-    name: "New Sale",
+    nameKey: "newSale",
     path: "/new-sale",
   },
   {
     icon: <ClipboardList />,
-    name: "Orders",
+    nameKey: "orders",
     subItems: [
-      { name: "All Orders", path: "/all-orders", pro: false },
-      { name: "Edit Order", path: "/order-editor", pro: false },
-      { name: "Guest Orders", path: "/guest-orders", pro: false },
+      { nameKey: "allOrders", path: "/all-orders", pro: false },
+      { nameKey: "editOrder", path: "/order-editor", pro: false },
+      { nameKey: "guestOrders", path: "/guest-orders", pro: false },
     ],
   },
   {
-    name: "Products",
+    nameKey: "products",
     icon: <Package />,
     subItems: [
-      { name: "All Products", path: "/all-products", pro: false },
-      { name: "Create Product", path: "/create-product", pro: false },
-      { name: "Product Category", path: "/product-category", pro: false },
-      { name: "Product Attributes", path: "/product-attributes", pro: false },
+      { nameKey: "allProducts", path: "/all-products", pro: false },
+      { nameKey: "createProduct", path: "/create-product", pro: false },
+      { nameKey: "productCategory", path: "/product-category", pro: false },
+      { nameKey: "productAttributes", path: "/product-attributes", pro: false },
     ],
   },
   {
-    name: "Report",
+    nameKey: "report",
     icon: <BarChart3 />,
     subItems: [
-      { name: "Product Reports", path: "/product-reports", pro: false },
-      { name: "Order Report", path: "/order-reports", pro: false },
-      { name: "Stock Reports", path: "/stock-reports", pro: false },
-      { name: "Visitor Report", path: "/visitor-report", pro: false },
+      { nameKey: "productReports", path: "/product-reports", pro: false },
+      { nameKey: "orderReport", path: "/order-reports", pro: false },
+      { nameKey: "stockReports", path: "/stock-reports", pro: false },
+      { nameKey: "visitorReport", path: "/visitor-report", pro: false },
     ],
   },
   {
-    name: "Customer",
+    nameKey: "customer",
     icon: <Users />,
     subItems: [
-      { name: "List of customers", path: "/customers-list", pro: false },
-      { name: "Create Customer", path: "/create-customer", pro: false },
-      // { name: "Blocked Customer", path: "/blocked-customer", pro: false },
+      { nameKey: "customersList", path: "/customers-list", pro: false },
+      { nameKey: "createCustomer", path: "/create-customer", pro: false },
+      // { nameKey: "Blocked Customer", path: "/blocked-customer", pro: false },
     ],
   },
   // {
   //   icon: <Star />,
-  //   name: "Customer review",
+  //   nameKey: "Customer review",
   //   path: "/customer-review",
   // },
 ];
@@ -86,46 +92,47 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [
   {
     icon: <Shield />,
-    name: "Admin & Permission",
+    nameKey: "adminPermission",
     subItems: [
-      { name: "List of Admins", path: "/admins-list", pro: false },
-      { name: "Create Admin", path: "/create-admin", pro: false },
+      { nameKey: "adminsList", path: "/admins-list", pro: false },
+      { nameKey: "createAdmin", path: "/create-admin", pro: false },
     ],
   },
   {
     icon: <Settings />,
-    name: "Business Setting",
+    nameKey: "businessSetting",
     subItems: [
-      { name: "Payment", path: "/payment-settings", pro: false },
-      { name: "Delivery", path: "/delivery-settings", pro: false },
-      { name: "Currier", path: "/currier-settings", pro: false },
-      { name: "Coupon Code", path: "/coupon-code", pro: false },
-      { name: "Service (SMS, Email)", path: "/service-settings", pro: false },
+      { nameKey: "payment", path: "/payment-settings", pro: false },
+      { nameKey: "delivery", path: "/delivery-settings", pro: false },
+      { nameKey: "currier", path: "/currier-settings", pro: false },
+      { nameKey: "couponCode", path: "/coupon-code", pro: false },
+      { nameKey: "serviceSettings", path: "/service-settings", pro: false },
     ],
   },
   {
     icon: <PanelsTopLeft />,
-    name: "Website Settings",
+    nameKey: "websiteSettings",
     subItems: [
-      { name: "Banners", path: "/banners-settings", pro: false },
-      { name: "Banner Video", path: "/banner-video-settings", pro: false },
+      { nameKey: "banners", path: "/banners-settings", pro: false },
+      { nameKey: "bannerVideo", path: "/banner-video-settings", pro: false },
       // {
-      //   name: "Header category",
+      //   nameKey: "Header category",
       //   path: "/header-category-settings",
       //   pro: false,
       // },
-      // { name: "Footer", path: "/footer-settings", pro: false },
-      { name: "Contact Message", path: "/contact-page", pro: false },
+      // { nameKey: "Footer", path: "/footer-settings", pro: false },
+      { nameKey: "contactMessage", path: "/contact-page", pro: false },
     ],
   },
   {
     icon: <UserCircle />,
-    name: "My Profile",
+    nameKey: "myProfile",
     path: "/my-profile",
   },
 ];
 
 const AppSidebar: React.FC = () => {
+  const { t } = useTranslation();
   const {
     isExpanded,
     isMobileOpen,
@@ -223,7 +230,7 @@ const AppSidebar: React.FC = () => {
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
       {items.map((nav, index) => (
-        <li key={nav.name}>
+        <li key={nav.nameKey}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
@@ -247,7 +254,7 @@ const AppSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text">{nav.name}</span>
+                <span className="menu-item-text">{t(`sidebar.${nav.nameKey}`)}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
@@ -279,7 +286,7 @@ const AppSidebar: React.FC = () => {
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">{nav.name}</span>
+                  <span className="menu-item-text">{t(`sidebar.${nav.nameKey}`)}</span>
                 )}
               </Link>
             )
@@ -299,7 +306,7 @@ const AppSidebar: React.FC = () => {
             >
               <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
+                  <li key={subItem.nameKey}>
                     <Link
                       to={subItem.path}
                       onClick={handleMobileItemClick}
@@ -309,7 +316,7 @@ const AppSidebar: React.FC = () => {
                           : "menu-dropdown-item-inactive"
                       }`}
                     >
-                      {subItem.name}
+                      {t(`sidebar.${subItem.nameKey}`)}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
@@ -319,7 +326,7 @@ const AppSidebar: React.FC = () => {
                                 : "menu-dropdown-badge-inactive"
                             } menu-dropdown-badge`}
                           >
-                            new
+                            {t("sidebar.badgeNew")}
                           </span>
                         )}
                         {subItem.pro && (
@@ -330,7 +337,7 @@ const AppSidebar: React.FC = () => {
                                 : "menu-dropdown-badge-inactive"
                             } menu-dropdown-badge`}
                           >
-                            pro
+                            {t("sidebar.badgePro")}
                           </span>
                         )}
                       </span>
@@ -390,7 +397,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  t("sidebar.menu")
                 ) : (
                   <HorizontaLDots className="size-6" />
                 )}
@@ -406,7 +413,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  t("sidebar.others")
                 ) : (
                   <HorizontaLDots />
                 )}
