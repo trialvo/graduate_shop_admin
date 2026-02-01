@@ -196,6 +196,86 @@
             "next": "Next"
         }
     },
+    "myProfile": {
+        "title": "My Profile",
+        "refreshedLabel": "Data Refreshed",
+        "overview": {
+            "uploadButton": "Upload profile picture",
+            "uploadLoading": "Uploading...",
+            "logout": "Log Out",
+            "lastLogin": "last login {{date}}"
+        },
+        "contact": {
+            "title": "Contact",
+            "email": "Email",
+            "phone": "Phone",
+            "address": "Address"
+        },
+        "details": {
+            "title": "My Profile",
+            "subtitle": "Update your profile info. Email is read-only.",
+            "resetPassword": "Reset Password (OTP)",
+            "firstNameLabel": "First Name",
+            "firstNamePlaceholder": "First name",
+            "lastNameLabel": "Last Name",
+            "lastNamePlaceholder": "Last name",
+            "emailLabel": "Email",
+            "phoneLabel": "Phone",
+            "phonePlaceholder": "+8801XXXXXXXXX",
+            "addressLabel": "Address",
+            "addressPlaceholder": "House, Road, Area",
+            "resetButton": "Reset",
+            "updateButton": "Update Profile",
+            "updatingButton": "Updating...",
+            "noChangesToast": "No changes to save."
+        },
+        "password": {
+            "title": "Reset Password",
+            "description": "We will send an OTP to your email, then you can set a new password.",
+            "emailLabel": "Email",
+            "emailPlaceholder": "your@email.com",
+            "otpHint": "Click Send OTP to receive a code in your email.",
+            "otpLabel": "OTP",
+            "otpPlaceholder": "6 digit code",
+            "newPasswordLabel": "New Password",
+            "newPasswordPlaceholder": "minimum 8 chars",
+            "confirmPasswordLabel": "Confirm Password",
+            "confirmPasswordPlaceholder": "repeat password",
+            "cancel": "Cancel",
+            "sendOtp": "Send OTP",
+            "sending": "Sending...",
+            "resendOtp": "Resend OTP",
+            "updatePassword": "Update Password",
+            "saving": "Saving...",
+            "hidePassword": "Hide password",
+            "showPassword": "Show password",
+            "errors": {
+                "emailRequired": "Email is required.",
+                "otpRequired": "OTP is required.",
+                "newPasswordRequired": "New password is required.",
+                "passwordTooShort": "Password must be at least 8 characters.",
+                "confirmMismatch": "Confirm password does not match."
+            }
+        },
+        "cropper": {
+            "title": "Crop Profile Photo",
+            "fixedRatio": "Fixed ratio: {{ratio}} (recommended 1:1)",
+            "zoom": "Zoom",
+            "tipsTitle": "Tips",
+            "tipDrag": "Drag the image to position",
+            "tipZoom": "Use zoom to fit the frame",
+            "tipOutput": "Output will be saved as JPG",
+            "cancel": "Cancel",
+            "apply": "Apply Crop",
+            "applying": "Applying...",
+            "close": "Close",
+            "closeOverlay": "Close overlay"
+        },
+        "quickLinks": {
+            "notifications": "Notifications ({{count}})",
+            "messages": "Messages ({{count}})"
+        }
+    },
     "sidebar": {
         "menu": "Menu",
         "others": "Others",

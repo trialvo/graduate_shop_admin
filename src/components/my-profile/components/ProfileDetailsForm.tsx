@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -34,6 +35,7 @@ export default function ProfileDetailsForm({
   onSave,
   onOpenChangePassword,
 }: Props) {
+  const { t } = useTranslation();
   const [state, setState] = useState<FormState>(() => asState(user));
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function ProfileDetailsForm({
     if (state.address !== (user.address || "")) payload.address = state.address.trim();
 
     if (!Object.keys(payload).length) {
-      toast("No changes to save.");
+      toast(t("myProfile.details.noChangesToast"));
       return;
     }
 
@@ -74,9 +76,11 @@ export default function ProfileDetailsForm({
     <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">My Profile</h3>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {t("myProfile.details.title")}
+          </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Update your profile info. Email is read-only.
+            {t("myProfile.details.subtitle")}
           </p>
         </div>
 
@@ -85,59 +89,71 @@ export default function ProfileDetailsForm({
           className="text-sm font-semibold text-brand-500 hover:text-brand-600"
           onClick={onOpenChangePassword}
         >
-          Reset Password (OTP)
+          {t("myProfile.details.resetPassword")}
         </button>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">First Name</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t("myProfile.details.firstNameLabel")}
+          </p>
           <Input
             value={state.firstName}
             onChange={(e) => setState((p) => ({ ...p, firstName: e.target.value }))}
-            placeholder="First name"
+            placeholder={t("myProfile.details.firstNamePlaceholder")}
           />
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t("myProfile.details.lastNameLabel")}
+          </p>
           <Input
             value={state.lastName}
             onChange={(e) => setState((p) => ({ ...p, lastName: e.target.value }))}
-            placeholder="Last name"
+            placeholder={t("myProfile.details.lastNamePlaceholder")}
           />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t("myProfile.details.emailLabel")}
+          </p>
           <Input value={user.email} disabled />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t("myProfile.details.phoneLabel")}
+          </p>
           <Input
             value={state.phone}
             onChange={(e) => setState((p) => ({ ...p, phone: e.target.value }))}
-            placeholder="+8801XXXXXXXXX"
+            placeholder={t("myProfile.details.phonePlaceholder")}
           />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Address</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t("myProfile.details.addressLabel")}
+          </p>
           <Input
             value={state.address}
             onChange={(e) => setState((p) => ({ ...p, address: e.target.value }))}
-            placeholder="House, Road, Area"
+            placeholder={t("myProfile.details.addressPlaceholder")}
           />
         </div>
       </div>
 
       <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={onReset} disabled={!dirty || Boolean(saving)}>
-          Reset
+          {t("myProfile.details.resetButton")}
         </Button>
         <Button onClick={onSubmit} disabled={!dirty || Boolean(saving)}>
-          {saving ? "Updating..." : "Update Profile"}
+          {saving
+            ? t("myProfile.details.updatingButton")
+            : t("myProfile.details.updateButton")}
         </Button>
       </div>
     </div>

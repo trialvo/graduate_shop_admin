@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Eye, EyeOff, KeyRound, Lock, Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -24,6 +25,7 @@ export default function ChangePasswordModal({
   email,
   onChanged,
 }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>("otp");
 
   const [localEmail, setLocalEmail] = useState(email || "");
@@ -39,18 +41,18 @@ export default function ChangePasswordModal({
 
   const error = useMemo(() => {
     if (step === "otp") {
-      if (!localEmail.trim()) return "Email is required.";
+      if (!localEmail.trim()) return t("myProfile.password.errors.emailRequired");
       return "";
     }
 
-    if (!otp.trim()) return "OTP is required.";
+    if (!otp.trim()) return t("myProfile.password.errors.otpRequired");
 
-    if (!next.trim()) return "New password is required.";
-    if (next.trim().length < 8) return "Password must be at least 8 characters.";
-    if (confirm.trim() !== next.trim()) return "Confirm password does not match.";
+    if (!next.trim()) return t("myProfile.password.errors.newPasswordRequired");
+    if (next.trim().length < 8) return t("myProfile.password.errors.passwordTooShort");
+    if (confirm.trim() !== next.trim()) return t("myProfile.password.errors.confirmMismatch");
 
     return "";
-  }, [confirm, localEmail, next, otp, step]);
+  }, [confirm, localEmail, next, otp, step, t]);
 
   const resetAll = () => {
     setStep("otp");
@@ -92,13 +94,13 @@ export default function ChangePasswordModal({
         onClose();
       }}
       size="sm"
-      title="Reset Password"
-      description="We will send an OTP to your email, then you can set a new password."
+      title={t("myProfile.password.title")}
+      description={t("myProfile.password.description")}
     >
       <div className="space-y-6">
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Email <span className="text-error-500">*</span>
+            {t("myProfile.password.emailLabel")} <span className="text-error-500">*</span>
           </p>
 
           <div className="relative">
@@ -107,7 +109,7 @@ export default function ChangePasswordModal({
               className="pl-9"
               value={localEmail}
               onChange={(e) => setLocalEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder={t("myProfile.password.emailPlaceholder")}
               disabled={saving}
             />
           </div>
@@ -115,14 +117,14 @@ export default function ChangePasswordModal({
 
         {step === "otp" ? (
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-            Click <span className="font-semibold">Send OTP</span> to receive a
-            code in your email.
+            {t("myProfile.password.otpHint")}
           </div>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                OTP <span className="text-error-500">*</span>
+                {t("myProfile.password.otpLabel")}{" "}
+                <span className="text-error-500">*</span>
               </p>
               <div className="relative">
                 <Input
@@ -130,7 +132,7 @@ export default function ChangePasswordModal({
                   className="pl-9"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="6 digit code"
+                  placeholder={t("myProfile.password.otpPlaceholder")}
                   disabled={saving}
                 />
               </div>
@@ -138,7 +140,8 @@ export default function ChangePasswordModal({
 
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                New Password <span className="text-error-500">*</span>
+                {t("myProfile.password.newPasswordLabel")}{" "}
+                <span className="text-error-500">*</span>
               </p>
               <div className="relative">
                 <Input
@@ -147,14 +150,18 @@ export default function ChangePasswordModal({
                   type={show.next ? "text" : "password"}
                   value={next}
                   onChange={(e) => setNext(e.target.value)}
-                  placeholder="minimum 8 chars"
+                  placeholder={t("myProfile.password.newPasswordPlaceholder")}
                   disabled={saving}
                 />
                 <button
                   type="button"
                   onClick={() => setShow((p) => ({ ...p, next: !p.next }))}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  aria-label={show.next ? "Hide password" : "Show password"}
+                  aria-label={
+                    show.next
+                      ? t("myProfile.password.hidePassword")
+                      : t("myProfile.password.showPassword")
+                  }
                 >
                   {show.next ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -163,7 +170,8 @@ export default function ChangePasswordModal({
 
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Confirm Password <span className="text-error-500">*</span>
+                {t("myProfile.password.confirmPasswordLabel")}{" "}
+                <span className="text-error-500">*</span>
               </p>
               <div className="relative">
                 <Input
@@ -172,7 +180,7 @@ export default function ChangePasswordModal({
                   type={show.confirm ? "text" : "password"}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="repeat password"
+                  placeholder={t("myProfile.password.confirmPasswordPlaceholder")}
                   disabled={saving}
                 />
                 <button
@@ -181,7 +189,11 @@ export default function ChangePasswordModal({
                     setShow((p) => ({ ...p, confirm: !p.confirm }))
                   }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  aria-label={show.confirm ? "Hide password" : "Show password"}
+                  aria-label={
+                    show.confirm
+                      ? t("myProfile.password.hidePassword")
+                      : t("myProfile.password.showPassword")
+                  }
                 >
                   {show.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -205,12 +217,12 @@ export default function ChangePasswordModal({
             }}
             disabled={saving}
           >
-            Cancel
+            {t("myProfile.password.cancel")}
           </Button>
 
           {step === "otp" ? (
             <Button onClick={sendOtp} disabled={saving || !localEmail.trim()}>
-              {saving ? "Sending..." : "Send OTP"}
+              {saving ? t("myProfile.password.sending") : t("myProfile.password.sendOtp")}
             </Button>
           ) : (
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -219,10 +231,10 @@ export default function ChangePasswordModal({
                 onClick={sendOtp}
                 disabled={saving || !localEmail.trim()}
               >
-                Resend OTP
+                {t("myProfile.password.resendOtp")}
               </Button>
               <Button onClick={submitReset} disabled={saving || Boolean(error)}>
-                {saving ? "Saving..." : "Update Password"}
+                {saving ? t("myProfile.password.saving") : t("myProfile.password.updatePassword")}
               </Button>
             </div>
           )}

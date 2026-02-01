@@ -1,5 +1,6 @@
 import React from "react";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ProfileContact } from "../types";
 
 type Props = {
@@ -32,14 +33,29 @@ function Item({
 }
 
 export default function ProfileContactCard({ contact }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-      <h4 className="text-base font-semibold text-gray-900 dark:text-white">Contact</h4>
+      <h4 className="text-base font-semibold text-gray-900 dark:text-white">
+        {t("myProfile.contact.title")}
+      </h4>
 
       <div className="mt-5 space-y-4">
-        <Item icon={<Mail size={16} />} title="Email" value={contact.email} />
-        <Item icon={<Phone size={16} />} title="Phone" value={contact.phonePrimary} />
-        <Item icon={<MapPin size={16} />} title="Address" value={contact.address} />
+        <Item
+          icon={<Mail size={16} />}
+          title={t("myProfile.contact.email")}
+          value={contact.email}
+        />
+        <Item
+          icon={<Phone size={16} />}
+          title={t("myProfile.contact.phone")}
+          value={contact.phonePrimary}
+        />
+        <Item
+          icon={<MapPin size={16} />}
+          title={t("myProfile.contact.address")}
+          value={contact.address}
+        />
       </div>
     </div>
   );

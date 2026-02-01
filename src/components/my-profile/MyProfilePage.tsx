@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import {
   useAdminProfile,
@@ -30,6 +31,7 @@ function SkeletonCard() {
 }
 
 export default function MyProfilePage() {
+  const { t } = useTranslation();
   const [refreshedAt, setRefreshedAt] = useState<string>(() => formatNow());
   const [pwdOpen, setPwdOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
@@ -124,7 +126,7 @@ export default function MyProfilePage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            My Profile
+            {t("myProfile.title")}
           </h1>
         </div>
 
@@ -136,7 +138,7 @@ export default function MyProfilePage() {
             disabled={isFetching}
           >
             <span className="text-gray-500 dark:text-gray-400">
-              Data Refreshed
+              {t("myProfile.refreshedLabel")}
             </span>
             <RefreshCw size={16} className="text-brand-500" />
           </button>

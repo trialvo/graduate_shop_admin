@@ -1,5 +1,6 @@
 import React from "react";
 import { Bell, Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type { NotificationCount } from "../types";
 
@@ -38,17 +39,20 @@ function Row({
 }
 
 export default function ProfileQuickLinksCard({ counts }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white p-3 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="space-y-3">
         <Row
           icon={<Bell size={18} className="text-error-500" />}
-          label={`Notifications (${counts.notifications})`}
+          label={t("myProfile.quickLinks.notifications", {
+            count: counts.notifications,
+          })}
           value={counts.notifications}
         />
         <Row
           icon={<Mail size={18} className="text-success-500" />}
-          label={`Messages (${counts.messages})`}
+          label={t("myProfile.quickLinks.messages", { count: counts.messages })}
           value={counts.messages}
         />
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import type { ProfileUser } from "../types";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
@@ -17,6 +18,7 @@ export default function ProfileOverviewCard({
   onSelectAvatarFile,
   uploading = false,
 }: Props) {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const name = useMemo(() => {
     const n = `${user.firstName} ${user.lastName}`.trim();
@@ -62,7 +64,9 @@ export default function ProfileOverviewCard({
         </span>
 
         {user.lastVisitAt ? (
-          <p className="mt-3 text-sm text-brand-500">last login {user.lastVisitAt}</p>
+          <p className="mt-3 text-sm text-brand-500">
+            {t("myProfile.overview.lastLogin", { date: user.lastVisitAt })}
+          </p>
         ) : null}
 
         <div className="mt-5 w-full">
@@ -82,15 +86,15 @@ export default function ProfileOverviewCard({
             className="w-full"
             onClick={() => fileInputRef.current?.click()}
             isLoading={uploading}
-            loadingText="Uploading..."
+            loadingText={t("myProfile.overview.uploadLoading")}
           >
-            Upload profile picture
+            {t("myProfile.overview.uploadButton")}
           </Button>
         </div>
 
         <div className="mt-3 w-full">
           <Button onClick={onLogout} className="w-full">
-            Log Out
+            {t("myProfile.overview.logout")}
           </Button>
         </div>
       </div>

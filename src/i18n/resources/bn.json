@@ -196,6 +196,86 @@
             "next": "পরের"
         }
     },
+    "myProfile": {
+        "title": "আমার প্রোফাইল",
+        "refreshedLabel": "ডেটা রিফ্রেশ হয়েছে",
+        "overview": {
+            "uploadButton": "প্রোফাইল ছবি আপলোড করুন",
+            "uploadLoading": "আপলোড হচ্ছে...",
+            "logout": "লগ আউট",
+            "lastLogin": "শেষ লগইন {{date}}"
+        },
+        "contact": {
+            "title": "যোগাযোগ",
+            "email": "ইমেইল",
+            "phone": "ফোন",
+            "address": "ঠিকানা"
+        },
+        "details": {
+            "title": "আমার প্রোফাইল",
+            "subtitle": "আপনার প্রোফাইল তথ্য আপডেট করুন। ইমেইল পরিবর্তনযোগ্য নয়।",
+            "resetPassword": "পাসওয়ার্ড রিসেট (OTP)",
+            "firstNameLabel": "প্রথম নাম",
+            "firstNamePlaceholder": "প্রথম নাম",
+            "lastNameLabel": "শেষ নাম",
+            "lastNamePlaceholder": "শেষ নাম",
+            "emailLabel": "ইমেইল",
+            "phoneLabel": "ফোন",
+            "phonePlaceholder": "+8801XXXXXXXXX",
+            "addressLabel": "ঠিকানা",
+            "addressPlaceholder": "বাড়ি, রোড, এলাকা",
+            "resetButton": "রিসেট",
+            "updateButton": "প্রোফাইল আপডেট করুন",
+            "updatingButton": "আপডেট হচ্ছে...",
+            "noChangesToast": "সংরক্ষণের জন্য কোনো পরিবর্তন নেই।"
+        },
+        "password": {
+            "title": "পাসওয়ার্ড রিসেট",
+            "description": "আমরা আপনার ইমেইলে একটি OTP পাঠাবো, এরপর আপনি নতুন পাসওয়ার্ড সেট করতে পারবেন।",
+            "emailLabel": "ইমেইল",
+            "emailPlaceholder": "your@email.com",
+            "otpHint": "ইমেইলে কোড পেতে OTP পাঠান ক্লিক করুন।",
+            "otpLabel": "OTP",
+            "otpPlaceholder": "৬ অঙ্কের কোড",
+            "newPasswordLabel": "নতুন পাসওয়ার্ড",
+            "newPasswordPlaceholder": "কমপক্ষে ৮ অক্ষর",
+            "confirmPasswordLabel": "পাসওয়ার্ড নিশ্চিত করুন",
+            "confirmPasswordPlaceholder": "পুনরায় পাসওয়ার্ড",
+            "cancel": "বাতিল",
+            "sendOtp": "OTP পাঠান",
+            "sending": "পাঠানো হচ্ছে...",
+            "resendOtp": "OTP আবার পাঠান",
+            "updatePassword": "পাসওয়ার্ড আপডেট করুন",
+            "saving": "সেভ হচ্ছে...",
+            "hidePassword": "পাসওয়ার্ড লুকান",
+            "showPassword": "পাসওয়ার্ড দেখান",
+            "errors": {
+                "emailRequired": "ইমেইল প্রয়োজন।",
+                "otpRequired": "OTP প্রয়োজন।",
+                "newPasswordRequired": "নতুন পাসওয়ার্ড প্রয়োজন।",
+                "passwordTooShort": "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
+                "confirmMismatch": "নিশ্চিত পাসওয়ার্ড মিলছে না।"
+            }
+        },
+        "cropper": {
+            "title": "প্রোফাইল ছবি ক্রপ করুন",
+            "fixedRatio": "স্থির অনুপাত: {{ratio}} (পরামর্শিত 1:1)",
+            "zoom": "জুম",
+            "tipsTitle": "টিপস",
+            "tipDrag": "ইমেজ টেনে অবস্থান ঠিক করুন",
+            "tipZoom": "ফ্রেমে ফিট করতে জুম ব্যবহার করুন",
+            "tipOutput": "আউটপুট JPG হিসেবে সংরক্ষণ হবে",
+            "cancel": "বাতিল",
+            "apply": "ক্রপ প্রয়োগ করুন",
+            "applying": "প্রয়োগ হচ্ছে...",
+            "close": "বন্ধ",
+            "closeOverlay": "ওভারলে বন্ধ করুন"
+        },
+        "quickLinks": {
+            "notifications": "নোটিফিকেশন ({{count}})",
+            "messages": "মেসেজ ({{count}})"
+        }
+    },
     "sidebar": {
         "menu": "মেনু",
         "others": "অন্যান্য",
