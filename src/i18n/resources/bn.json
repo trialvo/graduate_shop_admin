@@ -276,6 +276,232 @@
             "messages": "মেসেজ ({{count}})"
         }
     },
+    "contactMessages": {
+        "title": "কন্ট্যাক্ট মেসেজ",
+        "subtitle": "গ্রাহকের জিজ্ঞাসা পরিচালনা করুন, ইমেইল/এসএমএসে উত্তর দিন, মেসেজ আর্কাইভ বা ডিলিট করুন।",
+        "inbox": "ইনবক্স",
+        "loading": "লোড হচ্ছে...",
+        "selectMessage": "বিস্তারিত দেখতে একটি মেসেজ নির্বাচন করুন।",
+        "noMessages": "দেখানোর মতো কোনো মেসেজ নেই।",
+        "guest": "গেস্ট",
+        "emptyFiltered": "বর্তমান ফিল্টারে কোনো মেসেজ পাওয়া যায়নি।",
+        "noSubject": "(বিষয় নেই)",
+        "emptyValue": "-",
+        "stats": {
+            "total": "মোট",
+            "unread": "অপঠিত",
+            "unreplied": "উত্তরহীন",
+            "readButNotReplied": "পড়া হয়েছে কিন্তু উত্তর দেওয়া হয়নি",
+            "archived": "আর্কাইভ"
+        },
+        "filters": {
+            "statusActive": "সক্রিয়",
+            "statusArchived": "আর্কাইভ",
+            "statusAll": "সব",
+            "any": "সব",
+            "yes": "হ্যাঁ",
+            "no": "না",
+            "searchLabel": "সার্চ",
+            "searchPlaceholder": "নাম / ইমেইল / ফোন",
+            "subjectLabel": "বিষয়",
+            "subjectPlaceholder": "বিষয় কীওয়ার্ড",
+            "statusLabel": "স্ট্যাটাস",
+            "statusPlaceholder": "স্ট্যাটাস",
+            "readLabel": "পড়া",
+            "readPlaceholder": "পড়া",
+            "repliedLabel": "উত্তর দেওয়া",
+            "repliedPlaceholder": "উত্তর দেওয়া",
+            "refresh": "রিফ্রেশ",
+            "refreshing": "রিফ্রেশ হচ্ছে..."
+        },
+        "badges": {
+            "archived": "আর্কাইভ",
+            "unread": "অপঠিত",
+            "read": "পড়া",
+            "unreplied": "উত্তরহীন",
+            "replied": "উত্তর দেওয়া হয়েছে"
+        },
+        "table": {
+            "customer": "কাস্টমার",
+            "subject": "বিষয়",
+            "contact": "যোগাযোগ",
+            "status": "স্ট্যাটাস",
+            "date": "তারিখ"
+        },
+        "details": {
+            "reply": "উত্তর দিন",
+            "unarchive": "আর্কাইভ থেকে ফিরিয়ে আনুন",
+            "archive": "আর্কাইভ",
+            "delete": "ডিলিট",
+            "contact": "যোগাযোগ",
+            "email": "ইমেইল",
+            "phone": "ফোন",
+            "orders": "অর্ডার",
+            "totalSpent": "মোট ব্যয়",
+            "status": "স্ট্যাটাস",
+            "read": "পড়া",
+            "replied": "উত্তর দেওয়া",
+            "inbox": "ইনবক্স",
+            "lastUpdate": "শেষ আপডেট",
+            "yes": "হ্যাঁ",
+            "no": "না",
+            "archived": "আর্কাইভ",
+            "active": "সক্রিয়",
+            "subject": "বিষয়",
+            "message": "বার্তা",
+            "replies": "উত্তরসমূহ",
+            "replyType": "উত্তর",
+            "noReplies": "এখনও কোনো উত্তর নেই।",
+            "confirmDeleteTitle": "মেসেজ ডিলিট করুন",
+            "confirmDeleteDescription": "এটি মেসেজকে ট্র্যাশে পাঠাবে।"
+        },
+        "reply": {
+            "title": "উত্তর দিন",
+            "toLabel": "উত্তর পাঠান: {{to}}",
+            "toThis": "এই মেসেজে উত্তর পাঠান",
+            "cancel": "বাতিল",
+            "send": "পাঠান",
+            "sending": "পাঠানো হচ্ছে...",
+            "typeLabel": "ধরন",
+            "typePlaceholder": "ধরন নির্বাচন করুন",
+            "typeEmail": "ইমেইল",
+            "typeSms": "এসএমএস",
+            "messageLabel": "বার্তা",
+            "messagePlaceholder": "আপনার উত্তর লিখুন...",
+            "tip": "টিপ: সংক্ষিপ্ত ও পরিষ্কার রাখুন। এসএমএসের জন্য ১৬০ অক্ষরের মধ্যে ভালো।"
+        }
+    },
+    "banners": {
+        "title": "ব্যানার সেটিংস",
+        "actions": {
+            "addNew": "নতুন ব্যানার যোগ করুন",
+            "searchPlaceholder": "সার্চ",
+            "export": "এক্সপোর্ট",
+            "edit": "এডিট",
+            "delete": "ডিলিট"
+        },
+        "filters": {
+            "allZones": "সব জোন",
+            "allTypes": "সব টাইপ",
+            "zonePlaceholder": "জোন",
+            "typePlaceholder": "টাইপ",
+            "statusPlaceholder": "স্ট্যাটাস",
+            "featuredPlaceholder": "ফিচার্ড",
+            "statusAll": "সব",
+            "statusActive": "সক্রিয়",
+            "statusInactive": "নিষ্ক্রিয়",
+            "featuredAll": "সব",
+            "featured": "ফিচার্ড",
+            "notFeatured": "ফিচার্ড নয়",
+            "serverDefaultLimit": "সার্ভার ডিফল্ট লিমিট",
+            "limit": "{{count}} / পেজ",
+            "limitPlaceholder": "লিমিট",
+            "sortDefault": "ডিফল্ট সোর্ট",
+            "sortCreatedAt": "তৈরির সময়",
+            "sortUpdatedAt": "আপডেট সময়",
+            "sortTitle": "শিরোনাম",
+            "sortPlaceholder": "সোর্ট করুন",
+            "orderDefault": "ডিফল্ট অর্ডার",
+            "orderDesc": "DESC",
+            "orderAsc": "ASC",
+            "orderPlaceholder": "অর্ডার",
+            "pageLabel": "{{total}} এর মধ্যে {{from}}-{{to}}"
+        },
+        "zones": {
+            "homeTop": "হোম টপ",
+            "homeMiddle": "হোম মিডল",
+            "homeBottom": "হোম বটম",
+            "categoryPage": "ক্যাটাগরি পেজ",
+            "productPage": "প্রোডাক্ট পেজ",
+            "campaign": "ক্যাম্পেইন",
+            "default": "জোন"
+        },
+        "types": {
+            "default": "ডিফল্ট"
+        },
+        "table": {
+            "listTitle": "ব্যানার তালিকা",
+            "refreshing": "রিফ্রেশ হচ্ছে...",
+            "sl": "ক্রম",
+            "title": "শিরোনাম",
+            "zone": "জোন",
+            "type": "টাইপ",
+            "path": "পাথ",
+            "featured": "ফিচার্ড",
+            "status": "স্ট্যাটাস",
+            "action": "অ্যাকশন",
+            "noImage": "ছবি নেই",
+            "null": "null",
+            "empty": "কোনো ব্যানার পাওয়া যায়নি।"
+        },
+        "confirm": {
+            "title": "আপনি কি ডিলিট করতে চান?",
+            "description": "এই কাজটি ফেরত নেওয়া যাবে না।",
+            "confirmText": "হ্যাঁ, ডিলিট",
+            "deleting": "ডিলিট হচ্ছে...",
+            "closeOverlay": "ওভারলে বন্ধ করুন"
+        },
+        "toast": {
+            "deleted": "ব্যানার ডিলিট হয়েছে",
+            "deleteFailed": "ব্যানার ডিলিট ব্যর্থ",
+            "updated": "আপডেট হয়েছে",
+            "updateFailed": "আপডেট ব্যর্থ",
+            "exportNote": "চাইলে এক্সপোর্ট যোগ করা যেতে পারে"
+        }
+    },
+    "bannerVideos": {
+        "title": "ব্যানার ভিডিও সেটিংস",
+        "subtitle": "ব্যানার স্লটে দেখানো প্রোমোশনাল ভিডিও ম্যানেজ করুন।",
+        "actions": {
+            "refresh": "রিফ্রেশ",
+            "add": "ব্যানার ভিডিও যোগ করুন",
+            "copy": "কপি",
+            "open": "ওপেন",
+            "edit": "এডিট",
+            "delete": "ডিলিট"
+        },
+        "stats": {
+            "total": "মোট ভিডিও",
+            "totalHint": "ডাটাবেসের সব রেকর্ড",
+            "linked": "প্রোডাক্টের সাথে লিঙ্কড",
+            "standalone": "স্ট্যান্ডঅ্যালোন",
+            "onThisPage": "এই পেজে",
+            "pageSize": "পেজ সাইজ",
+            "limit": "{{count}} / পেজ",
+            "limitPlaceholder": "লিমিট"
+        },
+        "pageLabel": "{{total}} এর মধ্যে {{from}}-{{to}}",
+        "table": {
+            "title": "ভিডিও তালিকা",
+            "refreshing": "রিফ্রেশ হচ্ছে...",
+            "sl": "ক্রম",
+            "preview": "প্রিভিউ",
+            "label": "লেবেল",
+            "product": "প্রোডাক্ট",
+            "path": "পাথ",
+            "videoUrl": "ভিডিও URL",
+            "updated": "আপডেট",
+            "action": "অ্যাকশন",
+            "thumbAlt": "থাম্ব",
+            "untitled": "শিরোনামহীন",
+            "linkedProduct": "লিঙ্কড প্রোডাক্ট",
+            "productId": "আইডি: {{id}}",
+            "standalone": "স্ট্যান্ডঅ্যালোন/আনলিংকড",
+            "null": "null",
+            "empty": "কোনো ব্যানার ভিডিও পাওয়া যায়নি।"
+        },
+        "confirm": {
+            "title": "ব্যানার ভিডিও ডিলিট করবেন?",
+            "description": "এই কাজটি ফেরত নেওয়া যাবে না।",
+            "confirmText": "হ্যাঁ, ডিলিট"
+        },
+        "toast": {
+            "copied": "কপি হয়েছে",
+            "copyFailed": "কপি ব্যর্থ",
+            "deleted": "ব্যানার ভিডিও ডিলিট হয়েছে",
+            "deleteFailed": "ব্যানার ভিডিও ডিলিট ব্যর্থ"
+        }
+    },
     "sidebar": {
         "menu": "মেনু",
         "others": "অন্যান্য",

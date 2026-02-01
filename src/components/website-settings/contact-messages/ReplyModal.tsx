@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Modal from "@/components/ui/modal/Modal";
@@ -20,11 +21,6 @@ type Props = {
   toLabel?: string;
 };
 
-const typeOptions = [
-  { value: "email", label: "Email" },
-  { value: "sms", label: "SMS" },
-];
-
 export default function ReplyModal({
   open,
   onClose,
@@ -33,6 +29,7 @@ export default function ReplyModal({
   defaultType = "sms",
   toLabel,
 }: Props) {
+  const { t } = useTranslation();
   const [type, setType] = React.useState<ReplyType>(defaultType);
   const [text, setText] = React.useState<string>("");
 
@@ -44,20 +41,32 @@ export default function ReplyModal({
 
   const canSubmit = text.trim().length > 0 && !isSubmitting;
 
+  const typeOptions = React.useMemo(
+    () => [
+      { value: "email", label: t("contactMessages.reply.typeEmail") },
+      { value: "sms", label: t("contactMessages.reply.typeSms") },
+    ],
+    [t]
+  );
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Reply"
-      description={toLabel ? `Send reply to: ${toLabel}` : "Send reply to this message"}
+      title={t("contactMessages.reply.title")}
+      description={
+        toLabel
+          ? t("contactMessages.reply.toLabel", { to: toLabel })
+          : t("contactMessages.reply.toThis")
+      }
       size="md"
       footer={
         <>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t("contactMessages.reply.cancel")}
           </Button>
           <Button onClick={() => onSubmit({ replyText: text, type })} disabled={!canSubmit}>
-            {isSubmitting ? "Sending..." : "Send"}
+            {isSubmitting ? t("contactMessages.reply.sending") : t("contactMessages.reply.send")}
           </Button>
         </>
       }
@@ -65,12 +74,14 @@ export default function ReplyModal({
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Type</p>
+            <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              {t("contactMessages.reply.typeLabel")}
+            </p>
             <Select
               options={typeOptions}
               value={type}
               onChange={(v) => setType(v as ReplyType)}
-              placeholder="Select type"
+              placeholder={t("contactMessages.reply.typePlaceholder")}
             />
           </div>
 
@@ -78,10 +89,17 @@ export default function ReplyModal({
         </div>
 
         <div>
-          <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Message</p>
-          <TextArea rows={6} value={text} onChange={setText} placeholder="Write your reply..." />
+          <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+            {t("contactMessages.reply.messageLabel")}
+          </p>
+          <TextArea
+            rows={6}
+            value={text}
+            onChange={setText}
+            placeholder={t("contactMessages.reply.messagePlaceholder")}
+          />
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Tip: keep it short and clear. For SMS, best under 160 characters.
+            {t("contactMessages.reply.tip")}
           </p>
         </div>
       </div>

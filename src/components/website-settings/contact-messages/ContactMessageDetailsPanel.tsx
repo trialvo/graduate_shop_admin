@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Archive, ArchiveRestore, Mail, MessageCircle, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import ConfirmDeleteModal from "@/components/ui/modal/ConfirmDeleteModal";
@@ -28,6 +29,7 @@ export default function ContactMessageDetailsPanel({
   isToggling,
   isDeleting,
 }: Props) {
+  const { t } = useTranslation();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   const name = formatName(data.first_name, data.last_name);
@@ -59,7 +61,7 @@ export default function ContactMessageDetailsPanel({
             disabled={isArchived}
             startIcon={isReplied ? <Mail size={16} /> : <MessageCircle size={16} />}
           >
-            Reply
+            {t("contactMessages.details.reply")}
           </Button>
 
           <Button
@@ -69,7 +71,9 @@ export default function ContactMessageDetailsPanel({
             disabled={isToggling}
             startIcon={isArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
           >
-            {isArchived ? "Unarchive" : "Archive"}
+            {isArchived
+              ? t("contactMessages.details.unarchive")
+              : t("contactMessages.details.archive")}
           </Button>
 
           <Button
@@ -79,7 +83,7 @@ export default function ContactMessageDetailsPanel({
             disabled={isDeleting}
             startIcon={<Trash2 size={16} />}
           >
-            Delete
+            {t("contactMessages.details.delete")}
           </Button>
         </div>
       </div>
@@ -87,47 +91,71 @@ export default function ContactMessageDetailsPanel({
       <div className="flex-1 overflow-y-auto p-5">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs font-semibold text-gray-900 dark:text-white">Contact</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white">
+              {t("contactMessages.details.contact")}
+            </p>
 
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Email</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.email")}
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">{email}</span>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Phone</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.phone")}
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">{phone}</span>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Orders</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.orders")}
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">{data.total_orders ?? 0}</span>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Total spent</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.totalSpent")}
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">{data.total_spent ?? 0} BDT</span>
               </div>
             </div>
           </div>
 
           <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs font-semibold text-gray-900 dark:text-white">Status</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white">
+              {t("contactMessages.details.status")}
+            </p>
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Read</span>
-                <span className="font-medium text-gray-900 dark:text-white">{data.is_read === 1 ? "Yes" : "No"}</span>
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Replied</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.read")}
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {data.is_replied === 1 ? "Yes" : "No"}
+                  {data.is_read === 1 ? t("contactMessages.details.yes") : t("contactMessages.details.no")}
                 </span>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Inbox</span>
-                <span className="font-medium text-gray-900 dark:text-white">{isArchived ? "Archived" : "Active"}</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.replied")}
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {data.is_replied === 1 ? t("contactMessages.details.yes") : t("contactMessages.details.no")}
+                </span>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <span className="text-gray-500 dark:text-gray-400">Last update</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.inbox")}
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {isArchived ? t("contactMessages.details.archived") : t("contactMessages.details.active")}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t("contactMessages.details.lastUpdate")}
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">{formatDateTime(data.updated_at)}</span>
               </div>
             </div>
@@ -135,15 +163,21 @@ export default function ContactMessageDetailsPanel({
         </div>
 
         <div className="mt-5 rounded-[4px] border border-gray-200 bg-white px-5 py-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs font-semibold text-gray-900 dark:text-white">Subject</p>
+          <p className="text-xs font-semibold text-gray-900 dark:text-white">
+            {t("contactMessages.details.subject")}
+          </p>
           <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{subject}</p>
 
-          <p className="mt-4 text-xs font-semibold text-gray-900 dark:text-white">Message</p>
+          <p className="mt-4 text-xs font-semibold text-gray-900 dark:text-white">
+            {t("contactMessages.details.message")}
+          </p>
           <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-200">{msg}</p>
         </div>
 
         <div className="mt-5 rounded-[4px] border border-gray-200 bg-white px-5 py-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs font-semibold text-gray-900 dark:text-white">Replies</p>
+          <p className="text-xs font-semibold text-gray-900 dark:text-white">
+            {t("contactMessages.details.replies")}
+          </p>
           {data.replies?.length ? (
             <div className="mt-3 space-y-3">
               {data.replies.map((r) => (
@@ -153,7 +187,7 @@ export default function ContactMessageDetailsPanel({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs font-semibold text-gray-900 dark:text-white">
-                      {(r.type ?? "reply").toUpperCase()}
+                      {(r.type ?? t("contactMessages.details.replyType")).toUpperCase()}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(r.created_at)}</p>
                   </div>
@@ -162,7 +196,9 @@ export default function ContactMessageDetailsPanel({
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">No replies yet.</p>
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              {t("contactMessages.details.noReplies")}
+            </p>
           )}
         </div>
       </div>
@@ -170,8 +206,8 @@ export default function ContactMessageDetailsPanel({
       <ConfirmDeleteModal
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Delete message"
-        description="This will move the message to trash."
+        title={t("contactMessages.details.confirmDeleteTitle")}
+        description={t("contactMessages.details.confirmDeleteDescription")}
         onConfirm={() => {
           setConfirmOpen(false);
           onDelete();

@@ -276,6 +276,232 @@
             "messages": "Messages ({{count}})"
         }
     },
+    "contactMessages": {
+        "title": "Contact Messages",
+        "subtitle": "Manage customer inquiries, reply via Email/SMS, archive or delete messages.",
+        "inbox": "Inbox",
+        "loading": "Loading...",
+        "selectMessage": "Select a message to view details.",
+        "noMessages": "No messages to show.",
+        "guest": "Guest",
+        "emptyFiltered": "No messages found for current filters.",
+        "noSubject": "(No subject)",
+        "emptyValue": "-",
+        "stats": {
+            "total": "Total",
+            "unread": "Unread",
+            "unreplied": "Unreplied",
+            "readButNotReplied": "Read but not replied",
+            "archived": "Archived"
+        },
+        "filters": {
+            "statusActive": "Active",
+            "statusArchived": "Archived",
+            "statusAll": "All",
+            "any": "All",
+            "yes": "Yes",
+            "no": "No",
+            "searchLabel": "Search",
+            "searchPlaceholder": "Name / Email / Phone",
+            "subjectLabel": "Subject",
+            "subjectPlaceholder": "Subject keyword",
+            "statusLabel": "Status",
+            "statusPlaceholder": "Status",
+            "readLabel": "Read",
+            "readPlaceholder": "Read",
+            "repliedLabel": "Replied",
+            "repliedPlaceholder": "Replied",
+            "refresh": "Refresh",
+            "refreshing": "Refreshing..."
+        },
+        "badges": {
+            "archived": "Archived",
+            "unread": "Unread",
+            "read": "Read",
+            "unreplied": "Unreplied",
+            "replied": "Replied"
+        },
+        "table": {
+            "customer": "Customer",
+            "subject": "Subject",
+            "contact": "Contact",
+            "status": "Status",
+            "date": "Date"
+        },
+        "details": {
+            "reply": "Reply",
+            "unarchive": "Unarchive",
+            "archive": "Archive",
+            "delete": "Delete",
+            "contact": "Contact",
+            "email": "Email",
+            "phone": "Phone",
+            "orders": "Orders",
+            "totalSpent": "Total spent",
+            "status": "Status",
+            "read": "Read",
+            "replied": "Replied",
+            "inbox": "Inbox",
+            "lastUpdate": "Last update",
+            "yes": "Yes",
+            "no": "No",
+            "archived": "Archived",
+            "active": "Active",
+            "subject": "Subject",
+            "message": "Message",
+            "replies": "Replies",
+            "replyType": "reply",
+            "noReplies": "No replies yet.",
+            "confirmDeleteTitle": "Delete message",
+            "confirmDeleteDescription": "This will move the message to trash."
+        },
+        "reply": {
+            "title": "Reply",
+            "toLabel": "Send reply to: {{to}}",
+            "toThis": "Send reply to this message",
+            "cancel": "Cancel",
+            "send": "Send",
+            "sending": "Sending...",
+            "typeLabel": "Type",
+            "typePlaceholder": "Select type",
+            "typeEmail": "Email",
+            "typeSms": "SMS",
+            "messageLabel": "Message",
+            "messagePlaceholder": "Write your reply...",
+            "tip": "Tip: keep it short and clear. For SMS, best under 160 characters."
+        }
+    },
+    "banners": {
+        "title": "Banner Settings",
+        "actions": {
+            "addNew": "Add New Banner",
+            "searchPlaceholder": "Search",
+            "export": "Export",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "filters": {
+            "allZones": "All zones",
+            "allTypes": "All types",
+            "zonePlaceholder": "Zone",
+            "typePlaceholder": "Type",
+            "statusPlaceholder": "Status",
+            "featuredPlaceholder": "Featured",
+            "statusAll": "All",
+            "statusActive": "Active",
+            "statusInactive": "Inactive",
+            "featuredAll": "All",
+            "featured": "Featured",
+            "notFeatured": "Not Featured",
+            "serverDefaultLimit": "Server default limit",
+            "limit": "{{count}} / page",
+            "limitPlaceholder": "Limit",
+            "sortDefault": "Default sort",
+            "sortCreatedAt": "Created At",
+            "sortUpdatedAt": "Updated At",
+            "sortTitle": "Title",
+            "sortPlaceholder": "Sort by",
+            "orderDefault": "Default order",
+            "orderDesc": "DESC",
+            "orderAsc": "ASC",
+            "orderPlaceholder": "Order",
+            "pageLabel": "{{from}}-{{to}} of {{total}}"
+        },
+        "zones": {
+            "homeTop": "Home Top",
+            "homeMiddle": "Home Middle",
+            "homeBottom": "Home Bottom",
+            "categoryPage": "Category Page",
+            "productPage": "Product Page",
+            "campaign": "Campaign",
+            "default": "Zone"
+        },
+        "types": {
+            "default": "Default"
+        },
+        "table": {
+            "listTitle": "Banner List",
+            "refreshing": "Refreshing...",
+            "sl": "SL",
+            "title": "Title",
+            "zone": "Zone",
+            "type": "Type",
+            "path": "Path",
+            "featured": "Featured",
+            "status": "Status",
+            "action": "Action",
+            "noImage": "No image",
+            "null": "null",
+            "empty": "No banners found."
+        },
+        "confirm": {
+            "title": "Are you sure to delete?",
+            "description": "This action cannot be undone.",
+            "confirmText": "Yes, Delete",
+            "deleting": "Deleting...",
+            "closeOverlay": "Close overlay"
+        },
+        "toast": {
+            "deleted": "Banner deleted",
+            "deleteFailed": "Failed to delete banner",
+            "updated": "Updated",
+            "updateFailed": "Update failed",
+            "exportNote": "Export can be added if you want"
+        }
+    },
+    "bannerVideos": {
+        "title": "Banner Video Settings",
+        "subtitle": "Manage promotional videos shown in banner slots.",
+        "actions": {
+            "refresh": "Refresh",
+            "add": "Add Banner Video",
+            "copy": "Copy",
+            "open": "Open",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "stats": {
+            "total": "Total Videos",
+            "totalHint": "All records in database",
+            "linked": "Linked to Product",
+            "standalone": "Standalone",
+            "onThisPage": "On this page",
+            "pageSize": "Page Size",
+            "limit": "{{count}} / page",
+            "limitPlaceholder": "Limit"
+        },
+        "pageLabel": "{{from}}-{{to}} of {{total}}",
+        "table": {
+            "title": "Video List",
+            "refreshing": "Refreshing...",
+            "sl": "SL",
+            "preview": "Preview",
+            "label": "Label",
+            "product": "Product",
+            "path": "Path",
+            "videoUrl": "Video URL",
+            "updated": "Updated",
+            "action": "Action",
+            "thumbAlt": "thumb",
+            "untitled": "Untitled",
+            "linkedProduct": "Linked Product",
+            "productId": "ID: {{id}}",
+            "standalone": "Standalone/Unlinked",
+            "null": "null",
+            "empty": "No banner videos found."
+        },
+        "confirm": {
+            "title": "Delete banner video?",
+            "description": "This action cannot be undone.",
+            "confirmText": "Yes, Delete"
+        },
+        "toast": {
+            "copied": "Copied",
+            "copyFailed": "Copy failed",
+            "deleted": "Banner video deleted",
+            "deleteFailed": "Failed to delete banner video"
+        }
+    },
     "sidebar": {
         "menu": "Menu",
         "others": "Others",

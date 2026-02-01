@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Search, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import InputField from "@/components/form/input/InputField";
@@ -19,18 +20,6 @@ type Props = {
   onRefetch: () => void;
   isRefetching?: boolean;
 };
-
-const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
-  { value: "all", label: "All" },
-];
-
-const boolOptions = [
-  { value: "all", label: "All" },
-  { value: "false", label: "No" },
-  { value: "true", label: "Yes" },
-];
 
 function StatCard({
   title,
@@ -67,12 +56,31 @@ export default function ContactMessagesFiltersBar({
   onRefetch,
   isRefetching,
 }: Props) {
+  const { t } = useTranslation();
   const c = counts ?? {
     total: 0,
     unread: 0,
     unreplied: 0,
     read_but_not_replied: 0,
   };
+
+  const statusOptions = React.useMemo(
+    () => [
+      { value: "active", label: t("contactMessages.filters.statusActive") },
+      { value: "archived", label: t("contactMessages.filters.statusArchived") },
+      { value: "all", label: t("contactMessages.filters.statusAll") },
+    ],
+    [t]
+  );
+
+  const boolOptions = React.useMemo(
+    () => [
+      { value: "all", label: t("contactMessages.filters.any") },
+      { value: "false", label: t("contactMessages.filters.no") },
+      { value: "true", label: t("contactMessages.filters.yes") },
+    ],
+    [t]
+  );
 
   const setTab = (tab: ContactTabKey) => {
     // The backend supports only is_read/is_replied + status filters, so we map tabs to those.
@@ -99,31 +107,31 @@ export default function ContactMessagesFiltersBar({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <StatCard
-          title="Total"
+          title={t("contactMessages.stats.total")}
           value={c.total}
           active={filters.tab === "all"}
           onClick={() => setTab("all")}
         />
         <StatCard
-          title="Unread"
+          title={t("contactMessages.stats.unread")}
           value={c.unread}
           active={filters.tab === "unread"}
           onClick={() => setTab("unread")}
         />
         <StatCard
-          title="Unreplied"
+          title={t("contactMessages.stats.unreplied")}
           value={c.unreplied}
           active={filters.tab === "unreplied"}
           onClick={() => setTab("unreplied")}
         />
         <StatCard
-          title="Read but not replied"
+          title={t("contactMessages.stats.readButNotReplied")}
           value={c.read_but_not_replied}
           active={filters.tab === "read_but_not_replied"}
           onClick={() => setTab("read_but_not_replied")}
         />
         <StatCard
-          title="Archived"
+          title={t("contactMessages.stats.archived")}
           value={Math.max(0, c.total - (filters.status === "archived" ? 0 : 0))}
           active={filters.tab === "archived"}
           onClick={() => setTab("archived")}
@@ -139,39 +147,47 @@ export default function ContactMessagesFiltersBar({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[760px] lg:grid-cols-3">
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Search</p>
+              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("contactMessages.filters.searchLabel")}
+              </p>
               <InputField
                 value={filters.search}
                 onChange={(e) => onChange({ search: e.target.value })}
-                placeholder="Name / Email / Phone"
+                placeholder={t("contactMessages.filters.searchPlaceholder")}
                 startIcon={<Search size={16} />}
               />
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Subject</p>
+              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("contactMessages.filters.subjectLabel")}
+              </p>
               <InputField
                 value={filters.subject}
                 onChange={(e) => onChange({ subject: e.target.value })}
-                placeholder="Subject keyword"
+                placeholder={t("contactMessages.filters.subjectPlaceholder")}
               />
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Status</p>
+              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("contactMessages.filters.statusLabel")}
+              </p>
               <Select
                 options={statusOptions}
-                placeholder="Status"
+                placeholder={t("contactMessages.filters.statusPlaceholder")}
                 value={filters.status}
                 onChange={(v) => onChange({ status: v as ContactMessageStatusFilter, tab: "all" })}
               />
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Read</p>
+              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("contactMessages.filters.readLabel")}
+              </p>
               <Select
                 options={boolOptions}
-                placeholder="Read"
+                placeholder={t("contactMessages.filters.readPlaceholder")}
                 value={filters.is_read}
                 onChange={(v) => onChange({ is_read: v as ContactMessageBoolFilter, tab: "all" })}
               />
@@ -180,10 +196,12 @@ export default function ContactMessagesFiltersBar({
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:w-[360px]">
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Replied</p>
+              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t("contactMessages.filters.repliedLabel")}
+              </p>
               <Select
                 options={boolOptions}
-                placeholder="Replied"
+                placeholder={t("contactMessages.filters.repliedPlaceholder")}
                 value={filters.is_replied}
                 onChange={(v) => onChange({ is_replied: v as ContactMessageBoolFilter, tab: "all" })}
               />
@@ -197,7 +215,9 @@ export default function ContactMessagesFiltersBar({
                 startIcon={<RefreshCw size={16} />}
                 disabled={isRefetching}
               >
-                {isRefetching ? "Refreshing..." : "Refresh"}
+                {isRefetching
+                  ? t("contactMessages.filters.refreshing")
+                  : t("contactMessages.filters.refresh")}
               </Button>
             </div>
           </div>

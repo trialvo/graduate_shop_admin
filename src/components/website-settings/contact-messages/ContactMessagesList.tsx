@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Mail, MessageSquare, Archive } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 function StatusPills({ row }: { row: ContactMessageRow }) {
+  const { t } = useTranslation();
   const unread = row.is_read === 0;
   const unreplied = row.is_replied === 0;
   const archived = row.status === 0;
@@ -24,27 +26,27 @@ function StatusPills({ row }: { row: ContactMessageRow }) {
     <div className="flex flex-wrap items-center gap-1.5">
       {archived ? (
         <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
-          <Archive size={12} /> Archived
+          <Archive size={12} /> {t("contactMessages.badges.archived")}
         </span>
       ) : null}
 
       {unread ? (
         <span className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">
-          <Mail size={12} /> Unread
+          <Mail size={12} /> {t("contactMessages.badges.unread")}
         </span>
       ) : (
         <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
-          Read
+          {t("contactMessages.badges.read")}
         </span>
       )}
 
       {unreplied ? (
         <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-          <MessageSquare size={12} /> Unreplied
+          <MessageSquare size={12} /> {t("contactMessages.badges.unreplied")}
         </span>
       ) : (
         <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
-          Replied
+          {t("contactMessages.badges.replied")}
         </span>
       )}
     </div>
@@ -52,10 +54,11 @@ function StatusPills({ row }: { row: ContactMessageRow }) {
 }
 
 export default function ContactMessagesList({ rows, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   if (!rows.length) {
     return (
       <div className="px-4 py-10 text-sm text-gray-500 dark:text-gray-400">
-        No messages found for current filters.
+        {t("contactMessages.emptyFiltered")}
       </div>
     );
   }
@@ -90,17 +93,17 @@ export default function ContactMessagesList({ rows, selectedId, onSelect }: Prop
 
               <div className="mt-3">
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                  {r.subject || "(No subject)"}
+                  {r.subject || t("contactMessages.noSubject")}
                 </p>
                 <p className="mt-0.5 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
-                  {r.message || "-"}
+                  {r.message || t("contactMessages.emptyValue")}
                 </p>
               </div>
 
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 text-xs text-gray-500 dark:text-gray-400">
-                  <p className="truncate">{r.email || "-"}</p>
-                  <p className="truncate">{r.phone || "-"}</p>
+                  <p className="truncate">{r.email || t("contactMessages.emptyValue")}</p>
+                  <p className="truncate">{r.phone || t("contactMessages.emptyValue")}</p>
                 </div>
                 <StatusPills row={r} />
               </div>
@@ -114,19 +117,19 @@ export default function ContactMessagesList({ rows, selectedId, onSelect }: Prop
           <TableHeader className="bg-gray-50 dark:bg-gray-900/60">
             <TableRow>
               <TableCell isHeader className="w-[260px] px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
-              Customer
+                {t("contactMessages.table.customer")}
               </TableCell>
               <TableCell isHeader className="w-[280px] px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
-              Subject
+                {t("contactMessages.table.subject")}
               </TableCell>
               <TableCell isHeader className="w-[220px] px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
-              Contact
+                {t("contactMessages.table.contact")}
               </TableCell>
               <TableCell isHeader className="w-[220px] px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
-              Status
+                {t("contactMessages.table.status")}
               </TableCell>
               <TableCell isHeader className="w-[160px] px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
-              Date
+                {t("contactMessages.table.date")}
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -157,16 +160,20 @@ export default function ContactMessagesList({ rows, selectedId, onSelect }: Prop
 
                   <TableCell className="px-4 py-3">
                     <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                      {r.subject || "(No subject)"}
+                      {r.subject || t("contactMessages.noSubject")}
                     </p>
                     <p className="mt-0.5 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
-                      {r.message || "-"}
+                      {r.message || t("contactMessages.emptyValue")}
                     </p>
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <p className="truncate text-sm text-gray-900 dark:text-white">{r.email || "-"}</p>
-                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{r.phone || "-"}</p>
+                    <p className="truncate text-sm text-gray-900 dark:text-white">
+                      {r.email || t("contactMessages.emptyValue")}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                      {r.phone || t("contactMessages.emptyValue")}
+                    </p>
                   </TableCell>
 
                   <TableCell className="px-4 py-3">

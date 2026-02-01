@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
@@ -58,16 +59,17 @@ function shortText(value: string, max = 40) {
   return `${value.slice(0, max - 3)}...`;
 }
 
-function safeCopy(text: string) {
+function safeCopy(text: string, t: (key: string, options?: any) => string) {
   try {
     void navigator.clipboard.writeText(text);
-    toast.success("Copied");
+    toast.success(t("bannerVideos.toast.copied"));
   } catch {
-    toast.error("Copy failed");
+    toast.error(t("bannerVideos.toast.copyFailed"));
   }
 }
 
 export default function BannerVideoSettingsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [limit, setLimit] = useState<number | undefined>(20);
@@ -112,8 +114,8 @@ export default function BannerVideoSettingsPage() {
   const pageLabel = useMemo(() => {
     const from = total === 0 ? 0 : effectiveOffset + 1;
     const to = Math.min(effectiveOffset + effectiveLimit, total);
-    return `${from}-${to} of ${total}`;
-  }, [effectiveOffset, effectiveLimit, total]);
+    return t("bannerVideos.pageLabel", { from, to, total });
+  }, [effectiveOffset, effectiveLimit, t, total]);
 
   const linkedCount = rows.filter((r) => r.productId).length;
   const unlinkedCount = rows.length - linkedCount;
@@ -139,13 +141,13 @@ export default function BannerVideoSettingsPage() {
     mutationFn: (id: number) => deleteBannerVideo(id),
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success("Banner video deleted");
+        toast.success(t("bannerVideos.toast.deleted"));
         qc.invalidateQueries({ queryKey: ["banner-videos"] });
         setDeleteOpen(false);
         setDeleteId(null);
         return;
       }
-      toast.error(res?.message || res?.error || "Failed to delete banner video");
+      toast.error(res?.message || res?.error || t("bannerVideos.toast.deleteFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -155,10 +157,10 @@ export default function BannerVideoSettingsPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Banner Video Settings
+            {t("bannerVideos.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage promotional videos shown in banner slots.
+            {t("bannerVideos.subtitle")}
           </p>
         </div>
 
@@ -168,55 +170,63 @@ export default function BannerVideoSettingsPage() {
             startIcon={<RefreshCw size={16} />}
             onClick={() => qc.invalidateQueries({ queryKey: ["banner-videos"] })}
           >
-            Refresh
+            {t("bannerVideos.actions.refresh")}
           </Button>
           <Button startIcon={<Plus size={16} />} onClick={openCreate}>
-            Add Banner Video
+            {t("bannerVideos.actions.add")}
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Total Videos</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("bannerVideos.stats.total")}
+          </p>
           <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
             {total}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            All records in database
+            {t("bannerVideos.stats.totalHint")}
           </p>
         </div>
 
         <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Linked to Product</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("bannerVideos.stats.linked")}
+          </p>
           <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
             {linkedCount}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            On this page
+            {t("bannerVideos.stats.onThisPage")}
           </p>
         </div>
 
         <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Standalone</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("bannerVideos.stats.standalone")}
+          </p>
           <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
             {unlinkedCount}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            On this page
+            {t("bannerVideos.stats.onThisPage")}
           </p>
         </div>
 
         <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Page Size</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("bannerVideos.stats.pageSize")}
+          </p>
           <div className="mt-2">
             <Select
               options={[
-                { value: "10", label: "10 / page" },
-                { value: "20", label: "20 / page" },
-                { value: "50", label: "50 / page" },
+                { value: "10", label: t("bannerVideos.stats.limit", { count: 10 }) },
+                { value: "20", label: t("bannerVideos.stats.limit", { count: 20 }) },
+                { value: "50", label: t("bannerVideos.stats.limit", { count: 50 }) },
               ]}
-              placeholder="Limit"
+              placeholder={t("bannerVideos.stats.limitPlaceholder")}
               defaultValue={String(effectiveLimit)}
               onChange={(v) => {
                 const next = Number(v);
@@ -233,7 +243,7 @@ export default function BannerVideoSettingsPage() {
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Video List
+              {t("bannerVideos.table.title")}
             </h3>
             <span className="inline-flex h-6 items-center rounded-md bg-gray-100 px-2 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {total}
@@ -241,7 +251,7 @@ export default function BannerVideoSettingsPage() {
           </div>
           {videosQuery.isFetching ? (
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Refreshing...
+              {t("bannerVideos.table.refreshing")}
             </span>
           ) : null}
         </div>
@@ -251,14 +261,14 @@ export default function BannerVideoSettingsPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                 {[
-                  "SL",
-                  "Preview",
-                  "Label",
-                  "Product",
-                  "Path",
-                  "Video URL",
-                  "Updated",
-                  "Action",
+                  t("bannerVideos.table.sl"),
+                  t("bannerVideos.table.preview"),
+                  t("bannerVideos.table.label"),
+                  t("bannerVideos.table.product"),
+                  t("bannerVideos.table.path"),
+                  t("bannerVideos.table.videoUrl"),
+                  t("bannerVideos.table.updated"),
+                  t("bannerVideos.table.action"),
                 ].map((h) => (
                   <th
                     key={h}
@@ -290,7 +300,7 @@ export default function BannerVideoSettingsPage() {
                         {row.thumb ? (
                           <img
                             src={toPublicUrl(row.thumb)}
-                            alt="thumb"
+                            alt={t("bannerVideos.table.thumbAlt")}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -304,7 +314,7 @@ export default function BannerVideoSettingsPage() {
                     <td className="px-4 py-4">
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {row.label || "Untitled"}
+                          {row.label || t("bannerVideos.table.untitled")}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">#{row.id}</p>
                       </div>
@@ -314,14 +324,16 @@ export default function BannerVideoSettingsPage() {
                       {row.productId ? (
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {row.productName || "Linked Product"}
+                            {row.productName || t("bannerVideos.table.linkedProduct")}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            ID: {row.productId}
+                            {t("bannerVideos.table.productId", { id: row.productId })}
                           </p>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">Standalone/Unlinked</span>
+                        <span className="text-xs text-gray-400">
+                          {t("bannerVideos.table.standalone")}
+                        </span>
                       )}
                     </td>
 
@@ -331,7 +343,9 @@ export default function BannerVideoSettingsPage() {
                           {row.path}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">null</span>
+                        <span className="text-xs text-gray-400">
+                          {t("bannerVideos.table.null")}
+                        </span>
                       )}
                     </td>
 
@@ -347,8 +361,8 @@ export default function BannerVideoSettingsPage() {
                             "border-gray-200 bg-white text-gray-600 shadow-theme-xs hover:bg-gray-50",
                             "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                           )}
-                          onClick={() => safeCopy(row.videoUrl)}
-                          aria-label="Copy"
+                          onClick={() => safeCopy(row.videoUrl, t)}
+                          aria-label={t("bannerVideos.actions.copy")}
                         >
                           <Copy size={14} />
                         </button>
@@ -361,7 +375,7 @@ export default function BannerVideoSettingsPage() {
                             "border-gray-200 bg-white text-gray-600 shadow-theme-xs hover:bg-gray-50",
                             "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                           )}
-                          aria-label="Open"
+                          aria-label={t("bannerVideos.actions.open")}
                         >
                           <ExternalLink size={14} />
                         </a>
@@ -382,7 +396,7 @@ export default function BannerVideoSettingsPage() {
                             "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                           )}
                           onClick={() => openEdit(row)}
-                          aria-label="Edit"
+                          aria-label={t("bannerVideos.actions.edit")}
                         >
                           <Pencil size={16} />
                         </button>
@@ -395,7 +409,7 @@ export default function BannerVideoSettingsPage() {
                             "dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
                           )}
                           onClick={() => requestDelete(row.id)}
-                          aria-label="Delete"
+                          aria-label={t("bannerVideos.actions.delete")}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -406,7 +420,7 @@ export default function BannerVideoSettingsPage() {
               ) : (
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No banner videos found.
+                    {t("bannerVideos.table.empty")}
                   </td>
                 </tr>
               )}
@@ -435,9 +449,9 @@ export default function BannerVideoSettingsPage() {
 
       <ConfirmDeleteModal
         open={deleteOpen}
-        title="Delete banner video?"
-        description="This action cannot be undone."
-        confirmText="Yes, Delete"
+        title={t("bannerVideos.confirm.title")}
+        description={t("bannerVideos.confirm.description")}
+        confirmText={t("bannerVideos.confirm.confirmText")}
         onClose={() => setDeleteOpen(false)}
         onConfirm={() => deleteId && deleteMut.mutate(deleteId)}
         loading={deleteMut.isPending}

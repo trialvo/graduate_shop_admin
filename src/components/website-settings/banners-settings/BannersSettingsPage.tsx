@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Download, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -24,10 +25,8 @@ import { toPublicUrl } from "@/utils/toPublicUrl";
 import BannerModal from "./BannerModal";
 import type { BannerRow } from "./types";
 import {
-  FEATURED_FILTER_OPTIONS,
   mapFeaturedFilterToApi,
   mapStatusFilterToApi,
-  STATUS_FILTER_OPTIONS,
   TYPES,
   ZONES,
 } from "./banner.constants";
@@ -90,6 +89,7 @@ function ConfirmModal({
   onClose: () => void;
   loading?: boolean;
 }) {
+  const { t } = useTranslation();
   if (!open) return null;
 
   return (
@@ -98,7 +98,7 @@ function ConfirmModal({
         type="button"
         className="absolute inset-0 bg-black/60"
         onClick={onClose}
-        aria-label="Close overlay"
+        aria-label={t("banners.confirm.closeOverlay")}
       />
       <div className="relative w-[92vw] max-w-md rounded-[4px] border border-gray-200 bg-white p-5 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
@@ -111,7 +111,7 @@ function ConfirmModal({
             {cancelText}
           </Button>
           <Button onClick={onConfirm} disabled={loading}>
-            {loading ? "Deleting..." : confirmText}
+            {loading ? t("banners.confirm.deleting") : confirmText}
           </Button>
         </div>
       </div>
@@ -120,6 +120,7 @@ function ConfirmModal({
 }
 
 export default function BannersSettingsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   // ✅ initial filters empty => initial call becomes GET /api/v1/banners (NO QUERY)
@@ -181,8 +182,8 @@ export default function BannersSettingsPage() {
   const pageLabel = useMemo(() => {
     const from = total === 0 ? 0 : effectiveOffset + 1;
     const to = Math.min(effectiveOffset + effectiveLimit, total);
-    return `${from}-${to} of ${total}`;
-  }, [effectiveOffset, effectiveLimit, total]);
+    return t("banners.filters.pageLabel", { from, to, total });
+  }, [effectiveOffset, effectiveLimit, t, total]);
 
   const currentPage = Math.floor(effectiveOffset / Math.max(1, effectiveLimit)) + 1;
 
@@ -207,13 +208,13 @@ export default function BannersSettingsPage() {
     mutationFn: (id: number) => deleteBanner(id),
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success("Banner deleted");
+        toast.success(t("banners.toast.deleted"));
         qc.invalidateQueries({ queryKey: ["banners"] });
         setDeleteOpen(false);
         setDeleteId(null);
         return;
       }
-      toast.error(res?.message || res?.error || "Failed to delete banner");
+      toast.error(res?.message || res?.error || t("banners.toast.deleteFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -224,10 +225,10 @@ export default function BannersSettingsPage() {
     onSuccess: (res: any) => {
       if (res?.success === true) {
         qc.invalidateQueries({ queryKey: ["banners"] });
-        toast.success("Updated");
+        toast.success(t("banners.toast.updated"));
         return;
       }
-      toast.error(res?.message || res?.error || "Update failed");
+      toast.error(res?.message || res?.error || t("banners.toast.updateFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -240,21 +241,78 @@ export default function BannersSettingsPage() {
     updateInlineMut.mutate({ id, patch: { status: Boolean(checked) } });
   };
 
+  const zoneLabelKey: Record<string, string> = {
+    "Home Top": "homeTop",
+    "Home Middle": "homeMiddle",
+    "Home Bottom": "homeBottom",
+    "Category Page": "categoryPage",
+    "Product Page": "productPage",
+    Campaign: "campaign",
+  };
+
+  const typeLabelKey: Record<string, string> = {
+    Default: "default",
+  };
+
   const zoneOptions = useMemo(
-    () => [{ value: "", label: "All zones" }, ...ZONES.map((z) => ({ value: z, label: z }))],
-    []
+    () => [
+      { value: "", label: t("banners.filters.allZones") },
+      ...ZONES.map((z) => ({
+        value: z,
+        label: t(`banners.zones.${zoneLabelKey[z] ?? "default"}`, { defaultValue: z }),
+      })),
+    ],
+    [t]
   );
 
   const typeOptions = useMemo(
-    () => [{ value: "", label: "All types" }, ...TYPES.map((t) => ({ value: t, label: t }))],
-    []
+    () => [
+      { value: "", label: t("banners.filters.allTypes") },
+      ...TYPES.map((tValue) => ({
+        value: tValue,
+        label: t(`banners.types.${typeLabelKey[tValue] ?? "default"}`, { defaultValue: tValue }),
+      })),
+    ],
+    [t]
+  );
+
+  const statusOptions = useMemo(
+    () => [
+      { value: "", label: t("banners.filters.statusAll") },
+      { value: "active", label: t("banners.filters.statusActive") },
+      { value: "inactive", label: t("banners.filters.statusInactive") },
+    ],
+    [t]
+  );
+
+  const featuredOptions = useMemo(
+    () => [
+      { value: "", label: t("banners.filters.featuredAll") },
+      { value: "featured", label: t("banners.filters.featured") },
+      { value: "not_featured", label: t("banners.filters.notFeatured") },
+    ],
+    [t]
+  );
+
+  const tableHeaders = useMemo(
+    () => [
+      t("banners.table.sl"),
+      t("banners.table.title"),
+      t("banners.table.zone"),
+      t("banners.table.type"),
+      t("banners.table.path"),
+      t("banners.table.featured"),
+      t("banners.table.status"),
+      t("banners.table.action"),
+    ],
+    [t]
   );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Banner Settings
+          {t("banners.title")}
         </h1>
       </div>
 
@@ -263,17 +321,17 @@ export default function BannersSettingsPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <Button onClick={openCreate} startIcon={<Plus size={16} />}>
-              Add New Banner
+              {t("banners.actions.addNew")}
             </Button>
 
             <div className="w-full lg:max-w-sm">
-              <Input
-                startIcon={<Search size={16} className="text-gray-400" />}
-                className="pl-9"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
+                <Input
+                  startIcon={<Search size={16} className="text-gray-400" />}
+                  className="pl-9"
+                  placeholder={t("banners.actions.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
                   setOffset(0);
                   if (!limit) setLimit(20);
                 }}
@@ -284,7 +342,7 @@ export default function BannersSettingsPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Select
               options={zoneOptions}
-              placeholder="Zone"
+              placeholder={t("banners.filters.zonePlaceholder")}
               defaultValue={zone}
               onChange={(v) => {
                 setZone(String(v));
@@ -295,7 +353,7 @@ export default function BannersSettingsPage() {
 
             <Select
               options={typeOptions}
-              placeholder="Type"
+              placeholder={t("banners.filters.typePlaceholder")}
               defaultValue={type}
               onChange={(v) => {
                 setType(String(v));
@@ -305,8 +363,8 @@ export default function BannersSettingsPage() {
             />
 
             <Select
-              options={STATUS_FILTER_OPTIONS}
-              placeholder="Status"
+              options={statusOptions}
+              placeholder={t("banners.filters.statusPlaceholder")}
               defaultValue={statusFilter}
               onChange={(v) => {
                 setStatusFilter(String(v));
@@ -316,8 +374,8 @@ export default function BannersSettingsPage() {
             />
 
             <Select
-              options={FEATURED_FILTER_OPTIONS}
-              placeholder="Featured"
+              options={featuredOptions}
+              placeholder={t("banners.filters.featuredPlaceholder")}
               defaultValue={featuredFilter}
               onChange={(v) => {
                 setFeaturedFilter(String(v));
@@ -331,12 +389,12 @@ export default function BannersSettingsPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Select
                 options={[
-                  { value: "", label: "Server default limit" },
-                  { value: "10", label: "10 / page" },
-                  { value: "20", label: "20 / page" },
-                  { value: "50", label: "50 / page" },
+                  { value: "", label: t("banners.filters.serverDefaultLimit") },
+                  { value: "10", label: t("banners.filters.limit", { count: 10 }) },
+                  { value: "20", label: t("banners.filters.limit", { count: 20 }) },
+                  { value: "50", label: t("banners.filters.limit", { count: 50 }) },
                 ]}
-                placeholder="Limit"
+                placeholder={t("banners.filters.limitPlaceholder")}
                 defaultValue={limit ? String(limit) : ""}
                 onChange={(v) => {
                   const val = String(v);
@@ -347,12 +405,12 @@ export default function BannersSettingsPage() {
 
               <Select
                 options={[
-                  { value: "", label: "Default sort" },
-                  { value: "created_at", label: "Created At" },
-                  { value: "updated_at", label: "Updated At" },
-                  { value: "title", label: "Title" },
+                  { value: "", label: t("banners.filters.sortDefault") },
+                  { value: "created_at", label: t("banners.filters.sortCreatedAt") },
+                  { value: "updated_at", label: t("banners.filters.sortUpdatedAt") },
+                  { value: "title", label: t("banners.filters.sortTitle") },
                 ]}
-                placeholder="Sort by"
+                placeholder={t("banners.filters.sortPlaceholder")}
                 defaultValue={sortBy}
                 onChange={(v) => {
                   setSortBy(String(v));
@@ -363,11 +421,11 @@ export default function BannersSettingsPage() {
 
               <Select
                 options={[
-                  { value: "", label: "Default order" },
-                  { value: "desc", label: "DESC" },
-                  { value: "asc", label: "ASC" },
+                  { value: "", label: t("banners.filters.orderDefault") },
+                  { value: "desc", label: t("banners.filters.orderDesc") },
+                  { value: "asc", label: t("banners.filters.orderAsc") },
                 ]}
-                placeholder="Order"
+                placeholder={t("banners.filters.orderPlaceholder")}
                 defaultValue={sortOrder}
                 onChange={(v) => {
                   setSortOrder(String(v) as any);
@@ -382,9 +440,9 @@ export default function BannersSettingsPage() {
             <Button
               variant="outline"
               startIcon={<Download size={16} />}
-              onClick={() => toast("Export can be added if you want")}
+              onClick={() => toast(t("banners.toast.exportNote"))}
             >
-              Export
+              {t("banners.actions.export")}
             </Button>
           </div>
         </div>
@@ -395,7 +453,7 @@ export default function BannersSettingsPage() {
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Banner List
+              {t("banners.table.listTitle")}
             </h3>
             <span className="inline-flex h-6 items-center rounded-md bg-gray-100 px-2 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {total}
@@ -404,7 +462,7 @@ export default function BannersSettingsPage() {
 
           {bannersQuery.isFetching ? (
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Refreshing...
+              {t("banners.table.refreshing")}
             </span>
           ) : null}
         </div>
@@ -413,16 +471,14 @@ export default function BannersSettingsPage() {
           <table className="w-full min-w-[1200px] border-collapse">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                {["SL", "Title", "Zone", "Type", "Path", "Featured", "Status", "Action"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {tableHeaders.map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
 
@@ -453,7 +509,7 @@ export default function BannersSettingsPage() {
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-                              No image
+                              {t("banners.table.noImage")}
                             </div>
                           )}
                         </div>
@@ -480,7 +536,7 @@ export default function BannersSettingsPage() {
                           {row.path}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">null</span>
+                        <span className="text-xs text-gray-400">{t("banners.table.null")}</span>
                       )}
                     </td>
 
@@ -512,7 +568,7 @@ export default function BannersSettingsPage() {
                             "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                           )}
                           onClick={() => openEdit(row)}
-                          aria-label="Edit"
+                          aria-label={t("banners.actions.edit")}
                         >
                           <Pencil size={16} />
                         </button>
@@ -525,7 +581,7 @@ export default function BannersSettingsPage() {
                             "dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
                           )}
                           onClick={() => requestDelete(row.id)}
-                          aria-label="Delete"
+                          aria-label={t("banners.actions.delete")}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -536,7 +592,7 @@ export default function BannersSettingsPage() {
               ) : (
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No banners found.
+                    {t("banners.table.empty")}
                   </td>
                 </tr>
               )}
@@ -569,9 +625,9 @@ export default function BannersSettingsPage() {
 
       <ConfirmModal
         open={deleteOpen}
-        title="Are you sure to delete?"
-        description="This action cannot be undone."
-        confirmText="Yes, Delete"
+        title={t("banners.confirm.title")}
+        description={t("banners.confirm.description")}
+        confirmText={t("banners.confirm.confirmText")}
         onClose={() => setDeleteOpen(false)}
         onConfirm={() => deleteId && deleteMut.mutate(deleteId)}
         loading={deleteMut.isPending}

@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import Pagination from "@/components/common/Pagination";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ const DEFAULT_STATE: ContactMessagePageState = {
 };
 
 export default function ContactMessagesPage() {
+  const { t } = useTranslation();
   const [filters, setFilters] = React.useState<ContactMessageFilters>(DEFAULT_FILTERS);
   const [state, setState] = React.useState<ContactMessagePageState>(DEFAULT_STATE);
 
@@ -94,9 +96,11 @@ export default function ContactMessagesPage() {
         )}
       >
         <div className="flex flex-col gap-1">
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">Contact Messages</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t("contactMessages.title")}
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Manage customer inquiries, reply via Email/SMS, archive or delete messages.
+            {t("contactMessages.subtitle")}
           </p>
         </div>
 
@@ -123,12 +127,16 @@ export default function ContactMessagesPage() {
               )}
             >
               <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Inbox</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {t("contactMessages.inbox")}
+                </p>
               </div>
 
               <div className="min-h-[320px]">
                 {isLoading ? (
-                  <div className="px-4 py-10 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+                  <div className="px-4 py-10 text-sm text-gray-500 dark:text-gray-400">
+                    {t("contactMessages.loading")}
+                  </div>
                 ) : (
                   <ContactMessagesList rows={rows} selectedId={selectedId} onSelect={onSelect} />
                 )}
@@ -169,7 +177,9 @@ export default function ContactMessagesPage() {
                 />
               ) : (
                 <div className="px-5 py-10 text-sm text-gray-500 dark:text-gray-400">
-                  {rows.length ? "Select a message to view details." : "No messages to show."}
+                  {rows.length
+                    ? t("contactMessages.selectMessage")
+                    : t("contactMessages.noMessages")}
                 </div>
               )}
             </div>
@@ -180,7 +190,9 @@ export default function ContactMessagesPage() {
       <ReplyModal
         open={replyOpen}
         onClose={() => setReplyOpen(false)}
-        toLabel={selected ? selected.email || selected.phone || "Guest" : undefined}
+        toLabel={
+          selected ? selected.email || selected.phone || t("contactMessages.guest") : undefined
+        }
         isSubmitting={replyMsg.isPending}
         onSubmit={({ replyText, type }: { replyText: string; type: ReplyType }) => {
           if (!selected) return;
