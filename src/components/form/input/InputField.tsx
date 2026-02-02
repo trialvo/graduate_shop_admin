@@ -60,8 +60,13 @@ const Input: FC<InputProps> = ({
         ? "bg-white border-success-500 text-gray-900 focus-visible:border-success-500 dark:bg-gray-900 dark:text-white/90 dark:border-success-500"
         : "bg-white border-gray-200 text-gray-900 focus-visible:border-brand-500 dark:bg-gray-900 dark:border-gray-700 dark:text-white/90 dark:focus-visible:border-brand-500";
 
+  const numberInputClass =
+    type === "number"
+      ? "appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      : "";
+
   return (
-    <div className={cn("w-full", wrapperClassName)}>
+    <div className={cn("w-full min-w-[100px]", wrapperClassName)}>
       <div className="relative w-full">
         {startIcon ? (
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30">
@@ -98,6 +103,7 @@ const Input: FC<InputProps> = ({
             // ✅ spacing when icons exist
             startIcon && "pl-10",
             endIcon && "pr-10",
+            numberInputClass,
             stateClass,
             className,
           )}

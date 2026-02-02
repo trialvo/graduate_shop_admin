@@ -1445,7 +1445,14 @@ export default function EditProductModal({
                         <TableCell
                           key={h}
                           isHeader
-                          className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                          className={[
+                            "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                            h === "Action"
+                              ? "sticky right-0 z-10 bg-gray-50 dark:bg-gray-950"
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
                         >
                           {h}
                         </TableCell>
@@ -1675,7 +1682,7 @@ export default function EditProductModal({
                               )}
                             </TableCell>
 
-                            <TableCell className="px-4 py-4">
+                            <TableCell className="px-4 py-4 sticky right-0 z-10 bg-white dark:bg-gray-900">
                               <div className="flex items-center justify-end gap-2">
                                 {!editing ? (
                                   <>
