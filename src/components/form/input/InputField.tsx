@@ -10,6 +10,9 @@ interface InputProps {
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onWheel?: (e: React.WheelEvent<HTMLInputElement>) => void;
   className?: string;
   autoComplete?: string;
 
@@ -39,6 +42,9 @@ const Input: FC<InputProps> = ({
   value,
   onChange,
   onKeyDown,
+  onFocus,
+  onBlur,
+  onWheel,
   className,
   autoComplete,
   min,
@@ -88,6 +94,9 @@ const Input: FC<InputProps> = ({
           value={value}
           onChange={onChange}
           onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          onWheel={onWheel}
           autoComplete={autoComplete}
           min={min}
           max={max}

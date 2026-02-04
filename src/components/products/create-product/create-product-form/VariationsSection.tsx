@@ -29,12 +29,24 @@ const SKU_COLOR_LENGTH = 5;
 const SKU_SIZE_LENGTH = 4;
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{children}</p>;
+  return (
+    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      {children}
+    </p>
+  );
 }
 
 function safeNumber(input: string, fallback: number) {
   const n = Number(input);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function selectAllOnFocus(e: React.FocusEvent<HTMLInputElement>) {
+  e.currentTarget.select();
+}
+
+function blurOnWheel(e: React.WheelEvent<HTMLInputElement>) {
+  e.currentTarget.blur();
 }
 
 function cleanSkuPart(input: string) {
@@ -109,7 +121,10 @@ function VariationsSection({
   updateRow: (key: string, patch: Partial<VariantRow>) => void;
 }) {
   return (
-    <Section title="Variations" description="Colors dropdown + variants from selected attribute. Generates variations payload.">
+    <Section
+      title="Variations"
+      description="Colors dropdown + variants from selected attribute. Generates variations payload."
+    >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -120,7 +135,9 @@ function VariationsSection({
             <Select
               key={`color-dd-${selectedColorIds.join("-")}`}
               options={colorOptions}
-              placeholder={colorOptions.length ? "Select color" : "No more colors"}
+              placeholder={
+                colorOptions.length ? "Select color" : "No more colors"
+              }
               defaultValue=""
               onChange={(v) => {
                 const id = Number(v);
@@ -146,7 +163,11 @@ function VariationsSection({
                   <button
                     type="button"
                     className="text-error-500 hover:text-error-600"
-                    onClick={() => setSelectedColorIds((p) => p.filter((x) => x !== Number(c.id)))}
+                    onClick={() =>
+                      setSelectedColorIds((p) =>
+                        p.filter((x) => x !== Number(c.id)),
+                      )
+                    }
                     aria-label="Remove color"
                   >
                     ×
@@ -160,8 +181,15 @@ function VariationsSection({
         <div className="space-y-4">
           <div className="space-y-2">
             <FieldLabel>Attribute *</FieldLabel>
-            <Select options={attributeOptions} placeholder="Select attribute" value={String(attributeId)} onChange={(v) => setAttributeId(Number(v))} />
-            <p className="text-xs text-gray-500 dark:text-gray-400">Variants come from selected attribute.</p>
+            <Select
+              options={attributeOptions}
+              placeholder="Select attribute"
+              value={String(attributeId)}
+              onChange={(v) => setAttributeId(Number(v))}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Variants come from selected attribute.
+            </p>
           </div>
 
           <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -190,7 +218,9 @@ function VariationsSection({
               })}
 
               {!availableVariants.length ? (
-                <span className="text-sm text-gray-500 dark:text-gray-400">No variants found for this attribute.</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  No variants found for this attribute.
+                </span>
               ) : null}
             </div>
           </div>
@@ -200,9 +230,8 @@ function VariationsSection({
       {/* Matrix */}
       <div className="mt-6 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="border-b border-gray-200 p-4 dark:border-gray-800">
-          <p className="text-base font-semibold text-gray-900 dark:text-white">Variation Matrix</p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Generates API variations: color_id + variant_id + prices + stock + sku
+          <p className="text-base font-semibold text-gray-900 dark:text-white">
+            Variation Matrix
           </p>
         </div>
 
@@ -210,8 +239,20 @@ function VariationsSection({
           <table className="w-full min-w-[1200px] border-collapse">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                {["Color", "Variant", "Buying", "Selling", "Discount", "Stock", "SKU", "Active"].map((h) => (
-                  <th key={h} className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
+                {[
+                  "Color",
+                  "Variant",
+                  "Buying",
+                  "Selling",
+                  "Discount",
+                  "Stock",
+                  "SKU",
+                  "Active",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                  >
                     {h}
                   </th>
                 ))}
@@ -221,40 +262,70 @@ function VariationsSection({
             <tbody>
               {!grouped.length ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={8}
+                    className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
                     Select colors and attribute variants to generate rows.
                   </td>
                 </tr>
               ) : (
                 grouped.flatMap((g) => {
-                  const color = colors.find((c: any) => Number(c.id) === Number(g.colorId));
+                  const color = colors.find(
+                    (c: any) => Number(c.id) === Number(g.colorId),
+                  );
                   return g.rows.map((r, idx) => {
-                    const variantName = availableVariants.find((v) => v.id === r.variantId)?.name ?? `#${r.variantId}`;
+                    const variantName =
+                      availableVariants.find((v) => v.id === r.variantId)
+                        ?.name ?? `#${r.variantId}`;
 
                     return (
-                      <tr key={r.key} className="border-b border-gray-100 dark:border-gray-800">
+                      <tr
+                        key={r.key}
+                        className="border-b border-gray-100 dark:border-gray-800"
+                      >
                         {idx === 0 ? (
-                          <td rowSpan={g.rows.length} className="px-4 py-4 align-middle">
+                          <td
+                            rowSpan={g.rows.length}
+                            className="px-4 py-4 align-middle"
+                          >
                             <div className="flex items-center gap-3">
                               <span
                                 className="h-4 w-6 rounded-md border border-gray-200 dark:border-gray-800"
-                                style={{ backgroundColor: color?.hex ?? "#111827" }}
+                                style={{
+                                  backgroundColor: color?.hex ?? "#111827",
+                                }}
                               />
                               <div>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{color?.name ?? "Unknown"}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{g.rows.length} rows</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {color?.name ?? "Unknown"}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {g.rows.length} rows
+                                </p>
                               </div>
                             </div>
                           </td>
                         ) : null}
 
-                        <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">{variantName}</td>
+                        <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
+                          {variantName}
+                        </td>
 
                         <td className="px-4 py-4">
                           <Input
                             type="number"
                             value={r.buyingPrice}
-                            onChange={(e) => updateRow(r.key, { buyingPrice: safeNumber(String(e.target.value), r.buyingPrice) })}
+                            onFocus={selectAllOnFocus}
+                            onWheel={blurOnWheel}
+                            onChange={(e) =>
+                              updateRow(r.key, {
+                                buyingPrice: safeNumber(
+                                  String(e.target.value),
+                                  r.buyingPrice,
+                                ),
+                              })
+                            }
                           />
                         </td>
 
@@ -262,7 +333,16 @@ function VariationsSection({
                           <Input
                             type="number"
                             value={r.sellingPrice}
-                            onChange={(e) => updateRow(r.key, { sellingPrice: safeNumber(String(e.target.value), r.sellingPrice) })}
+                            onFocus={selectAllOnFocus}
+                            onWheel={blurOnWheel}
+                            onChange={(e) =>
+                              updateRow(r.key, {
+                                sellingPrice: safeNumber(
+                                  String(e.target.value),
+                                  r.sellingPrice,
+                                ),
+                              })
+                            }
                           />
                         </td>
 
@@ -270,7 +350,16 @@ function VariationsSection({
                           <Input
                             type="number"
                             value={r.discount}
-                            onChange={(e) => updateRow(r.key, { discount: safeNumber(String(e.target.value), r.discount) })}
+                            onFocus={selectAllOnFocus}
+                            onWheel={blurOnWheel}
+                            onChange={(e) =>
+                              updateRow(r.key, {
+                                discount: safeNumber(
+                                  String(e.target.value),
+                                  r.discount,
+                                ),
+                              })
+                            }
                           />
                         </td>
 
@@ -278,7 +367,16 @@ function VariationsSection({
                           <Input
                             type="number"
                             value={r.stock}
-                            onChange={(e) => updateRow(r.key, { stock: Math.max(0, safeNumber(String(e.target.value), r.stock)) })}
+                            onFocus={selectAllOnFocus}
+                            onWheel={blurOnWheel}
+                            onChange={(e) =>
+                              updateRow(r.key, {
+                                stock: Math.max(
+                                  0,
+                                  safeNumber(String(e.target.value), r.stock),
+                                ),
+                              })
+                            }
                           />
                         </td>
 
@@ -288,7 +386,10 @@ function VariationsSection({
                               value={r.sku}
                               onChange={(e) =>
                                 updateRow(r.key, {
-                                  sku: String(e.target.value).slice(0, SKU_MAX_LENGTH),
+                                  sku: String(e.target.value).slice(
+                                    0,
+                                    SKU_MAX_LENGTH,
+                                  ),
                                 })
                               }
                               wrapperClassName="min-w-[220px]"
@@ -315,7 +416,14 @@ function VariationsSection({
                         </td>
 
                         <td className="px-4 py-4">
-                          <Switch key={`row-${r.key}-${r.active}`} label="" defaultChecked={r.active} onChange={(checked) => updateRow(r.key, { active: checked })} />
+                          <Switch
+                            key={`row-${r.key}-${r.active}`}
+                            label=""
+                            defaultChecked={r.active}
+                            onChange={(checked) =>
+                              updateRow(r.key, { active: checked })
+                            }
+                          />
                         </td>
                       </tr>
                     );
