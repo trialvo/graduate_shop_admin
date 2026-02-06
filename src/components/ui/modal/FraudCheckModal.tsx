@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   HelpCircle,
   ShieldAlert,
+  X,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
@@ -87,9 +88,11 @@ function ringColor(status: FraudLevel) {
 function RatioRing({
   value,
   status,
+  label,
 }: {
   value: number | null;
   status: FraudLevel;
+  label: string;
 }) {
   const size = 160;
   const stroke = 12;
@@ -123,6 +126,11 @@ function RatioRing({
           className={ringColor(status)}
         />
       </svg>
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <span className="text-3xl font-extrabold text-brand-600 dark:text-brand-300">
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
@@ -204,7 +212,7 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
               aria-label="Close"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
             >
-              X
+              <X size={16} />
             </button>
           </div>
 
@@ -243,9 +251,9 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
                 </div>
               ) : null}
 
-              <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 lg:col-span-4">
-                  <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+              <div className="grid grid-cols-12 gap-6 items-stretch">
+                <div className="col-span-12 lg:col-span-4 h-full">
+                  <div className="h-full rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] flex flex-col">
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-[6px] border border-gray-200 bg-white text-brand-500 shadow-theme-xs dark:border-gray-800 dark:bg-gray-950">
                         {statusIcon(fraud.status)}
@@ -260,11 +268,12 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
                       </div>
                     </div>
 
-                    <div className="mt-6 flex flex-col items-center">
-                      <RatioRing value={deliveryRatio} status={fraud.status} />
-                      <div className="mt-3 text-2xl font-bold">
-                        {deliveryRatioLabel}
-                      </div>
+                    <div className="mt-6 flex flex-1 flex-col items-center justify-center">
+                      <RatioRing
+                        value={deliveryRatio}
+                        status={fraud.status}
+                        label={deliveryRatioLabel}
+                      />
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
@@ -278,7 +287,7 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
                   </div>
                 </div>
 
-                <div className="col-span-12 lg:col-span-8 space-y-5">
+                <div className="col-span-12 lg:col-span-8 space-y-5 h-full">
                   <div className="grid grid-cols-12 gap-3">
                     {[
                       {
