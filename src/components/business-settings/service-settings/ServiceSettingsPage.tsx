@@ -3,10 +3,20 @@
 
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Mail, MessageSquareText, Settings } from "lucide-react";
+import {
+  Bell,
+  KeyRound,
+  KeySquare,
+  Mail,
+  MessageSquareText,
+  Phone,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
+import Radio from "@/components/form/input/Radio";
 import Switch from "@/components/form/switch/Switch";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +33,16 @@ import { smsProviderTitle } from "./types";
 import SmsConfigModal from "./SmsConfigModal";
 import EmailConfigModal from "./EmailConfigModal";
 import TestSmsModal from "./TestSmsModal";
+
+type AuthChannel = "email" | "sms" | "none";
+type OrderVerifyPolicy = "sms_required" | "allow";
+type OrderNotifyChannel = { email: boolean; sms: boolean };
+
+type PermissionOption = {
+  value: string;
+  label: string;
+  hint: string;
+};
 
 function safeString(v: any) {
   return typeof v === "string" ? v : v == null ? "" : String(v);
@@ -60,11 +80,84 @@ function buildSmsCard(provider: SmsProvider, node: any): SmsProviderCard {
 export default function ServiceSettingsPage() {
   const qc = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState<"services" | "permissions">(
+    "services",
+  );
+
   const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [smsEditing, setSmsEditing] = useState<SmsProviderCard | null>(null);
 
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [testSmsOpen, setTestSmsOpen] = useState(false);
+
+  const [authMethod, setAuthMethod] = useState<AuthChannel>("email");
+  const [resetMethod, setResetMethod] = useState<AuthChannel>("email");
+  const [orderVerifyPolicy, setOrderVerifyPolicy] =
+    useState<OrderVerifyPolicy>("sms_required");
+  const [orderNotifyChannel, setOrderNotifyChannel] =
+    useState<OrderNotifyChannel>({ email: true, sms: false });
+
+  const permissionTabs = [
+    { id: "services", label: "Service (SMS, Email)", icon: MessageSquareText },
+    { id: "permissions", label: "Permission Types", icon: ShieldCheck },
+  ] as const;
+
+  const authOptions: PermissionOption[] = [
+    {
+      value: "email",
+      label: "Email",
+      hint: "Authenticate using email OTP or link.",
+    },
+    {
+      value: "sms",
+      label: "SMS",
+      hint: "Authenticate using SMS OTP.",
+    },
+    {
+      value: "none",
+      label: "No Verification",
+      hint: "Allow login without verification.",
+    },
+  ];
+
+  const resetOptions: PermissionOption[] = [
+    {
+      value: "email",
+      label: "Email",
+      hint: "Send reset link/OTP to email.",
+    },
+    {
+      value: "sms",
+      label: "SMS",
+      hint: "Send reset OTP via SMS.",
+    },
+    {
+      value: "none",
+      label: "No Verification",
+      hint: "Disable recovery verification.",
+    },
+  ];
+
+  const verifyOptions: PermissionOption[] = [
+    {
+      value: "sms_required",
+      label: "SMS Required",
+      hint: "Block order until phone is verified.",
+    },
+    {
+      value: "allow",
+      label: "Allow Without Verification",
+      hint: "Let customers order without verified phone.",
+    },
+  ];
+
+  const resetPermissionDefaults = () => {
+    setAuthMethod("email");
+    setResetMethod("email");
+    setOrderVerifyPolicy("sms_required");
+    setOrderNotifyChannel({ email: true, sms: false });
+    toast.success("Permission settings reset");
+  };
 
   const smsQuery = useQuery({
     queryKey: ["systemConfig", "sms"],
@@ -165,8 +258,77 @@ export default function ServiceSettingsPage() {
     bulkBalanceQuery.isFetching ||
     activeProviderMutation.isPending;
 
+  const renderOptions = (
+    name: string,
+    value: string,
+    options: PermissionOption[],
+    onChange: (v: string) => void,
+  ) => {
+    const grid = options.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+
+    return (
+      <div className={cn("grid grid-cols-1 gap-3", grid)}>
+        {options.map((opt) => {
+          const active = value === opt.value;
+          return (
+            <div
+              key={`${name}-${opt.value}`}
+              className={cn(
+                "rounded-[4px] border p-3 transition",
+                active
+                  ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200"
+                  : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",
+              )}
+            >
+              <Radio
+                id={`${name}-${opt.value}`}
+                name={name}
+                value={opt.value}
+                checked={active}
+                label={opt.label}
+                onChange={onChange}
+                className="w-full"
+              />
+              <p className="mt-1 pl-8 text-xs text-gray-500 dark:text-gray-400">
+                {opt.hint}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {/* Tabs */}
+      <div className="rounded-[6px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+          {permissionTabs.map((t) => {
+            const active = activeTab === t.id;
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActiveTab(t.id)}
+                className={cn(
+                  "inline-flex items-center gap-2 whitespace-nowrap rounded-[6px] px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm",
+                  active
+                    ? "bg-brand-500 text-white shadow-theme-xs"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+                )}
+              >
+                <Icon size={16} />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeTab === "services" ? (
+        <>
       {/* SMS Section */}
       <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -396,6 +558,191 @@ export default function ServiceSettingsPage() {
           )}
         </div>
       </div>
+        </>
+      ) : (
+        <div className="space-y-6">
+          <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <ShieldCheck size={18} />
+              </div>
+
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  Permission & Notification Rules
+                </h3>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                  Control authentication, recovery, verification and notification
+                  channels.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-12 gap-5">
+            <div className="col-span-12 lg:col-span-6">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                    <KeyRound size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Authentication Method
+                    </h4>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      Choose how users authenticate during login.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  {renderOptions("auth-method", authMethod, authOptions, (v) =>
+                    setAuthMethod(v as AuthChannel),
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-12 lg:col-span-6">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                    <KeySquare size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Forgot Password Method
+                    </h4>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      Select how users recover their password.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  {renderOptions("reset-method", resetMethod, resetOptions, (v) =>
+                    setResetMethod(v as AuthChannel),
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-12 lg:col-span-6">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                    <Phone size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Order Placement Verification
+                    </h4>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      Decide if phone verification is required before order.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  {renderOptions(
+                    "order-verify",
+                    orderVerifyPolicy,
+                    verifyOptions,
+                    (v) => setOrderVerifyPolicy(v as OrderVerifyPolicy),
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-12 lg:col-span-6">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                    <Bell size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Order Status Notifications
+                    </h4>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      Select channel for order success or failure notices.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Email Notification
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          Send email on order success/failure.
+                        </p>
+                      </div>
+                      <Switch
+                        label=""
+                        checked={orderNotifyChannel.email}
+                        onChange={(checked) =>
+                          setOrderNotifyChannel((prev) => ({
+                            ...prev,
+                            email: checked,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          SMS Notification
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          Send SMS on order success/failure.
+                        </p>
+                      </div>
+                      <Switch
+                        label=""
+                        checked={orderNotifyChannel.sms}
+                        onChange={(checked) =>
+                          setOrderNotifyChannel((prev) => ({
+                            ...prev,
+                            sms: checked,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                    {orderNotifyChannel.email && orderNotifyChannel.sms
+                      ? "Notifications will be sent via Email and SMS."
+                      : orderNotifyChannel.email
+                        ? "Notifications will be sent via Email only."
+                        : orderNotifyChannel.sms
+                          ? "Notifications will be sent via SMS only."
+                          : "No notification channel is enabled."}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button variant="outline" onClick={resetPermissionDefaults}>
+              Reset Defaults
+            </Button>
+            <Button
+              onClick={() => toast.success("Permission settings saved")}
+              className="min-w-[160px]"
+            >
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <SmsConfigModal

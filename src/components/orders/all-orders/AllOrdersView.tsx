@@ -372,7 +372,7 @@ export default function AllOrdersView() {
         customerImage: toPublicUrl(o.customer_img ?? null) ?? undefined,
 
         fraudLevel,
-        fraudCheck,
+        fraudCheck: fraudCheck ?? undefined,
 
         paymentMethod: method,
         paymentStatus: o.payment_status,
