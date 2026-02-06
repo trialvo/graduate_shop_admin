@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
+  HelpCircle,
   Eye,
   Pencil,
   Printer,
@@ -16,6 +17,7 @@ import type { CourierProviderId, OrderRow } from "./types";
 import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
+import FraudCheckModal from "@/components/ui/modal/FraudCheckModal";
 import { cn } from "@/lib/utils";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -33,7 +35,16 @@ function fraudIcon(level: OrderRow["fraudLevel"]) {
     return <CheckCircle2 size={16} className="text-success-500" />;
   if (level === "medium")
     return <AlertTriangle size={16} className="text-orange-500" />;
+  if (level === "not_found")
+    return <HelpCircle size={16} className="text-gray-400" />;
   return <ShieldAlert size={16} className="text-error-500" />;
+}
+
+function fraudLabel(level: OrderRow["fraudLevel"]) {
+  if (level === "safe") return "Safe";
+  if (level === "medium") return "Medium";
+  if (level === "not_found") return "Not Found";
+  return "Fraud";
 }
 
 const PAYMENT_OPTIONS = [
@@ -73,6 +84,8 @@ export default function OrdersTable({ rows }: Props) {
 
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [fraudOpen, setFraudOpen] = useState(false);
+  const [fraudOrder, setFraudOrder] = useState<OrderRow | null>(null);
 
   const mergedRows = useMemo(() => {
     return rows.map((r) => ({
@@ -85,6 +98,11 @@ export default function OrdersTable({ rows }: Props) {
   const openView = (order: OrderRow) => {
     setSelectedOrder(order);
     setViewOpen(true);
+  };
+
+  const openFraud = (order: OrderRow) => {
+    setFraudOrder(order);
+    setFraudOpen(true);
   };
 
   const updateCourier = (
@@ -263,10 +281,14 @@ export default function OrdersTable({ rows }: Props) {
                         </p>
 
                         <div className="mt-1 flex items-center gap-2">
-                          <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800">
+                          <button
+                            type="button"
+                            onClick={() => openFraud(r)}
+                            className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
+                          >
                             {fraudIcon(r.fraudLevel)}
-                            <span className="truncate">Fraud Check</span>
-                          </span>
+                            <span className="truncate">Fraud: {fraudLabel(r.fraudLevel)}</span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -475,6 +497,12 @@ export default function OrdersTable({ rows }: Props) {
         open={viewOpen}
         onClose={() => setViewOpen(false)}
         order={selectedOrder}
+      />
+
+      <FraudCheckModal
+        open={fraudOpen}
+        onClose={() => setFraudOpen(false)}
+        order={fraudOrder}
       />
     </>
   );

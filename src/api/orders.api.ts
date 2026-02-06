@@ -132,11 +132,13 @@ export type ApiOrder = {
   id: number;
   customer_name: string;
   customer_image?: string | null;
+  customer_img?: string | null;
   customer_email: string;
   customer_phone: string;
 
   order_type: string;
   is_fraud: number;
+  fraud_test_results?: string | null;
 
   payment_type: "gateway" | "cod" | "mixed";
   payment_status: "unpaid" | "partial_paid" | "paid";

@@ -7,7 +7,7 @@ import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
 import Pagination from "@/components/common/Pagination";
 
-import type { OrderRow, OrderStatus, OrderItemRow } from "./types";
+import type { OrderRow, OrderStatus, OrderItemRow, FraudCheckSummary, FraudLevel } from "./types";
 import {
   FRAUD_OPTIONS,
   ORDER_TYPE_OPTIONS,
@@ -50,6 +50,89 @@ function timeAgoLabel(iso: string) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
+}
+
+const FRAUD_CANCEL_THRESHOLD = 0.4;
+const FRAUD_SAFE_THRESHOLD = 0.8;
+
+function clamp01(value: number) {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function toNumber(value: unknown) {
+  const num = Number(value ?? 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function parseFraudResults(raw: unknown): FraudCheckSummary | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+
+  let parsed: any = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err: any) {
+      return {
+        success: false,
+        status: "not_found",
+        totalParcels: 0,
+        totalDelivered: 0,
+        totalCancel: 0,
+        deliveryRatio: null,
+        cancelRatio: null,
+        systemNote: "Invalid fraud check response",
+        providers: [],
+      };
+    }
+  }
+
+  if (!parsed || typeof parsed !== "object") return null;
+
+  const success = Boolean(parsed.success);
+  const totalParcels = toNumber(parsed.total_parcels);
+  const totalDelivered = toNumber(parsed.total_delivered);
+  const totalCancel = toNumber(parsed.total_cancel);
+
+  const deliveryRatio = totalParcels > 0 ? clamp01(totalDelivered / totalParcels) : null;
+  const cancelRatio = totalParcels > 0 ? clamp01(totalCancel / totalParcels) : null;
+
+  let status: FraudLevel = "medium";
+  if (!success || totalParcels <= 0) status = "not_found";
+  else if ((cancelRatio ?? 0) >= FRAUD_CANCEL_THRESHOLD) status = "high";
+  else if ((deliveryRatio ?? 0) >= FRAUD_SAFE_THRESHOLD) status = "safe";
+  else status = "medium";
+
+  const apis = parsed.apis && typeof parsed.apis === "object" ? parsed.apis : {};
+  const providers = Object.entries(apis).map(([key, value]) => {
+    const stats = value as any;
+    const total = toNumber(stats?.total_parcels);
+    const delivered = toNumber(stats?.total_delivered_parcels);
+    const cancelled = toNumber(stats?.total_cancelled_parcels);
+    return {
+      id: key,
+      name: stats?.courier_name || key,
+      total,
+      delivered,
+      cancelled,
+      ratio: total > 0 ? clamp01(delivered / total) : null,
+      status: stats?.status ?? null,
+    };
+  });
+
+  return {
+    success,
+    status,
+    mobileNumber: parsed.mobile_number,
+    totalParcels,
+    totalDelivered,
+    totalCancel,
+    deliveryRatio,
+    cancelRatio,
+    systemNote: parsed.system_note,
+    checkedAt: parsed.checked_at,
+    providers,
+  };
 }
 
 function paymentMethodFromApi(paymentType: ApiOrder["payment_type"], providerGuess?: string) {
@@ -275,6 +358,9 @@ export default function AllOrdersView() {
 
       const apiConnected = autoList.some((x: any) => x.providerId === courierProvider && x.connected);
 
+      const fraudCheck = parseFraudResults(o.fraud_test_results);
+      const fraudLevel: FraudLevel = fraudCheck ? fraudCheck.status : o.is_fraud ? "high" : "safe";
+
       const shippingLocation = `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—";
 
       return {
@@ -285,7 +371,8 @@ export default function AllOrdersView() {
 
         customerImage: toPublicUrl(o.customer_img ?? null) ?? undefined,
 
-        fraudLevel: o.is_fraud ? "high" : "safe",
+        fraudLevel,
+        fraudCheck,
 
         paymentMethod: method,
         paymentStatus: o.payment_status,

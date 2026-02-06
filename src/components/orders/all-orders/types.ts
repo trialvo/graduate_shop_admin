@@ -46,6 +46,32 @@ export type OrderItemRow = {
   total: number; // line_total
 };
 
+export type FraudLevel = "safe" | "medium" | "high" | "not_found";
+
+export type FraudProviderStat = {
+  id: string;
+  name: string;
+  total: number;
+  delivered: number;
+  cancelled: number;
+  ratio: number | null;
+  status?: string | null;
+};
+
+export type FraudCheckSummary = {
+  success: boolean;
+  status: FraudLevel;
+  mobileNumber?: string;
+  totalParcels: number;
+  totalDelivered: number;
+  totalCancel: number;
+  deliveryRatio: number | null;
+  cancelRatio: number | null;
+  systemNote?: string;
+  checkedAt?: string;
+  providers: FraudProviderStat[];
+};
+
 export type OrderRow = {
   id: string;
 
@@ -53,7 +79,8 @@ export type OrderRow = {
   customerPhone: string;
   customerImage?: string;
 
-  fraudLevel: "safe" | "medium" | "high";
+  fraudLevel: FraudLevel;
+  fraudCheck?: FraudCheckSummary;
 
   paymentMethod: "COD" | "BKASH" | "NAGAD" | "ROCKET" | "CARD";
   paymentStatus: "unpaid" | "partial_paid" | "paid";
