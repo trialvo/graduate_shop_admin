@@ -3,7 +3,25 @@
 import React from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Globe,
+  Image as ImageIcon,
+  Layers,
+  Package,
+  Pencil,
+  Plus,
+  Save,
+  Search,
+  Star,
+  ToggleLeft,
+  Trash2,
+  Video,
+  X,
+  Zap,
+} from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -379,7 +397,7 @@ export default function EditProductModal({
 
   // variations
   const [variations, setVariations] = React.useState<VariationRow[]>([]);
-  console.log("🚀 ~ EditProductModal ~ variations:", variations);
+
   const [varEdit, setVarEdit] = React.useState<InlineEditState>({});
   const [addDraft, setAddDraft] = React.useState<VariationDraft>({
     color_id: 0,
@@ -763,31 +781,45 @@ export default function EditProductModal({
     deleteVarMutation.isPending;
 
   const footer = (
-    <div className="flex items-center justify-end gap-2">
-      <Button
-        variant="outline"
-        className="h-11"
-        onClick={() => {
-          if (isBusy) return;
-          onClose();
-        }}
-      >
-        Cancel
-      </Button>
+    <div className="flex items-center justify-between gap-4">
+      <div className="text-xs text-gray-400 dark:text-gray-500">
+        {isBusy ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+            Processing…
+          </span>
+        ) : (
+          <span>ID: {productId}</span>
+        )}
+      </div>
 
-      <Button
-        className="h-11"
-        onClick={() => updateMutation.mutate()}
-        disabled={
-          isBusy ||
-          !name.trim() ||
-          !slug.trim() ||
-          !mainCategoryId ||
-          !subCategoryId
-        }
-      >
-        Save Changes
-      </Button>
+      <div className="flex items-center gap-2.5">
+        <Button
+          variant="outline"
+          className="h-10 px-5"
+          onClick={() => {
+            if (isBusy) return;
+            onClose();
+          }}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          className="h-10 px-6"
+          startIcon={<Save size={15} />}
+          onClick={() => updateMutation.mutate()}
+          disabled={
+            isBusy ||
+            !name.trim() ||
+            !slug.trim() ||
+            !mainCategoryId ||
+            !subCategoryId
+          }
+        >
+          {updateMutation.isPending ? "Saving…" : "Save Changes"}
+        </Button>
+      </div>
     </div>
   );
 
@@ -826,63 +858,54 @@ export default function EditProductModal({
             Failed to load product.
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Basic */}
-            <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Basic Info
-                </h3>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="space-y-7">
+            {/* ─── Basic Info ─── */}
+            <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/60 px-5 py-3.5 dark:border-gray-800 dark:bg-gray-950/40">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                    <Package size={16} />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Basic Info</h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                   ID: {productId}
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     Name <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Product name"
-                  />
+                  </label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     Slug <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder="product-slug"
-                  />
+                  </label>
+                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="product-slug" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Category
-                  </p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Category</label>
                   <Select
                     key={`main-${mainCategoryId}`}
                     options={mainOptions}
                     placeholder="Select category"
                     defaultValue={mainCategoryId ? String(mainCategoryId) : ""}
                     onChange={(v) => {
-                      const id = Number(v);
-                      setMainCategoryId(id);
+                      setMainCategoryId(Number(v));
                       setSubCategoryId(0);
                       setChildCategoryId(0);
                     }}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Sub Category
-                  </p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Sub Category</label>
                   <Select
                     key={`sub-${mainCategoryId}-${subCategoryId}`}
                     options={subOptions}
@@ -895,69 +918,63 @@ export default function EditProductModal({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Child Category
-                  </p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Child Category</label>
                   <Select
                     key={`child-${subCategoryId}-${childCategoryId}`}
                     options={childOptions}
                     placeholder="Select child category (optional)"
-                    defaultValue={
-                      childCategoryId ? String(childCategoryId) : ""
-                    }
-                    onChange={(v) => {
-                      const id = v ? Number(v) : 0;
-                      setChildCategoryId(id);
-                    }}
+                    defaultValue={childCategoryId ? String(childCategoryId) : ""}
+                    onChange={(v) => setChildCategoryId(v ? Number(v) : 0)}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Brand
-                  </p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Brand</label>
                   <Select
                     key={`brand-${brandId}`}
                     options={brandOptions}
                     placeholder="Select brand"
                     defaultValue={brandId ? String(brandId) : ""}
-                    onChange={(v) => {
-                      const id = v ? Number(v) : 0;
-                      setBrandId(id);
-                    }}
+                    onChange={(v) => setBrandId(v ? Number(v) : 0)}
                   />
                 </div>
-
-                {/* <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Attribute
-                  </p>
-                  <Select
-                    key={`attr-${attributeId}`}
-                    options={attributeOptions}
-                    placeholder="Select attribute"
-                    defaultValue={attributeId ? String(attributeId) : ""}
-                    onChange={(v) => setAttributeId(Number(v))}
-                  />
-                </div> */}
               </div>
             </div>
 
-            {/* Media */}
-            <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Media
-              </h3>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Product images and product video URL.
-              </p>
+            {/* ─── Media ─── */}
+            <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-2.5 border-b border-gray-100 bg-gray-50/60 px-5 py-3.5 dark:border-gray-800 dark:bg-gray-950/40">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  <ImageIcon size={16} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Media</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Product images & video</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-md bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                    {existingImages.length} existing
+                  </span>
+                  {deleteImageIds.length > 0 && (
+                    <span className="rounded-md bg-error-50 px-2 py-0.5 text-[11px] font-semibold text-error-600 dark:bg-error-500/10 dark:text-error-400">
+                      {deleteImageIds.length} to delete
+                    </span>
+                  )}
+                  {newImages.length > 0 && (
+                    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                      {newImages.length} new
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              <div className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Product Video URL
-                  </p>
+              <div className="space-y-5 p-5">
+                {/* Video URL */}
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <Video size={13} /> Video URL
+                  </label>
                   <Input
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
@@ -965,19 +982,14 @@ export default function EditProductModal({
                   />
                 </div>
 
+                {/* Existing Images */}
                 <div>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Images
-                    </p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Existing: {existingImages.length} | Marked delete:{" "}
-                      {deleteImageIds.length} | New: {newImages.length}
-                    </span>
-                  </div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <ImageIcon size={13} /> Existing Images
+                  </label>
 
                   {existingImages.length ? (
-                    <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                    <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                       {existingImages.map((img) => {
                         const marked = deleteImageIds.includes(img.id);
                         return (
@@ -986,109 +998,92 @@ export default function EditProductModal({
                             type="button"
                             onClick={() => toggleDeleteImage(img.id)}
                             className={cn(
-                              "relative overflow-hidden rounded-[6px] border bg-gray-50 dark:bg-gray-950",
+                              "group relative aspect-square overflow-hidden rounded-lg border-2 transition-all duration-200",
                               marked
-                                ? "border-error-400"
-                                : "border-gray-200 dark:border-gray-800",
+                                ? "border-error-400 ring-2 ring-error-400/20"
+                                : "border-gray-200 hover:border-brand-300 hover:shadow-md dark:border-gray-700 dark:hover:border-brand-600",
                             )}
-                            title={
-                              marked
-                                ? "Will be deleted"
-                                : "Click to mark for delete"
-                            }
+                            title={marked ? "Click to restore" : "Click to mark for deletion"}
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={toPublicUrl(img.path)}
                               alt={`img-${img.id}`}
                               className={cn(
-                                "h-20 w-full object-cover",
-                                marked && "opacity-40",
+                                "h-full w-full object-cover transition-all duration-200",
+                                marked ? "scale-95 opacity-30 grayscale" : "group-hover:scale-105",
                               )}
                             />
-                            <div
-                              className={cn(
-                                "absolute right-2 top-2 rounded-full px-2 py-1 text-[11px] font-semibold",
-                                marked
-                                  ? "bg-error-600 text-white"
-                                  : "bg-black/50 text-white",
-                              )}
-                            >
-                              {marked ? "Delete" : `#${img.id}`}
-                            </div>
+                            {marked ? (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-error-500/10">
+                                <Trash2 size={18} className="text-error-500" />
+                                <span className="text-[10px] font-bold text-error-600">REMOVE</span>
+                              </div>
+                            ) : (
+                              <div className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
+                                #{img.id}
+                              </div>
+                            )}
                           </button>
                         );
                       })}
                     </div>
                   ) : (
-                    <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                      No existing images.
-                    </div>
+                    <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">No existing images.</p>
                   )}
-
-                  <div className="mt-4">
-                    <ImageMultiUploader
-                      label="Upload new images"
-                      images={newImages}
-                      onChange={setNewImages}
-                      max={10}
-                      helperText="Images will be cropped one by one before upload."
-                    />
-                  </div>
                 </div>
+
+                {/* New Images (with cropper) */}
+                <ImageMultiUploader
+                  label="Upload New Images"
+                  images={newImages}
+                  onChange={setNewImages}
+                  max={10}
+                  helperText="Each image will be cropped to 1200×1200 before upload."
+                />
               </div>
             </div>
 
-            {/* Flags */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              {[
-                { label: "Status", value: status, onChange: setStatus },
-                { label: "Featured", value: featured, onChange: setFeatured },
-                // {
-                //   label: "Free Delivery",
-                //   value: freeDelivery,
-                //   onChange: setFreeDelivery,
-                // },
-                { label: "Best Deal", value: bestDeal, onChange: setBestDeal },
-              ].map((x) => (
-                <div
-                  key={x.label}
-                  className="rounded-[6px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {x.label}
-                    </p>
-                    <Switch
-                      key={`${x.label}-${x.value}`}
-                      label=""
-                      defaultChecked={x.value}
-                      onChange={(checked) => x.onChange(checked)}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Toggle for listing & promotions.
-                  </p>
+            {/* ─── Flags ─── */}
+            <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-2.5 border-b border-gray-100 bg-gray-50/60 px-5 py-3.5 dark:border-gray-800 dark:bg-gray-950/40">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <ToggleLeft size={16} />
                 </div>
-              ))}
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Product Flags</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-px bg-gray-100 dark:bg-gray-800 sm:grid-cols-3">
+                {[
+                  { label: "Status", desc: "Show in storefront", icon: ToggleLeft, value: status, onChange: setStatus },
+                  { label: "Featured", desc: "Highlight as featured", icon: Star, value: featured, onChange: setFeatured },
+                  { label: "Best Deal", desc: "Tag as best deal", icon: Zap, value: bestDeal, onChange: setBestDeal },
+                ].map((x) => (
+                  <div key={x.label} className="flex items-center justify-between gap-3 bg-white px-5 py-4 dark:bg-gray-900">
+                    <div className="flex items-center gap-3">
+                      <x.icon size={15} className="text-gray-400" />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{x.label}</p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400">{x.desc}</p>
+                      </div>
+                    </div>
+                    <Switch key={`${x.label}-${x.value}`} label="" defaultChecked={x.value} onChange={(checked) => x.onChange(checked)} />
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Descriptions (✅ RichTextEditor) */}
-            <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Descriptions
-              </h3>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Use rich text editor for short and long descriptions.
-              </p>
+            {/* ─── Descriptions ─── */}
+            <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-2.5 border-b border-gray-100 bg-gray-50/60 px-5 py-3.5 dark:border-gray-800 dark:bg-gray-950/40">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <FileText size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Description</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Rich text product description</p>
+                </div>
+              </div>
 
-              <div className="mt-4 space-y-6">
-                {/* <RichTextEditor
-                  label="Short Description"
-                  value={shortDescription}
-                  onChange={setShortDescription}
-                  heightClassName="min-h-[160px]"
-                /> */}
+              <div className="p-5">
                 <RichTextEditor
                   label="Long Description"
                   value={longDescription}
@@ -1098,21 +1093,21 @@ export default function EditProductModal({
               </div>
             </div>
 
-            {/* ✅ Variations */}
-            <div className="overflow-hidden rounded-[6px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-              <div className="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Variations
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Manage product variations (color + variant + prices + stock
-                    + sku).
-                  </p>
+            {/* ─── Variations ─── */}
+            <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex flex-col gap-2 border-b border-gray-100 bg-gray-50/60 px-5 py-3.5 dark:border-gray-800 dark:bg-gray-950/40 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                    <Layers size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Variations</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Color, variant, prices, stock &amp; SKU</p>
+                  </div>
                 </div>
 
-                <span className="inline-flex h-7 items-center rounded-md bg-gray-100 px-2 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                  Total: {variations.length}
+                <span className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-50 px-2.5 text-xs font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-400">
+                  <Layers size={12} /> {variations.length} variation{variations.length !== 1 ? "s" : ""}
                 </span>
               </div>
               <div className="px-5 py-1 w-[50%]">
@@ -1687,82 +1682,51 @@ export default function EditProductModal({
               </div>
             </div>
 
-            {/* SEO (simple) */}
-            <div className="rounded-[6px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                SEO
-              </h3>
-
-              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Meta Title
-                  </p>
-                  <Input
-                    value={metaTitle}
-                    onChange={(e) => setMetaTitle(e.target.value)}
-                  />
+            {/* ─── SEO ─── */}
+            <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-2.5 border-b border-gray-100 bg-gray-50/60 px-5 py-3.5 dark:border-gray-800 dark:bg-gray-950/40">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                  <Globe size={16} />
                 </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Canonical URL
-                  </p>
-                  <Input
-                    value={canonicalUrl}
-                    onChange={(e) => setCanonicalUrl(e.target.value)}
-                  />
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">SEO Settings</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Meta tags, OG and robots</p>
                 </div>
+              </div>
 
-                <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Meta Description
-                  </p>
+              <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Meta Title</label>
+                  <Input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Canonical URL</label>
+                  <Input value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)} />
+                </div>
+                <div className="space-y-1.5 lg:col-span-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Meta Description</label>
                   <textarea
-                    className="min-h-[90px] w-full rounded-[6px] border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    className="min-h-[80px] w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     value={metaDescription}
                     onChange={(e) => setMetaDescription(e.target.value)}
                   />
                 </div>
-
-                <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Meta Keywords
-                  </p>
-                  <Input
-                    value={metaKeywords}
-                    onChange={(e) => setMetaKeywords(e.target.value)}
-                    placeholder="a,b,c"
-                  />
+                <div className="space-y-1.5 lg:col-span-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Meta Keywords</label>
+                  <Input value={metaKeywords} onChange={(e) => setMetaKeywords(e.target.value)} placeholder="keyword1, keyword2, keyword3" />
                 </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    OG Title
-                  </p>
-                  <Input
-                    value={ogTitle}
-                    onChange={(e) => setOgTitle(e.target.value)}
-                  />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">OG Title</label>
+                  <Input value={ogTitle} onChange={(e) => setOgTitle(e.target.value)} />
                 </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Robots
-                  </p>
-                  <Input
-                    value={robots}
-                    onChange={(e) => setRobots(e.target.value)}
-                    placeholder="index, follow"
-                  />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Robots</label>
+                  <Input value={robots} onChange={(e) => setRobots(e.target.value)} placeholder="index, follow" />
                 </div>
-
-                <div className="space-y-2 lg:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    OG Description
-                  </p>
+                <div className="space-y-1.5 lg:col-span-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">OG Description</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-[6px] border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    className="min-h-[70px] w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     value={ogDescription}
                     onChange={(e) => setOgDescription(e.target.value)}
                   />
@@ -1788,7 +1752,7 @@ export default function EditProductModal({
           <div className="flex items-center justify-end gap-2">
             <Button
               variant="outline"
-              className="h-11"
+              className="h-10"
               onClick={() => {
                 if (deleteVarMutation.isPending) return;
                 setVarDeleteOpen(false);
@@ -1798,7 +1762,7 @@ export default function EditProductModal({
               Cancel
             </Button>
             <Button
-              className="h-11 bg-error-600 hover:bg-error-700"
+              className="h-10 bg-error-600 hover:bg-error-700"
               onClick={() => {
                 if (!varDeleteId) return;
                 deleteVarMutation.mutate(varDeleteId);
