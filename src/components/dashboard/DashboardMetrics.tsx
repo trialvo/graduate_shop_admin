@@ -150,11 +150,11 @@ const DashboardMetrics: React.FC = () => {
   }, [bucket, range, t]);
 
   return (
-    <section className="mb-6">
+    <section>
       {/* Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t("dashboard.metrics.overviewTitle")}
           </h2>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -168,7 +168,7 @@ const DashboardMetrics: React.FC = () => {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-6">
         {cards.map((c) => (
           <MetricCard
             key={c.key}

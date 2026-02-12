@@ -8,11 +8,11 @@ interface Props {
 const OrderStatusCard = ({ item }: Props) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
       {/* Header */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-5 flex items-center gap-3">
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-full text-white ${item.iconBg}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm ${item.iconBg}`}
         >
           {item.icon}
         </div>
@@ -25,12 +25,12 @@ const OrderStatusCard = ({ item }: Props) => {
       {/* Stats */}
       <div className="space-y-4">
         {item.stats.map((stat) => (
-          <div key={stat.labelKey}>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-              {String(stat.value).padStart(2, "0")}
-            </p>
+          <div key={stat.labelKey} className="flex items-center justify-between">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t(stat.labelKey)}
+            </p>
+            <p className="text-xl font-bold tabular-nums text-gray-900 dark:text-white">
+              {String(stat.value).padStart(2, "0")}
             </p>
           </div>
         ))}

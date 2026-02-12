@@ -49,7 +49,7 @@ export default function StockAlertProductsCard() {
 
   return (
     <>
-      <div className="rounded-[8px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 w-full">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 w-full">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div className="min-w-0">

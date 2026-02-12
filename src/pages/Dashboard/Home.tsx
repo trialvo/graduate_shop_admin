@@ -10,9 +10,6 @@ import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCar
 import { useAppBranding } from "@/context/AppBrandingContext";
 import { useTranslation } from "react-i18next";
 
-// ✅ adjust this import to your real data file if different
-import { stockAlertProducts } from "./dashboardSection5Data";
-
 export default function Home() {
   const { branding } = useAppBranding();
   const appName = branding.appShortName ?? branding.appName;
@@ -25,42 +22,44 @@ export default function Home() {
         description={t("dashboard.pageDescription", { appName })}
       />
 
-      {/* Section 1 */}
-      <QuickAccess />
+      <div className="space-y-6">
+        {/* Quick Access Shortcuts */}
+        <QuickAccess />
 
-      {/* Section 2 */}
-      <DashboardMetrics />
+        {/* Metrics Overview */}
+        <DashboardMetrics />
 
-      {/* Section 3 */}
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-7">
-          <StatisticsChart />
+        {/* Statistics Chart + Order Statuses */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-8">
+            <StatisticsChart />
+          </div>
+
+          <div className="col-span-12 xl:col-span-4">
+            <OrderStatusGrid />
+          </div>
         </div>
 
-        <div className="col-span-12 xl:col-span-5">
-          <OrderStatusGrid />
-        </div>
-      </div>
+        {/* Top Viewed + Top Selling Districts */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-6 flex">
+            <TopViewProductsCard />
+          </div>
 
-      {/* Section 4 */}
-      <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-6 flex">
-          <TopViewProductsCard />
-        </div>
-
-        <div className="col-span-12 xl:col-span-6 flex">
-          <TopSellingDistrictCard />
-        </div>
-      </div>
-
-      {/* Section 5 */}
-      <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-6 flex">
-          <TopSellingProductsCard />
+          <div className="col-span-12 xl:col-span-6 flex">
+            <TopSellingDistrictCard />
+          </div>
         </div>
 
-        <div className="col-span-12 xl:col-span-6 flex">
-          <StockAlertProductsCard />
+        {/* Top Selling Products + Stock Alerts */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-6 flex">
+            <TopSellingProductsCard />
+          </div>
+
+          <div className="col-span-12 xl:col-span-6 flex">
+            <StockAlertProductsCard />
+          </div>
         </div>
       </div>
     </>

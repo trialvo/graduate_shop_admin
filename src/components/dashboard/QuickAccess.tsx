@@ -162,10 +162,10 @@ const QuickAccess: React.FC = () => {
   };
 
   return (
-    <section className="mb-4">
+    <section>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           {t("dashboard.quickAccess.title")}
         </h2>
 
