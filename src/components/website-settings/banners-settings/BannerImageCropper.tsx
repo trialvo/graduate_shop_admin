@@ -129,18 +129,13 @@ export default function ImageCropperModal({
             </p>
           </div>
 
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => !saving && onClose()}
-            className={cn(
-              "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border",
-              "border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
-              "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-            )}
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
+            ariaLabel="Close"
+            startIcon={<X size={18} />}
+          />
         </div>
 
         {/* Body */}

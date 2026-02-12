@@ -1,5 +1,7 @@
 import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Button from "@/components/ui/button/Button";
 
 type Props = {
   page: number;
@@ -20,7 +22,7 @@ function range(start: number, end: number) {
 }
 
 function buildPages(page: number, totalPages: number) {
-  if (totalPages <= 7) return range(1, totalPages);
+  if (totalPages <= 5) return range(1, totalPages);
 
   const pages: (number | "…")[] = [];
   const left = Math.max(2, page - 1);
@@ -44,33 +46,29 @@ const Pagination: React.FC<Props> = ({ page, pageSize, total, onPageChange, clas
   if (totalPages <= 1) return null;
 
   return (
-    <div className={cn("flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-gray-800 dark:bg-white/[0.02]", className)}>
-      <div className="text-xs text-gray-500 dark:text-gray-400">
+    <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.02]", className)}>
+      <p className="text-[11px] text-gray-500 dark:text-gray-400">
         Page <span className="font-semibold text-gray-800 dark:text-white">{safePage}</span> of{" "}
         <span className="font-semibold text-gray-800 dark:text-white">{totalPages}</span> •{" "}
         <span className="font-semibold text-gray-800 dark:text-white">{total}</span> items
-      </div>
+      </p>
 
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="xs"
           onClick={() => onPageChange(Math.max(1, safePage - 1))}
           disabled={safePage === 1}
-          className={cn(
-            "h-8 rounded-lg border px-3 text-xs font-medium transition",
-            "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
-            "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700",
-            safePage === 1 && "cursor-not-allowed opacity-50"
-          )}
+          startIcon={<ChevronLeft size={14} />}
         >
-          Prev
-        </button>
+          <span className="hidden sm:inline">Prev</span>
+        </Button>
 
-        <div className="flex items-center gap-1">
+        <div className="hidden items-center gap-1 sm:flex">
           {items.map((it, idx) => {
             if (it === "…") {
               return (
-                <span key={`dots-${idx}`} className="px-1.5 text-xs text-gray-400">
+                <span key={`dots-${idx}`} className="px-1 text-xs text-gray-400">
                   …
                 </span>
               );
@@ -78,39 +76,33 @@ const Pagination: React.FC<Props> = ({ page, pageSize, total, onPageChange, clas
 
             const active = it === safePage;
             return (
-              <button
+              <Button
                 key={it}
-                type="button"
+                variant={active ? "primary" : "outline"}
+                size="xs"
                 onClick={() => onPageChange(it)}
-                className={cn(
-                  "h-8 min-w-[32px] rounded-lg px-2 text-xs font-medium transition",
-                  active
-                    ? "bg-brand-500 text-white shadow-sm"
-                    : cn(
-                      "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
-                      "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                    )
-                )}
+                className="min-w-[28px] px-1.5"
               >
                 {it}
-              </button>
+              </Button>
             );
           })}
         </div>
 
-        <button
-          type="button"
+        {/* Mobile compact indicator */}
+        <span className="inline-flex h-7 items-center rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:hidden">
+          {safePage}/{totalPages}
+        </span>
+
+        <Button
+          variant="outline"
+          size="xs"
           onClick={() => onPageChange(Math.min(totalPages, safePage + 1))}
           disabled={safePage === totalPages}
-          className={cn(
-            "h-8 rounded-lg border px-3 text-xs font-medium transition",
-            "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
-            "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700",
-            safePage === totalPages && "cursor-not-allowed opacity-50"
-          )}
+          endIcon={<ChevronRight size={14} />}
         >
-          Next
-        </button>
+          <span className="hidden sm:inline">Next</span>
+        </Button>
       </div>
     </div>
   );

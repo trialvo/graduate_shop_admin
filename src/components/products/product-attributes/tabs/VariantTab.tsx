@@ -429,22 +429,23 @@ export default function VariantTab({
                     </div>
 
                     <div className="mt-4 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                      <Button
+                        variant="ghost"
+                        size="xs"
                         onClick={() => setSelectedForAttr(a.id, [])}
                       >
                         Clear
-                      </button>
+                      </Button>
 
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                      <Button
+                        variant="ghost"
+                        size="xs"
                         onClick={() => setSelectedForAttr(a.id, a.values)}
                         disabled={a.values.length === 0}
+                        className="text-brand-600 dark:text-brand-400"
                       >
                         Select All
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );
@@ -573,14 +574,14 @@ export default function VariantTab({
                   </td>
 
                   <td className="px-4 py-4">
-                    <button
-                      type="button"
-                      className="inline-flex h-9 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => removeVariant(v.id)}
+                      startIcon={<Trash2 size={14} />}
                     >
-                      <Trash2 size={16} className="mr-2" />
                       Delete
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

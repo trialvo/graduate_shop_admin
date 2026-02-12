@@ -429,14 +429,13 @@ export default function ContactPageSettingsPage() {
                         onChange={(e) => updatePhone(idx, e.target.value)}
                         placeholder="+8801XXXXXXXXX"
                       />
-                      <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                      <Button
+                        variant="danger"
+                        size="icon"
                         onClick={() => removePhone(idx)}
-                        aria-label="Remove phone"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                        ariaLabel="Remove phone"
+                        startIcon={<Trash2 size={16} />}
+                      />
                     </div>
                   ))}
 
@@ -490,14 +489,13 @@ export default function ContactPageSettingsPage() {
                         onChange={(e) => updateEmail(idx, e.target.value)}
                         placeholder="support@yourshop.com"
                       />
-                      <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                      <Button
+                        variant="danger"
+                        size="icon"
                         onClick={() => removeEmail(idx)}
-                        aria-label="Remove email"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                        ariaLabel="Remove email"
+                        startIcon={<Trash2 size={16} />}
+                      />
                     </div>
                   ))}
                 </div>
@@ -555,14 +553,13 @@ export default function ContactPageSettingsPage() {
                               updateBusinessRow(r.id, { enabled: checked })
                             }
                           />
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                          <Button
+                            variant="danger"
+                            size="icon"
                             onClick={() => removeBusinessRow(r.id)}
-                            aria-label="Remove row"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                            ariaLabel="Remove row"
+                            startIcon={<Trash2 size={16} />}
+                          />
                         </div>
                       </div>
 
@@ -732,13 +729,14 @@ export default function ContactPageSettingsPage() {
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Google Map Embed URL
                   </p>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                  <Button
+                    variant="outline"
+                    size="xs"
                     onClick={() => safeCopy(settings.contactInfo.mapEmbedUrl)}
+                    startIcon={<Copy size={14} />}
                   >
-                    <Copy size={14} /> Copy
-                  </button>
+                    Copy
+                  </Button>
                 </div>
                 <Input
                   value={settings.contactInfo.mapEmbedUrl}
@@ -898,14 +896,13 @@ export default function ContactPageSettingsPage() {
                         onChange={(e) => updateRecipient(idx, e.target.value)}
                         placeholder="support@yourshop.com"
                       />
-                      <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                      <Button
+                        variant="danger"
+                        size="icon"
                         onClick={() => removeRecipient(idx)}
-                        aria-label="Remove recipient"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                        ariaLabel="Remove recipient"
+                        startIcon={<Trash2 size={16} />}
+                      />
                     </div>
                   ))}
                 </div>
@@ -971,7 +968,7 @@ export default function ContactPageSettingsPage() {
                               <span className="text-error-500">*</span>
                             ) : null}
                           </p>
-                          <Input value="" onChange={() => {}} placeholder={f.placeholder} />
+                          <Input value="" onChange={() => { }} placeholder={f.placeholder} />
                         </div>
                       );
                     })}
@@ -991,9 +988,9 @@ export default function ContactPageSettingsPage() {
                             ) : null}
                           </p>
                           {key === "message" ? (
-                            <TextArea value="" onChange={() => {}} placeholder={f.placeholder} />
+                            <TextArea value="" onChange={() => { }} placeholder={f.placeholder} />
                           ) : (
-                            <Input value="" onChange={() => {}} placeholder={f.placeholder} />
+                            <Input value="" onChange={() => { }} placeholder={f.placeholder} />
                           )}
                         </div>
                       );

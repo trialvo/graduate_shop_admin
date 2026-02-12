@@ -214,24 +214,24 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
 
     const b = apiBanner
       ? {
-          title: apiBanner.title,
-          zone: apiBanner.zone,
-          type: apiBanner.type,
-          path: apiBanner.path,
-          featured: apiBanner.featured,
-          status: apiBanner.status,
-          img_path: apiBanner.img_path,
-        }
+        title: apiBanner.title,
+        zone: apiBanner.zone,
+        type: apiBanner.type,
+        path: apiBanner.path,
+        featured: apiBanner.featured,
+        status: apiBanner.status,
+        img_path: apiBanner.img_path,
+      }
       : initial
         ? {
-            title: initial.title,
-            zone: initial.zone,
-            type: initial.type,
-            path: initial.path,
-            featured: initial.featured,
-            status: initial.status,
-            img_path: initial.imgPath ? initial.imgPath.replace(toPublicUrl(""), "") : null,
-          }
+          title: initial.title,
+          zone: initial.zone,
+          type: initial.type,
+          path: initial.path,
+          featured: initial.featured,
+          status: initial.status,
+          img_path: initial.imgPath ? initial.imgPath.replace(toPublicUrl(""), "") : null,
+        }
         : null;
 
     if (!b) return;
@@ -369,22 +369,22 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
 
       const base = apiBanner
         ? {
-            title: apiBanner.title ?? "",
-            zone: apiBanner.zone ?? "",
-            type: apiBanner.type ?? "",
-            path: apiBanner.path ?? "",
-            status: Boolean(apiBanner.status),
-            featured: Boolean(apiBanner.featured),
-          }
+          title: apiBanner.title ?? "",
+          zone: apiBanner.zone ?? "",
+          type: apiBanner.type ?? "",
+          path: apiBanner.path ?? "",
+          status: Boolean(apiBanner.status),
+          featured: Boolean(apiBanner.featured),
+        }
         : initial
           ? {
-              title: initial.title ?? "",
-              zone: initial.zone ?? "",
-              type: initial.type ?? "",
-              path: initial.path ?? "",
-              status: Boolean(initial.status),
-              featured: Boolean(initial.featured),
-            }
+            title: initial.title ?? "",
+            zone: initial.zone ?? "",
+            type: initial.type ?? "",
+            path: initial.path ?? "",
+            status: Boolean(initial.status),
+            featured: Boolean(initial.featured),
+          }
           : null;
 
       const patch: any = {};
@@ -498,18 +498,13 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
               </p>
             </div>
 
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => !pending && onClose()}
-              className={cn(
-                "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border",
-                "border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
-                "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              )}
-              aria-label="Close"
-            >
-              <X size={18} />
-            </button>
+              ariaLabel="Close"
+              startIcon={<X size={18} />}
+            />
           </div>
 
           {/* Body */}

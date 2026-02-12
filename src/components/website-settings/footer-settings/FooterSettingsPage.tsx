@@ -314,8 +314,8 @@ export default function FooterSettingsPage() {
     data.layout.maxWidth === "xl"
       ? "max-w-6xl"
       : data.layout.maxWidth === "2xl"
-      ? "max-w-7xl"
-      : "max-w-none";
+        ? "max-w-7xl"
+        : "max-w-none";
 
   return (
     <div className="space-y-6">
@@ -432,14 +432,13 @@ export default function FooterSettingsPage() {
                     onChange={(e) => updateBranding("logoUrl", e.target.value)}
                     placeholder="/logo.png"
                   />
-                  <button
-                    type="button"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={() => safeCopy(data.branding.logoUrl)}
-                    aria-label="Copy"
-                  >
-                    <Copy size={16} />
-                  </button>
+                    ariaLabel="Copy"
+                    startIcon={<Copy size={16} />}
+                  />
                 </div>
               </div>
 
@@ -668,9 +667,9 @@ export default function FooterSettingsPage() {
                                             }
                                             placeholder="/path or https://..."
                                           />
-                                          <button
-                                            type="button"
-                                            className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                                          <Button
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => {
                                               if (!l.href) return;
                                               window.open(
@@ -679,10 +678,9 @@ export default function FooterSettingsPage() {
                                                 "noreferrer"
                                               );
                                             }}
-                                            aria-label="Open"
-                                          >
-                                            <ExternalLink size={16} />
-                                          </button>
+                                            ariaLabel="Open"
+                                            startIcon={<ExternalLink size={16} />}
+                                          />
                                         </div>
                                       </td>
                                       <td className="px-4 py-3">
@@ -722,14 +720,14 @@ export default function FooterSettingsPage() {
                                         </div>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <button
-                                          type="button"
-                                          className="inline-flex h-10 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                                        <Button
+                                          variant="danger"
+                                          size="sm"
                                           onClick={() => removeLink(col.id, l.id)}
+                                          startIcon={<Trash2 size={14} />}
                                         >
-                                          <Trash2 size={16} className="mr-2" />
                                           Delete
-                                        </button>
+                                        </Button>
                                       </td>
                                     </tr>
                                   ))}
@@ -765,14 +763,14 @@ export default function FooterSettingsPage() {
                         />
                       </div>
 
-                      <button
-                        type="button"
-                        className="inline-flex h-10 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => removeColumn(col.id)}
+                        startIcon={<Trash2 size={14} />}
                       >
-                        <Trash2 size={16} className="mr-2" />
                         Remove
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -900,17 +898,16 @@ export default function FooterSettingsPage() {
                       onChange={(e) => updateSocial(s.key, { url: e.target.value })}
                       placeholder="https://..."
                     />
-                    <button
-                      type="button"
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => {
                         if (!s.url) return;
                         window.open(s.url, "_blank", "noreferrer");
                       }}
-                      aria-label="Open"
-                    >
-                      <ExternalLink size={16} />
-                    </button>
+                      ariaLabel="Open"
+                      startIcon={<ExternalLink size={16} />}
+                    />
                   </div>
                 </div>
               ))}
@@ -1000,13 +997,14 @@ export default function FooterSettingsPage() {
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Copyright Text
                   </p>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                  <Button
+                    variant="outline"
+                    size="xs"
                     onClick={() => safeCopy(data.legal.copyrightText)}
+                    startIcon={<Copy size={14} />}
                   >
-                    <Copy size={14} /> Copy
-                  </button>
+                    Copy
+                  </Button>
                 </div>
 
                 <Input
@@ -1090,17 +1088,16 @@ export default function FooterSettingsPage() {
                                   }
                                   placeholder="/privacy-policy"
                                 />
-                                <button
-                                  type="button"
-                                  className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                                <Button
+                                  variant="outline"
+                                  size="icon"
                                   onClick={() => {
                                     if (!p.href) return;
                                     window.open(p.href, "_blank", "noreferrer");
                                   }}
-                                  aria-label="Open"
-                                >
-                                  <ExternalLink size={16} />
-                                </button>
+                                  ariaLabel="Open"
+                                  startIcon={<ExternalLink size={16} />}
+                                />
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -1134,14 +1131,14 @@ export default function FooterSettingsPage() {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <button
-                                type="button"
-                                className="inline-flex h-10 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                              <Button
+                                variant="danger"
+                                size="sm"
                                 onClick={() => removePolicy(p.id)}
+                                startIcon={<Trash2 size={14} />}
                               >
-                                <Trash2 size={16} className="mr-2" />
                                 Delete
-                              </button>
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -1228,7 +1225,7 @@ export default function FooterSettingsPage() {
                         </p>
 
                         <div className="mt-3 flex gap-2">
-                          <Input value="" onChange={() => {}} placeholder={data.newsletter.placeholder} />
+                          <Input value="" onChange={() => { }} placeholder={data.newsletter.placeholder} />
                           <Button>{data.newsletter.buttonLabel}</Button>
                         </div>
                       </div>

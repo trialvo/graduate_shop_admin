@@ -167,23 +167,24 @@ export default function ContactMessagesFiltersBar({
           {tabs.map((tab) => {
             const active = filters.tab === tab.key;
             return (
-              <button
+              <Button
                 key={tab.key}
-                type="button"
+                variant="outline"
+                size="xs"
                 onClick={() => setTab(tab.key)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all duration-150",
+                  "gap-1.5",
                   active
                     ? STAT_ACTIVE_BG[tab.key]
-                    : "border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800",
+                    : "",
                   STAT_COLORS[tab.key]
                 )}
+                startIcon={STAT_ICONS[tab.key]}
               >
-                {STAT_ICONS[tab.key]}
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span
                   className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
                     active
                       ? "bg-white/60 dark:bg-black/20"
                       : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
@@ -191,26 +192,21 @@ export default function ContactMessagesFiltersBar({
                 >
                   {tab.count}
                 </span>
-              </button>
+              </Button>
             );
           })}
         </div>
 
-        {/* Actions */}
+        {/* Actions — now both use Button consistently */}
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant={showFilters ? "primary" : "outline"}
+            size="sm"
             onClick={() => setShowFilters((v) => !v)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition",
-              showFilters
-                ? "border-brand-200 bg-brand-50 text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
-                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
-            )}
+            startIcon={<SlidersHorizontal size={14} />}
           >
-            <SlidersHorizontal size={13} />
             <span className="hidden sm:inline">Filters</span>
-          </button>
+          </Button>
 
           <Button
             variant="outline"
@@ -238,8 +234,7 @@ export default function ContactMessagesFiltersBar({
         <div
           className={cn(
             "rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm",
-            "dark:border-gray-800 dark:bg-gray-900",
-            "animate-in slide-in-from-top-1 fade-in duration-200"
+            "dark:border-gray-800 dark:bg-gray-900"
           )}
         >
           <div className="flex items-center gap-2 pb-3">

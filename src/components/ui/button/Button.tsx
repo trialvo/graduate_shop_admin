@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 export interface ButtonProps {
   children?: ReactNode;
 
-  /** Heights are capped at 40px (h-10) */
-  size?: "sm" | "md" | "icon";
+  /** xs=28px  sm=32px  md=36px  lg=40px  icon=36px */
+  size?: "xs" | "sm" | "md" | "lg" | "icon";
 
-  variant?: "primary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "outline" | "ghost" | "danger" | "success";
 
   startIcon?: ReactNode;
   endIcon?: ReactNode;
@@ -30,11 +30,14 @@ export interface ButtonProps {
   loadingText?: string;
 }
 
-function Spinner() {
+function Spinner({ className }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+      className={cn(
+        "inline-flex h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent",
+        className
+      )}
     />
   );
 }
@@ -54,22 +57,45 @@ const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   loadingText,
 }) => {
-  const isIconOnly = !children && (size === "icon" || (!!(startIcon || endIcon) && !loadingText));
+  const isIconOnly =
+    !children &&
+    (size === "icon" || (!!(startIcon || endIcon) && !loadingText));
 
   const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {
-    sm: "h-9 px-3 text-sm", // <= 36px
-    md: "h-10 px-4 text-sm", // <= 40px
-    icon: "h-10 w-10 p-0", // <= 40px
+    xs: "h-7 px-2 text-xs gap-1",
+    sm: "h-8 px-3 text-xs gap-1.5",
+    md: "h-9 px-4 text-sm gap-2",
+    lg: "h-10 px-5 text-sm gap-2",
+    icon: "h-9 w-9 p-0",
   };
 
   const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
-    primary:
-      "bg-brand-500 text-white hover:bg-brand-600 disabled:bg-brand-300 dark:disabled:bg-brand-400/40",
-    outline:
-      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-white/[0.03]",
-    ghost:
-      "bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/[0.06]",
-    danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300 dark:disabled:bg-red-400/40",
+    primary: cn(
+      "bg-brand-500 text-white shadow-sm",
+      "hover:bg-brand-600 active:bg-brand-700",
+      "disabled:bg-brand-300 dark:disabled:bg-brand-400/40"
+    ),
+    outline: cn(
+      "bg-white text-gray-700 border border-gray-300 shadow-sm",
+      "hover:bg-gray-50 active:bg-gray-100",
+      "dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700",
+      "dark:hover:bg-white/[0.04] dark:active:bg-white/[0.06]"
+    ),
+    ghost: cn(
+      "bg-transparent text-gray-700",
+      "hover:bg-gray-100 active:bg-gray-200",
+      "dark:text-gray-200 dark:hover:bg-white/[0.06] dark:active:bg-white/[0.08]"
+    ),
+    danger: cn(
+      "bg-red-600 text-white shadow-sm",
+      "hover:bg-red-700 active:bg-red-800",
+      "disabled:bg-red-300 dark:disabled:bg-red-400/40"
+    ),
+    success: cn(
+      "bg-emerald-600 text-white shadow-sm",
+      "hover:bg-emerald-700 active:bg-emerald-800",
+      "disabled:bg-emerald-300 dark:disabled:bg-emerald-400/40"
+    ),
   };
 
   const computedDisabled = disabled || isLoading;
@@ -80,13 +106,21 @@ const Button: React.FC<ButtonProps> = ({
       aria-label={ariaLabel}
       title={title}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-[4px] transition-colors duration-150",
-        "whitespace-nowrap select-none",
-        "outline-none focus-visible:outline-none",
+        // layout
+        "inline-flex items-center justify-center whitespace-nowrap select-none",
+        // shape
+        "rounded-lg font-medium",
+        // transitions
+        "transition-all duration-150",
+        // focus
+        "outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-1",
+        "dark:focus-visible:ring-offset-gray-900",
+        // disabled
         computedDisabled && "cursor-not-allowed opacity-60",
+        // size + variant
         sizeClasses[size],
         variantClasses[variant],
-        className,
+        className
       )}
       onClick={computedDisabled ? undefined : onClick}
       disabled={computedDisabled}
@@ -95,18 +129,23 @@ const Button: React.FC<ButtonProps> = ({
       {isLoading ? (
         <>
           <Spinner />
-          {loadingText ? <span className="truncate">{loadingText}</span> : null}
+          {loadingText ? (
+            <span className="truncate">{loadingText}</span>
+          ) : null}
         </>
       ) : (
         <>
-          {startIcon ? <span className="inline-flex items-center">{startIcon}</span> : null}
-          {/* children optional */}
+          {startIcon ? (
+            <span className="inline-flex items-center">{startIcon}</span>
+          ) : null}
           {children}
-          {endIcon ? <span className="inline-flex items-center">{endIcon}</span> : null}
+          {endIcon ? (
+            <span className="inline-flex items-center">{endIcon}</span>
+          ) : null}
         </>
       )}
 
-      {/* a11y hint: if icon-only and no ariaLabel, still render (but please pass ariaLabel) */}
+      {/* a11y: if icon-only and no ariaLabel */}
       {isIconOnly && !ariaLabel ? (
         <span className="sr-only">Button</span>
       ) : null}

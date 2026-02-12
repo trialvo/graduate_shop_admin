@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { useMemo } from "react";
 
 import Select from "@/components/form/Select";
+import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 
 type PageItem = number | "ellipsis";
@@ -121,19 +122,14 @@ export default function Pagination({
           ) : null}
 
           {/* Prev button */}
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() => go(safePage - 1)}
             disabled={safePage <= 1}
-            className={cn(
-              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition",
-              "hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
-              "disabled:cursor-not-allowed disabled:opacity-40"
-            )}
-            aria-label="Previous page"
-          >
-            <ChevronLeft size={15} />
-          </button>
+            startIcon={<ChevronLeft size={14} />}
+            ariaLabel="Previous page"
+          />
 
           {/* Page pills — desktop */}
           <div className="hidden items-center gap-1 sm:flex">
@@ -142,7 +138,7 @@ export default function Pagination({
                 return (
                   <span
                     key={`el-${idx}`}
-                    className="inline-flex h-8 w-8 items-center justify-center text-gray-400 dark:text-gray-500"
+                    className="inline-flex h-7 w-7 items-center justify-center text-gray-400 dark:text-gray-500"
                   >
                     <MoreHorizontal size={14} />
                   </span>
@@ -151,46 +147,34 @@ export default function Pagination({
 
               const active = it === safePage;
               return (
-                <button
+                <Button
                   key={it}
-                  type="button"
-                  aria-current={active ? "page" : undefined}
+                  variant={active ? "primary" : "outline"}
+                  size="xs"
                   onClick={() => go(it)}
-                  className={cn(
-                    "inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-semibold transition",
-                    active
-                      ? "bg-brand-500 text-white shadow-sm"
-                      : cn(
-                        "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
-                        "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                      )
-                  )}
+                  className="min-w-[28px] px-1.5"
+                  ariaLabel={`Page ${it}`}
                 >
                   {it}
-                </button>
+                </Button>
               );
             })}
           </div>
 
           {/* Compact mobile indicator */}
-          <span className="inline-flex h-8 items-center rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:hidden">
+          <span className="inline-flex h-7 items-center rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:hidden">
             {safePage}/{totalPages}
           </span>
 
           {/* Next button */}
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() => go(safePage + 1)}
             disabled={safePage >= totalPages}
-            className={cn(
-              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition",
-              "hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
-              "disabled:cursor-not-allowed disabled:opacity-40"
-            )}
-            aria-label="Next page"
-          >
-            <ChevronRight size={15} />
-          </button>
+            startIcon={<ChevronRight size={14} />}
+            ariaLabel="Next page"
+          />
         </div>
       </div>
     </div>

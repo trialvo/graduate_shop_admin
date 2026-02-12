@@ -354,18 +354,13 @@ export default function BannerVideoSettingsPage() {
                         <span className="max-w-[240px] truncate text-xs text-gray-600 dark:text-gray-300">
                           {shortText(row.videoUrl, 38)}
                         </span>
-                        <button
-                          type="button"
-                          className={cn(
-                            "inline-flex h-8 w-8 items-center justify-center rounded-md border",
-                            "border-gray-200 bg-white text-gray-600 shadow-theme-xs hover:bg-gray-50",
-                            "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                          )}
+                        <Button
+                          variant="outline"
+                          size="icon"
                           onClick={() => safeCopy(row.videoUrl, t)}
-                          aria-label={t("bannerVideos.actions.copy")}
-                        >
-                          <Copy size={14} />
-                        </button>
+                          ariaLabel={t("bannerVideos.actions.copy")}
+                          startIcon={<Copy size={14} />}
+                        />
                         <a
                           href={row.videoUrl}
                           target="_blank"
@@ -388,31 +383,21 @@ export default function BannerVideoSettingsPage() {
 
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className={cn(
-                            "inline-flex h-9 w-9 items-center justify-center rounded-lg border",
-                            "border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
-                            "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                          )}
+                        <Button
+                          variant="outline"
+                          size="icon"
                           onClick={() => openEdit(row)}
-                          aria-label={t("bannerVideos.actions.edit")}
-                        >
-                          <Pencil size={16} />
-                        </button>
+                          ariaLabel={t("bannerVideos.actions.edit")}
+                          startIcon={<Pencil size={16} />}
+                        />
 
-                        <button
-                          type="button"
-                          className={cn(
-                            "inline-flex h-9 w-9 items-center justify-center rounded-lg border",
-                            "border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50",
-                            "dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
-                          )}
+                        <Button
+                          variant="danger"
+                          size="icon"
                           onClick={() => requestDelete(row.id)}
-                          aria-label={t("bannerVideos.actions.delete")}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                          ariaLabel={t("bannerVideos.actions.delete")}
+                          startIcon={<Trash2 size={16} />}
+                        />
                       </div>
                     </td>
                   </tr>

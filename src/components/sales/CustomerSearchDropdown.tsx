@@ -2,6 +2,7 @@ import React from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Button from "@/components/ui/button/Button";
 import { getAdminUsers, type AdminUserEntity } from "@/api/admin-users.api";
 
 type Props = {
@@ -153,18 +154,17 @@ export default function CustomerSearchDropdown({
                 })}
 
                 {query.hasNextPage ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 w-full"
                     onClick={() => query.fetchNextPage()}
                     disabled={query.isFetchingNextPage}
-                    className={cn(
-                      "mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700",
-                      "hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]",
-                      query.isFetchingNextPage && "opacity-70"
-                    )}
+                    isLoading={query.isFetchingNextPage}
+                    loadingText="Loading..."
                   >
-                    {query.isFetchingNextPage ? "Loading..." : "Load more"}
-                  </button>
+                    Load more
+                  </Button>
                 ) : null}
               </div>
             )}

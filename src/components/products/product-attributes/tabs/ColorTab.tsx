@@ -150,14 +150,13 @@ function ColorModal({
             </p>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setState((p) => ({ ...p, open: false }))}
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+            ariaLabel="Close"
+            startIcon={<X size={16} />}
+          />
         </div>
 
         <div className="p-5">
@@ -604,28 +603,26 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                          <Button
+                            variant="outline"
+                            size="icon"
                             onClick={() => openEdit(row.id)}
-                            aria-label="Edit"
-                          >
-                            <Pencil size={16} />
-                          </button>
+                            ariaLabel="Edit"
+                            startIcon={<Pencil size={16} />}
+                          />
 
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 disabled:opacity-60 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                          <Button
+                            variant="danger"
+                            size="icon"
                             onClick={() => {
                               const ok = window.confirm(`Delete color "${row.name}"?`);
                               if (!ok) return;
                               deleteMutation.mutate(row.id);
                             }}
-                            aria-label="Delete"
+                            ariaLabel="Delete"
                             disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                            startIcon={<Trash2 size={16} />}
+                          />
                         </div>
                       </td>
                     </tr>

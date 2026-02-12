@@ -168,14 +168,13 @@ function AttributeModal({
             </p>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setState((p) => ({ ...p, open: false }))}
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+            ariaLabel="Close"
+            startIcon={<X size={16} />}
+          />
         </div>
 
         <div className="p-5">
@@ -316,14 +315,13 @@ function VariantModal({
             </p>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setState((p) => ({ ...p, open: false }))}
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+            ariaLabel="Close"
+            startIcon={<X size={16} />}
+          />
         </div>
 
         <div className="p-5">
@@ -968,15 +966,14 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                               />
                             </div>
 
-                            <button
-                              type="button"
-                              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:opacity-60 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                            <Button
+                              variant="outline"
+                              size="icon"
                               onClick={() => addVariantInline(row.id)}
-                              aria-label="Add variant"
+                              ariaLabel="Add variant"
                               disabled={createVarMutation.isPending}
-                            >
-                              <Plus size={16} />
-                            </button>
+                              startIcon={<Plus size={16} />}
+                            />
                           </div>
                         </div>
                       </td>
@@ -1010,28 +1007,26 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                       {/* Action */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                          <Button
+                            variant="outline"
+                            size="icon"
                             onClick={() => openEditAttribute(row.id)}
-                            aria-label="Edit attribute"
-                          >
-                            <Pencil size={16} />
-                          </button>
+                            ariaLabel="Edit attribute"
+                            startIcon={<Pencil size={16} />}
+                          />
 
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 disabled:opacity-60 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                          <Button
+                            variant="danger"
+                            size="icon"
                             onClick={() => {
                               const ok = window.confirm(`Delete attribute "${row.name}"?`);
                               if (!ok) return;
                               deleteAttrMutation.mutate(row.id);
                             }}
-                            aria-label="Delete attribute"
+                            ariaLabel="Delete attribute"
                             disabled={deleteAttrMutation.isPending}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                            startIcon={<Trash2 size={16} />}
+                          />
                         </div>
                       </td>
                     </tr>

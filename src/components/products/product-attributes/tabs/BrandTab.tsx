@@ -158,14 +158,13 @@ function BrandModal({
             </p>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setState((p) => ({ ...p, open: false }))}
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+            ariaLabel="Close"
+            startIcon={<X size={16} />}
+          />
         </div>
 
         <div className="p-5">
@@ -246,18 +245,16 @@ function BrandModal({
                       }}
                     />
 
-                    <button
-                      type="button"
-                      className="inline-flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                    <Button
+                      variant="outline"
                       onClick={() => fileRef.current?.click()}
+                      startIcon={<Upload size={16} />}
                     >
-                      <Upload size={16} />
                       Upload
-                    </button>
+                    </Button>
 
-                    <button
-                      type="button"
-                      className="inline-flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 shadow-theme-xs hover:bg-gray-50 disabled:opacity-60 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         if (fileRef.current) fileRef.current.value = "";
                         setState((p) => {
@@ -266,10 +263,10 @@ function BrandModal({
                         });
                       }}
                       disabled={!state.file && !state.previewUrl}
+                      startIcon={<Trash2 size={16} />}
                     >
-                      <Trash2 size={16} />
                       Clear New
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="mt-3 flex items-center gap-3">
@@ -708,28 +705,26 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                            <Button
+                              variant="outline"
+                              size="icon"
                               onClick={() => openEdit(row.id)}
-                              aria-label="Edit"
-                            >
-                              <Pencil size={16} />
-                            </button>
+                              ariaLabel="Edit"
+                              startIcon={<Pencil size={16} />}
+                            />
 
-                            <button
-                              type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 disabled:opacity-60 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                            <Button
+                              variant="danger"
+                              size="icon"
                               onClick={() => {
                                 const ok = window.confirm(`Delete brand "${row.name}"?`);
                                 if (!ok) return;
                                 deleteMutation.mutate(row.id);
                               }}
-                              aria-label="Delete"
+                              ariaLabel="Delete"
                               disabled={deleteMutation.isPending}
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                              startIcon={<Trash2 size={16} />}
+                            />
                           </div>
                         </td>
                       </tr>
