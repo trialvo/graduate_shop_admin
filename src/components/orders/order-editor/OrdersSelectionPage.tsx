@@ -84,6 +84,7 @@ export default function OrdersSelectionPage({
   onSelectOrder,
 }: Props) {
   const [local, setLocal] = useState<OrdersListParams>(params);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Keep local inputs until user clicks Apply (professional UX)
   const syncFromUrl = () => setLocal(params);
@@ -109,9 +110,10 @@ export default function OrdersSelectionPage({
 
   return (
     <div className="mx-auto w-full space-y-6">
-      {/* ─── Header ───────────────────────────────────── */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      {/* ─── Header + Collapsible Filters ─────────────── */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        {/* Top bar */}
+        <div className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
               <Search size={18} />
@@ -142,140 +144,148 @@ export default function OrdersSelectionPage({
             </Button>
 
             <Button
-              variant="outline"
+              variant={filtersOpen ? "primary" : "outline"}
               size="sm"
-              onClick={() => {
-                onReset();
-                toast.success("Filters reset");
-              }}
-              startIcon={<SlidersHorizontal size={14} />}
-            >
-              Reset
-            </Button>
-
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                onChangeParams({
-                  ...local,
-                  offset: 0,
-                  limit: Number(local.limit ?? 10) || 10,
-                });
-                onApply();
-              }}
+              onClick={() => setFiltersOpen((s) => !s)}
               startIcon={<Filter size={14} />}
             >
-              Apply Filters
+              {filtersOpen ? "Hide Filters" : "Filters"}
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* ─── Filters ──────────────────────────────────── */}
-      <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-3 flex items-center gap-2">
-          <Filter size={13} className="text-gray-400" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500">
-            Filters
-          </span>
-        </div>
+        {/* Collapsible filter panel */}
+        {filtersOpen && (
+          <div className="border-t border-gray-100 px-6 py-4 dark:border-gray-800">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
+              {/* Search — first */}
+              <Input
+                value={local.customer_phone ?? local.customer_email ?? ""}
+                onChange={(e) =>
+                  setLocal((p) => ({
+                    ...p,
+                    customer_phone: e.target.value || undefined,
+                    customer_email: e.target.value || undefined,
+                  }))
+                }
+                placeholder="Search phone or email"
+                className="bg-gray-50 dark:bg-gray-800/50"
+              />
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-          {/* Search — first */}
-          <Input
-            value={local.customer_phone ?? local.customer_email ?? ""}
-            onChange={(e) =>
-              setLocal((p) => ({
-                ...p,
-                customer_phone: e.target.value || undefined,
-                customer_email: e.target.value || undefined,
-              }))
-            }
-            placeholder="Search phone or email"
-            className="bg-gray-50 dark:bg-gray-800/50"
-          />
+              <Select
+                options={[
+                  { value: "", label: "Type: Any" },
+                  { value: "regular", label: "Type: Regular" },
+                ]}
+                defaultValue={local.order_type ?? ""}
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, order_type: v || undefined }))
+                }
+                className="bg-gray-50 dark:bg-gray-800/50"
+              />
 
-          <Select
-            options={[
-              { value: "", label: "Type: Any" },
-              { value: "regular", label: "Type: Regular" },
-            ]}
-            defaultValue={local.order_type ?? ""}
-            onChange={(v) =>
-              setLocal((p) => ({ ...p, order_type: v || undefined }))
-            }
-            className="bg-gray-50 dark:bg-gray-800/50"
-          />
+              <Select
+                options={[
+                  { value: "", label: "Status: Any" },
+                  { value: "new", label: "New" },
+                  { value: "approved", label: "Approved" },
+                  { value: "processing", label: "Processing" },
+                  { value: "packaging", label: "Packaging" },
+                  { value: "shipped", label: "Shipped" },
+                  { value: "out_for_delivery", label: "Out for delivery" },
+                  { value: "delivered", label: "Delivered" },
+                  { value: "returned", label: "Returned" },
+                  { value: "cancelled", label: "Cancelled" },
+                  { value: "on_hold", label: "On hold" },
+                  { value: "trash", label: "Trash" },
+                ]}
+                defaultValue={local.order_status ?? ""}
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, order_status: v || undefined }))
+                }
+                className="bg-gray-50 dark:bg-gray-800/50"
+              />
 
-          <Select
-            options={[
-              { value: "", label: "Status: Any" },
-              { value: "new", label: "New" },
-              { value: "approved", label: "Approved" },
-              { value: "processing", label: "Processing" },
-              { value: "packaging", label: "Packaging" },
-              { value: "shipped", label: "Shipped" },
-              { value: "out_for_delivery", label: "Out for delivery" },
-              { value: "delivered", label: "Delivered" },
-              { value: "returned", label: "Returned" },
-              { value: "cancelled", label: "Cancelled" },
-              { value: "on_hold", label: "On hold" },
-              { value: "trash", label: "Trash" },
-            ]}
-            defaultValue={local.order_status ?? ""}
-            onChange={(v) =>
-              setLocal((p) => ({ ...p, order_status: v || undefined }))
-            }
-            className="bg-gray-50 dark:bg-gray-800/50"
-          />
+              <Select
+                options={[
+                  { value: "", label: "Payment: Any" },
+                  { value: "paid", label: "Paid" },
+                  { value: "partial_paid", label: "Partial" },
+                  { value: "unpaid", label: "Unpaid" },
+                ]}
+                defaultValue={local.payment_status ?? ""}
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, payment_status: v || undefined }))
+                }
+                className="bg-gray-50 dark:bg-gray-800/50"
+              />
 
-          <Select
-            options={[
-              { value: "", label: "Payment: Any" },
-              { value: "paid", label: "Paid" },
-              { value: "partial_paid", label: "Partial" },
-              { value: "unpaid", label: "Unpaid" },
-            ]}
-            defaultValue={local.payment_status ?? ""}
-            onChange={(v) =>
-              setLocal((p) => ({ ...p, payment_status: v || undefined }))
-            }
-            className="bg-gray-50 dark:bg-gray-800/50"
-          />
+              <Select
+                options={[
+                  { value: "", label: "Pay Type: Any" },
+                  { value: "gateway", label: "Gateway" },
+                  { value: "cod", label: "COD" },
+                  { value: "mixed", label: "Mixed" },
+                ]}
+                defaultValue={local.payment_type ?? ""}
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, payment_type: v || undefined }))
+                }
+                className="bg-gray-50 dark:bg-gray-800/50"
+              />
 
-          <Select
-            options={[
-              { value: "", label: "Pay Type: Any" },
-              { value: "gateway", label: "Gateway" },
-              { value: "cod", label: "COD" },
-              { value: "mixed", label: "Mixed" },
-            ]}
-            defaultValue={local.payment_type ?? ""}
-            onChange={(v) =>
-              setLocal((p) => ({ ...p, payment_type: v || undefined }))
-            }
-            className="bg-gray-50 dark:bg-gray-800/50"
-          />
+              <DatePicker
+                placeholder="Start"
+                value={local.date_from ?? ""}
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, date_from: v || undefined }))
+                }
+                showToday={false}
+              />
 
-          <DatePicker
-            placeholder="Start"
-            value={local.date_from ?? ""}
-            onChange={(v) =>
-              setLocal((p) => ({ ...p, date_from: v || undefined }))
-            }
-            showToday={false}
-          />
+              <DatePicker
+                placeholder="End"
+                value={local.date_to ?? ""}
+                onChange={(v) =>
+                  setLocal((p) => ({ ...p, date_to: v || undefined }))
+                }
+                showToday={false}
+              />
+            </div>
 
-          <DatePicker
-            placeholder="End"
-            value={local.date_to ?? ""}
-            onChange={(v) =>
-              setLocal((p) => ({ ...p, date_to: v || undefined }))
-            }
-            showToday={false}
-          />
-        </div>
+            {/* Actions row */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  onChangeParams({
+                    ...local,
+                    offset: 0,
+                    limit: Number(local.limit ?? 10) || 10,
+                  });
+                  onApply();
+                  setFiltersOpen(false);
+                }}
+                startIcon={<Filter size={14} />}
+              >
+                Apply Filters
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onReset();
+                  toast.success("Filters reset");
+                }}
+                startIcon={<SlidersHorizontal size={14} />}
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ─── Table ────────────────────────────────────── */}
