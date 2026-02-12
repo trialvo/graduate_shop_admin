@@ -7,6 +7,15 @@ import {
   Mail,
   Phone,
   MapPin,
+  Receipt,
+  Truck,
+  ShoppingCart,
+  CreditCard,
+  StickyNote,
+  Ticket,
+  CheckCircle2,
+  Loader2,
+  Plus,
 } from "lucide-react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -70,6 +79,25 @@ function badgeClass(variant: "ok" | "warn" | "muted") {
   return "bg-gray-50 text-gray-700 ring-gray-200 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10";
 }
 
+/* ─── Reusable styled card label (uppercase tracking) ─── */
+function SectionLabel({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      {icon && <span className="text-brand-500 dark:text-brand-400">{icon}</span>}
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        {children}
+      </p>
+    </div>
+  );
+}
+
+/* ─── Input wrapper class ─── */
+const inputClass =
+  "h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10";
+
+const selectClass =
+  "h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10";
+
 function CustomerRow({
   u,
   active,
@@ -90,14 +118,14 @@ function CustomerRow({
       type="button"
       onClick={onPick}
       className={cn(
-        "w-full rounded-xl border p-3 text-left transition",
+        "w-full rounded-xl border p-3 text-left transition-all",
         active
-          ? "border-brand-500 bg-brand-500/5 dark:border-brand-400 dark:bg-brand-400/10"
-          : "border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
+          ? "border-brand-400 bg-brand-50/60 shadow-sm ring-1 ring-brand-300/30 dark:border-brand-500/60 dark:bg-brand-500/5 dark:ring-brand-500/20"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/40 dark:hover:border-gray-600"
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageSrc}
@@ -115,13 +143,13 @@ function CustomerRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
+            <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
               {userFullName(u)}
             </div>
 
             <span
               className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] ring-1",
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1",
                 badgeClass(u.status === "active" ? "ok" : "muted")
               )}
             >
@@ -131,7 +159,7 @@ function CustomerRow({
             {u.is_fully_verified ? (
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] ring-1",
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1",
                   badgeClass("ok")
                 )}
               >
@@ -140,7 +168,7 @@ function CustomerRow({
             ) : (
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] ring-1",
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1",
                   badgeClass("warn")
                 )}
               >
@@ -149,24 +177,24 @@ function CustomerRow({
             )}
           </div>
 
-          <div className="mt-1 grid grid-cols-12 gap-2 text-xs text-gray-600 dark:text-gray-300">
+          <div className="mt-1.5 grid grid-cols-12 gap-2 text-xs text-gray-600 dark:text-gray-300">
             <div className="col-span-12 md:col-span-6 min-w-0">
               <div className="flex items-center gap-1.5 truncate">
-                <Mail size={14} className="text-gray-400" />
+                <Mail size={13} className="text-gray-400" />
                 <span className="truncate">{u.email}</span>
               </div>
             </div>
 
             <div className="col-span-12 md:col-span-6 min-w-0">
               <div className="flex items-center gap-1.5 truncate">
-                <Phone size={14} className="text-gray-400" />
+                <Phone size={13} className="text-gray-400" />
                 <span className="truncate">{phone || "No phone"}</span>
               </div>
             </div>
 
             <div className="col-span-12 md:col-span-6">
               <div className="flex items-center gap-1.5">
-                <MapPin size={14} className="text-gray-400" />
+                <MapPin size={13} className="text-gray-400" />
                 <span>{addrCount} address(es)</span>
               </div>
             </div>
@@ -174,7 +202,7 @@ function CustomerRow({
             <div className="col-span-12 md:col-span-6">
               <div className="flex items-center justify-between gap-2">
                 <span>Total spent</span>
-                <span className="font-semibold text-gray-900 dark:text-white/90">
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {formatCurrencyBDT(Number(u.total_spent ?? 0))}
                 </span>
               </div>
@@ -183,7 +211,7 @@ function CustomerRow({
         </div>
 
         {active ? (
-          <div className="mt-1 rounded-full bg-brand-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+          <div className="mt-1 flex-shrink-0 rounded-full bg-brand-500 px-2 py-0.5 text-[11px] font-semibold text-white">
             Selected
           </div>
         ) : null}
@@ -462,27 +490,32 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   return (
     <div
       className={cn(
-        "h-full min-h-0 overflow-auto custom-scrollbar",
-        "rounded-xl border border-gray-200 bg-white p-2",
-        "dark:border-gray-800 dark:bg-gray-950"
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm",
+        "dark:border-gray-800 dark:bg-gray-900"
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-base font-semibold text-gray-900 dark:text-white/90">
-            Billing
+      {/* ── Panel Header ── */}
+      <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+            <Receipt className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Billing</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">Cart, customer & payment</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Mode Toggle */}
+        <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
           <button
             type="button"
             onClick={() => setMode("existing")}
             className={cn(
-              "h-9 rounded-lg px-3 text-sm font-medium ring-1 transition",
+              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
               mode === "existing"
-                ? "bg-gray-900 text-white ring-gray-900 dark:bg-white dark:text-gray-900 dark:ring-white"
-                : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
+                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             )}
           >
             Existing
@@ -491,10 +524,10 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             type="button"
             onClick={() => setMode("stranger")}
             className={cn(
-              "h-9 rounded-lg px-3 text-sm font-medium ring-1 transition",
+              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
               mode === "stranger"
-                ? "bg-gray-900 text-white ring-gray-900 dark:bg-white dark:text-gray-900 dark:ring-white"
-                : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
+                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             )}
           >
             Stranger
@@ -502,222 +535,215 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         </div>
       </div>
 
-      {/* Cart summary */}
-      <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-gray-800 dark:text-white/90">
-            Cart Items
+      {/* ── Scroll container ── */}
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar p-4 space-y-4">
+
+        {/* ═══════ Cart Items ═══════ */}
+        <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-white/[0.02]">
+          <div className="flex items-center justify-between mb-3">
+            <SectionLabel icon={<ShoppingCart size={14} />}>Cart Items</SectionLabel>
+            <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[11px] font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              {cart.length}
+            </span>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {cart.length} item(s)
-          </div>
-        </div>
 
-        <div className="mt-3 space-y-2">
-          {cart.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-gray-200 bg-white p-3 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
-              Cart is empty.
-            </div>
-          ) : (
-            cart.map((i) => (
-              <div
-                key={i.key}
-                className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
-              >
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
-                    {i.title}
-                  </div>
-                  <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                    SKU: {i.sku}
-                    {i.colorName || i.variantName ? (
-                      <>
-                        {" "}
-                        • {i.colorName ?? "Color"} •{" "}
-                        {i.variantName ?? "Variant"}
-                      </>
-                    ) : null}{" "}
-                    • PV:{" "}
-                    {i.productVariationId ? (
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {i.productVariationId}
-                      </span>
-                    ) : (
-                      <span className="font-semibold text-error-600 dark:text-error-300">
-                        (Select variation)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-800 dark:bg-white/[0.03]">
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQty(i.key, Math.max(1, i.qty - 1))}
-                      className="h-7 w-7 rounded-md text-sm font-semibold text-gray-700 hover:bg-white dark:text-gray-200 dark:hover:bg-gray-900"
-                    >
-                      -
-                    </button>
-                    <div className="w-8 text-center text-sm font-semibold text-gray-900 dark:text-white/90">
-                      {i.qty}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQty(i.key, i.qty + 1)}
-                      className="h-7 w-7 rounded-md bg-brand-500 text-sm font-semibold text-white hover:bg-brand-600"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="w-[88px] text-right text-sm font-semibold text-gray-900 dark:text-white/90">
-                    {formatCurrencyBDT(i.unitPrice * i.qty)}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => onRemove(i.key)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                    aria-label="Remove item"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+          <div className="space-y-2">
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-6 dark:border-gray-700 dark:bg-gray-800/40">
+                <ShoppingCart className="mb-2 h-6 w-6 text-gray-300 dark:text-gray-600" />
+                <p className="text-xs text-gray-400 dark:text-gray-500">Cart is empty</p>
               </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Mode panels */}
-      <div className="mt-4 grid grid-cols-12 gap-4">
-        {/* Customer */}
-        <div className="col-span-12 lg:col-span-7">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
-                {mode === "existing" ? "Customer" : "Stranger Customer"}
-              </div>
-
-              {mode === "existing" ? (
-                <Button
-                  onClick={() => setAddCustomerOpen(true)}
-                  className="h-9 px-3 text-sm"
+            ) : (
+              cart.map((i) => (
+                <div
+                  key={i.key}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 transition hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/40 dark:hover:border-gray-600"
                 >
-                  + Add Customer
-                </Button>
-              ) : null}
-            </div>
-
-            {mode === "existing" ? (
-              <>
-                <div className="mt-3">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Search customer
-                  </label>
-                  <input
-                    value={userQ}
-                    onChange={(e) => {
-                      setUsersOffset(0);
-                      setUserQ(e.target.value);
-                    }}
-                    placeholder="Search by name/email/phone"
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div className="mt-3 space-y-2">
-                  {usersQuery.isLoading ? (
-                    <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
-                      Loading customers...
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {i.title}
                     </div>
-                  ) : users.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
-                      No customers found.
+                    <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                      SKU: {i.sku}
+                      {i.colorName || i.variantName ? (
+                        <>
+                          {" "}
+                          • {i.colorName ?? "Color"} •{" "}
+                          {i.variantName ?? "Variant"}
+                        </>
+                      ) : null}{" "}
+                      • PV:{" "}
+                      {i.productVariationId ? (
+                        <span className="font-semibold text-gray-700 dark:text-gray-200">
+                          {i.productVariationId}
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-error-600 dark:text-error-300">
+                          (Select variation)
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    users.map((u) => (
-                      <CustomerRow
-                        key={u.id}
-                        u={u}
-                        active={Number(customerId) === Number(u.id)}
-                        onPick={() => setCustomerId(Number(u.id))}
-                      />
-                    ))
-                  )}
-                </div>
-
-                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <div>
-                    Showing{" "}
-                    <span className="font-semibold text-gray-800 dark:text-gray-200">
-                      {usersTotal === 0
-                        ? 0
-                        : Math.min(usersOffset + USERS_LIMIT, usersTotal)}
-                    </span>{" "}
-                    / {usersTotal}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={usersOffset === 0}
-                      onClick={() =>
-                        setUsersOffset((o) => Math.max(0, o - USERS_LIMIT))
-                      }
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 transition",
-                        usersOffset === 0
-                          ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-800"
-                          : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                      )}
-                    >
-                      <ChevronLeft size={14} />
-                      Prev
-                    </button>
+                    <div className="flex items-center gap-0.5 rounded-xl border border-gray-200 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQty(i.key, Math.max(1, i.qty - 1))}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-sm font-semibold text-gray-700 transition hover:bg-white dark:text-gray-200 dark:hover:bg-gray-700"
+                      >
+                        -
+                      </button>
+                      <div className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white">
+                        {i.qty}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQty(i.key, i.qty + 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500 text-sm font-semibold text-white hover:bg-brand-600"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <div className="w-[88px] text-right text-sm font-bold text-gray-900 dark:text-white">
+                      {formatCurrencyBDT(i.unitPrice * i.qty)}
+                    </div>
 
                     <button
                       type="button"
-                      disabled={usersOffset + USERS_LIMIT >= usersTotal}
-                      onClick={() => setUsersOffset((o) => o + USERS_LIMIT)}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 transition",
-                        usersOffset + USERS_LIMIT >= usersTotal
-                          ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-800"
-                          : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                      )}
+                      onClick={() => onRemove(i.key)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition hover:border-error-300 hover:bg-error-50 hover:text-error-500 dark:border-gray-700 dark:hover:border-error-500/40 dark:hover:bg-error-500/10"
+                      aria-label="Remove item"
                     >
-                      Next
-                      <ChevronRight size={14} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
+              ))
+            )}
+          </div>
+        </div>
 
-                <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
-                      Address
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (!selectedUser) {
-                          toast.error("Select a customer first");
-                          return;
-                        }
-                        setManualAddressOpen(true);
+        {/* ═══════ Customer / Stranger ═══════ */}
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-12 lg:col-span-7">
+            <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <SectionLabel icon={<User2 size={14} />}>
+                  {mode === "existing" ? "Customer" : "Stranger Customer"}
+                </SectionLabel>
+
+                {mode === "existing" ? (
+                  <Button
+                    onClick={() => setAddCustomerOpen(true)}
+                    className="h-8 gap-1.5 rounded-lg px-3 text-xs"
+                  >
+                    <Plus size={14} /> Add
+                  </Button>
+                ) : null}
+              </div>
+
+              {mode === "existing" ? (
+                <>
+                  <div>
+                    <input
+                      value={userQ}
+                      onChange={(e) => {
+                        setUsersOffset(0);
+                        setUserQ(e.target.value);
                       }}
-                      className="h-9 px-3 text-sm"
-                    >
-                      + Add Address
-                    </Button>
+                      placeholder="Search by name, email or phone..."
+                      className={inputClass}
+                    />
                   </div>
 
-                  <div className="mt-3">
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                      Select address
-                    </label>
+                  <div className="mt-3 space-y-2">
+                    {usersQuery.isLoading ? (
+                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-400">
+                        Loading customers...
+                      </div>
+                    ) : users.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-400">
+                        No customers found.
+                      </div>
+                    ) : (
+                      users.map((u) => (
+                        <CustomerRow
+                          key={u.id}
+                          u={u}
+                          active={Number(customerId) === Number(u.id)}
+                          onPick={() => setCustomerId(Number(u.id))}
+                        />
+                      ))
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div>
+                      Showing{" "}
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">
+                        {usersTotal === 0
+                          ? 0
+                          : Math.min(usersOffset + USERS_LIMIT, usersTotal)}
+                      </span>{" "}
+                      / {usersTotal}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={usersOffset === 0}
+                        onClick={() =>
+                          setUsersOffset((o) => Math.max(0, o - USERS_LIMIT))
+                        }
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 ring-1 transition",
+                          usersOffset === 0
+                            ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-700"
+                            : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-white/[0.03]"
+                        )}
+                      >
+                        <ChevronLeft size={14} />
+                        Prev
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={usersOffset + USERS_LIMIT >= usersTotal}
+                        onClick={() => setUsersOffset((o) => o + USERS_LIMIT)}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 ring-1 transition",
+                          usersOffset + USERS_LIMIT >= usersTotal
+                            ? "cursor-not-allowed text-gray-400 ring-gray-200 dark:ring-gray-700"
+                            : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-white/[0.03]"
+                        )}
+                      >
+                        Next
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="mt-3 rounded-xl border border-gray-200/80 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-white/[0.02]">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <SectionLabel icon={<MapPin size={14} />}>Address</SectionLabel>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (!selectedUser) {
+                            toast.error("Select a customer first");
+                            return;
+                          }
+                          setManualAddressOpen(true);
+                        }}
+                        className="h-8 gap-1.5 rounded-lg px-3 text-xs"
+                      >
+                        <Plus size={14} /> Add
+                      </Button>
+                    </div>
+
                     <select
                       value={addressId ?? ""}
                       onChange={(e) =>
@@ -725,7 +751,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                           e.target.value ? Number(e.target.value) : null
                         )
                       }
-                      className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                      className={selectClass}
                       disabled={!selectedUser}
                     >
                       <option value="">
@@ -741,288 +767,274 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                       ))}
                     </select>
                   </div>
-                </div>
-              </>
-            ) : (
-              <div className="mt-3 grid grid-cols-12 gap-3">
-                <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Name
-                  </label>
-                  <input
-                    value={strangerName}
-                    onChange={(e) => setStrangerName(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
-                </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="col-span-12 md:col-span-6">
+                    <SectionLabel>Name</SectionLabel>
+                    <input
+                      value={strangerName}
+                      onChange={(e) => setStrangerName(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Phone
-                  </label>
-                  <input
-                    value={strangerPhone}
-                    onChange={(e) => setStrangerPhone(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
-                </div>
+                  <div className="col-span-12 md:col-span-6">
+                    <SectionLabel>Phone</SectionLabel>
+                    <input
+                      value={strangerPhone}
+                      onChange={(e) => setStrangerPhone(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div className="col-span-12">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Full address
-                  </label>
-                  <input
-                    value={strangerFullAddress}
-                    onChange={(e) => setStrangerFullAddress(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
-                </div>
+                  <div className="col-span-12">
+                    <SectionLabel>Full address</SectionLabel>
+                    <input
+                      value={strangerFullAddress}
+                      onChange={(e) => setStrangerFullAddress(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    City
-                  </label>
-                  <input
-                    value={strangerCity}
-                    onChange={(e) => setStrangerCity(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
-                </div>
+                  <div className="col-span-12 md:col-span-4">
+                    <SectionLabel>City</SectionLabel>
+                    <input
+                      value={strangerCity}
+                      onChange={(e) => setStrangerCity(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Zip
-                  </label>
-                  <input
-                    value={strangerZip}
-                    onChange={(e) => setStrangerZip(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
-                </div>
+                  <div className="col-span-12 md:col-span-4">
+                    <SectionLabel>Zip</SectionLabel>
+                    <input
+                      value={strangerZip}
+                      onChange={(e) => setStrangerZip(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Email
-                  </label>
-                  <input
-                    value={strangerEmail}
-                    onChange={(e) => setStrangerEmail(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
+                  <div className="col-span-12 md:col-span-4">
+                    <SectionLabel>Email</SectionLabel>
+                    <input
+                      value={strangerEmail}
+                      onChange={(e) => setStrangerEmail(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Delivery + Payment + Notes */}
-        <div className="col-span-12 lg:col-span-5">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
-              Delivery
+              )}
             </div>
+          </div>
 
-            <div className="mt-3">
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                Delivery charge
-              </label>
-              <select
-                value={deliveryChargeId ?? ""}
-                onChange={(e) =>
-                  setDeliveryChargeId(
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
-                className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="">
-                  {deliveryChargesQuery.isLoading
-                    ? "Loading..."
-                    : "Choose delivery charge"}
-                </option>
-                {deliveryCharges.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.title} — {formatCurrencyBDT(d.customer_charge)}
+          {/* ═══════ Delivery + Payment + Totals ═══════ */}
+          <div className="col-span-12 lg:col-span-5">
+            <div className="space-y-4">
+              {/* Delivery */}
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                <SectionLabel icon={<Truck size={14} />}>Delivery Charge</SectionLabel>
+                <select
+                  value={deliveryChargeId ?? ""}
+                  onChange={(e) =>
+                    setDeliveryChargeId(
+                      e.target.value ? Number(e.target.value) : null
+                    )
+                  }
+                  className={cn(selectClass, "mt-2")}
+                >
+                  <option value="">
+                    {deliveryChargesQuery.isLoading
+                      ? "Loading..."
+                      : "Choose delivery charge"}
                   </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-              <div className="flex items-center justify-between text-sm">
-                <div className="text-gray-600 dark:text-gray-300">Subtotal</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">
-                  {formatCurrencyBDT(subtotal)}
-                </div>
+                  {deliveryCharges.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.title} — {formatCurrencyBDT(d.customer_charge)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="mt-2 flex items-center justify-between text-sm">
-                <div className="text-gray-600 dark:text-gray-300">Delivery</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">
-                  {formatCurrencyBDT(deliveryFee)}
-                </div>
-              </div>
-
-              <div className="mt-2 flex items-center justify-between text-sm">
-                <div className="text-gray-600 dark:text-gray-300">Discount</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">
-                  {formatCurrencyBDT(0)}
-                </div>
-              </div>
-
-              <div className="mt-2 flex items-center justify-between text-sm">
-                <div className="text-gray-600 dark:text-gray-300">Tax</div>
-                <div className="font-semibold text-gray-900 dark:text-white/90">
-                  {formatCurrencyBDT(0)}
-                </div>
-              </div>
-
-              <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-gray-800 dark:text-white/90">
-                    Total
+              {/* Totals */}
+              <div className="rounded-xl border border-gray-200/80 bg-gradient-to-b from-gray-50 to-white p-4 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {formatCurrencyBDT(subtotal)}
+                    </span>
                   </div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white/90">
-                    {formatCurrencyBDT(total)}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Delivery</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {formatCurrencyBDT(deliveryFee)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Discount</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {formatCurrencyBDT(0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Tax</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {formatCurrencyBDT(0)}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-3 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">Total</span>
+                      <span className="text-lg font-extrabold text-brand-600 dark:text-brand-400">
+                        {formatCurrencyBDT(total)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="mt-4">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
-                Coupon
-              </div>
-              <input
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Optional coupon code"
-                className="mt-2 h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div className="mt-4">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
-                Note
-              </div>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Optional note for delivery / admin"
-                className="mt-2 min-h-[96px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div className="mt-4">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white/90">
-                Payment
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPayBy("cod")}
-                  className={cn(
-                    "rounded-lg px-4 py-2 text-sm ring-1 transition",
-                    payBy === "cod"
-                      ? "bg-gray-800 text-white ring-gray-800 dark:bg-white dark:text-gray-900 dark:ring-white"
-                      : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                  )}
-                >
-                  COD
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPayBy("bkash")}
-                  className={cn(
-                    "rounded-lg px-4 py-2 text-sm ring-1 transition",
-                    payBy === "bkash"
-                      ? "bg-gray-800 text-white ring-gray-800 dark:bg-white dark:text-gray-900 dark:ring-white"
-                      : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                  )}
-                >
-                  bKash
-                </button>
+              {/* Coupon */}
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                <SectionLabel icon={<Ticket size={14} />}>Coupon</SectionLabel>
+                <input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Optional coupon code"
+                  className={cn(inputClass, "mt-2")}
+                />
               </div>
 
-              {payBy === "bkash" ? (
-                <div className="mt-3">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    bKash TRX ID
-                  </label>
-                  <input
-                    value={trx}
-                    onChange={(e) => setTrx(e.target.value)}
-                    placeholder="Enter transaction id"
-                    className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                  />
+              {/* Note */}
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                <SectionLabel icon={<StickyNote size={14} />}>Note</SectionLabel>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Optional note for delivery / admin"
+                  className="mt-2 min-h-[80px] w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10"
+                />
+              </div>
+
+              {/* Payment */}
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                <SectionLabel icon={<CreditCard size={14} />}>Payment</SectionLabel>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPayBy("cod")}
+                    className={cn(
+                      "rounded-xl px-4 py-2.5 text-sm font-semibold ring-1 transition-all",
+                      payBy === "cod"
+                        ? "bg-gray-900 text-white ring-gray-900 dark:bg-white dark:text-gray-900 dark:ring-white"
+                        : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    COD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPayBy("bkash")}
+                    className={cn(
+                      "rounded-xl px-4 py-2.5 text-sm font-semibold ring-1 transition-all",
+                      payBy === "bkash"
+                        ? "bg-gray-900 text-white ring-gray-900 dark:bg-white dark:text-gray-900 dark:ring-white"
+                        : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    bKash
+                  </button>
                 </div>
-              ) : null}
+
+                {payBy === "bkash" ? (
+                  <div className="mt-3">
+                    <SectionLabel>bKash TRX ID</SectionLabel>
+                    <input
+                      value={trx}
+                      onChange={(e) => setTrx(e.target.value)}
+                      placeholder="Enter transaction id"
+                      className={cn(inputClass, "mt-1")}
+                    />
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="mt-5 grid grid-cols-12 gap-3">
-        <div className="col-span-12 md:col-span-6">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() =>
-              window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))
-            }
-          >
-            Clear Cart
-          </Button>
-        </div>
-
-        <div className="col-span-12 md:col-span-6">
-          <button
-            type="button"
-            disabled={
-              placing ||
-              (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
-            }
-            className={cn(
-              "h-11 w-full rounded-lg text-sm font-semibold text-white",
-              placing ||
-                (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
-                ? "cursor-not-allowed bg-brand-500/60"
-                : "bg-brand-500 hover:bg-brand-600"
-            )}
-            onClick={() => {
-              if (placing) return;
-
-              const anyMissingVariation = cart.some(
-                (i) => !Number(i.productVariationId)
-              );
-              if (anyMissingVariation) {
-                toast.error("Select product variation before placing order");
-                return;
+        {/* ═══════ Action Buttons ═══════ */}
+        <div className="grid grid-cols-12 gap-3 pt-2 pb-1">
+          <div className="col-span-12 md:col-span-6">
+            <Button
+              variant="outline"
+              className="w-full rounded-xl"
+              onClick={() =>
+                window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))
               }
+            >
+              Clear Cart
+            </Button>
+          </div>
 
-              if (mode === "existing") {
-                if (!canPlaceExisting) {
+          <div className="col-span-12 md:col-span-6">
+            <button
+              type="button"
+              disabled={
+                placing ||
+                (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
+              }
+              className={cn(
+                "flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition",
+                placing ||
+                  (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
+                  ? "cursor-not-allowed bg-brand-500/50"
+                  : "bg-brand-600 shadow-md hover:bg-brand-700"
+              )}
+              onClick={() => {
+                if (placing) return;
+
+                const anyMissingVariation = cart.some(
+                  (i) => !Number(i.productVariationId)
+                );
+                if (anyMissingVariation) {
+                  toast.error("Select product variation before placing order");
+                  return;
+                }
+
+                if (mode === "existing") {
+                  if (!canPlaceExisting) {
+                    toast.error(
+                      "Please select customer, address, delivery, and variation"
+                    );
+                    return;
+                  }
+                  placeExistingMutation.mutate();
+                  return;
+                }
+
+                if (!canPlaceStranger) {
                   toast.error(
-                    "Please select customer, address, delivery, and variation"
+                    "Please fill stranger info, delivery, and variation"
                   );
                   return;
                 }
-                placeExistingMutation.mutate();
-                return;
-              }
-
-              if (!canPlaceStranger) {
-                toast.error(
-                  "Please fill stranger info, delivery, and variation"
-                );
-                return;
-              }
-              placeStrangerMutation.mutate();
-            }}
-          >
-            {placing ? "Placing..." : "Place Order"}
-          </button>
+                placeStrangerMutation.mutate();
+              }}
+            >
+              {placing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Placing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Place Order
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1035,8 +1047,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       {manualAddressOpen ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-[760px] overflow-hidden rounded-xl bg-white shadow-theme-lg dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white px-6 py-4 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 Add Address
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -1047,70 +1059,58 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             <div className="px-6 py-6">
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Name
-                  </label>
+                  <SectionLabel>Name</SectionLabel>
                   <input
                     value={manualAddressName}
                     onChange={(e) => setManualAddressName(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
+                    className={inputClass}
                   />
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Phone
-                  </label>
+                  <SectionLabel>Phone</SectionLabel>
                   <input
                     value={manualAddressPhone}
                     onChange={(e) => setManualAddressPhone(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
+                    className={inputClass}
                   />
                 </div>
 
                 <div className="col-span-12">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Full Address
-                  </label>
+                  <SectionLabel>Full Address</SectionLabel>
                   <input
                     value={manualAddressFull}
                     onChange={(e) => setManualAddressFull(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
+                    className={inputClass}
                   />
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    City
-                  </label>
+                  <SectionLabel>City</SectionLabel>
                   <input
                     value={manualAddressCity}
                     onChange={(e) => setManualAddressCity(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
+                    className={inputClass}
                   />
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Zip
-                  </label>
+                  <SectionLabel>Zip</SectionLabel>
                   <input
                     value={manualAddressZip}
                     onChange={(e) => setManualAddressZip(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
+                    className={inputClass}
                   />
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                    Type
-                  </label>
+                  <SectionLabel>Type</SectionLabel>
                   <select
                     value={manualAddressType}
                     onChange={(e) =>
                       setManualAddressType(e.target.value as any)
                     }
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-white"
+                    className={selectClass}
                   >
                     <option value="n/a">n/a</option>
                     <option value="home">home</option>
@@ -1120,15 +1120,17 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
+            <div className="border-t border-gray-200 bg-gray-50/60 px-6 py-4 dark:border-gray-800 dark:bg-white/[0.02]">
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
+                  className="rounded-xl"
                   onClick={() => setManualAddressOpen(false)}
                 >
                   Cancel
                 </Button>
                 <Button
+                  className="rounded-xl"
                   disabled={
                     !selectedUser ||
                     createAddressMutation.isPending ||

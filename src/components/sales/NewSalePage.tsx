@@ -38,18 +38,18 @@ const NewSalePage: React.FC = () => {
    * If your header height differs, change 120px.
    */
   const containerClass = cn(
-    "grid grid-cols-12 gap-4 md:gap-6",
+    "grid grid-cols-12 gap-5 md:gap-6",
     "xl:h-[calc(100dvh-120px)] xl:min-h-[calc(100dvh-120px)]"
   );
 
   return (
     <div className={containerClass}>
-      {/* Left */}
+      {/* Left — Product Selection */}
       <div className="col-span-12 xl:col-span-6 h-full min-h-0">
         <ProductSelectionPanel onAddToCart={addToCart} />
       </div>
 
-      {/* Right */}
+      {/* Right — Billing */}
       <div className="col-span-12 xl:col-span-6 h-full min-h-0">
         <BillingPanel
           cart={cart}

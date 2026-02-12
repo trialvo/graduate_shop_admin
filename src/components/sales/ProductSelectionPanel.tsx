@@ -1,5 +1,5 @@
 import React from "react";
-import { Search } from "lucide-react";
+import { LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
@@ -181,85 +181,106 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col rounded-[4px] border border-gray-200 bg-white",
-        "dark:border-gray-800 dark:bg-white/[0.03]"
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm",
+        "dark:border-gray-800 dark:bg-gray-900"
       )}
     >
-      {/* ✅ Scroll container */}
+      {/* ── Panel Header ── */}
+      <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+            <ShoppingBag className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Products</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">Browse & add to cart</p>
+          </div>
+        </div>
+        {total > 0 && (
+          <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-400">
+            {total} items
+          </span>
+        )}
+      </div>
+
+      {/* ── Scroll container ── */}
       <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-        {/* ✅ Sticky Filters */}
-        <div
-          className={cn(
-            "sticky top-0 z-20 pb-3 pt-0"
-          )}
-        >
-          <div
-            className={cn("rounded-[4px] bg-white p-2", " dark:bg-gray-950")}
-          >
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-12 md:col-span-6">
-                <ImageSelectDropdown
-                  value={subCategoryId}
-                  onChange={(v) => {
-                    setSubCategoryId(v);
-                    setChildCategoryId("all");
-                  }}
-                  options={subOptions}
-                  placeholder="All Sub Categories"
-                />
-              </div>
+        {/* Sticky Filters */}
+        <div className="sticky top-0 z-20 border-b border-gray-100 bg-white/95 p-3 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/95">
+          <div className="grid grid-cols-12 gap-2.5">
+            <div className="col-span-12 md:col-span-6">
+              <ImageSelectDropdown
+                value={subCategoryId}
+                onChange={(v) => {
+                  setSubCategoryId(v);
+                  setChildCategoryId("all");
+                }}
+                options={subOptions}
+                placeholder="All Sub Categories"
+              />
+            </div>
 
-              <div className="col-span-12 md:col-span-6">
-                <ImageSelectDropdown
-                  value={childCategoryId}
-                  onChange={setChildCategoryId}
-                  options={childOptions}
-                  placeholder={
-                    subCategoryId === "all"
-                      ? "All Child Categories"
-                      : "Select Child Category"
-                  }
-                  disabled={childOptions.length <= 1}
-                />
-              </div>
+            <div className="col-span-12 md:col-span-6">
+              <ImageSelectDropdown
+                value={childCategoryId}
+                onChange={setChildCategoryId}
+                options={childOptions}
+                placeholder={
+                  subCategoryId === "all"
+                    ? "All Child Categories"
+                    : "Select Child Category"
+                }
+                disabled={childOptions.length <= 1}
+              />
+            </div>
 
-              <div className="col-span-12">
-                <div
-                  className={cn(
-                    "flex h-10 items-center gap-2 rounded-[4px] border border-gray-200 bg-gray-50 px-3"
-                  )}
-                >
-                  <Search size={16} className="text-gray-400" />
-                  <input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search products"
-                    className="w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400 dark:text-gray-200"
-                  />
-                </div>
+            <div className="col-span-12">
+              <div
+                className={cn(
+                  "flex h-11 items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50/80 px-4 transition-colors",
+                  "focus-within:border-brand-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100",
+                  "dark:border-gray-700 dark:bg-white/[0.03] dark:focus-within:border-brand-500 dark:focus-within:ring-brand-500/10"
+                )}
+              >
+                <Search size={16} className="flex-shrink-0 text-gray-400" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search products by name, SKU..."
+                  className="w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400 dark:text-gray-200"
+                />
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* Content */}
-        <div className="mt-4 px-2">
+        {/* Product Grid */}
+        <div className="p-3">
           {loading ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="h-[200px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]"
-                />
+                  className="space-y-2 rounded-xl border border-gray-100 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
+                >
+                  <div className="aspect-[4/3] w-full animate-pulse rounded-lg bg-gray-100 dark:bg-white/[0.04]" />
+                  <div className="h-3 w-3/4 animate-pulse rounded-md bg-gray-100 dark:bg-white/[0.04]" />
+                  <div className="h-3 w-1/2 animate-pulse rounded-md bg-gray-100 dark:bg-white/[0.04]" />
+                  <div className="flex gap-2">
+                    <div className="h-7 w-1/2 animate-pulse rounded-lg bg-gray-100 dark:bg-white/[0.04]" />
+                    <div className="h-7 w-1/2 animate-pulse rounded-lg bg-gray-100 dark:bg-white/[0.04]" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="rounded-[4px] border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-              No products found.
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/50 py-14 dark:border-gray-700 dark:bg-white/[0.01]">
+              <LayoutGrid className="mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" />
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No products found</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Try adjusting your filters or search</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {products.map((p) => (
                 <ProductCard
                   key={String(p.id)}
@@ -274,7 +295,7 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
           )}
         </div>
 
-        <div className="mt-5">
+        <div className="px-3 pb-3">
           <Pagination
             page={page}
             pageSize={limit}
