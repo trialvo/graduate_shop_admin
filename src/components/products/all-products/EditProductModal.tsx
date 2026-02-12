@@ -456,7 +456,20 @@ export default function EditProductModal({
       ? ((p as any).variations as VariationRow[])
       : [];
     setVariations(vars);
-    setVarEdit({});
+    // Auto-populate varEdit so all rows are always in edit mode
+    const autoEdit: InlineEditState = {};
+    for (const vr of vars) {
+      autoEdit[vr.id] = {
+        color_id: getVariationColorId(vr),
+        variant_id: getVariationVariantId(vr),
+        buying_price: vr.buying_price,
+        selling_price: vr.selling_price,
+        discount: vr.discount,
+        stock: vr.stock,
+        sku: vr.sku ?? "",
+      };
+    }
+    setVarEdit(autoEdit);
 
     setAddDraft({
       color_id: 0,
@@ -595,7 +608,8 @@ export default function EditProductModal({
     mutationFn: async () => {
       if (!productId) throw new Error("Missing product id");
 
-      return updateProduct(productId, {
+      // 1. Update the product itself
+      const productRes = await updateProduct(productId, {
         product_images: newImages.map((i) => i.file),
         name,
         slug,
@@ -607,7 +621,6 @@ export default function EditProductModal({
         brand_id: normalizeId(brandId),
         attribute_id: normalizeId(attributeId),
 
-        // ✅ send as video_path like create
         video_path: videoUrl,
         short_description: shortDescription,
         long_description: longDescription,
@@ -627,6 +640,27 @@ export default function EditProductModal({
 
         delete_image_ids: deleteImageIds.length ? deleteImageIds : undefined,
       } as any);
+
+      // 2. Save all modified variations
+      const varPromises: Promise<any>[] = [];
+      for (const v of variations) {
+        const draft = varEdit[v.id];
+        if (!draft) continue;
+        const changed =
+          draft.color_id !== getVariationColorId(v) ||
+          draft.variant_id !== getVariationVariantId(v) ||
+          draft.buying_price !== v.buying_price ||
+          draft.selling_price !== v.selling_price ||
+          draft.discount !== v.discount ||
+          draft.stock !== v.stock ||
+          draft.sku !== (v.sku ?? "");
+        if (changed) {
+          varPromises.push(updateVariation(v.id, draft));
+        }
+      }
+      if (varPromises.length) await Promise.all(varPromises);
+
+      return productRes;
     },
     onSuccess: async (res: any) => {
       if (
@@ -1371,14 +1405,9 @@ export default function EditProductModal({
                   <TableBody>
                     {variations.length ? (
                       variations.map((v) => {
-                        const editing = !!varEdit[v.id];
                         const draft = varEdit[v.id];
-
                         const colorId = getVariationColorId(v);
                         const variantId = getVariationVariantId(v);
-                        const colorLabel =
-                          v.color?.name ?? getColorLabel(colorId);
-                        const colorHex = v.color?.hex ?? getColorHex(colorId);
                         const variantLabel = v.variant?.name ?? `#${variantId}`;
 
                         return (
@@ -1386,290 +1415,147 @@ export default function EditProductModal({
                             key={v.id}
                             className="border-b border-gray-100 dark:border-gray-800"
                           >
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
+                            <TableCell className="px-4 py-2">
+                              <Select
+                                key={`edit-color-${v.id}-${draft?.color_id}`}
+                                options={colorOptions}
+                                placeholder="Color"
+                                defaultValue={String(draft?.color_id ?? colorId)}
+                                onChange={(val) =>
+                                  patchEditVariation(v.id, { color_id: Number(val) })
+                                }
+                              />
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
+                              {variantOptionsFromAttr.length ? (
                                 <Select
-                                  key={`edit-color-${v.id}-${draft?.color_id}`}
-                                  options={colorOptions}
-                                  placeholder="Color"
-                                  defaultValue={String(
-                                    draft?.color_id ?? colorId,
-                                  )}
+                                  key={`edit-variant-${v.id}-${draft?.variant_id}-${attributeId}`}
+                                  options={variantOptionsFromAttr}
+                                  placeholder="Variant"
+                                  defaultValue={String(draft?.variant_id ?? variantId)}
                                   onChange={(val) =>
-                                    patchEditVariation(v.id, {
-                                      color_id: Number(val),
-                                    })
+                                    patchEditVariation(v.id, { variant_id: Number(val) })
                                   }
                                 />
                               ) : (
-                                <span className="flex items-center gap-2">
-                                  <span
-                                    className="!w-2 !h-2"
-                                    style={{
-                                      background: colorHex || "#e5e7eb",
-                                    }}
-                                  ></span>
-                                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    {colorLabel}
-                                  </span>
-                                </span>
-                              )}
-                            </TableCell>
-
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
-                                variantOptionsFromAttr.length ? (
-                                  <Select
-                                    key={`edit-variant-${v.id}-${draft?.variant_id}-${attributeId}`}
-                                    options={variantOptionsFromAttr}
-                                    placeholder="Variant"
-                                    defaultValue={String(
-                                      draft?.variant_id ?? variantId,
-                                    )}
-                                    onChange={(val) =>
-                                      patchEditVariation(v.id, {
-                                        variant_id: Number(val),
-                                      })
-                                    }
-                                  />
-                                ) : (
-                                  <Input
-                                    type="number"
-                                    value={draft?.variant_id ?? variantId}
-                                    onChange={(e) =>
-                                      patchEditVariation(v.id, {
-                                        variant_id: safeNumber(
-                                          e.target.value,
-                                          variantId,
-                                        ),
-                                      })
-                                    }
-                                  />
-                                )
-                              ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {variantLabel}
-                                </span>
-                              )}
-                            </TableCell>
-
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
                                 <Input
                                   type="number"
-                                  value={draft.buying_price}
+                                  value={draft?.variant_id ?? variantId}
                                   onChange={(e) =>
                                     patchEditVariation(v.id, {
-                                      buying_price: safeNumber(
-                                        e.target.value,
-                                        draft.buying_price,
-                                      ),
+                                      variant_id: safeNumber(e.target.value, variantId),
                                     })
                                   }
                                 />
-                              ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {v.buying_price}
-                                </span>
                               )}
                             </TableCell>
 
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
+                            <TableCell className="px-4 py-2">
+                              <Input
+                                type="number"
+                                value={draft?.buying_price ?? v.buying_price}
+                                onChange={(e) =>
+                                  patchEditVariation(v.id, {
+                                    buying_price: safeNumber(e.target.value, v.buying_price),
+                                  })
+                                }
+                              />
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
+                              <Input
+                                type="number"
+                                value={draft?.selling_price ?? v.selling_price}
+                                onChange={(e) =>
+                                  patchEditVariation(v.id, {
+                                    selling_price: safeNumber(e.target.value, v.selling_price),
+                                  })
+                                }
+                              />
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
+                              <Input
+                                type="number"
+                                value={draft?.discount ?? v.discount}
+                                onChange={(e) =>
+                                  patchEditVariation(v.id, {
+                                    discount: safeNumber(e.target.value, v.discount),
+                                  })
+                                }
+                              />
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
+                              <Input
+                                type="number"
+                                value={draft?.stock ?? v.stock}
+                                onChange={(e) =>
+                                  patchEditVariation(v.id, {
+                                    stock: Math.max(0, safeNumber(e.target.value, v.stock)),
+                                  })
+                                }
+                              />
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
+                              <div className="flex items-center gap-2">
                                 <Input
-                                  type="number"
-                                  value={draft.selling_price}
+                                  value={draft?.sku ?? v.sku ?? ""}
                                   onChange={(e) =>
                                     patchEditVariation(v.id, {
-                                      selling_price: safeNumber(
-                                        e.target.value,
-                                        draft.selling_price,
-                                      ),
+                                      sku: String(e.target.value).slice(0, SKU_MAX_LENGTH),
                                     })
                                   }
+                                  wrapperClassName="min-w-[180px]"
                                 />
-                              ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {v.selling_price}
-                                </span>
-                              )}
-                            </TableCell>
-
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
-                                <Input
-                                  type="number"
-                                  value={draft.discount}
-                                  onChange={(e) =>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const productBase = name.trim() || brandNameById.get(brandId) || "PRODUCT";
+                                    const draftColorId = draft?.color_id ?? colorId;
+                                    const draftVariantId = draft?.variant_id ?? variantId;
+                                    const colorName = colorNameById.get(draftColorId) ?? `C${draftColorId}`;
+                                    const variantName = variantLabelById.get(draftVariantId) ?? variantLabel;
                                     patchEditVariation(v.id, {
-                                      discount: safeNumber(
-                                        e.target.value,
-                                        draft.discount,
-                                      ),
-                                    })
-                                  }
-                                />
-                              ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {v.discount}
-                                </span>
-                              )}
-                            </TableCell>
-
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
-                                <Input
-                                  type="number"
-                                  value={draft.stock}
-                                  onChange={(e) =>
-                                    patchEditVariation(v.id, {
-                                      stock: Math.max(
-                                        0,
-                                        safeNumber(e.target.value, draft.stock),
-                                      ),
-                                    })
-                                  }
-                                />
-                              ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {v.stock}
-                                </span>
-                              )}
-                            </TableCell>
-
-                            <TableCell className="px-4 py-4">
-                              {editing ? (
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    value={draft.sku}
-                                    onChange={(e) =>
-                                      patchEditVariation(v.id, {
-                                        sku: String(e.target.value).slice(
-                                          0,
-                                          SKU_MAX_LENGTH,
-                                        ),
-                                      })
-                                    }
-                                    wrapperClassName="min-w-[220px]"
-                                  />
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      const productBase =
-                                        name.trim() ||
-                                        brandNameById.get(brandId) ||
-                                        "PRODUCT";
-                                      const draftColorId =
-                                        draft?.color_id ?? colorId;
-                                      const draftVariantId =
-                                        draft?.variant_id ?? variantId;
-                                      const colorName =
-                                        colorNameById.get(draftColorId) ??
-                                        `C${draftColorId}`;
-                                      const variantName =
-                                        variantLabelById.get(draftVariantId) ??
-                                        variantLabel;
-                                      patchEditVariation(v.id, {
-                                        sku: buildSku({
-                                          productBase,
-                                          colorName,
-                                          variantName,
-                                        }),
-                                      });
-                                    }}
-                                  >
-                                    Generate
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {v.sku}
-                                </span>
-                              )}
-                            </TableCell>
-
-                            <TableCell className="px-4 py-4 sticky right-0 z-10 bg-white dark:bg-gray-900">
-                              <div className="flex items-center justify-end gap-2">
-                                {!editing ? (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-10 w-10"
-                                      ariaLabel="Edit variation"
-                                      onClick={() => startEditVariation(v)}
-                                    >
-                                      <Pencil className="h-4 w-4 text-brand-600" />
-                                    </Button>
-
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-10 w-10 border-error-200 text-error-500 hover:text-error-600 dark:border-error-500/30"
-                                      ariaLabel="Delete variation"
-                                      onClick={() => {
-                                        setVarDeleteId(v.id);
-                                        setVarDeleteOpen(true);
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-10 w-10"
-                                      ariaLabel="Cancel"
-                                      onClick={() => cancelEditVariation(v.id)}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-
-                                    <Button
-                                      size="icon"
-                                      className="h-10 w-10"
-                                      ariaLabel="Save"
-                                      onClick={() => {
-                                        const payload = varEdit[v.id];
-                                        if (!payload?.color_id)
-                                          return toast.error("Color required");
-                                        if (!payload?.variant_id)
-                                          return toast.error(
-                                            "Variant required",
-                                          );
-                                        if (payload.selling_price <= 0)
-                                          return toast.error(
-                                            "Selling price required",
-                                          );
-                                        updateVarMutation.mutate({
-                                          id: v.id,
-                                          payload,
-                                        });
-                                      }}
-                                      disabled={updateVarMutation.isPending}
-                                    >
-                                      <Save className="h-4 w-4" />
-                                    </Button>
-                                  </>
-                                )}
+                                      sku: buildSku({ productBase, colorName, variantName }),
+                                    });
+                                  }}
+                                >
+                                  Generate
+                                </Button>
                               </div>
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2 sticky right-0 z-10 bg-white dark:bg-gray-900">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 border-error-200 text-error-500 hover:text-error-600 dark:border-error-500/30"
+                                ariaLabel="Delete variation"
+                                onClick={() => {
+                                  setVarDeleteId(v.id);
+                                  setVarDeleteOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
                       })
                     ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={8}
-                          className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
-                        >
-                          No variations found for this product.
-                        </TableCell>
-                      </TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        No variations found for this product.
+                      </TableCell>
+                    </TableRow>
                     )}
                   </TableBody>
                 </Table>
