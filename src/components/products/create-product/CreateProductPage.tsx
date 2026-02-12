@@ -3,7 +3,20 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { X } from "lucide-react";
+import {
+  CheckCircle,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  Package,
+  Shield,
+  Star,
+  ToggleLeft,
+  Truck,
+  Video,
+  X,
+  Zap,
+} from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import Switch from "@/components/form/switch/Switch";
@@ -23,7 +36,6 @@ import Section from "./create-product-form/Section";
 import BasicSection from "./create-product-form/BasicSection";
 import VariationsSection from "./create-product-form/VariationsSection";
 import SeoSection from "./create-product-form/SeoSection";
-
 type Option = { value: string; label: string };
 type SkuMode = "auto" | "manual";
 const SKU_MAX_LENGTH = 21;
@@ -165,13 +177,23 @@ function getSuccessProductId(res: unknown): number | null {
 
 /* ----------------------------- UI Components ----------------------------- */
 
+/* ----------------------------- UI Components ----------------------------- */
+
 function PageHeader() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Product</h1>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Dynamic load: category, brand, color, attribute & attribute variants from API.
-      </p>
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          Create Product
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Fill in product details, variations, media, and SEO metadata.
+        </p>
+      </div>
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400">
+        <Package className="h-3 w-3" />
+        New Product
+      </span>
     </div>
   );
 }
@@ -192,20 +214,23 @@ function FloatingErrorBanner({
       <div
         className={cn(
           "mx-auto w-full max-w-[1200px]",
-          "rounded-[4px] border border-error-200 bg-error-50 px-4 py-3",
-          "text-sm font-medium text-error-700 shadow-theme-xs",
+          "rounded-xl border border-error-200 bg-error-50 px-5 py-4",
+          "text-sm font-medium text-error-700 shadow-lg",
           "dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300",
         )}
         role="alert"
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 flex-1 pr-2">{message}</p>
+          <div className="flex items-start gap-3">
+            <Shield className="mt-0.5 h-5 w-5 shrink-0 text-error-500" />
+            <p className="min-w-0 flex-1 pr-2">{message}</p>
+          </div>
 
           <button
             type="button"
             className={cn(
-              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border",
-              "border-error-200 bg-white/70 text-error-700 hover:bg-white",
+              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+              "border-error-200 bg-white/70 text-error-700 transition hover:bg-white",
               "dark:border-error-900/40 dark:bg-white/[0.03] dark:text-error-300 dark:hover:bg-white/[0.06]",
             )}
             onClick={onDismiss}
@@ -232,10 +257,21 @@ function MediaSection({
   setVideoUrl: (v: string) => void;
 }) {
   return (
-    <Section title="Media" description="Upload product images + paste a video URL (YouTube or direct video link).">
+    <Section
+      title="Media"
+      description="Upload product images and add a video URL."
+      icon={<ImageIcon className="h-5 w-5" />}
+    >
       <div className="space-y-6">
         <ImageMultiUploader label="Product Images" images={images} onChange={setImages} max={10} />
-        <VideoUploader label="Product Video URL" value={videoUrl} onChange={setVideoUrl} />
+
+        <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-white/[0.015]">
+          <div className="mb-3 flex items-center gap-2">
+            <Video className="h-4 w-4 text-brand-500" />
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Video URL</p>
+          </div>
+          <VideoUploader label="" value={videoUrl} onChange={setVideoUrl} />
+        </div>
       </div>
     </Section>
   );
@@ -253,14 +289,12 @@ function DescriptionsSection({
   setLongDescription: (v: string) => void;
 }) {
   return (
-    <Section title="Descriptions" description="Short and long description.">
+    <Section
+      title="Descriptions"
+      description="Describe the product for customers."
+      icon={<FileText className="h-5 w-5" />}
+    >
       <div className="space-y-6">
-        {/* <RichTextEditor
-          label="Short Description"
-          value={shortDescription}
-          onChange={setShortDescription}
-          heightClassName="min-h-[160px]"
-        /> */}
         <RichTextEditor
           label="Long Description"
           value={longDescription}
@@ -291,29 +325,66 @@ function FlagsSection({
     }>
   >;
 }) {
+  const items = [
+    {
+      key: "status" as const,
+      label: "Status",
+      description: "Product is active and visible",
+      icon: <ToggleLeft className="h-5 w-5" />,
+    },
+    {
+      key: "featured" as const,
+      label: "Featured",
+      description: "Show in featured collection",
+      icon: <Star className="h-5 w-5" />,
+    },
+    {
+      key: "best_deal" as const,
+      label: "Best Deal",
+      description: "Highlight as a best deal",
+      icon: <Zap className="h-5 w-5" />,
+    },
+  ];
+
   return (
-    <Section title="Flags" description="Visibility and marketing flags.">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {(
-          [
-            { key: "status", label: "Status" },
-            { key: "featured", label: "Featured" },
-            { key: "best_deal", label: "Best Deal" },
-          ] as const
-        ).map((item) => (
+    <Section
+      title="Flags & Visibility"
+      description="Marketing and visibility toggles."
+      icon={<ToggleLeft className="h-5 w-5" />}
+    >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
           <div
             key={item.key}
-            className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+            className={cn(
+              "group flex items-center justify-between rounded-xl border p-4 transition-all",
+              flags[item.key]
+                ? "border-brand-200 bg-brand-50/50 shadow-sm dark:border-brand-500/30 dark:bg-brand-500/5"
+                : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700",
+            )}
           >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
-              <Switch
-                key={`flag-${item.key}-${flags[item.key]}`}
-                label=""
-                defaultChecked={flags[item.key]}
-                onChange={(checked) => setFlags((p) => ({ ...p, [item.key]: checked }))}
-              />
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-lg transition",
+                  flags[item.key]
+                    ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400"
+                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500",
+                )}
+              >
+                {item.icon}
+              </span>
+              <div>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{item.label}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">{item.description}</p>
+              </div>
             </div>
+            <Switch
+              key={`flag-${item.key}-${flags[item.key]}`}
+              label=""
+              defaultChecked={flags[item.key]}
+              onChange={(checked) => setFlags((p) => ({ ...p, [item.key]: checked }))}
+            />
           </div>
         ))}
       </div>
@@ -752,10 +823,17 @@ export default function CreateProductPage() {
   // -------------------- UI --------------------
   if (initialLoading) {
     return (
-      <div className="space-y-3">
-        <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
-        <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
-        <div className="h-12 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+      <div className="space-y-5">
+        <div className="flex items-end justify-between">
+          <div className="space-y-2">
+            <div className="h-7 w-48 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
+            <div className="h-4 w-64 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800/60" />
+          </div>
+          <div className="h-7 w-28 animate-pulse rounded-full bg-gray-100 dark:bg-gray-800/60" />
+        </div>
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-48 w-full animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800/40" />
+        ))}
       </div>
     );
   }
@@ -785,8 +863,8 @@ export default function CreateProductPage() {
         brandOptions={brandOptions}
         subLoading={subLoading}
         childLoading={childLoading}
-        // ✅ if you update BasicSection placeholder text, it will show:
-        // "Select child category (optional)"
+      // ✅ if you update BasicSection placeholder text, it will show:
+      // "Select child category (optional)"
       />
 
       <VariationsSection

@@ -2,30 +2,17 @@ import { useMemo } from "react";
 import Section from "./Section";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { Globe } from "lucide-react";
 
 type Option = { value: string; label: string };
-type SkuMode = "auto" | "manual";
-
-type VariantRow = {
-  key: string; // `${colorId}__${variantId}`
-  colorId: number;
-  variantId: number;
-
-  buyingPrice: number;
-  sellingPrice: number;
-  discount: number;
-  stock: number;
-  sku: string;
-
-  active: boolean;
-};
-
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{children}</p>;
+  return (
+    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      {children}
+    </p>
+  );
 }
-
-
 
 function SeoSection({
   seo,
@@ -63,50 +50,109 @@ function SeoSection({
   );
 
   return (
-    <Section title="SEO" description="All SEO fields from API payload.">
+    <Section
+      title="SEO & Open Graph"
+      description="Search engine optimization and social sharing metadata."
+      icon={<Globe className="h-5 w-5" />}
+    >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="space-y-2">
-          <FieldLabel>Meta Title</FieldLabel>
-          <Input value={seo.meta_title} onChange={(e) => setSeo((p) => ({ ...p, meta_title: String(e.target.value) }))} />
+        <div>
+          <FieldLabel>META TITLE</FieldLabel>
+          <Input
+            value={seo.meta_title}
+            onChange={(e) =>
+              setSeo((p) => ({
+                ...p,
+                meta_title: String(e.target.value),
+              }))
+            }
+            placeholder="Page title for search engines"
+          />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Canonical URL</FieldLabel>
-          <Input value={seo.canonical_url} onChange={(e) => setSeo((p) => ({ ...p, canonical_url: String(e.target.value) }))} />
+        <div>
+          <FieldLabel>CANONICAL URL</FieldLabel>
+          <Input
+            value={seo.canonical_url}
+            onChange={(e) =>
+              setSeo((p) => ({
+                ...p,
+                canonical_url: String(e.target.value),
+              }))
+            }
+            placeholder="https://example.com/product"
+          />
         </div>
 
-        <div className="space-y-2 lg:col-span-2">
-          <FieldLabel>Meta Description</FieldLabel>
+        <div className="lg:col-span-2">
+          <FieldLabel>META DESCRIPTION</FieldLabel>
           <Input
             value={seo.meta_description}
-            onChange={(e) => setSeo((p) => ({ ...p, meta_description: String(e.target.value) }))}
-            placeholder="product meta description"
+            onChange={(e) =>
+              setSeo((p) => ({
+                ...p,
+                meta_description: String(e.target.value),
+              }))
+            }
+            placeholder="Brief description for search results"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">Tip: keep it under ~160 characters.</p>
+          <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+            Recommended: under 160 characters
+          </p>
         </div>
 
-        <div className="space-y-2 lg:col-span-2">
-          <FieldLabel>Meta Keywords</FieldLabel>
+        <div className="lg:col-span-2">
+          <FieldLabel>META KEYWORDS</FieldLabel>
           <Input
             value={seo.meta_keywords}
-            onChange={(e) => setSeo((p) => ({ ...p, meta_keywords: String(e.target.value) }))}
-            placeholder="shirt,vo"
+            onChange={(e) =>
+              setSeo((p) => ({
+                ...p,
+                meta_keywords: String(e.target.value),
+              }))
+            }
+            placeholder="keyword1, keyword2, keyword3"
           />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>OG Title</FieldLabel>
-          <Input value={seo.og_title} onChange={(e) => setSeo((p) => ({ ...p, og_title: String(e.target.value) }))} />
+        <div>
+          <FieldLabel>OG TITLE</FieldLabel>
+          <Input
+            value={seo.og_title}
+            onChange={(e) =>
+              setSeo((p) => ({
+                ...p,
+                og_title: String(e.target.value),
+              }))
+            }
+            placeholder="Social share title"
+          />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Robots</FieldLabel>
-          <Select options={robotsOptions} placeholder="Select robots" value={seo.robots} onChange={(v) => setSeo((p) => ({ ...p, robots: String(v) }))} />
+        <div>
+          <FieldLabel>ROBOTS</FieldLabel>
+          <Select
+            options={robotsOptions}
+            placeholder="Select robots directive"
+            value={seo.robots}
+            onChange={(v) =>
+              setSeo((p) => ({ ...p, robots: String(v) }))
+            }
+          />
         </div>
 
-        <div className="space-y-2 lg:col-span-2">
-          <FieldLabel>OG Description</FieldLabel>
-          <Input value={seo.og_description} onChange={(e) => setSeo((p) => ({ ...p, og_description: String(e.target.value) }))} />
+        <div className="lg:col-span-2">
+          <FieldLabel>OG DESCRIPTION</FieldLabel>
+          <Input
+            value={seo.og_description}
+            onChange={(e) =>
+              setSeo((p) => ({
+                ...p,
+                og_description: String(e.target.value),
+              }))
+            }
+            placeholder="Social share description"
+          />
         </div>
       </div>
     </Section>

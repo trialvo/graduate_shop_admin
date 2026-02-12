@@ -1,28 +1,17 @@
 import Input from "@/components/form/input/InputField";
 import Section from "./Section";
 import Select from "@/components/form/Select";
+import { Package } from "lucide-react";
 
 type Option = { value: string; label: string; status?: boolean };
-type SkuMode = "auto" | "manual";
-
-type VariantRow = {
-  key: string; // `${colorId}__${variantId}`
-  colorId: number;
-  variantId: number;
-
-  buyingPrice: number;
-  sellingPrice: number;
-  discount: number;
-  stock: number;
-  sku: string;
-
-  active: boolean;
-};
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{children}</p>;
+  return (
+    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      {children}
+    </p>
+  );
 }
-
 
 function BasicSection({
   productName,
@@ -67,48 +56,76 @@ function BasicSection({
   childLoading: boolean;
 }) {
   return (
-    <Section title="Basic" description="Name, slug, categories and brand.">
+    <Section
+      title="Basic Information"
+      description="Product name, slug, categories and brand."
+      icon={<Package className="h-5 w-5" />}
+    >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="space-y-2">
-          <FieldLabel>Name *</FieldLabel>
-          <Input value={productName} onChange={(e) => setProductName(String(e.target.value))} placeholder="Product name" />
+        <div>
+          <FieldLabel>PRODUCT NAME *</FieldLabel>
+          <Input
+            value={productName}
+            onChange={(e) => setProductName(String(e.target.value))}
+            placeholder="Enter product name"
+          />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Slug *</FieldLabel>
-          <Input value={productSlug} disabled placeholder="product-slug" />
+        <div>
+          <FieldLabel>SLUG</FieldLabel>
+          <Input value={productSlug} disabled placeholder="auto-generated-slug" />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Category *</FieldLabel>
-          <Select options={mainOptions} placeholder="Select category" value={String(mainCategoryId)} onChange={(v) => setMainCategoryId(Number(v))} />
+        <div>
+          <FieldLabel>MAIN CATEGORY *</FieldLabel>
+          <Select
+            options={mainOptions}
+            placeholder="Select main category"
+            value={String(mainCategoryId)}
+            onChange={(v) => setMainCategoryId(Number(v))}
+          />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Sub Category *</FieldLabel>
+        <div>
+          <FieldLabel>SUB CATEGORY *</FieldLabel>
           <Select
             key={`sub-${mainCategoryId}-${subCategoryId}`}
             options={subOptions}
-            placeholder={subLoading ? "Loading sub categories..." : "Select sub category"}
+            placeholder={
+              subLoading
+                ? "Loading sub categories..."
+                : "Select sub category"
+            }
             value={String(subCategoryId)}
             onChange={(v) => setSubCategoryId(Number(v))}
           />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Child Category *</FieldLabel>
+        <div>
+          <FieldLabel>CHILD CATEGORY</FieldLabel>
           <Select
             key={`child-${subCategoryId}-${childCategoryId}`}
             options={childOptions}
-            placeholder={!subCategoryId ? "Select sub category first" : childLoading ? "Loading child categories..." : "Select child category"}
+            placeholder={
+              !subCategoryId
+                ? "Select sub category first"
+                : childLoading
+                  ? "Loading child categories..."
+                  : "Select child category (optional)"
+            }
             value={String(childCategoryId)}
             onChange={(v) => setChildCategoryId(Number(v))}
           />
         </div>
 
-        <div className="space-y-2">
-          <FieldLabel>Brand *</FieldLabel>
-          <Select options={brandOptions} placeholder="Select brand" value={String(brandId)} onChange={(v) => setBrandId(Number(v))} />
+        <div>
+          <FieldLabel>BRAND *</FieldLabel>
+          <Select
+            options={brandOptions}
+            placeholder="Select brand"
+            value={String(brandId)}
+            onChange={(v) => setBrandId(Number(v))}
+          />
         </div>
       </div>
     </Section>
