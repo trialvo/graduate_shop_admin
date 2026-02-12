@@ -2,7 +2,6 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { useMemo } from "react";
 
 import Select from "@/components/form/Select";
-import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 
 type PageItem = number | "ellipsis";
@@ -22,7 +21,7 @@ function clamp(n: number, min: number, max: number): number {
 }
 
 function buildPageItems(totalPages: number, page: number): PageItem[] {
-  if (totalPages <= 7) {
+  if (totalPages <= 5) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
@@ -57,7 +56,10 @@ export default function Pagination({
   pageSizeOptions = [10, 20, 50, 100],
   className,
 }: PaginationProps) {
-  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalItems / Math.max(1, pageSize))
+  );
   const safePage = clamp(page, 1, totalPages);
   const start = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const end = Math.min(totalItems, safePage * pageSize);
@@ -78,182 +80,117 @@ export default function Pagination({
 
   const go = (p: number) => onPageChange(clamp(p, 1, totalPages));
 
-  const PagePill = ({
-    active,
-    children,
-    onClick,
-    disabled,
-    ariaCurrent,
-  }: {
-    active?: boolean;
-    children: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-    ariaCurrent?: "page";
-  }) => {
-    if (!onClick) {
-      return (
-        <span
-          className={cn(
-            "inline-flex h-9 min-w-[40px] items-center justify-center rounded-[4px] px-3 text-sm font-semibold",
-            "border border-transparent text-gray-500 dark:text-gray-400"
-          )}
-        >
-          {children}
-        </span>
-      );
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        aria-current={ariaCurrent}
-        className={cn(
-          "inline-flex h-9 min-w-[40px] items-center justify-center rounded-[4px] px-3 text-sm font-semibold",
-          "transition outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500/30",
-          active
-            ? "bg-brand-500 text-white shadow-theme-xs"
-            : cn(
-                "border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
-                "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.04]"
-              ),
-          disabled && "cursor-not-allowed opacity-60"
-        )}
-      >
-        {children}
-      </button>
-    );
-  };
-
   return (
     <div
       className={cn(
-        "rounded-[4px] border border-gray-200 bg-white px-3 py-3 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:px-4 sm:py-4",
-        "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
+        "rounded-xl border border-gray-200/80 bg-white px-3 py-2.5 shadow-sm",
+        "dark:border-gray-800 dark:bg-gray-900",
         className
       )}
     >
-      {/* Left summary */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <span className="inline-flex items-center gap-1">
-          Page{" "}
+      {/* Row — always flex-wrap so it never overflows */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Left: Summary text */}
+        <p className="text-[11px] text-gray-500 dark:text-gray-400">
           <span className="font-semibold text-gray-700 dark:text-gray-200">
-            {safePage}
-          </span>{" "}
-          of{" "}
-          <span className="font-semibold text-gray-700 dark:text-gray-200">
-            {totalPages}
-          </span>
-        </span>
-
-        <span className="hidden h-3 w-px bg-gray-200 dark:bg-gray-800 sm:inline-block" />
-
-        <span className="inline-flex items-center gap-1">
-          Showing{" "}
-          <span className="font-semibold text-gray-700 dark:text-gray-200">
-            {start}
-          </span>
-          –
-          <span className="font-semibold text-gray-700 dark:text-gray-200">
-            {end}
+            {start}–{end}
           </span>{" "}
           of{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-200">
             {totalItems}
           </span>
-        </span>
-      </div>
+        </p>
 
-      {/* Right controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        {onPageSizeChange ? (
-          <div className="min-w-[170px]">
-            <Select
-              key={`pageSize-${pageSize}`}
-              options={pageSizeSelectOptions}
-              placeholder="Page size"
-              defaultValue={String(pageSize)}
-              onChange={(v) => {
-                const next = Number(v);
-                if (!Number.isFinite(next) || next <= 0) return;
-                onPageSizeChange(next);
-              }}
-            />
-          </div>
-        ) : null}
+        {/* Right: Controls */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Page size select */}
+          {onPageSizeChange ? (
+            <div className="w-[110px]">
+              <Select
+                key={`pageSize-${pageSize}`}
+                options={pageSizeSelectOptions}
+                placeholder="Size"
+                defaultValue={String(pageSize)}
+                onChange={(v) => {
+                  const next = Number(v);
+                  if (!Number.isFinite(next) || next <= 0) return;
+                  onPageSizeChange(next);
+                }}
+              />
+            </div>
+          ) : null}
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          {/* Prev button */}
+          <button
+            type="button"
             onClick={() => go(safePage - 1)}
             disabled={safePage <= 1}
-            startIcon={<ChevronLeft size={16} />}
+            className={cn(
+              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition",
+              "hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+              "disabled:cursor-not-allowed disabled:opacity-40"
+            )}
+            aria-label="Previous page"
           >
-            <span className="hidden sm:inline">Prev</span>
-          </Button>
+            <ChevronLeft size={15} />
+          </button>
 
-          {/* Pages (desktop) */}
-          <div className="hidden items-center gap-1 md:flex">
+          {/* Page pills — desktop */}
+          <div className="hidden items-center gap-1 sm:flex">
             {items.map((it, idx) => {
               if (it === "ellipsis") {
                 return (
-                  <PagePill key={`el-${idx}`}>
-                    <MoreHorizontal size={16} />
-                  </PagePill>
+                  <span
+                    key={`el-${idx}`}
+                    className="inline-flex h-8 w-8 items-center justify-center text-gray-400 dark:text-gray-500"
+                  >
+                    <MoreHorizontal size={14} />
+                  </span>
                 );
               }
 
               const active = it === safePage;
               return (
-                <PagePill
+                <button
                   key={it}
-                  active={active}
-                  ariaCurrent={active ? "page" : undefined}
+                  type="button"
+                  aria-current={active ? "page" : undefined}
                   onClick={() => go(it)}
+                  className={cn(
+                    "inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-semibold transition",
+                    active
+                      ? "bg-brand-500 text-white shadow-sm"
+                      : cn(
+                        "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
+                        "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                      )
+                  )}
                 >
                   {it}
-                </PagePill>
+                </button>
               );
             })}
           </div>
 
           {/* Compact mobile indicator */}
-          <div className="flex items-center rounded-[4px] border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 md:hidden">
-            {safePage} / {totalPages}
-          </div>
+          <span className="inline-flex h-8 items-center rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:hidden">
+            {safePage}/{totalPages}
+          </span>
 
-          <Button
-            variant="outline"
-            size="sm"
+          {/* Next button */}
+          <button
+            type="button"
             onClick={() => go(safePage + 1)}
             disabled={safePage >= totalPages}
-            endIcon={<ChevronRight size={16} />}
+            className={cn(
+              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition",
+              "hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+              "disabled:cursor-not-allowed disabled:opacity-40"
+            )}
+            aria-label="Next page"
           >
-            <span className="hidden sm:inline">Next</span>
-          </Button>
-        </div>
-
-        {/* Quick jump (desktop) */}
-        <div className="hidden items-center gap-1 lg:flex">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => go(1)}
-            disabled={safePage <= 1}
-          >
-            First
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => go(totalPages)}
-            disabled={safePage >= totalPages}
-          >
-            Last
-          </Button>
+            <ChevronRight size={15} />
+          </button>
         </div>
       </div>
     </div>

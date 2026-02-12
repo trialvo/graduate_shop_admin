@@ -2,7 +2,17 @@
 "use client";
 
 import React from "react";
-import { Search, RefreshCw } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  Mail,
+  MessageSquare,
+  Archive,
+  Eye,
+  MailOpen,
+  Filter,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
@@ -10,8 +20,15 @@ import InputField from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import { cn } from "@/lib/utils";
 
-import type { ContactMessageCountsData, ContactMessageFilters, ContactTabKey } from "./types";
-import type { ContactMessageBoolFilter, ContactMessageStatusFilter } from "@/api/contact-messages.api";
+import type {
+  ContactMessageCountsData,
+  ContactMessageFilters,
+  ContactTabKey,
+} from "./types";
+import type {
+  ContactMessageBoolFilter,
+  ContactMessageStatusFilter,
+} from "@/api/contact-messages.api";
 
 type Props = {
   counts: ContactMessageCountsData | null;
@@ -21,33 +38,33 @@ type Props = {
   isRefetching?: boolean;
 };
 
-function StatCard({
-  title,
-  value,
-  active,
-  onClick,
-}: {
-  title: string;
-  value: number;
-  active?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-[4px] border px-4 py-3 text-left shadow-theme-xs transition",
-        "border-gray-200 bg-white hover:bg-gray-50",
-        "dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-white/[0.03]",
-        active ? "ring-2 ring-brand-500/30" : "ring-0"
-      )}
-    >
-      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{title}</p>
-      <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">{value}</p>
-    </button>
-  );
-}
+/* ── Stat pill tab (compact horizontal) ── */
+const STAT_COLORS: Record<string, string> = {
+  all: "text-brand-600 dark:text-brand-400",
+  unread: "text-sky-600 dark:text-sky-400",
+  unreplied: "text-amber-600 dark:text-amber-400",
+  read_but_not_replied: "text-orange-600 dark:text-orange-400",
+  archived: "text-gray-500 dark:text-gray-400",
+};
+
+const STAT_ACTIVE_BG: Record<string, string> = {
+  all: "bg-brand-50 border-brand-200 dark:bg-brand-500/10 dark:border-brand-500/30",
+  unread: "bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30",
+  unreplied:
+    "bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30",
+  read_but_not_replied:
+    "bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/30",
+  archived:
+    "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600",
+};
+
+const STAT_ICONS: Record<string, React.ReactNode> = {
+  all: <Mail size={13} />,
+  unread: <MailOpen size={13} />,
+  unreplied: <MessageSquare size={13} />,
+  read_but_not_replied: <Eye size={13} />,
+  archived: <Archive size={13} />,
+};
 
 export default function ContactMessagesFiltersBar({
   counts,
@@ -57,6 +74,8 @@ export default function ContactMessagesFiltersBar({
   isRefetching,
 }: Props) {
   const { t } = useTranslation();
+  const [showFilters, setShowFilters] = React.useState(false);
+
   const c = counts ?? {
     total: 0,
     unread: 0,
@@ -67,7 +86,10 @@ export default function ContactMessagesFiltersBar({
   const statusOptions = React.useMemo(
     () => [
       { value: "active", label: t("contactMessages.filters.statusActive") },
-      { value: "archived", label: t("contactMessages.filters.statusArchived") },
+      {
+        value: "archived",
+        label: t("contactMessages.filters.statusArchived"),
+      },
       { value: "all", label: t("contactMessages.filters.statusAll") },
     ],
     [t]
@@ -83,7 +105,6 @@ export default function ContactMessagesFiltersBar({
   );
 
   const setTab = (tab: ContactTabKey) => {
-    // The backend supports only is_read/is_replied + status filters, so we map tabs to those.
     if (tab === "unread") {
       onChange({ tab, status: "active", is_read: "false", is_replied: "all" });
       return;
@@ -93,73 +114,156 @@ export default function ContactMessagesFiltersBar({
       return;
     }
     if (tab === "read_but_not_replied") {
-      onChange({ tab, status: "active", is_read: "true", is_replied: "false" });
+      onChange({
+        tab,
+        status: "active",
+        is_read: "true",
+        is_replied: "false",
+      });
       return;
     }
     if (tab === "archived") {
-      onChange({ tab, status: "archived", is_read: "all", is_replied: "all" });
+      onChange({
+        tab,
+        status: "archived",
+        is_read: "all",
+        is_replied: "all",
+      });
       return;
     }
     onChange({ tab, status: "active", is_read: "all", is_replied: "all" });
   };
 
+  const tabs: { key: ContactTabKey; label: string; count: number }[] = [
+    { key: "all", label: t("contactMessages.stats.total"), count: c.total },
+    {
+      key: "unread",
+      label: t("contactMessages.stats.unread"),
+      count: c.unread,
+    },
+    {
+      key: "unreplied",
+      label: t("contactMessages.stats.unreplied"),
+      count: c.unreplied,
+    },
+    {
+      key: "read_but_not_replied",
+      label: t("contactMessages.stats.readButNotReplied"),
+      count: c.read_but_not_replied,
+    },
+    {
+      key: "archived",
+      label: t("contactMessages.stats.archived"),
+      count: 0,
+    },
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <StatCard
-          title={t("contactMessages.stats.total")}
-          value={c.total}
-          active={filters.tab === "all"}
-          onClick={() => setTab("all")}
-        />
-        <StatCard
-          title={t("contactMessages.stats.unread")}
-          value={c.unread}
-          active={filters.tab === "unread"}
-          onClick={() => setTab("unread")}
-        />
-        <StatCard
-          title={t("contactMessages.stats.unreplied")}
-          value={c.unreplied}
-          active={filters.tab === "unreplied"}
-          onClick={() => setTab("unreplied")}
-        />
-        <StatCard
-          title={t("contactMessages.stats.readButNotReplied")}
-          value={c.read_but_not_replied}
-          active={filters.tab === "read_but_not_replied"}
-          onClick={() => setTab("read_but_not_replied")}
-        />
-        <StatCard
-          title={t("contactMessages.stats.archived")}
-          value={Math.max(0, c.total - (filters.status === "archived" ? 0 : 0))}
-          active={filters.tab === "archived"}
-          onClick={() => setTab("archived")}
-        />
+    <div className="space-y-3">
+      {/* ── Tab Pills + Actions Row ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Stat tabs */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {tabs.map((tab) => {
+            const active = filters.tab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setTab(tab.key)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all duration-150",
+                  active
+                    ? STAT_ACTIVE_BG[tab.key]
+                    : "border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800",
+                  STAT_COLORS[tab.key]
+                )}
+              >
+                {STAT_ICONS[tab.key]}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                    active
+                      ? "bg-white/60 dark:bg-black/20"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                  )}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Actions */}
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition",
+              showFilters
+                ? "border-brand-200 bg-brand-50 text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
+                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+            )}
+          >
+            <SlidersHorizontal size={13} />
+            <span className="hidden sm:inline">Filters</span>
+          </button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefetch}
+            startIcon={
+              <RefreshCw
+                size={14}
+                className={isRefetching ? "animate-spin" : ""}
+              />
+            }
+            disabled={isRefetching}
+          >
+            <span className="hidden sm:inline">
+              {isRefetching
+                ? t("contactMessages.filters.refreshing")
+                : t("contactMessages.filters.refresh")}
+            </span>
+          </Button>
+        </div>
       </div>
 
-      <div
-        className={cn(
-          "rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs",
-          "dark:border-gray-800 dark:bg-gray-900"
-        )}
-      >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[760px] lg:grid-cols-3">
+      {/* ── Collapsible Filters ── */}
+      {showFilters && (
+        <div
+          className={cn(
+            "rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm",
+            "dark:border-gray-800 dark:bg-gray-900",
+            "animate-in slide-in-from-top-1 fade-in duration-200"
+          )}
+        >
+          <div className="flex items-center gap-2 pb-3">
+            <Filter size={14} className="text-gray-400" />
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Advanced Filters
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {t("contactMessages.filters.searchLabel")}
               </p>
               <InputField
                 value={filters.search}
                 onChange={(e) => onChange({ search: e.target.value })}
                 placeholder={t("contactMessages.filters.searchPlaceholder")}
-                startIcon={<Search size={16} />}
+                startIcon={<Search size={14} />}
               />
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {t("contactMessages.filters.subjectLabel")}
               </p>
               <InputField
@@ -170,59 +274,58 @@ export default function ContactMessagesFiltersBar({
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {t("contactMessages.filters.statusLabel")}
               </p>
               <Select
                 options={statusOptions}
                 placeholder={t("contactMessages.filters.statusPlaceholder")}
                 value={filters.status}
-                onChange={(v) => onChange({ status: v as ContactMessageStatusFilter, tab: "all" })}
+                onChange={(v) =>
+                  onChange({
+                    status: v as ContactMessageStatusFilter,
+                    tab: "all",
+                  })
+                }
               />
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {t("contactMessages.filters.readLabel")}
               </p>
               <Select
                 options={boolOptions}
                 placeholder={t("contactMessages.filters.readPlaceholder")}
                 value={filters.is_read}
-                onChange={(v) => onChange({ is_read: v as ContactMessageBoolFilter, tab: "all" })}
+                onChange={(v) =>
+                  onChange({
+                    is_read: v as ContactMessageBoolFilter,
+                    tab: "all",
+                  })
+                }
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:w-[360px]">
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {t("contactMessages.filters.repliedLabel")}
               </p>
               <Select
                 options={boolOptions}
                 placeholder={t("contactMessages.filters.repliedPlaceholder")}
                 value={filters.is_replied}
-                onChange={(v) => onChange({ is_replied: v as ContactMessageBoolFilter, tab: "all" })}
+                onChange={(v) =>
+                  onChange({
+                    is_replied: v as ContactMessageBoolFilter,
+                    tab: "all",
+                  })
+                }
               />
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={onRefetch}
-                startIcon={<RefreshCw size={16} />}
-                disabled={isRefetching}
-              >
-                {isRefetching
-                  ? t("contactMessages.filters.refreshing")
-                  : t("contactMessages.filters.refresh")}
-              </Button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
