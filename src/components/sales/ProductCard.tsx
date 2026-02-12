@@ -1,5 +1,5 @@
 import React from "react";
-import { BadgeCheck, Package, Tag, Truck } from "lucide-react";
+import { Star, Tag, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -46,25 +46,28 @@ export default function ProductCard({ product, onClick }: Props) {
   const stockSummary = p?.stock_summary ?? null;
   const inStock = stockSummary?.in_stock === true;
   const totalStock = Number(stockSummary?.total_stock ?? 0);
-  const variationCount = Number(stockSummary?.variation_count ?? (p?.variations?.length ?? 0));
+  const variationCount = Number(
+    stockSummary?.variation_count ?? (p?.variations?.length ?? 0)
+  );
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "group w-full overflow-hidden rounded-2xl border border-gray-200 bg-white text-left shadow-theme-xs transition",
-        "hover:shadow-theme-md hover:ring-1 hover:ring-brand-500/20",
-        "dark:border-gray-800 dark:bg-gray-950 dark:hover:ring-brand-400/20"
+        "group relative w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white text-left",
+        "shadow-sm transition-all duration-200",
+        "hover:border-brand-200 hover:shadow-md hover:ring-1 hover:ring-brand-100",
+        "dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-500/30 dark:hover:ring-brand-500/10"
       )}
     >
-      {/* Image */}
-      <div className="relative">
-        <div className="aspect-[4/3] w-full overflow-hidden bg-gray-50 dark:bg-white/[0.04]">
+      {/* ── Image Area ── */}
+      <div className="relative overflow-hidden">
+        <div className="aspect-[4/3] w-full bg-gray-50 dark:bg-white/[0.03]">
           <img
             src={cover}
             alt={name}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
             onError={(event) => {
               const target = event.currentTarget;
@@ -75,102 +78,104 @@ export default function ProductCard({ product, onClick }: Props) {
           />
         </div>
 
-        {/* Top badges */}
-        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+        {/* Gradient overlay on hover */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+        {/* Top-left badges row */}
+        <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
           {p?.featured ? (
-            <span className="rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-semibold text-white">
-              Featured
+            <span className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              <Star className="h-2.5 w-2.5" /> Featured
             </span>
           ) : null}
           {p?.best_deal ? (
-            <span className="rounded-full bg-success-600 px-2.5 py-1 text-[11px] font-semibold text-white">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
               Best Deal
             </span>
           ) : null}
           {p?.free_delivery ? (
-            <span className="rounded-full bg-gray-900/80 px-2.5 py-1 text-[11px] font-semibold text-white">
-              Free Delivery
+            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-900/75 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm backdrop-blur-sm">
+              <Truck className="h-2.5 w-2.5" /> Free
             </span>
           ) : null}
         </div>
 
-        {/* Stock badge */}
-        <div className="absolute right-3 top-3">
+        {/* Top-right stock badge */}
+        <div className="absolute right-2.5 top-2.5">
           <span
             className={cn(
-              "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-              inStock ? "bg-success-50 text-success-700" : "bg-error-50 text-error-700",
-              "dark:bg-white/10 dark:text-white"
+              "rounded-lg px-2 py-0.5 text-[10px] font-bold shadow-sm backdrop-blur-sm",
+              inStock
+                ? "bg-emerald-50/90 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                : "bg-red-50/90 text-red-700 dark:bg-red-500/20 dark:text-red-300"
             )}
           >
-            {inStock ? "In Stock" : "Out of Stock"}
+            {inStock ? "In Stock" : "Out"}
           </span>
         </div>
 
         {/* Discount chip */}
         {discount ? (
-          <div className="absolute bottom-3 left-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-warning-500 px-2.5 py-1 text-[11px] font-semibold text-white">
-              <Tag size={12} />
-              Discount
+          <div className="absolute bottom-2.5 left-2.5">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              <Tag className="h-2.5 w-2.5" /> Sale
             </span>
           </div>
         ) : null}
       </div>
 
-      {/* Content */}
-      <div className="p-4">
+      {/* ── Content ── */}
+      <div className="p-3">
+        {/* Name + Price */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
+            <p className="truncate text-[13px] font-bold text-gray-900 dark:text-white">
               {name}
-            </div>
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              ID: {String(p?.id)} • Brand ID: {String(p?.brand_id ?? "-")}
-            </div>
+            </p>
+            <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
+              ID: {String(p?.id)}
+            </p>
           </div>
 
-          <div className="shrink-0 text-right">
-            <div className="text-[11px] text-gray-500 dark:text-gray-400">Price</div>
-            <div className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-              {range ? (range.min === range.max ? formatBdt(range.min) : `${formatBdt(range.min)} - ${formatBdt(range.max)}`) : "-"}
-            </div>
-          </div>
-        </div>
-
-        {/* meta row */}
-        <div className="mt-3 grid grid-cols-12 gap-2">
-          <div className="col-span-6 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.04]">
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-              <Package size={14} className="text-gray-400" />
-              <span className="font-semibold">{variationCount}</span>
-              <span>Variations</span>
-            </div>
-          </div>
-
-          <div className="col-span-6 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.04]">
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-              <BadgeCheck size={14} className="text-gray-400" />
-              <span className="font-semibold">{Number.isFinite(totalStock) ? totalStock : 0}</span>
-              <span>Stock</span>
-            </div>
-          </div>
-
-          <div className="col-span-12 rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                <Truck size={14} className="text-gray-400" />
-                <span>Category</span>
-              </div>
-              <div className="truncate text-gray-700 dark:text-gray-200">
-                Sub: {String(p?.sub_category_id ?? "-")} • Child: {String(p?.child_category_id ?? "-")}
-              </div>
-            </div>
+          <div className="flex-shrink-0 text-right">
+            <p className="text-[13px] font-extrabold text-brand-600 dark:text-brand-400">
+              {range
+                ? range.min === range.max
+                  ? formatBdt(range.min)
+                  : `${formatBdt(range.min)} – ${formatBdt(range.max)}`
+                : "—"}
+            </p>
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-          Updated: {p?.updated_at ? String(p.updated_at).slice(0, 10) : "-"}
+        {/* Meta row */}
+        <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+          <div className="flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50/60 py-1.5 dark:border-gray-800 dark:bg-white/[0.03]">
+            <span className="text-[13px] font-bold text-gray-800 dark:text-gray-200">
+              {variationCount}
+            </span>
+            <span className="text-[9px] font-medium text-gray-400 dark:text-gray-500">
+              Variants
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50/60 py-1.5 dark:border-gray-800 dark:bg-white/[0.03]">
+            <span className={cn("text-[13px] font-bold", inStock ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
+              {Number.isFinite(totalStock) ? totalStock : 0}
+            </span>
+            <span className="text-[9px] font-medium text-gray-400 dark:text-gray-500">
+              Stock
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50/60 py-1.5 dark:border-gray-800 dark:bg-white/[0.03]">
+            <span className="text-[13px] font-bold text-gray-800 dark:text-gray-200">
+              {String(p?.sub_category_id ?? "–")}
+            </span>
+            <span className="text-[9px] font-medium text-gray-400 dark:text-gray-500">
+              Sub Cat
+            </span>
+          </div>
         </div>
       </div>
     </button>
