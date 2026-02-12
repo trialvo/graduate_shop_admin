@@ -3,7 +3,7 @@ import { dashboardStatusData } from "../../pages/Dashboard/dashboardStatusData";
 
 const OrderStatusGrid = () => {
   return (
-    <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
+    <div className="grid h-full grid-cols-2 gap-4 content-stretch">
       {dashboardStatusData.map((item) => (
         <OrderStatusCard key={item.id} item={item} />
       ))}

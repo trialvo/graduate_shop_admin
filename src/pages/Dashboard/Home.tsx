@@ -31,11 +31,11 @@ export default function Home() {
 
         {/* Statistics Chart + Order Statuses */}
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 xl:col-span-8">
+          <div className="col-span-12 xl:col-span-8 flex">
             <StatisticsChart />
           </div>
 
-          <div className="col-span-12 xl:col-span-4">
+          <div className="col-span-12 xl:col-span-4 flex">
             <OrderStatusGrid />
           </div>
         </div>

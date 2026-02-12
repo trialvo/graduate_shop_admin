@@ -174,7 +174,7 @@ const StatisticsChart: React.FC = () => {
   );
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
+    <div className="w-full flex-1 rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

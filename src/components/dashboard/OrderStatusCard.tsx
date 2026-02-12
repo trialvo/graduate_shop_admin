@@ -8,7 +8,7 @@ interface Props {
 const OrderStatusCard = ({ item }: Props) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
+    <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <div
