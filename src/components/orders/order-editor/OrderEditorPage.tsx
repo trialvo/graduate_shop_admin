@@ -2,6 +2,7 @@ import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { ArrowLeft, AlertCircle, RefreshCw, Hash } from "lucide-react";
 
 import OrderEditorHeader from "./OrderEditorHeader";
 import OrderFormCard from "./OrderFormCard";
@@ -132,7 +133,7 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
       method: firstCourier?.courier_provider ?? "manual",
       consignmentId:
         firstCourier?.reference_id !== null &&
-        firstCourier?.reference_id !== undefined
+          firstCourier?.reference_id !== undefined
           ? String(firstCourier.reference_id)
           : (firstCourier?.memo ?? ""),
       trackingUrl: firstCourier?.tracking_number
@@ -165,7 +166,7 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
 
 type Props = {
   orderId: number | null;
-  onBack?: () => void; // NEW
+  onBack?: () => void;
 };
 
 const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
@@ -404,28 +405,58 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   const handleOpenStickerGenerator = () =>
     toast("Sticker generator not implemented yet");
 
+  // ─── No order ID ───────────────────────────────────────────
   if (!orderId) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
-        <div className="mx-auto w-full">
-          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              Missing orderId in URL. Example:{" "}
-              <span className="font-semibold">/order-editor?orderId=23</span>
-            </div>
+      <div className="mx-auto w-full">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+            <AlertCircle size={16} className="text-amber-500" />
+            Missing orderId in URL. Example:{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              /order-editor?orderId=23
+            </span>
           </div>
         </div>
       </div>
     );
   }
 
+  // ─── Loading ───────────────────────────────────────────────
   if (detailQuery.isLoading || !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
-        <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
-          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              Loading order...
+      <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
+        <div className="space-y-4">
+          {/* Skeleton header */}
+          <div className="animate-pulse rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-xl bg-gray-200 dark:bg-gray-700" />
+              <div className="space-y-2">
+                <div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3 w-32 rounded bg-gray-100 dark:bg-gray-800" />
+              </div>
+            </div>
+          </div>
+          {/* Skeleton body */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            <div className="space-y-4 lg:col-span-8">
+              <div className="animate-pulse rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                <div className="space-y-3">
+                  <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-10 w-full rounded-lg bg-gray-100 dark:bg-gray-800" />
+                  <div className="h-10 w-full rounded-lg bg-gray-100 dark:bg-gray-800" />
+                  <div className="h-10 w-2/3 rounded-lg bg-gray-100 dark:bg-gray-800" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4 lg:col-span-4">
+              <div className="animate-pulse rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                <div className="space-y-3">
+                  <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-4 w-full rounded bg-gray-100 dark:bg-gray-800" />
+                  <div className="h-4 w-full rounded bg-gray-100 dark:bg-gray-800" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -433,28 +464,35 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     );
   }
 
+  // ─── Error ─────────────────────────────────────────────────
   if (detailQuery.isError) {
     const msg = (detailQuery.error as any)?.message ?? "Failed to load order";
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
-        <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
-          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.5)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
-            <div className="text-sm font-semibold text-red-600 dark:text-red-400">
-              {msg}
+      <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
+        <div className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm dark:border-red-500/30 dark:bg-gray-900">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400">
+              <AlertCircle size={20} />
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {onBack ? (
-                <Button onClick={onBack} variant="primary" size="sm">
-                  Back to Orders
+            <div>
+              <div className="font-semibold text-red-600 dark:text-red-400">
+                {msg}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {onBack ? (
+                  <Button onClick={onBack} variant="primary" size="sm" startIcon={<ArrowLeft size={14} />}>
+                    Back to Orders
+                  </Button>
+                ) : null}
+                <Button
+                  onClick={() => detailQuery.refetch()}
+                  variant="outline"
+                  size="sm"
+                  startIcon={<RefreshCw size={14} />}
+                >
+                  Retry
                 </Button>
-              ) : null}
-              <Button
-                onClick={() => detailQuery.refetch()}
-                variant="outline"
-                size="sm"
-              >
-                Retry
-              </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -467,120 +505,121 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   const courierOption = detailQuery.data?.courierOption;
 
+  // ─── Main Layout ───────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-12 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
-      <div className="mx-auto w-full">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {onBack ? (
-              <Button onClick={onBack} size="sm" variant="outline">
-                Back to Orders
-              </Button>
-            ) : null}
-          </div>
-
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:text-gray-300">
-            <span className="uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              Order ID
-            </span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {orderId}
-            </span>
-          </div>
+    <div className="mx-auto w-full">
+      {/* Top bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {onBack ? (
+            <Button onClick={onBack} size="sm" variant="outline" startIcon={<ArrowLeft size={14} />}>
+              Back to Orders
+            </Button>
+          ) : null}
         </div>
 
-        <div className="mt-6 space-y-6">
-          <OrderEditorHeader
-            orderNumber={data.orderNumber}
-            orderStatus={data.orderStatus}
-            paymentStatus={data.paymentStatus}
-            orderDateLabel={formatDateLabel(data.orderDate)}
-            paymentLabel={paymentLabel}
-            statusLabel={statusLabel(data.orderStatus)}
-            customerIp={data.customerIp}
-          />
+        <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <Hash size={12} className="text-gray-400" />
+          <span className="uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Order ID
+          </span>
+          <span className="font-bold text-gray-900 dark:text-white">
+            {orderId}
+          </span>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="space-y-6 lg:col-span-8">
-              <OrderFormCard
-                values={{
-                  billingName: data.billingName,
-                  shippingAddress: data.shippingAddress,
-                  orderStatus: data.orderStatus,
-                  phone: data.phone,
-                  altPhone: data.altPhone,
-                  paymentStatus: data.paymentStatus,
-                  deliveryType: data.deliveryType,
-                  city: data.city,
-                  postalCode: data.postalCode,
-                  email: data.email,
-                  paymentMethod: data.paymentMethod,
-                  note: data.note,
-                }}
-                onChange={(key, value) => handleChangeForm(key, value as never)}
-                onSubmit={handleSubmitTop}
-              />
+      <div className="mt-6 space-y-6">
+        <OrderEditorHeader
+          orderNumber={data.orderNumber}
+          orderStatus={data.orderStatus}
+          paymentStatus={data.paymentStatus}
+          orderDateLabel={formatDateLabel(data.orderDate)}
+          paymentLabel={paymentLabel}
+          statusLabel={statusLabel(data.orderStatus)}
+          customerIp={data.customerIp}
+        />
 
-              <ProductCalculationsCard
-                products={data.products}
-                onChangeLine={handleChangeLine}
-                onDeleteLine={handleDeleteLine}
-                onAddLine={handleAddLine}
-                deliveryCharge={data.deliveryCharge}
-                specialDiscount={data.specialDiscount}
-                advancePayment={data.advancePayment}
-                onChangeTotals={handleChangeTotals}
-                totals={{
-                  itemCount: totals.itemCount,
-                  subTotal: totals.subTotal,
-                  taxTotal: totals.taxTotal,
-                  grandTotal: totals.grandTotal,
-                  payable: totals.payable,
-                }}
-                onSubmit={handleSubmitProducts}
-              />
-            </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="space-y-6 lg:col-span-8">
+            <OrderFormCard
+              values={{
+                billingName: data.billingName,
+                shippingAddress: data.shippingAddress,
+                orderStatus: data.orderStatus,
+                phone: data.phone,
+                altPhone: data.altPhone,
+                paymentStatus: data.paymentStatus,
+                deliveryType: data.deliveryType,
+                city: data.city,
+                postalCode: data.postalCode,
+                email: data.email,
+                paymentMethod: data.paymentMethod,
+                note: data.note,
+              }}
+              onChange={(key, value) => handleChangeForm(key, value as never)}
+              onSubmit={handleSubmitTop}
+            />
 
-            <div className="space-y-6 lg:col-span-4">
-              <SidebarInfoCard
-                name={data.customerInfo.name}
-                phone={data.customerInfo.phone}
-                email={data.customerInfo.email}
-                address={data.customerInfo.address}
-              />
+            <ProductCalculationsCard
+              products={data.products}
+              onChangeLine={handleChangeLine}
+              onDeleteLine={handleDeleteLine}
+              onAddLine={handleAddLine}
+              deliveryCharge={data.deliveryCharge}
+              specialDiscount={data.specialDiscount}
+              advancePayment={data.advancePayment}
+              onChangeTotals={handleChangeTotals}
+              totals={{
+                itemCount: totals.itemCount,
+                subTotal: totals.subTotal,
+                taxTotal: totals.taxTotal,
+                grandTotal: totals.grandTotal,
+                payable: totals.payable,
+              }}
+              onSubmit={handleSubmitProducts}
+            />
+          </div>
 
-              <SidebarCourierCard
-                method={data.courier.method}
-                consignmentId={data.courier.consignmentId}
-                trackingUrl={data.courier.trackingUrl}
-                lastUpdatedAtLabel={formatDateTimeLabel(
-                  data.courier.lastUpdatedAt,
-                )}
-                anyAutoAvailable={courierOption?.any_auto_available}
-                providers={courierOption?.available_providers}
-                onChange={handleCourierChange}
-                onSend={handleCourierSend}
-                onComplete={handleCourierComplete}
-                onDownloadInvoice={handleCourierInvoice}
-              />
+          <div className="space-y-6 lg:col-span-4">
+            <SidebarInfoCard
+              name={data.customerInfo.name}
+              phone={data.customerInfo.phone}
+              email={data.customerInfo.email}
+              address={data.customerInfo.address}
+            />
 
-              <SidebarCustomerHistoryCard
-                orderId={data.customerHistory.orderId}
-                shipping={data.customerHistory.shipping}
-                orderDateLabel={formatDateLabel(data.customerHistory.orderDate)}
-                totalAmount={data.customerHistory.totalAmount}
-                timeAgo={data.customerHistory.timeAgo}
-                orderStatus={data.customerHistory.orderStatus}
-                sentBy={data.customerHistory.sentBy}
-                altPhone={data.customerHistory.altPhone}
-                additionalNotes={data.customerHistory.additionalNotes}
-                onDownloadInvoice={handleInvoiceDownload}
-              />
+            <SidebarCourierCard
+              method={data.courier.method}
+              consignmentId={data.courier.consignmentId}
+              trackingUrl={data.courier.trackingUrl}
+              lastUpdatedAtLabel={formatDateTimeLabel(
+                data.courier.lastUpdatedAt,
+              )}
+              anyAutoAvailable={courierOption?.any_auto_available}
+              providers={courierOption?.available_providers}
+              onChange={handleCourierChange}
+              onSend={handleCourierSend}
+              onComplete={handleCourierComplete}
+              onDownloadInvoice={handleCourierInvoice}
+            />
 
-              {/* <SidebarShippingStickerCard
-                onOpenGenerator={handleOpenStickerGenerator}
-              /> */}
-            </div>
+            <SidebarCustomerHistoryCard
+              orderId={data.customerHistory.orderId}
+              shipping={data.customerHistory.shipping}
+              orderDateLabel={formatDateLabel(data.customerHistory.orderDate)}
+              totalAmount={data.customerHistory.totalAmount}
+              timeAgo={data.customerHistory.timeAgo}
+              orderStatus={data.customerHistory.orderStatus}
+              sentBy={data.customerHistory.sentBy}
+              altPhone={data.customerHistory.altPhone}
+              additionalNotes={data.customerHistory.additionalNotes}
+              onDownloadInvoice={handleInvoiceDownload}
+            />
+
+            {/* <SidebarShippingStickerCard
+              onOpenGenerator={handleOpenStickerGenerator}
+            /> */}
           </div>
         </div>
       </div>
