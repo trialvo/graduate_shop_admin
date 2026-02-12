@@ -5,7 +5,7 @@ import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
-import { Layers, Palette, Tag, X } from "lucide-react";
+import { Check, Layers, Palette, Sparkles, Tag, X } from "lucide-react";
 
 type Option = { value: string; label: string };
 
@@ -133,61 +133,98 @@ function VariationsSection({
       }
     >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Colors Picker */}
-        <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-white/[0.015]">
-          <div className="mb-4 flex items-center gap-2">
-            <Palette className="h-4 w-4 text-brand-500" />
-            <p className="text-sm font-bold text-gray-900 dark:text-white">
-              Colors <span className="text-error-500">*</span>
-            </p>
+
+        {/* ──────────────────── Colors Picker Card ──────────────────── */}
+        <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+          {/* Card header */}
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                <Palette className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  Colors <span className="text-error-500">*</span>
+                </p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">Pick product colors</p>
+              </div>
+            </div>
+            {selectedColors.length > 0 && (
+              <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-400">
+                {selectedColors.length} selected
+              </span>
+            )}
           </div>
 
-          <Select
-            key={`color-dd-${selectedColorIds.join("-")}`}
-            options={colorOptions}
-            placeholder={
-              colorOptions.length ? "Select a color to add" : "No more colors available"
-            }
-            defaultValue=""
-            onChange={(v) => {
-              const id = Number(v);
-              if (!Number.isFinite(id)) return;
-              if (selectedColorIds.includes(id)) return;
-              setSelectedColorIds((p) => [...p, id]);
-            }}
-          />
+          {/* Card body */}
+          <div className="p-5">
+            <Select
+              key={`color-dd-${selectedColorIds.join("-")}`}
+              options={colorOptions}
+              placeholder={
+                colorOptions.length ? "Search & select a color..." : "All colors selected"
+              }
+              defaultValue=""
+              onChange={(v) => {
+                const id = Number(v);
+                if (!Number.isFinite(id)) return;
+                if (selectedColorIds.includes(id)) return;
+                setSelectedColorIds((p) => [...p, id]);
+              }}
+            />
 
-          {selectedColors.length ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {selectedColors.map((c: any) => (
-                <span
-                  key={c.id}
-                  className="group inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:shadow dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                >
-                  <span
-                    className="h-3.5 w-5 rounded border border-gray-200/60 dark:border-gray-700"
-                    style={{ backgroundColor: c.hex }}
-                  />
-                  {c.name}
-                  <button
-                    type="button"
-                    className="ml-1 rounded-full p-0.5 text-gray-400 transition hover:bg-error-50 hover:text-error-500 dark:hover:bg-error-500/10"
-                    onClick={() =>
-                      setSelectedColorIds((p) =>
-                        p.filter((x) => x !== Number(c.id)),
-                      )
-                    }
-                    aria-label="Remove color"
+            {selectedColors.length > 0 && (
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {selectedColors.map((c: any) => (
+                  <div
+                    key={c.id}
+                    className="group relative flex items-center gap-2.5 rounded-lg border border-gray-200 bg-gray-50/60 px-3 py-2.5 transition-all hover:border-gray-300 hover:shadow-sm dark:border-gray-700 dark:bg-white/[0.02] dark:hover:border-gray-600"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          ) : null}
+                    {/* Color swatch with ring */}
+                    <span className="relative flex-shrink-0">
+                      <span
+                        className="block h-8 w-8 rounded-full border-2 border-white shadow-md ring-2 ring-brand-500/40 dark:border-gray-900"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
+                        <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                      </span>
+                    </span>
+
+                    {/* Color info */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-gray-900 dark:text-white">{c.name}</p>
+                      <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{c.hex ?? "—"}</p>
+                    </div>
+
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 opacity-0 shadow-sm transition-all hover:border-error-300 hover:bg-error-50 hover:text-error-500 group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-error-500/40 dark:hover:bg-error-500/10"
+                      onClick={() =>
+                        setSelectedColorIds((p) =>
+                          p.filter((x) => x !== Number(c.id)),
+                        )
+                      }
+                      aria-label="Remove color"
+                    >
+                      <X className="h-3 w-3" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selectedColors.length === 0 && (
+              <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50/50 py-6 dark:border-gray-700 dark:bg-white/[0.01]">
+                <Palette className="mb-2 h-6 w-6 text-gray-300 dark:text-gray-600" />
+                <p className="text-xs text-gray-400 dark:text-gray-500">No colors selected yet</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Attribute & Variants */}
+        {/* ──────────────────── Attribute & Variants Card ──────────────────── */}
         <div className="space-y-4">
           <div>
             <FieldLabel>ATTRIBUTE *</FieldLabel>
@@ -202,39 +239,66 @@ function VariationsSection({
             </p>
           </div>
 
-          <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-white/[0.015]">
-            <div className="mb-3 flex items-center gap-2">
-              <Tag className="h-4 w-4 text-brand-500" />
-              <p className="text-sm font-bold text-gray-900 dark:text-white">
-                Attribute Variants <span className="text-error-500">*</span>
-              </p>
+          <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+            {/* Card header */}
+            <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                  <Tag className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    Attribute Variants <span className="text-error-500">*</span>
+                  </p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">Click to toggle selection</p>
+                </div>
+              </div>
+              {selectedVariantIds.length > 0 && (
+                <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-400">
+                  {selectedVariantIds.length} / {availableVariants.length}
+                </span>
+              )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {availableVariants.map((v) => {
-                const active = selectedVariantIds.includes(v.id);
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => toggleVariantId(v.id)}
-                    className={cn(
-                      "rounded-lg border px-3.5 py-2 text-xs font-semibold transition-all",
-                      active
-                        ? "border-brand-500 bg-brand-500/10 text-brand-700 shadow-sm ring-1 ring-brand-500/20 dark:text-brand-400"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700",
-                    )}
-                  >
-                    {v.name}
-                  </button>
-                );
-              })}
+            {/* Card body */}
+            <div className="p-5">
+              <div className="flex flex-wrap gap-2">
+                {availableVariants.map((v) => {
+                  const active = selectedVariantIds.includes(v.id);
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => toggleVariantId(v.id)}
+                      className={cn(
+                        "group relative inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-xs font-semibold transition-all duration-200",
+                        active
+                          ? "border-brand-400 bg-gradient-to-b from-brand-50 to-brand-100/50 text-brand-700 shadow-sm ring-1 ring-brand-300/30 dark:border-brand-500/60 dark:from-brand-500/15 dark:to-brand-500/5 dark:text-brand-400 dark:ring-brand-500/20"
+                          : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300",
+                      )}
+                    >
+                      {/* Checkbox circle */}
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 items-center justify-center rounded-full border transition-all",
+                          active
+                            ? "border-brand-500 bg-brand-500 text-white dark:border-brand-400 dark:bg-brand-500"
+                            : "border-gray-300 bg-white group-hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700",
+                        )}
+                      >
+                        {active && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+                      </span>
+                      {v.name}
+                    </button>
+                  );
+                })}
 
-              {!availableVariants.length ? (
-                <span className="text-sm text-gray-400 dark:text-gray-500">
-                  No variants found for this attribute.
-                </span>
-              ) : null}
+                {!availableVariants.length ? (
+                  <span className="text-sm text-gray-400 dark:text-gray-500">
+                    No variants found for this attribute.
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
