@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Radio from "@/components/form/input/Radio";
@@ -78,6 +79,7 @@ function buildSmsCard(provider: SmsProvider, node: any): SmsProviderCard {
 }
 
 export default function ServiceSettingsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"services" | "permissions">(
@@ -98,56 +100,56 @@ export default function ServiceSettingsPage() {
     useState<OrderNotifyChannel>({ email: true, sms: false });
 
   const permissionTabs = [
-    { id: "services", label: "Service (SMS, Email)", icon: MessageSquareText },
-    { id: "permissions", label: "Permission Types", icon: ShieldCheck },
+    { id: "services", label: t("businessSettings.service.tabServices"), icon: MessageSquareText },
+    { id: "permissions", label: t("businessSettings.service.tabPermissions"), icon: ShieldCheck },
   ] as const;
 
   const authOptions: PermissionOption[] = [
     {
       value: "email",
-      label: "Email",
-      hint: "Authenticate using email OTP or link.",
+      label: t("businessSettings.service.authEmail"),
+      hint: t("businessSettings.service.authEmailHint"),
     },
     {
       value: "sms",
-      label: "SMS",
-      hint: "Authenticate using SMS OTP.",
+      label: t("businessSettings.service.authSms"),
+      hint: t("businessSettings.service.authSmsHint"),
     },
     {
       value: "none",
-      label: "No Verification",
-      hint: "Allow login without verification.",
+      label: t("businessSettings.service.authNone"),
+      hint: t("businessSettings.service.authNoneHint"),
     },
   ];
 
   const resetOptions: PermissionOption[] = [
     {
       value: "email",
-      label: "Email",
-      hint: "Send reset link/OTP to email.",
+      label: t("businessSettings.service.resetEmail"),
+      hint: t("businessSettings.service.resetEmailHint"),
     },
     {
       value: "sms",
-      label: "SMS",
-      hint: "Send reset OTP via SMS.",
+      label: t("businessSettings.service.resetSms"),
+      hint: t("businessSettings.service.resetSmsHint"),
     },
     {
       value: "none",
-      label: "No Verification",
-      hint: "Disable recovery verification.",
+      label: t("businessSettings.service.resetNone"),
+      hint: t("businessSettings.service.resetNoneHint"),
     },
   ];
 
   const verifyOptions: PermissionOption[] = [
     {
       value: "sms_required",
-      label: "SMS Required",
-      hint: "Block order until phone is verified.",
+      label: t("businessSettings.service.smsRequired"),
+      hint: t("businessSettings.service.smsRequiredHint"),
     },
     {
       value: "allow",
-      label: "Allow Without Verification",
-      hint: "Let customers order without verified phone.",
+      label: t("businessSettings.service.allowWithout"),
+      hint: t("businessSettings.service.allowWithoutHint"),
     },
   ];
 
@@ -156,7 +158,7 @@ export default function ServiceSettingsPage() {
     setResetMethod("email");
     setOrderVerifyPolicy("sms_required");
     setOrderNotifyChannel({ email: true, sms: false });
-    toast.success("Permission settings reset");
+    toast.success(t("businessSettings.service.permissionReset"));
   };
 
   const smsQuery = useQuery({
@@ -223,19 +225,19 @@ export default function ServiceSettingsPage() {
     mutationFn: (provider: SmsProvider) => setActiveSmsProvider({ provider }),
     onSuccess: (res: any) => {
       if (res?.success === true || res?.status === true) {
-        toast.success("Active SMS provider updated");
+        toast.success(t("businessSettings.service.activeProviderUpdated"));
         invalidateAll().catch(() => undefined);
         return;
       }
       toast.error(
-        res?.error ?? res?.message ?? "Failed to update active provider",
+        res?.error ?? res?.message ?? t("businessSettings.service.failedActiveUpdate"),
       );
     },
     onError: (err: any) => {
       const msg =
         err?.response?.data?.error ??
         err?.response?.data?.message ??
-        "Failed to update active provider";
+        t("businessSettings.service.failedActiveUpdate");
       toast.error(msg);
     },
   });
@@ -329,235 +331,235 @@ export default function ServiceSettingsPage() {
 
       {activeTab === "services" ? (
         <>
-      {/* SMS Section */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-              <MessageSquareText size={18} />
-            </div>
+          {/* SMS Section */}
+          <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                  <MessageSquareText size={18} />
+                </div>
 
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">SMS Service</h3>
-              <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                Manage SMS provider configuration, balance and active provider.
-              </p>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{t("businessSettings.service.smsService")}</h3>
+                  <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                    {t("businessSettings.service.smsServiceDesc")}
+                  </p>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                  Active Provider:{" "}
-                  <span className="ml-1 font-bold">
-                    {smsDefaultProvider ? smsProviderTitle(smsDefaultProvider) : "—"}
-                  </span>
-                </span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      {t("businessSettings.service.activeProvider")}:{" "}
+                      <span className="ml-1 font-bold">
+                        {smsDefaultProvider ? smsProviderTitle(smsDefaultProvider) : "—"}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setTestSmsOpen(true)}
+                  disabled={smsQuery.isLoading}
+                >
+                  {t("businessSettings.service.testSmsBtn")}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    invalidateAll().catch(() => undefined);
+                    toast.success(t("businessSettings.service.refreshed"));
+                  }}
+                  disabled={isRefreshing}
+                >
+                  {t("businessSettings.service.refresh")}
+                </Button>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setTestSmsOpen(true)}
-              disabled={smsQuery.isLoading}
-            >
-              Test SMS
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => {
-                invalidateAll().catch(() => undefined);
-                toast.success("Refreshed");
-              }}
-              disabled={isRefreshing}
-            >
-              Refresh
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-          {smsQuery.isLoading
-            ? Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
-                />
-              ))
-            : smsCards.map((c) => {
-                const isDefault = smsDefaultProvider === c.provider;
-
-                return (
+            <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+              {smsQuery.isLoading
+                ? Array.from({ length: 2 }).map((_, i) => (
                   <div
-                    key={c.provider}
-                    className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                          {c.gateway_name}
-                        </p>
-                        <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                          Provider: <span className="font-semibold">{c.provider}</span>
-                        </p>
-                      </div>
+                    key={i}
+                    className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+                  />
+                ))
+                : smsCards.map((c) => {
+                  const isDefault = smsDefaultProvider === c.provider;
 
-                      <div className="flex flex-col items-end gap-2">
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold",
-                            c.is_active
-                              ? "bg-success-100 text-success-700 dark:bg-success-500/10 dark:text-success-300"
-                              : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-                          )}
-                        >
-                          {c.is_active ? "Enabled" : "Disabled"}
-                        </span>
-
-                        {isDefault ? (
-                          <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
-                            Active
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Balance:{" "}
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {balanceFor(c.provider)}
-                        </span>
-                      </p>
-
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Sender ID:{" "}
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {c.senderId || "—"}
-                        </span>
-                      </p>
-
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Base URL:{" "}
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {c.url || "—"}
-                        </span>
-                      </p>
-                    </div>
-
-                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <button
-                        type="button"
-                        className={cn(
-                          "inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600",
-                        )}
-                        onClick={() => openSmsEdit(c)}
-                      >
-                        <Settings size={16} />
-                        View Settings
-                      </button>
-
-                      {/* ✅ Set Active Provider toggle */}
-                      <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:w-[240px]">
+                  return (
+                    <div
+                      key={c.provider}
+                      className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+                    >
+                      <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                            Set Active Provider
+                          <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                            {c.gateway_name}
                           </p>
-                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                            {isDefault ? "Currently active" : "Make active"}
+                          <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                            Provider: <span className="font-semibold">{c.provider}</span>
                           </p>
                         </div>
 
-                        <Switch
-                          key={`sms-active-${c.provider}-${String(isDefault)}`}
-                          label=""
-                          defaultChecked={isDefault}
-                          disabled={activeProviderMutation.isPending || smsQuery.isLoading}
-                          onChange={(checked) => {
-                            if (!checked) {
-                              toast("To deactivate, select another provider.");
-                              return;
-                            }
-                            activeProviderMutation.mutate(c.provider);
-                          }}
-                        />
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold",
+                              c.is_active
+                                ? "bg-success-100 text-success-700 dark:bg-success-500/10 dark:text-success-300"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                            )}
+                          >
+                            {c.is_active ? t("businessSettings.service.enabled") : t("businessSettings.service.disabled")}
+                          </span>
+
+                          {isDefault ? (
+                            <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
+                              {t("businessSettings.service.active")}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {t("businessSettings.service.balance")}:{" "}
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {balanceFor(c.provider)}
+                          </span>
+                        </p>
+
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {t("businessSettings.service.senderId")}:{" "}
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {c.senderId || "—"}
+                          </span>
+                        </p>
+
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {t("businessSettings.service.baseUrl")}:{" "}
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {c.url || "—"}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <button
+                          type="button"
+                          className={cn(
+                            "inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600",
+                          )}
+                          onClick={() => openSmsEdit(c)}
+                        >
+                          <Settings size={16} />
+                          {t("businessSettings.service.viewSettings")}
+                        </button>
+
+                        {/* ✅ Set Active Provider toggle */}
+                        <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:w-[240px]">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                              {t("businessSettings.service.setActiveProvider")}
+                            </p>
+                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                              {isDefault ? t("businessSettings.service.currentlyActive") : t("businessSettings.service.makeActive")}
+                            </p>
+                          </div>
+
+                          <Switch
+                            key={`sms-active-${c.provider}-${String(isDefault)}`}
+                            label=""
+                            defaultChecked={isDefault}
+                            disabled={activeProviderMutation.isPending || smsQuery.isLoading}
+                            onChange={(checked) => {
+                              if (!checked) {
+                                toast(t("businessSettings.service.deactivateHint"));
+                                return;
+                              }
+                              activeProviderMutation.mutate(c.provider);
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-        </div>
-      </div>
-
-      {/* Email Section */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-              <Mail size={18} />
-            </div>
-
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Email Service</h3>
-              <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                Configure SMTP credentials used for system emails.
-              </p>
-
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold",
-                    emailCard?.is_active
-                      ? "bg-success-100 text-success-700 dark:bg-success-500/10 dark:text-success-300"
-                      : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-                  )}
-                >
-                  {emailCard?.is_active ? "Active" : "Inactive"}
-                </span>
-
-                <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                  Provider: Custom SMTP
-                </span>
-              </div>
+                  );
+                })}
             </div>
           </div>
 
-          <Button onClick={() => setEmailModalOpen(true)} disabled={emailQuery.isLoading || !emailCard}>
-            View Settings
-          </Button>
-        </div>
+          {/* Email Section */}
+          <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                  <Mail size={18} />
+                </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {emailQuery.isLoading ? (
-            Array.from({ length: 2 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-[84px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
-              />
-            ))
-          ) : emailCard ? (
-            <>
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_HOST</p>
-                <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
-                  {emailCard.host || "—"}
-                </p>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{t("businessSettings.service.emailService")}</h3>
+                  <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                    {t("businessSettings.service.emailServiceDesc")}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold",
+                        emailCard?.is_active
+                          ? "bg-success-100 text-success-700 dark:bg-success-500/10 dark:text-success-300"
+                          : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                      )}
+                    >
+                      {emailCard?.is_active ? t("businessSettings.service.active") : t("businessSettings.service.inactive")}
+                    </span>
+
+                    <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      {t("businessSettings.service.providerCustomSmtp")}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_USER</p>
-                <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
-                  {emailCard.user || "—"}
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-              Email configuration not found.
+              <Button onClick={() => setEmailModalOpen(true)} disabled={emailQuery.isLoading || !emailCard}>
+                {t("businessSettings.service.viewSettings")}
+              </Button>
             </div>
-          )}
-        </div>
-      </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+              {emailQuery.isLoading ? (
+                Array.from({ length: 2 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[84px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+                  />
+                ))
+              ) : emailCard ? (
+                <>
+                  <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_HOST</p>
+                    <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
+                      {emailCard.host || "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_USER</p>
+                    <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
+                      {emailCard.user || "—"}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                  {t("businessSettings.service.emailNotFound")}
+                </div>
+              )}
+            </div>
+          </div>
         </>
       ) : (
         <div className="space-y-6">
@@ -569,11 +571,10 @@ export default function ServiceSettingsPage() {
 
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Permission & Notification Rules
+                  {t("businessSettings.service.permissionRules")}
                 </h3>
                 <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                  Control authentication, recovery, verification and notification
-                  channels.
+                  {t("businessSettings.service.permissionRulesDesc")}
                 </p>
               </div>
             </div>
@@ -588,10 +589,10 @@ export default function ServiceSettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Authentication Method
+                      {t("businessSettings.service.authMethod")}
                     </h4>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      Choose how users authenticate during login.
+                      {t("businessSettings.service.authMethodDesc")}
                     </p>
                   </div>
                 </div>
@@ -612,10 +613,10 @@ export default function ServiceSettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Forgot Password Method
+                      {t("businessSettings.service.forgotPassword")}
                     </h4>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      Select how users recover their password.
+                      {t("businessSettings.service.forgotPasswordDesc")}
                     </p>
                   </div>
                 </div>
@@ -636,10 +637,10 @@ export default function ServiceSettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Order Placement Verification
+                      {t("businessSettings.service.orderVerification")}
                     </h4>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      Decide if phone verification is required before order.
+                      {t("businessSettings.service.orderVerificationDesc")}
                     </p>
                   </div>
                 </div>
@@ -663,10 +664,10 @@ export default function ServiceSettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Order Status Notifications
+                      {t("businessSettings.service.orderNotifications")}
                     </h4>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      Select channel for order success or failure notices.
+                      {t("businessSettings.service.orderNotificationsDesc")}
                     </p>
                   </div>
                 </div>
@@ -676,10 +677,10 @@ export default function ServiceSettingsPage() {
                     <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Email Notification
+                          {t("businessSettings.service.emailNotification")}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Send email on order success/failure.
+                          {t("businessSettings.service.emailNotificationHint")}
                         </p>
                       </div>
                       <Switch
@@ -697,10 +698,10 @@ export default function ServiceSettingsPage() {
                     <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          SMS Notification
+                          {t("businessSettings.service.smsNotification")}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Send SMS on order success/failure.
+                          {t("businessSettings.service.smsNotificationHint")}
                         </p>
                       </div>
                       <Switch
@@ -718,12 +719,12 @@ export default function ServiceSettingsPage() {
 
                   <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                     {orderNotifyChannel.email && orderNotifyChannel.sms
-                      ? "Notifications will be sent via Email and SMS."
+                      ? t("businessSettings.service.notifyBoth")
                       : orderNotifyChannel.email
-                        ? "Notifications will be sent via Email only."
+                        ? t("businessSettings.service.notifyEmailOnly")
                         : orderNotifyChannel.sms
-                          ? "Notifications will be sent via SMS only."
-                          : "No notification channel is enabled."}
+                          ? t("businessSettings.service.notifySmsOnly")
+                          : t("businessSettings.service.notifyNone")}
                   </div>
                 </div>
               </div>
@@ -732,13 +733,13 @@ export default function ServiceSettingsPage() {
 
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="outline" onClick={resetPermissionDefaults}>
-              Reset Defaults
+              {t("businessSettings.service.resetDefaults")}
             </Button>
             <Button
-              onClick={() => toast.success("Permission settings saved")}
+              onClick={() => toast.success(t("businessSettings.service.permissionSaved"))}
               className="min-w-[160px]"
             >
-              Save Changes
+              {t("businessSettings.service.saveChanges")}
             </Button>
           </div>
         </div>

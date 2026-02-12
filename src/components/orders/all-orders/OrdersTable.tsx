@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -68,6 +69,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export default function OrdersTable({ rows }: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -131,7 +133,7 @@ export default function OrdersTable({ rows }: Props) {
       newStatus: "unpaid" | "partial_paid" | "paid";
     }) => patchOrderPaymentStatus(payload.orderId, payload.newStatus),
     onSuccess: async () => {
-      toast.success("Payment status updated");
+      toast.success(t("orders.paymentStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
@@ -150,7 +152,7 @@ export default function OrdersTable({ rows }: Props) {
       newStatus: OrderRow["status"];
     }) => patchOrderStatus(payload.orderId, payload.newStatus),
     onSuccess: async () => {
-      toast.success("Order status updated");
+      toast.success(t("orders.orderStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
@@ -256,42 +258,42 @@ export default function OrdersTable({ rows }: Props) {
                       const fallback = imageFallbackSvgDataUri(r.customerName);
                       const imageSrc = r.customerImage ? toPublicUrl(r.customerImage) : fallback;
                       return (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                        <img
-                          src={imageSrc}
-                          alt={r.customerName}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          onError={(event) => {
-                            const target = event.currentTarget;
-                            if (target.src !== fallback) {
-                              target.src = fallback;
-                            }
-                          }}
-                        />
-                      </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                            <img
+                              src={imageSrc}
+                              alt={r.customerName}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              onError={(event) => {
+                                const target = event.currentTarget;
+                                if (target.src !== fallback) {
+                                  target.src = fallback;
+                                }
+                              }}
+                            />
+                          </div>
 
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-brand-500">
-                          {r.customerName}
-                        </p>
-                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                          {r.customerPhone}
-                        </p>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-brand-500">
+                              {r.customerName}
+                            </p>
+                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                              {r.customerPhone}
+                            </p>
 
-                        <div className="mt-1 flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openFraud(r)}
-                            className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                          >
-                            {fraudIcon(r.fraudLevel)}
-                            <span className="truncate">Fraud: {fraudLabel(r.fraudLevel)}</span>
-                          </button>
+                            <div className="mt-1 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openFraud(r)}
+                                className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
+                              >
+                                {fraudIcon(r.fraudLevel)}
+                                <span className="truncate">Fraud: {fraudLabel(r.fraudLevel)}</span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
                       );
                     })()}
                   </td>

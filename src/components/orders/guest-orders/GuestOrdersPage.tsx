@@ -4,6 +4,7 @@ import React from "react";
 import { RefreshCcw } from "lucide-react";
 import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 import type { GuestOrder, GuestOrderStatus, SortBy } from "./types";
 
@@ -73,6 +74,7 @@ const toRow = (o: GuestOrderListItem): GuestOrder => {
 };
 
 const GuestOrdersPage: React.FC = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [activeTab, setActiveTab] = React.useState<"all" | GuestOrderStatus>("all");
@@ -166,11 +168,11 @@ const GuestOrdersPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteGuestOrder(id),
     onSuccess: () => {
-      toast.success("Guest order deleted");
+      toast.success(t("guestOrders.guestOrderDeleted"));
       qc.invalidateQueries({ queryKey: guestOrdersKeys.all }).catch(() => undefined);
     },
     onError: (err: any) => {
-      const msg = err?.message ?? "Failed to delete guest order";
+      const msg = err?.message ?? t("guestOrders.failedDeleteGuest");
       toast.error(msg);
     },
   });
@@ -180,7 +182,7 @@ const GuestOrdersPage: React.FC = () => {
       {/* Title + Tabs + Refresh */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <GuestOrdersHeader
-          title="Guest Orders"
+          title={t("guestOrders.title")}
           tabs={statusTabs}
           activeTab={activeTab}
           onTabChange={(v) => {
@@ -192,7 +194,7 @@ const GuestOrdersPage: React.FC = () => {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span className="hidden sm:inline">Data Refreshed</span>
+            <span className="hidden sm:inline">{t("guestOrders.dataRefreshed")}</span>
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"

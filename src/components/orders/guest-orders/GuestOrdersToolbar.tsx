@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
@@ -28,13 +29,14 @@ const GuestOrdersToolbar: React.FC<Props> = ({
   onSearchChange,
   onClear,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       {/* Sort */}
       <div className="w-full md:w-[240px]">
         <Select
           options={sortOptions.map((o) => ({ value: o.value, label: o.label }))}
-          placeholder="Sort by"
+          placeholder={t("guestOrders.sortPlaceholder")}
           defaultValue={sortBy}
           onChange={(v) => onSortChange(v as SortBy)}
         />
@@ -47,7 +49,7 @@ const GuestOrdersToolbar: React.FC<Props> = ({
             startIcon={<Search size={16} className="text-gray-400" />}
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
-            placeholder="Search by name, phone, email, tour..."
+            placeholder={t("guestOrders.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -58,7 +60,7 @@ const GuestOrdersToolbar: React.FC<Props> = ({
           onClick={onClear}
           className="h-11 rounded-lg font-semibold"
         >
-          Clear
+          {t("guestOrders.clear")}
         </Button>
       </div>
     </div>

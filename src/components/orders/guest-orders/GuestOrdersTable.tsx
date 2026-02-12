@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Copy, Trash2, Mail, Phone, CalendarDays, Clock, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type { GuestOrder } from "./types";
 
@@ -36,6 +37,7 @@ type Props = {
 };
 
 const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => {
+  const { t } = useTranslation();
   const onCopy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -50,7 +52,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
       <div className="block md:hidden">
         {orders.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-            No guest orders found.
+            {t("guestOrders.noGuestOrders")}
           </div>
         ) : (
           <div className="p-4 space-y-3">
@@ -147,7 +149,7 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                       </div>
 
                       <div className="col-span-2 rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Cart Total</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{t("guestOrders.table.cartTotal")}</div>
                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
                           {o.cartTotal}
                         </div>
@@ -193,11 +195,11 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-950">
                 <TableCell isHeader className="w-[64px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  SN
+                  {t("guestOrders.table.sn")}
                 </TableCell>
 
                 <TableCell isHeader className="w-[240px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  NAME
+                  {t("guestOrders.table.name")}
                 </TableCell>
 
                 {/*  hide email on md, show on lg+ */}
@@ -205,15 +207,15 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                   isHeader
                   className="hidden lg:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
                 >
-                  EMAIL
+                  {t("guestOrders.table.email")}
                 </TableCell>
 
                 <TableCell isHeader className="w-[190px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  PHONE
+                  {t("guestOrders.table.phone")}
                 </TableCell>
 
                 <TableCell isHeader className="w-[120px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  DATE
+                  {t("guestOrders.table.date")}
                 </TableCell>
 
                 {/*  hide time on md, show on lg+ */}
@@ -221,11 +223,11 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                   isHeader
                   className="hidden lg:table-cell w-[120px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
                 >
-                  TIME
+                  {t("guestOrders.table.time")}
                 </TableCell>
 
                 <TableCell isHeader className="w-[140px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  TOTAL
+                  {t("guestOrders.table.total")}
                 </TableCell>
 
                 {/*  hide tour on md/lg, show on xl+ */}
@@ -233,18 +235,18 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                   isHeader
                   className="hidden xl:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
                 >
-                  LOCATION
+                  {t("guestOrders.table.location")}
                 </TableCell>
 
                 <TableCell isHeader className="w-[130px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  STATUS
+                  {t("guestOrders.table.status")}
                 </TableCell>
 
                 <TableCell
                   isHeader
                   className="sticky right-0 z-20 w-[90px] bg-gray-50 px-4 py-4 text-right text-xs font-semibold text-brand-500 dark:bg-gray-950"
                 >
-                  ACTION
+                  {t("guestOrders.table.action")}
                 </TableCell>
               </TableRow>
             </TableHeader>

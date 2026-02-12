@@ -9,6 +9,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/common/Pagination";
@@ -75,6 +76,7 @@ function toStatusFilter(v: string): boolean | undefined {
 }
 
 export default function CouponCodePage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -154,11 +156,11 @@ export default function CouponCodePage() {
       updateCoupon(p.id, { status: p.status } satisfies ApiCouponPayload),
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success("Status updated");
+        toast.success(t("businessSettings.coupon.statusUpdated"));
         invalidate();
         return;
       }
-      toast.error(res?.error ?? res?.message ?? "Failed to update");
+      toast.error(res?.error ?? res?.message ?? t("businessSettings.coupon.failedUpdate"));
     },
     onError: (err: any) => {
       const msg =
@@ -173,11 +175,11 @@ export default function CouponCodePage() {
     mutationFn: (id: number) => deleteCoupon(id),
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success("Coupon deleted");
+        toast.success(t("businessSettings.coupon.couponDeleted"));
         invalidate();
         return;
       }
-      toast.error(res?.error ?? res?.message ?? "Failed to delete");
+      toast.error(res?.error ?? res?.message ?? t("businessSettings.coupon.failedDelete"));
     },
     onError: (err: any) => {
       const msg =
@@ -196,19 +198,19 @@ export default function CouponCodePage() {
   };
 
   const getProductScopeLabel = (r: CouponRow) =>
-    r.productScope === "all" ? "All Products" : `${r.productCount} Products`;
+    r.productScope === "all" ? t("businessSettings.coupon.allProducts") : `${r.productCount} ${t("businessSettings.coupon.products")}`;
 
   const getCustomerScopeLabel = (r: CouponRow) =>
     r.customerScope === "all"
-      ? "All Customers"
-      : `${r.customerCount} Customers`;
+      ? t("businessSettings.coupon.allCustomers")
+      : `${r.customerCount} ${t("businessSettings.coupon.customers")}`;
 
   return (
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <Button onClick={openCreate} startIcon={<Plus size={16} />}>
-          Add New Coupon
+          {t("businessSettings.coupon.addNew")}
         </Button>
 
         <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center">
@@ -216,7 +218,7 @@ export default function CouponCodePage() {
             <Input
               startIcon={<Search size={16} className="text-gray-400" />}
               className="pl-9"
-              placeholder="Search by title or code"
+              placeholder={t("businessSettings.coupon.searchPlaceholder")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -230,7 +232,7 @@ export default function CouponCodePage() {
             startIcon={<Download size={16} />}
             onClick={() => console.log("Export coupons")}
           >
-            Export
+            {t("common.export")}
           </Button>
         </div>
       </div>
@@ -303,7 +305,7 @@ export default function CouponCodePage() {
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Coupon List
+              {t("businessSettings.coupon.couponList")}
             </h3>
             <span className="inline-flex h-6 items-center rounded-md bg-gray-100 px-2 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {total}
@@ -311,7 +313,7 @@ export default function CouponCodePage() {
           </div>
 
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Page <span className="font-semibold">{page + 1}</span> /{" "}
+            {t("pagination.page")} <span className="font-semibold">{page + 1}</span> /{" "}
             {totalPages}
           </div>
         </div>
@@ -348,105 +350,105 @@ export default function CouponCodePage() {
             <tbody>
               {couponsQuery.isLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
-                    <tr
-                      key={i}
-                      className="border-b border-gray-100 dark:border-gray-800"
-                    >
-                      <td colSpan={13} className="px-4 py-6">
-                        <div className="h-4 w-full animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-                      </td>
-                    </tr>
-                  ))
+                  <tr
+                    key={i}
+                    className="border-b border-gray-100 dark:border-gray-800"
+                  >
+                    <td colSpan={13} className="px-4 py-6">
+                      <div className="h-4 w-full animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                    </td>
+                  </tr>
+                ))
                 : rows.map((r, idx) => (
-                    <tr
-                      key={r.id}
-                      className="border-b border-gray-100 dark:border-gray-800"
-                    >
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {page * limit + idx + 1}
-                      </td>
+                  <tr
+                    key={r.id}
+                    className="border-b border-gray-100 dark:border-gray-800"
+                  >
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {page * limit + idx + 1}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                        {r.title}
-                      </td>
+                    <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
+                      {r.title}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {normalizeCode(r.code)}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {normalizeCode(r.code)}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {r.discountType === "flat" ? "Flat" : "Percent"}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {r.discountType === "flat" ? t("businessSettings.coupon.flat") : t("businessSettings.coupon.percent")}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {r.discountType === "flat"
-                          ? `৳ ${r.discountValue}`
-                          : `${r.discountValue}%`}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {r.discountType === "flat"
+                        ? `৳ ${r.discountValue}`
+                        : `${r.discountValue}%`}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        ৳ {r.minPurchase}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      ৳ {r.minPurchase}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {r.discountType === "percent"
-                          ? `৳ ${r.maxDiscount}`
-                          : "—"}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {r.discountType === "percent"
+                        ? `৳ ${r.maxDiscount}`
+                        : "—"}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {getProductScopeLabel(r)}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {getProductScopeLabel(r)}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {getCustomerScopeLabel(r)}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {getCustomerScopeLabel(r)}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {r.startDate}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {r.startDate}
+                    </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {r.expireDate}
-                      </td>
+                    <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {r.expireDate}
+                    </td>
 
-                      <td className="px-4 py-4">
-                        <Switch
-                          label=""
-                          defaultChecked={r.status}
-                          disabled={toggleStatusMutation.isPending}
-                          onChange={(checked) =>
-                            toggleStatusMutation.mutate({
-                              id: r.id,
-                              status: checked,
-                            })
-                          }
-                        />
-                      </td>
+                    <td className="px-4 py-4">
+                      <Switch
+                        label=""
+                        defaultChecked={r.status}
+                        disabled={toggleStatusMutation.isPending}
+                        onChange={(checked) =>
+                          toggleStatusMutation.mutate({
+                            id: r.id,
+                            status: checked,
+                          })
+                        }
+                      />
+                    </td>
 
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                            onClick={() => openEdit(r)}
-                            aria-label="Edit"
-                          >
-                            <Pencil size={16} />
-                          </button>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                          onClick={() => openEdit(r)}
+                          aria-label="Edit"
+                        >
+                          <Pencil size={16} />
+                        </button>
 
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
-                            onClick={() => openDelete(r)}
-                            aria-label="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        <button
+                          type="button"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                          onClick={() => openDelete(r)}
+                          aria-label="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
 
               {!couponsQuery.isLoading && rows.length === 0 ? (
                 <tr>
@@ -454,7 +456,7 @@ export default function CouponCodePage() {
                     colSpan={13}
                     className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
-                    No coupons found.
+                    {t("businessSettings.coupon.noCoupons")}
                   </td>
                 </tr>
               ) : null}
@@ -486,14 +488,14 @@ export default function CouponCodePage() {
 
       <ConfirmDialog
         open={deleteOpen}
-        title="Delete Coupon"
+        title={t("businessSettings.coupon.deleteCoupon")}
         message={
           deleteTarget
-            ? `Are you sure you want to delete "${deleteTarget.title}"?`
-            : "Are you sure you want to delete this coupon?"
+            ? t("businessSettings.coupon.confirmDeleteNamed", { name: deleteTarget.title })
+            : t("businessSettings.coupon.confirmDelete")
         }
-        confirmText="Delete"
-        cancelText="Cancel"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         tone="danger"
         onClose={() => {
           setDeleteOpen(false);

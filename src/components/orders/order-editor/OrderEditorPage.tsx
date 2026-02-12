@@ -23,6 +23,7 @@ import {
 } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import Button from "@/components/ui/button/Button";
+import { useTranslation } from "react-i18next";
 
 const statusLabel = (status: OrderEditorData["orderStatus"]): string => {
   return status
@@ -170,6 +171,7 @@ type Props = {
 };
 
 const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const hydratedRef = useRef(false);
 
@@ -249,12 +251,12 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       new_payment_status: "unpaid" | "partial_paid" | "paid";
     }) => patchOrderPaymentStatus(payload.orderId, payload.new_payment_status),
     onSuccess: async () => {
-      toast.success("Payment status updated");
+      toast.success(t("orders.orderEditor.paymentStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
     },
     onError: (err: any) => {
-      toast.error(err?.message ?? "Failed to update payment status");
+      toast.error(err?.message ?? t("orders.orderEditor.failedPaymentStatus"));
     },
   });
 
@@ -264,12 +266,12 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       new_status: ApiOrder["order_status"];
     }) => patchOrderStatus(payload.orderId, payload.new_status),
     onSuccess: async () => {
-      toast.success("Order status updated");
+      toast.success(t("orders.orderEditor.orderStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
     },
     onError: (err: any) => {
-      toast.error(err?.message ?? "Failed to update order status");
+      toast.error(err?.message ?? t("orders.orderEditor.failedOrderStatus"));
     },
   });
 
@@ -302,7 +304,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     }
 
     if (!jobs.length) {
-      toast("Nothing changed");
+      toast(t("orders.orderEditor.nothingChanged"));
       return;
     }
 
@@ -313,7 +315,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       paymentStatus: nextPay,
     };
 
-    toast.success("Order updated");
+    toast.success(t("orders.orderEditor.orderUpdated"));
   };
 
   const handleChangeLine = (id: string, patch: Partial<OrderProductLine>) => {
@@ -383,7 +385,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   };
 
   const handleSubmitProducts = () => {
-    toast("No API for products update yet");
+    toast(t("orders.orderEditor.noProductsApi"));
   };
 
   const handleCourierChange = (patch: {
@@ -396,14 +398,14 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     });
   };
 
-  const handleCourierSend = () => toast("No courier API endpoint provided yet");
+  const handleCourierSend = () => toast(t("orders.orderEditor.noCourierApi"));
   const handleCourierComplete = () =>
-    toast("No courier complete endpoint provided yet");
+    toast(t("orders.orderEditor.noCourierCompleteApi"));
   const handleCourierInvoice = () =>
-    toast("No courier invoice endpoint provided yet");
-  const handleInvoiceDownload = () => toast("No invoice endpoint provided yet");
+    toast(t("orders.orderEditor.noCourierInvoiceApi"));
+  const handleInvoiceDownload = () => toast(t("orders.orderEditor.noInvoiceApi"));
   const handleOpenStickerGenerator = () =>
-    toast("Sticker generator not implemented yet");
+    toast(t("orders.orderEditor.noStickerApi"));
 
   // ─── No order ID ───────────────────────────────────────────
   if (!orderId) {
@@ -412,7 +414,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
             <AlertCircle size={16} className="text-amber-500" />
-            Missing orderId in URL. Example:{" "}
+            {t("orders.orderEditor.missingOrderId")}{" "}
             <span className="font-semibold text-gray-900 dark:text-white">
               /order-editor?orderId=23
             </span>
@@ -466,7 +468,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
   // ─── Error ─────────────────────────────────────────────────
   if (detailQuery.isError) {
-    const msg = (detailQuery.error as any)?.message ?? "Failed to load order";
+    const msg = (detailQuery.error as any)?.message ?? t("orders.orderEditor.failedLoadOrder");
     return (
       <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 md:px-6">
         <div className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm dark:border-red-500/30 dark:bg-gray-900">
@@ -481,7 +483,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
               <div className="mt-3 flex flex-wrap gap-3">
                 {onBack ? (
                   <Button onClick={onBack} variant="primary" size="sm" startIcon={<ArrowLeft size={14} />}>
-                    Back to Orders
+                    {t("orders.orderEditor.backToOrders")}
                   </Button>
                 ) : null}
                 <Button
@@ -490,7 +492,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
                   size="sm"
                   startIcon={<RefreshCw size={14} />}
                 >
-                  Retry
+                  {t("common.refresh")}
                 </Button>
               </div>
             </div>
@@ -513,7 +515,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
         <div className="flex flex-wrap items-center gap-3">
           {onBack ? (
             <Button onClick={onBack} size="sm" variant="outline" startIcon={<ArrowLeft size={14} />}>
-              Back to Orders
+              {t("orders.orderEditor.backToOrders")}
             </Button>
           ) : null}
         </div>
@@ -521,7 +523,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
         <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <Hash size={12} className="text-gray-400" />
           <span className="uppercase tracking-wide text-gray-400 dark:text-gray-500">
-            Order ID
+            {t("orders.orderEditor.orderId")}
           </span>
           <span className="font-bold text-gray-900 dark:text-white">
             {orderId}

@@ -1,6 +1,7 @@
 import type React from "react";
 import { Clock, MessageSquare, Download } from "lucide-react";
 import Button from "@/components/ui/button/Button";
+import { useTranslation } from "react-i18next";
 
 import type { OrderStatus } from "./types";
 
@@ -39,15 +40,16 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
   additionalNotes,
   onDownloadInvoice,
 }) => {
+  const { t } = useTranslation();
   const rows = [
-    { label: "Order ID", value: orderId },
-    { label: "Shipping", value: shipping },
-    { label: "Order Date", value: orderDateLabel },
-    { label: "Total Amount", value: `${formatBDT(totalAmount)} BDT`, bold: true },
-    { label: "Time", value: timeAgo },
-    { label: "Order Status", value: statusLabel(orderStatus) },
-    { label: "Sent by", value: sentBy === "auto" ? "Auto" : "Manually" },
-    { label: "Alt. Phone", value: altPhone || "—" },
+    { label: t("orders.orderEditor.orderId"), value: orderId },
+    { label: t("orders.orderEditor.shipping"), value: shipping },
+    { label: t("orders.orderEditor.orderDate"), value: orderDateLabel },
+    { label: t("orders.orderEditor.totalAmount"), value: `${formatBDT(totalAmount)} BDT`, bold: true },
+    { label: t("orders.orderEditor.time"), value: timeAgo },
+    { label: t("orders.orderEditor.orderStatus"), value: statusLabel(orderStatus) },
+    { label: t("orders.orderEditor.sentBy"), value: sentBy === "auto" ? t("orders.orderEditor.auto") : t("orders.orderEditor.manually") },
+    { label: t("orders.orderEditor.altPhone"), value: altPhone || "—" },
   ];
 
   return (
@@ -58,10 +60,10 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
         </div>
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-            History
+            {t("orders.orderEditor.history")}
           </div>
           <div className="text-base font-semibold text-gray-900 dark:text-white">
-            Customer Timeline
+            {t("orders.orderEditor.customerTimeline")}
           </div>
         </div>
       </div>
@@ -83,7 +85,7 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
       <div className="mt-3 flex items-start gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/50">
         <MessageSquare size={14} className="mt-0.5 shrink-0 text-gray-400" />
         <div className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-          {additionalNotes || "No notes"}
+          {additionalNotes || t("orders.orderEditor.noNotes")}
         </div>
       </div>
 
@@ -94,7 +96,7 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
           variant="primary"
           startIcon={<Download size={14} />}
         >
-          Download Invoice
+          {t("orders.orderEditor.downloadInvoice")}
         </Button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
@@ -36,6 +37,7 @@ function formatHeaderTime(d: Date): string {
 }
 
 export default function DeliverySettingsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [refreshedAt, setRefreshedAt] = useState<Date>(new Date());
@@ -91,7 +93,7 @@ export default function DeliverySettingsPage() {
     mutationFn: (payload: { id: number; status: boolean }) =>
       updateDeliveryCharge(payload.id, { status: payload.status }),
     onSuccess: () => {
-      toast.success("Status updated");
+      toast.success(t("businessSettings.delivery.areaUpdated"));
       invalidate();
     },
     onError: (err: any) => {
@@ -106,7 +108,7 @@ export default function DeliverySettingsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteDeliveryCharge(id),
     onSuccess: () => {
-      toast.success("Delivery charge deleted");
+      toast.success(t("businessSettings.delivery.areaDeleted"));
       setDeleteOpen(false);
       setDeleteTargetId(null);
       setDeleteTargetTitle(null);
@@ -138,14 +140,14 @@ export default function DeliverySettingsPage() {
       {/* Top actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Button startIcon={<Plus size={16} />} onClick={openCreate}>
-          Add New Courier
+          {t("businessSettings.delivery.addNew")}
         </Button>
 
         <div className="relative w-full md:max-w-sm">
           <Input
             startIcon={<Search size={16} className="text-gray-400" />}
             className="pl-9"
-            placeholder="Search"
+            placeholder={t("common.search")}
             value={search}
             onChange={(e) => setSearch(String(e.target.value))}
           />
@@ -156,117 +158,117 @@ export default function DeliverySettingsPage() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {listQuery.isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-[220px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
-              />
-            ))
+            <div
+              key={i}
+              className="h-[220px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+            />
+          ))
           : filtered.map((card) => {
-              const imgUrl = card.img_path ? toPublicUrl(card.img_path) : null;
+            const imgUrl = card.img_path ? toPublicUrl(card.img_path) : null;
 
-              return (
-                <div
-                  key={card.id}
-                  className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-                >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
-                          {imgUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={imgUrl}
-                              alt={card.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                              Logo
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="truncate text-lg font-semibold text-gray-900 dark:text-white">
-                            {card.title}
-                          </p>
-                          <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                            {deliveryTypeLabel(card.type)}
-                          </p>
-                        </div>
+            return (
+              <div
+                key={card.id}
+                className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                        {imgUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={imgUrl}
+                            alt={card.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                            Logo
+                          </div>
+                        )}
                       </div>
 
-                      <Switch
-                        key={`st-${card.id}-${card.status}`}
-                        label=""
-                        defaultChecked={card.status}
-                        onChange={(checked) =>
-                          toggleMutation.mutate({
-                            id: card.id,
-                            status: checked,
-                          })
-                        }
-                        disabled={toggleMutation.isPending}
-                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+                          {card.title}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                          {deliveryTypeLabel(card.type)}
+                        </p>
+                      </div>
                     </div>
 
-                    <p className="mt-4 text-3xl font-semibold text-gray-900 dark:text-white">
-                      {card.customer_charge}{" "}
-                      <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
-                        BDT
-                      </span>
-                    </p>
-
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Our Cost:{" "}
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {card.our_charge} BDT
-                      </span>
-                    </p>
-
-                    <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                      <p>
-                        Create : {new Date(card.created_at).toLocaleString()}
-                      </p>
-                      <p>
-                        Update : {new Date(card.updated_at).toLocaleString()}
-                      </p>
-                    </div>
+                    <Switch
+                      key={`st-${card.id}-${card.status}`}
+                      label=""
+                      defaultChecked={card.status}
+                      onChange={(checked) =>
+                        toggleMutation.mutate({
+                          id: card.id,
+                          status: checked,
+                        })
+                      }
+                      disabled={toggleMutation.isPending}
+                    />
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-                    {/* ✅ View Settings => Edit (open modal) */}
-                    <button
-                      type="button"
-                      className={cn(
-                        "text-sm font-semibold text-brand-500 hover:text-brand-600"
-                      )}
-                      onClick={() => openEdit(card.id)}
-                    >
-                      View Settings
-                    </button>
+                  <p className="mt-4 text-3xl font-semibold text-gray-900 dark:text-white">
+                    {card.customer_charge}{" "}
+                    <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
+                      BDT
+                    </span>
+                  </p>
 
-                    <button
-                      type="button"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
-                      onClick={() => {
-                        setDeleteTargetId(card.id);
-                        setDeleteTargetTitle(card.title);
-                        setDeleteOpen(true);
-                      }}
-                      aria-label="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {t("businessSettings.delivery.ourCost")}:{" "}
+                    <span className="font-semibold text-gray-700 dark:text-gray-200">
+                      {card.our_charge} BDT
+                    </span>
+                  </p>
+
+                  <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p>
+                      {t("common.create")} : {new Date(card.created_at).toLocaleString()}
+                    </p>
+                    <p>
+                      {t("common.update")} : {new Date(card.updated_at).toLocaleString()}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4 dark:border-gray-800">
+                  {/* ✅ View Settings => Edit (open modal) */}
+                  <button
+                    type="button"
+                    className={cn(
+                      "text-sm font-semibold text-brand-500 hover:text-brand-600"
+                    )}
+                    onClick={() => openEdit(card.id)}
+                  >
+                    {t("businessSettings.payment.viewSettings")}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                    onClick={() => {
+                      setDeleteTargetId(card.id);
+                      setDeleteTargetTitle(card.title);
+                      setDeleteOpen(true);
+                    }}
+                    aria-label="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
 
         {!listQuery.isLoading && filtered.length === 0 ? (
           <div className="md:col-span-2 xl:col-span-4 rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-            No delivery charge cards found.
+            {t("businessSettings.delivery.noAreas")}
           </div>
         ) : null}
       </div>
@@ -305,14 +307,14 @@ export default function DeliverySettingsPage() {
       {/* Delete Confirm */}
       <ConfirmDialog
         open={deleteOpen}
-        title="Delete Delivery Charge"
+        title={t("businessSettings.delivery.deleteTitle")}
         message={
           deleteTargetTitle
-            ? `Are you sure you want to delete "${deleteTargetTitle}"?`
-            : "Are you sure you want to delete this item?"
+            ? t("businessSettings.delivery.confirmDeleteNamed", { name: deleteTargetTitle })
+            : t("businessSettings.delivery.confirmDeleteGeneric")
         }
-        confirmText={deleteMutation.isPending ? "Deleting..." : "Delete"}
-        cancelText="Cancel"
+        confirmText={deleteMutation.isPending ? t("common.deleting") : t("common.delete")}
+        cancelText={t("common.cancel")}
         tone="danger"
         onClose={() => {
           if (deleteMutation.isPending) return;

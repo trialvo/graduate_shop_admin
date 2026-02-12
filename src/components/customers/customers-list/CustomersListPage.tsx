@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Pencil,
@@ -179,6 +180,7 @@ function IconBadge({
 }
 
 export default function CustomersListPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<UserStatusTab>("ALL");
@@ -397,15 +399,15 @@ export default function CustomersListPage() {
             <TableHeader>
               <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                 {[
-                  "CUSTOMER",
-                  "STATUS",
-                  "DELETED",
-                  "VERIFICATION",
-                  "TOTAL SPENT",
-                  "GENDER",
-                  "DOB",
-                  "CREATED",
-                  "ACTIONS",
+                  t("customers.table.customer"),
+                  t("customers.table.status"),
+                  t("customers.table.deleted"),
+                  t("customers.table.verification"),
+                  t("customers.table.totalSpent"),
+                  t("customers.table.gender"),
+                  t("customers.table.dob"),
+                  t("customers.table.created"),
+                  t("customers.table.actions"),
                 ].map((h) => (
                   <TableCell
                     key={h}
@@ -569,8 +571,8 @@ export default function CustomersListPage() {
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {row.isDeleted && row.deleted_at
                               ? `Deleted at: ${new Date(
-                                  row.deleted_at,
-                                ).toLocaleString()}`
+                                row.deleted_at,
+                              ).toLocaleString()}`
                               : "—"}
                           </p>
                         </div>

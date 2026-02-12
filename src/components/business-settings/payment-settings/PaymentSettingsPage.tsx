@@ -5,6 +5,7 @@ import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Settings } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import Switch from "@/components/form/switch/Switch";
 
@@ -32,6 +33,7 @@ function safeString(v: any) {
 }
 
 export default function PaymentSettingsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -125,11 +127,11 @@ export default function PaymentSettingsPage() {
     onSuccess: (res: any) => {
       // ✅ supports both {success:true} and {status:true}
       if (res?.success === true || res?.status === true) {
-        toast.success("Status updated");
+        toast.success(t("businessSettings.payment.statusUpdated"));
         invalidate();
         return;
       }
-      toast.error(res?.error ?? res?.message ?? "Failed to update");
+      toast.error(res?.error ?? res?.message ?? t("businessSettings.payment.failedUpdate"));
     },
     onError: (err: any) => {
       const msg =
@@ -156,99 +158,99 @@ export default function PaymentSettingsPage() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {paymentQuery.isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
-              />
-            ))
+            <div
+              key={i}
+              className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+            />
+          ))
           : filtered.map((g) => {
-              const meta = providerMeta(g.provider);
-              const logo = meta?.logoText ?? "PG";
+            const meta = providerMeta(g.provider);
+            const logo = meta?.logoText ?? "PG";
 
-              return (
-                <div
-                  key={g.provider}
-                  className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                        {logo}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                          {g.gateway_name || meta?.title || g.provider}
-                        </p>
-                        <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                          Provider:{" "}
-                          <span className="font-semibold">
-                            {meta?.title ?? g.provider}
-                          </span>
-                        </p>
-                      </div>
+            return (
+              <div
+                key={g.provider}
+                className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                      {logo}
                     </div>
 
-                    <Switch
-                      key={`pay-st-${g.provider}-${g.is_active}`}
-                      label=""
-                      defaultChecked={g.is_active}
-                      disabled={toggleMutation.isPending}
-                      onChange={(checked) =>
-                        toggleMutation.mutate({
-                          provider: g.provider,
-                          status: checked,
-                        })
-                      }
-                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                        {g.gateway_name || meta?.title || g.provider}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                        {t("businessSettings.payment.provider")}:{" "}
+                        <span className="font-semibold">
+                          {meta?.title ?? g.provider}
+                        </span>
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Environment:{" "}
-                      <span className="font-semibold text-gray-900 dark:text-white">
-                        {g.provider === "cod" ? "—" : g.env || "sandbox"}
+                  <Switch
+                    key={`pay-st-${g.provider}-${g.is_active}`}
+                    label=""
+                    defaultChecked={g.is_active}
+                    disabled={toggleMutation.isPending}
+                    onChange={(checked) =>
+                      toggleMutation.mutate({
+                        provider: g.provider,
+                        status: checked,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {t("businessSettings.payment.environment")}:{" "}
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {g.provider === "cod" ? "—" : g.env || "sandbox"}
+                    </span>
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      {meta?.category ?? "Payment"}
+                    </span>
+
+                    {g.isDefault ? (
+                      <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
+                        {t("businessSettings.payment.default")}
                       </span>
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                        {meta?.category ?? "Payment"}
-                      </span>
-
-                      {g.isDefault ? (
-                        <span className="inline-flex items-center rounded-lg bg-success-100 px-2.5 py-1 text-xs font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-300">
-                          Default
-                        </span>
-                      ) : null}
-                    </div>
-
-                    {g.note && g.provider !== "cod" ? (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {g.note}
-                      </p>
                     ) : null}
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between">
-                    <button
-                      type="button"
-                      className={cn(
-                        "inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600",
-                      )}
-                      onClick={() => openEdit(g)}
-                    >
-                      <Settings size={16} />
-                      View Settings
-                    </button>
-                  </div>
+                  {g.note && g.provider !== "cod" ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {g.note}
+                    </p>
+                  ) : null}
                 </div>
-              );
-            })}
+
+                <div className="mt-5 flex items-center justify-between">
+                  <button
+                    type="button"
+                    className={cn(
+                      "inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600",
+                    )}
+                    onClick={() => openEdit(g)}
+                  >
+                    <Settings size={16} />
+                    {t("businessSettings.payment.viewSettings")}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
 
         {!paymentQuery.isLoading && filtered.length === 0 ? (
           <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-            No payment gateway found.
+            {t("businessSettings.payment.noGateway")}
           </div>
         ) : null}
       </div>

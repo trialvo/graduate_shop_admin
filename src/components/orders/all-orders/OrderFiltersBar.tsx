@@ -1,6 +1,7 @@
 // src/components/orders/all-orders/OrderFiltersBar.tsx
 
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import type { OrderStatus } from "./types";
 import { cn } from "@/lib/utils";
@@ -24,12 +25,12 @@ type Props = {
   setPaymentType: (v: "all" | "gateway" | "cod" | "mixed") => void;
 
   paymentProvider:
-    | "all"
-    | "sslcommerz"
-    | "bkash"
-    | "nagad"
-    | "shurjopay"
-    | "rocket";
+  | "all"
+  | "sslcommerz"
+  | "bkash"
+  | "nagad"
+  | "shurjopay"
+  | "rocket";
   setPaymentProvider: (
     v: "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket"
   ) => void;
@@ -108,6 +109,7 @@ export default function OrderFiltersBar({
   uiOptions,
   loading,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
       {/* Status strip (compact) */}
@@ -144,7 +146,7 @@ export default function OrderFiltersBar({
           >
             {uiOptions.paymentStatus.map((x) => (
               <option key={x.id} value={x.id}>
-                Pay: {x.label}
+                {t("orders.filters.payPrefix")}: {x.label}
               </option>
             ))}
           </select>
@@ -158,7 +160,7 @@ export default function OrderFiltersBar({
           >
             {uiOptions.paymentProvider.map((x) => (
               <option key={x.id} value={x.id}>
-                Provider: {x.label}
+                {t("orders.filters.providerPrefix")}: {x.label}
               </option>
             ))}
           </select>
@@ -172,7 +174,7 @@ export default function OrderFiltersBar({
           >
             {uiOptions.fraud.map((x) => (
               <option key={x.id} value={x.id}>
-                Fraud: {x.label}
+                {t("orders.filters.fraudPrefix")}: {x.label}
               </option>
             ))}
           </select>
@@ -184,7 +186,7 @@ export default function OrderFiltersBar({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search phone or email"
+              placeholder={t("orders.filters.searchPlaceholder")}
               className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
             />
           </div>
@@ -196,7 +198,7 @@ export default function OrderFiltersBar({
             className="h-10 w-full md:w-auto"
             disabled={loading}
           >
-            {loading ? "Loading..." : "Clear"}
+            {loading ? t("orders.filters.loading") : t("orders.filters.clear")}
           </Button>
         </div>
         {/* Line 2 */}

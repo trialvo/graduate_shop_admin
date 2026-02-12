@@ -1,6 +1,7 @@
 import type React from "react";
 import { Tag } from "lucide-react";
 import Button from "@/components/ui/button/Button";
+import { useTranslation } from "react-i18next";
 
 interface SidebarShippingStickerCardProps {
   onOpenGenerator: () => void;
@@ -9,6 +10,7 @@ interface SidebarShippingStickerCardProps {
 const SidebarShippingStickerCard: React.FC<SidebarShippingStickerCardProps> = ({
   onOpenGenerator,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center gap-3">
@@ -17,23 +19,22 @@ const SidebarShippingStickerCard: React.FC<SidebarShippingStickerCardProps> = ({
         </div>
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-            Shipping Labels
+            {t("orders.orderEditor.shippingLabels")}
           </div>
           <div className="text-base font-semibold text-gray-900 dark:text-white">
-            Generate Sticker
+            {t("orders.orderEditor.generateSticker")}
           </div>
         </div>
       </div>
 
       <div className="mt-4 space-y-4">
         <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-          Create professional shipping labels with multiple design variants.
-          Select a design, customize if needed, and print or download.
+          {t("orders.orderEditor.shippingStickerDesc")}
         </p>
 
         <div className="flex items-center gap-4">
           <Button onClick={onOpenGenerator} size="sm" variant="primary">
-            Sticker Generator
+            {t("orders.orderEditor.stickerGenerator")}
           </Button>
 
           <div className="ml-auto rounded-xl border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-800/50">
@@ -51,9 +52,9 @@ const SidebarShippingStickerCard: React.FC<SidebarShippingStickerCardProps> = ({
               </div>
               <div className="text-[11px] text-gray-500 dark:text-gray-400">
                 <div className="font-semibold text-gray-700 dark:text-gray-200">
-                  Preview
+                  {t("orders.orderEditor.preview")}
                 </div>
-                <div className="mt-0.5">12 variants</div>
+                <div className="mt-0.5">{t("orders.orderEditor.variants")}</div>
               </div>
             </div>
           </div>

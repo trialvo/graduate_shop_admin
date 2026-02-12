@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
@@ -57,6 +58,7 @@ export default function Pagination({
   pageSizeOptions = [10, 20, 50, 100],
   className,
 }: PaginationProps) {
+  const { t } = useTranslation();
   const totalPages = Math.max(
     1,
     Math.ceil(totalItems / Math.max(1, pageSize))
@@ -74,7 +76,7 @@ export default function Pagination({
     () =>
       pageSizeOptions.map((n) => ({
         value: String(n),
-        label: `${n} / page`,
+        label: `${n} ${t("pagination.perPage")}`,
       })),
     [pageSizeOptions]
   );
@@ -96,7 +98,7 @@ export default function Pagination({
           <span className="font-semibold text-gray-700 dark:text-gray-200">
             {start}–{end}
           </span>{" "}
-          of{" "}
+          {t("pagination.of")}{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-200">
             {totalItems}
           </span>
@@ -128,7 +130,7 @@ export default function Pagination({
             onClick={() => go(safePage - 1)}
             disabled={safePage <= 1}
             startIcon={<ChevronLeft size={14} />}
-            ariaLabel="Previous page"
+            ariaLabel={t("pagination.previousPage")}
           />
 
           {/* Page pills — desktop */}
@@ -153,7 +155,7 @@ export default function Pagination({
                   size="xs"
                   onClick={() => go(it)}
                   className="min-w-[28px] px-1.5"
-                  ariaLabel={`Page ${it}`}
+                  ariaLabel={t("pagination.page", { page: it })}
                 >
                   {it}
                 </Button>
@@ -173,7 +175,7 @@ export default function Pagination({
             onClick={() => go(safePage + 1)}
             disabled={safePage >= totalPages}
             startIcon={<ChevronRight size={14} />}
-            ariaLabel="Next page"
+            ariaLabel={t("pagination.nextPage")}
           />
         </div>
       </div>

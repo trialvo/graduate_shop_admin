@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { GuestOrderStatus } from "./types";
 
 type Tab = { label: string; value: "all" | GuestOrderStatus };
@@ -20,6 +21,7 @@ const GuestOrdersHeader: React.FC<Props> = ({
   onTabChange,
   badgeCounts,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       <div>
@@ -27,7 +29,7 @@ const GuestOrdersHeader: React.FC<Props> = ({
           {title}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Guest checkout / inquiry orders
+          {t("guestOrders.subtitle")}
         </p>
       </div>
 

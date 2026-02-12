@@ -5,6 +5,7 @@ import React from "react";
 import toast from "react-hot-toast";
 import { Download, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
@@ -41,6 +42,7 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 }
 
 const AllProductsPage: React.FC = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [filters, setFilters] = React.useState<ProductListFilters>({
@@ -185,13 +187,13 @@ const AllProductsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
-      toast.success("Product deleted");
+      toast.success(t("products.productDeleted"));
       setDeleteOpen(false);
       setDeleteId(null);
       qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to delete product";
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? t("products.failedDeleteProduct");
       toast.error(msg);
     },
   });
@@ -212,11 +214,11 @@ const AllProductsPage: React.FC = () => {
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: boolean }) => updateProductStatus(id, status),
     onSuccess: () => {
-      toast.success("Status updated");
+      toast.success(t("products.statusUpdated"));
       qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update status";
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? t("products.failedUpdateStatus");
       toast.error(msg);
       qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
     },
@@ -260,7 +262,7 @@ const AllProductsPage: React.FC = () => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFilters((p) => ({ ...p, q: e.target.value, offset: 0 }))
                   }
-                  placeholder="Ex : search item by name"
+                  placeholder={t("products.searchPlaceholder")}
                   className="h-11 rounded-l-xl rounded-r-none border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
                 />
               </div>
@@ -292,7 +294,7 @@ const AllProductsPage: React.FC = () => {
                 onClick={() => console.log("low stock list")}
                 type="button"
               >
-                Low Stock List ({lowStockCount})
+                {t("products.lowStockList", { count: lowStockCount })}
               </Button>
 
               <Button
@@ -301,20 +303,20 @@ const AllProductsPage: React.FC = () => {
                 onClick={() => console.log("new product request")}
                 type="button"
               >
-                New Product Request
+                {t("products.newProductRequest")}
               </Button>
             </div>
           </div>
 
           {/* Filters row */}
           <div className="rounded-[6px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
-            <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Category Filter</div>
+            <div className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">{t("products.categoryFilter")}</div>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               <Select
                 key={`main-${filters.mainCategoryId ?? ""}`}
                 options={mainOptions}
-                placeholder="All Categories"
+                placeholder={t("products.allCategories")}
                 defaultValue={filters.mainCategoryId ? String(filters.mainCategoryId) : ""}
                 onChange={(v) => {
                   const id = v ? Number(v) : undefined;
@@ -331,7 +333,7 @@ const AllProductsPage: React.FC = () => {
               <Select
                 key={`sub-${filters.mainCategoryId ?? ""}-${filters.subCategoryId ?? ""}`}
                 options={subOptions}
-                placeholder="All Sub Categories"
+                placeholder={t("products.allSubCategories")}
                 defaultValue={filters.subCategoryId ? String(filters.subCategoryId) : ""}
                 onChange={(v) => {
                   const id = v ? Number(v) : undefined;
@@ -347,7 +349,7 @@ const AllProductsPage: React.FC = () => {
               <Select
                 key={`child-${filters.subCategoryId ?? ""}-${filters.childCategoryId ?? ""}`}
                 options={childOptions}
-                placeholder="All Child Categories"
+                placeholder={t("products.allChildCategories")}
                 defaultValue={filters.childCategoryId ? String(filters.childCategoryId) : ""}
                 onChange={(v) => {
                   const id = v ? Number(v) : undefined;

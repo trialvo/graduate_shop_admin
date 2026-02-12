@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Search, Trash2, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import Pagination from "@/components/common/Pagination";
@@ -78,6 +79,7 @@ const assertApiSuccess = (res: unknown, fallback: string) => {
 };
 
 export default function AdminsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [rows, setRows] = useState<AdminListRow[]>([]);
 
@@ -223,13 +225,13 @@ export default function AdminsListPage() {
         prev.map((r) =>
           r.id === next.id
             ? {
-                ...r,
-                name: next.name.trim(),
-                email: next.email.trim(),
-                phone: next.phone.trim(),
-                address: next.address.trim(),
-                role: next.role,
-              }
+              ...r,
+              name: next.name.trim(),
+              email: next.email.trim(),
+              phone: next.phone.trim(),
+              address: next.address.trim(),
+              role: next.role,
+            }
             : r
         )
       );
@@ -348,16 +350,16 @@ export default function AdminsListPage() {
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                 {[
-                  "SN NO",
-                  "USER",
-                  "ROLE",
-                  "EMAIL",
-                  "PASS",
-                  "JOIN DATE",
-                  "PHONE",
-                  "STATUS",
-                  "ADDRESS",
-                  "ACTIONS",
+                  t("admins.table.snNo"),
+                  t("admins.table.user"),
+                  t("admins.table.role"),
+                  t("admins.table.email"),
+                  t("admins.table.pass"),
+                  t("admins.table.joinDate"),
+                  t("admins.table.phone"),
+                  t("admins.table.status"),
+                  t("admins.table.address"),
+                  t("admins.table.actions"),
                 ].map((h) => (
                   <TableCell
                     key={h}

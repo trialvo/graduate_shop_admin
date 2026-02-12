@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { Package, Calendar, CreditCard, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Badge from "@/components/ui/badge/Badge";
 import type { OrderStatus, PaymentStatus } from "./types";
 
@@ -54,6 +55,7 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
   statusLabel,
   customerIp,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-start justify-between gap-6">
@@ -63,7 +65,7 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
               <Package size={16} />
             </div>
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-              Order Editor
+              {t("orders.orderEditor.title")}
             </span>
           </div>
 
@@ -91,7 +93,7 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
             <Calendar size={14} className="text-gray-400" />
             <div>
               <div className="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500">
-                Order Date
+                {t("orders.orderEditor.orderDate")}
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-white">
                 {orderDateLabel}

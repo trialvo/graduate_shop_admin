@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { keepPreviousData, useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
@@ -24,7 +25,7 @@ function nowLabel() {
   const d = new Date();
   const date = d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
   const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-  return `${date} at ${time}`;
+  return `${date} at ${time} `;
 }
 
 function formatOrderDateLabel(iso: string) {
@@ -50,6 +51,19 @@ function timeAgoLabel(iso: string) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
+}
+
+function timeAgoLabelI18n(iso: string, t: (key: string, opts?: any) => string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return t("orders.justNow");
+  if (mins < 60) return t("orders.minutesAgo", { count: mins });
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return t("orders.hoursAgo", { count: hrs });
+  const days = Math.floor(hrs / 24);
+  return t("orders.daysAgo", { count: days });
 }
 
 const FRAUD_CANCEL_THRESHOLD = 0.4;
@@ -162,7 +176,7 @@ function mapApiItemsToRowItems(items: any[]): OrderItemRow[] {
     const lineTotal = Number(it?.line_total ?? unitPrice * qty) || 0;
 
     return {
-      id: String(it?.id ?? `${it?.order_id ?? "x"}-${it?.product_id ?? "p"}-${it?.product_sku_id ?? "s"}`),
+      id: String(it?.id ?? `${it?.order_id ?? "x"} -${it?.product_id ?? "p"} -${it?.product_sku_id ?? "s"} `),
 
       productId: typeof it?.product_id === "number" ? it.product_id : undefined,
       skuId: typeof it?.product_sku_id === "number" ? it.product_sku_id : undefined,
@@ -187,6 +201,7 @@ function mapApiItemsToRowItems(items: any[]): OrderItemRow[] {
 }
 
 export default function AllOrdersView() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<OrderStatus>("new");
@@ -361,7 +376,7 @@ export default function AllOrdersView() {
       const fraudCheck = parseFraudResults(o.fraud_test_results);
       const fraudLevel: FraudLevel = fraudCheck ? fraudCheck.status : o.is_fraud ? "high" : "safe";
 
-      const shippingLocation = `${o.city ?? ""} ${o.full_address ?? ""}`.trim() || "—";
+      const shippingLocation = `${o.city ?? ""} ${o.full_address ?? ""} `.trim() || "—";
 
       return {
         id: String(o.id),
@@ -448,9 +463,9 @@ export default function AllOrdersView() {
     try {
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       setRefreshedAt(nowLabel());
-      toast.success("Orders refreshed");
+      toast.success(t("orders.ordersRefreshed"));
     } catch {
-      toast.error("Failed to refresh");
+      toast.error(t("orders.failedRefresh"));
     }
   };
 
@@ -460,27 +475,25 @@ export default function AllOrdersView() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Order Management
+            {t("orders.title")}
           </h1>
 
           <div className="mt-2 flex flex-wrap gap-5 text-sm">
-            {(
-              [
-                { label: "Total", value: counts.all },
-                {
-                  label: "Pending",
-                  value:
-                    counts.new +
-                    counts.approved +
-                    counts.processing +
-                    counts.packaging +
-                    counts.shipped +
-                    counts.out_for_delivery,
-                },
-                { label: "Complete", value: counts.delivered },
-                { label: "Cancelled", value: counts.cancelled },
-              ] as const
-            ).map((x) => (
+            {([
+              { label: t("orders.total"), value: counts.all },
+              {
+                label: t("orders.pending"),
+                value:
+                  counts.new +
+                  counts.approved +
+                  counts.processing +
+                  counts.packaging +
+                  counts.shipped +
+                  counts.out_for_delivery,
+              },
+              { label: t("orders.complete"), value: counts.delivered },
+              { label: t("orders.cancelled"), value: counts.cancelled },
+            ] as const).map((x) => (
               <span key={x.label} className="text-gray-500 dark:text-gray-400">
                 <span className="text-brand-500 font-semibold">{x.label}</span>{" "}
                 <span className="text-gray-900 dark:text-white">({x.value})</span>
@@ -491,7 +504,7 @@ export default function AllOrdersView() {
 
         <div className="flex items-center justify-between gap-3 sm:justify-end">
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span className="hidden sm:inline">Data Refreshed</span>
+            <span className="hidden sm:inline">{t("orders.dataRefreshed")}</span>
             <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"

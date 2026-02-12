@@ -5,6 +5,7 @@ import { ClipboardList, Save } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { useTranslation } from "react-i18next";
 
 import type { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from "./types";
 
@@ -30,6 +31,7 @@ interface OrderFormCardProps {
 }
 
 const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmit }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -39,15 +41,15 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
           </div>
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-              Order Details
+              {t("orders.orderEditor.orderDetails")}
             </div>
             <div className="text-base font-semibold text-gray-900 dark:text-white">
-              Customer & Status
+              {t("orders.orderEditor.customerAndStatus")}
             </div>
           </div>
         </div>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Update essential order fields and contact information.
+          {t("orders.orderEditor.updateFieldsDesc")}
         </p>
       </div>
 
@@ -56,33 +58,33 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
         <div className="space-y-5">
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Billing Name
+              {t("orders.orderEditor.billingName")}
             </div>
             <Input
               value={values.billingName}
               onChange={(e) => onChange("billingName", e.target.value)}
-              placeholder="Billing name"
+              placeholder={t("orders.orderEditor.billingNamePlaceholder")}
               className="bg-white dark:bg-gray-800/50"
             />
           </div>
 
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Order Status
+              {t("orders.orderEditor.orderStatus")}
             </div>
             <Select
               options={[
-                { value: "new", label: "New" },
-                { value: "approved", label: "Approved" },
-                { value: "processing", label: "Processing" },
-                { value: "packaging", label: "Packaging" },
-                { value: "shipped", label: "Shipped" },
-                { value: "out_for_delivery", label: "Out for delivery" },
-                { value: "delivered", label: "Delivered" },
-                { value: "returned", label: "Returned" },
-                { value: "cancelled", label: "Cancelled" },
-                { value: "on_hold", label: "On hold" },
-                { value: "trash", label: "Trash" },
+                { value: "new", label: t("orders.status.new") },
+                { value: "approved", label: t("orders.status.approved") },
+                { value: "processing", label: t("orders.status.processing") },
+                { value: "packaging", label: t("orders.status.packaging") },
+                { value: "shipped", label: t("orders.status.shipped") },
+                { value: "out_for_delivery", label: t("orders.status.outForDelivery") },
+                { value: "delivered", label: t("orders.status.delivered") },
+                { value: "returned", label: t("orders.status.returned") },
+                { value: "cancelled", label: t("orders.status.cancelled") },
+                { value: "on_hold", label: t("orders.status.onHold") },
+                { value: "trash", label: t("orders.status.trash") },
               ]}
               defaultValue={values.orderStatus}
               onChange={(v) => onChange("orderStatus", v as OrderStatus)}
@@ -93,13 +95,13 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Payment Status
+                {t("orders.orderEditor.paymentStatus")}
               </div>
               <Select
                 options={[
-                  { value: "paid", label: "Paid" },
-                  { value: "partial_paid", label: "Partial paid" },
-                  { value: "unpaid", label: "Unpaid" },
+                  { value: "paid", label: t("orders.paymentStatus.paid") },
+                  { value: "partial_paid", label: t("orders.paymentStatus.partialPaid") },
+                  { value: "unpaid", label: t("orders.paymentStatus.unpaid") },
                 ]}
                 defaultValue={values.paymentStatus}
                 onChange={(v) => onChange("paymentStatus", v as PaymentStatus)}
@@ -108,12 +110,12 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
             </div>
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Delivery Type
+                {t("orders.orderEditor.deliveryType")}
               </div>
               <Select
                 options={[
-                  { value: "inside_dhaka", label: "Inside Dhaka" },
-                  { value: "out_of_dhaka", label: "Out of Dhaka" },
+                  { value: "inside_dhaka", label: t("orders.delivery.insideDhaka") },
+                  { value: "out_of_dhaka", label: t("orders.delivery.outOfDhaka") },
                 ]}
                 defaultValue={values.deliveryType}
                 onChange={(v) => onChange("deliveryType", v as DeliveryType)}
@@ -124,13 +126,13 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
 
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Email
+              {t("orders.orderEditor.email")}
             </div>
             <Input
               type="email"
               value={values.email}
               onChange={(e) => onChange("email", e.target.value)}
-              placeholder="Email"
+              placeholder={t("orders.orderEditor.email")}
               className="bg-white dark:bg-gray-800/50"
             />
           </div>
@@ -140,12 +142,12 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
         <div className="space-y-5">
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Shipping Address
+              {t("orders.orderEditor.shippingAddress")}
             </div>
             <Input
               value={values.shippingAddress}
               onChange={(e) => onChange("shippingAddress", e.target.value)}
-              placeholder="Shipping address"
+              placeholder={t("orders.orderEditor.shippingAddressPlaceholder")}
               className="bg-white dark:bg-gray-800/50"
             />
           </div>
@@ -153,23 +155,23 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Phone
+                {t("orders.orderEditor.phone")}
               </div>
               <Input
                 value={values.phone}
                 onChange={(e) => onChange("phone", e.target.value)}
-                placeholder="Phone"
+                placeholder={t("orders.orderEditor.phone")}
                 className="bg-white dark:bg-gray-800/50"
               />
             </div>
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Alt Phone
+                {t("orders.orderEditor.altPhone")}
               </div>
               <Input
                 value={values.altPhone}
                 onChange={(e) => onChange("altPhone", e.target.value)}
-                placeholder="Alternative phone"
+                placeholder={t("orders.orderEditor.altPhonePlaceholder")}
                 className="bg-white dark:bg-gray-800/50"
               />
             </div>
@@ -178,23 +180,23 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                City
+                {t("orders.orderEditor.city")}
               </div>
               <Input
                 value={values.city}
                 onChange={(e) => onChange("city", e.target.value)}
-                placeholder="City"
+                placeholder={t("orders.orderEditor.city")}
                 className="bg-white dark:bg-gray-800/50"
               />
             </div>
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Postal Code
+                {t("orders.orderEditor.postalCode")}
               </div>
               <Input
                 value={values.postalCode}
                 onChange={(e) => onChange("postalCode", e.target.value)}
-                placeholder="Postal code"
+                placeholder={t("orders.orderEditor.postalCodePlaceholder")}
                 className="bg-white dark:bg-gray-800/50"
               />
             </div>
@@ -203,13 +205,13 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Payment Type
+                {t("orders.orderEditor.paymentType")}
               </div>
               <Select
                 options={[
-                  { value: "gateway", label: "Gateway" },
-                  { value: "cod", label: "COD" },
-                  { value: "mixed", label: "Mixed" },
+                  { value: "gateway", label: t("orders.paymentMethod.gateway") },
+                  { value: "cod", label: t("orders.paymentMethod.cod") },
+                  { value: "mixed", label: t("orders.paymentMethod.mixed") },
                 ]}
                 defaultValue={values.paymentMethod}
                 onChange={(v) => onChange("paymentMethod", v as PaymentMethod)}
@@ -218,12 +220,12 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
             </div>
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                Note
+                {t("orders.orderEditor.note")}
               </div>
               <Input
                 value={values.note}
                 onChange={(e) => onChange("note", e.target.value)}
-                placeholder="Add note"
+                placeholder={t("orders.orderEditor.addNote")}
                 className="bg-white dark:bg-gray-800/50"
               />
             </div>
@@ -231,7 +233,7 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
 
           <div className="flex justify-end pt-2">
             <Button onClick={onSubmit} size="md" variant="primary" startIcon={<Save size={16} />}>
-              Update Order
+              {t("orders.orderEditor.updateOrder")}
             </Button>
           </div>
         </div>
