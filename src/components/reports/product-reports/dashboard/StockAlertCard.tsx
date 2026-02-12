@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   config: { active: boolean; limit: number } | null;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 const StockAlertCard: React.FC<Props> = ({ config, isLoading }) => {
+  const { t } = useTranslation();
   const active = config?.active ?? false;
   const limit = config?.limit ?? 0;
 
@@ -20,7 +22,7 @@ const StockAlertCard: React.FC<Props> = ({ config, isLoading }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="text-base font-semibold text-gray-900 dark:text-white">Stock Alert</div>
+      <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.productReport.stockAlert")}</div>
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
       {isLoading ? (
@@ -31,7 +33,7 @@ const StockAlertCard: React.FC<Props> = ({ config, isLoading }) => {
       ) : (
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Status</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-300">{t("reports.productReport.status")}</div>
             <div
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-semibold",
@@ -40,19 +42,19 @@ const StockAlertCard: React.FC<Props> = ({ config, isLoading }) => {
                   : "bg-error-500/10 text-error-700 dark:text-error-400"
               )}
             >
-              {active ? "Active" : "Inactive"}
+              {active ? t("reports.productReport.active") : t("reports.productReport.inactive")}
             </div>
           </div>
 
           <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Stock Limit</div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t("reports.productReport.stockLimit")}</div>
             <div className="mt-1 text-xl font-extrabold text-gray-900 dark:text-white">
               {String(limit).padStart(2, "0")}
             </div>
           </div>
 
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Products under this limit will be counted as <b>Under Limit Stock</b>.
+            {t("reports.productReport.underLimitNote")}
           </div>
         </div>
       )}

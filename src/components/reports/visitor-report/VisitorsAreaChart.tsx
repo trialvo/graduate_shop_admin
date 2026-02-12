@@ -3,6 +3,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { VisitorDayPoint } from "./types";
 
 type Props = {
@@ -28,6 +29,7 @@ function pathLine(xy: Array<{ x: number; y: number }>) {
 }
 
 const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points, metaText }) => {
+  const { t } = useTranslation();
   const w = 1200;
   const h = 360;
   const pad = 44;
@@ -51,7 +53,7 @@ const VisitorsAreaChart: React.FC<Props> = ({ title, legend, points, metaText })
         <div className="min-w-0">
           <div className="text-base font-semibold text-gray-900 dark:text-white">{title}</div>
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Total: <span className="font-semibold">{total}</span> • Peak:{" "}
+            {t("reports.common.total")}: <span className="font-semibold">{total}</span> • {t("reports.visitorReport.peak")}:{" "}
             <span className="font-semibold">{maxV}</span>
             {metaText ? <span className="ml-2">• {metaText}</span> : null}
           </div>

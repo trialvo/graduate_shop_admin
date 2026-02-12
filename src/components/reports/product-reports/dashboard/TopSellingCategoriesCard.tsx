@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { Image as ImageIcon } from "lucide-react";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import type { ProductTopSellingCategory } from "@/api/product-metrics.api";
@@ -17,6 +18,7 @@ type Props = {
 type TabKey = "main" | "sub" | "child";
 
 const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child }) => {
+  const { t } = useTranslation();
   const [tab, setTab] = React.useState<TabKey>("main");
 
   const list = tab === "main" ? main : tab === "sub" ? sub : child;
@@ -31,16 +33,14 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-gray-900 dark:text-white">Top Selling Categories</div>
-          <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            Based on quantity sold and revenue (selected time range).
-          </div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.productReport.topSellingCategories")}</div>
+          <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400" />
         </div>
 
         <div className="inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
-          <TabButton active={tab === "main"} onClick={() => setTab("main")}>Main</TabButton>
-          <TabButton active={tab === "sub"} onClick={() => setTab("sub")}>Sub</TabButton>
-          <TabButton active={tab === "child"} onClick={() => setTab("child")}>Child</TabButton>
+          <TabButton active={tab === "main"} onClick={() => setTab("main")}>{t("reports.productReport.main")}</TabButton>
+          <TabButton active={tab === "sub"} onClick={() => setTab("sub")}>{t("reports.productReport.sub")}</TabButton>
+          <TabButton active={tab === "child"} onClick={() => setTab("child")}>{t("reports.productReport.child")}</TabButton>
         </div>
       </div>
 
@@ -86,13 +86,13 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
 
                     <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                       <span>
-                        Sold: <span className="font-semibold text-gray-900 dark:text-white">{c.sold_count}</span>
+                        {t("reports.productReport.sold")}: <span className="font-semibold text-gray-900 dark:text-white">{c.sold_count}</span>
                       </span>
                       <span>
-                        Orders: <span className="font-semibold text-gray-900 dark:text-white">{c.order_count}</span>
+                        {t("reports.productReport.orders")}: <span className="font-semibold text-gray-900 dark:text-white">{c.order_count}</span>
                       </span>
                       <span className="ml-auto">
-                        Revenue:{" "}
+                        {t("reports.productReport.revenue")}:{" "}
                         <span className="font-semibold text-gray-900 dark:text-white">
                           {formatBdt(revenue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
@@ -106,7 +106,7 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
 
           {list.length === 0 && (
             <div className="col-span-full rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
-              No data found for this category level.
+              {t("reports.common.noData")}
             </div>
           )}
         </div>

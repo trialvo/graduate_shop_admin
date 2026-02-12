@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Pagination from "@/components/common/Pagination";
+import { useTranslation } from "react-i18next";
 
 import { getOrderMatricsReport, orderMatricsKeys, type OrderMatricsReportRow } from "@/api/order-matrics.api";
 import type { OrderReportRow, TimePeriodKey } from "../types";
@@ -45,7 +46,7 @@ function mapRow(r: OrderMatricsReportRow): OrderReportRow {
   return {
     orderId: String(r.order_id),
     orderType: r.order_type,
-    customerName: (r.customer_name ?? "").trim() || "Guest Customer",
+    customerName: (r.customer_name ?? "").trim() || "—",
     phone: r.customer_phone ?? "-",
     email: r.customer_email ?? undefined,
     items: safeNum(r.item_count),
@@ -60,6 +61,7 @@ function mapRow(r: OrderMatricsReportRow): OrderReportRow {
 }
 
 const OrderReportReport: React.FC<Props> = ({ period }) => {
+  const { t } = useTranslation();
   const { startDate, endDate } = React.useMemo(() => startEndByPeriod(period), [period]);
 
   const [query, setQuery] = React.useState("");
@@ -156,9 +158,9 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
       <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">All Reports</div>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">{t("reports.common.allReports")}</div>
             <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Period: {periodLabel(period)} • Range: {startDate} → {endDate} • Total: {totalItems}
+              {t("reports.common.period")}: {periodLabel(period)} • {t("reports.common.range")}: {startDate} → {endDate} • {t("reports.common.total")}: {totalItems}
             </div>
           </div>
 
@@ -167,7 +169,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
               <Input
                 value={query}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-                placeholder="Search order id, customer, phone..."
+                placeholder={t("reports.common.searchPlaceholder")}
                 className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -182,9 +184,9 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
             >
-              <option value="all">All Order Type</option>
-              <option value="regular">Regular</option>
-              <option value="guest">Guest</option>
+              <option value="all">{t("reports.common.allOrderType")}</option>
+              <option value="regular">{t("reports.common.regular")}</option>
+              <option value="guest">{t("reports.common.guest")}</option>
             </select>
 
             <select
@@ -196,18 +198,18 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
             >
-              <option value="all">All Order Status</option>
-              <option value="new">New</option>
-              <option value="approved">Approved</option>
-              <option value="processing">Processing</option>
-              <option value="packaging">Packaging</option>
-              <option value="shipped">Shipped</option>
-              <option value="out_for_delivery">Out for Delivery</option>
-              <option value="delivered">Delivered</option>
-              <option value="returned">Returned</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="on_hold">On Hold</option>
-              <option value="trash">Trash</option>
+              <option value="all">{t("reports.common.allOrderStatus")}</option>
+              <option value="new">{t("reports.common.new")}</option>
+              <option value="approved">{t("reports.common.approved")}</option>
+              <option value="processing">{t("reports.common.processing")}</option>
+              <option value="packaging">{t("reports.common.packaging")}</option>
+              <option value="shipped">{t("reports.common.shipped")}</option>
+              <option value="out_for_delivery">{t("reports.common.outForDelivery")}</option>
+              <option value="delivered">{t("reports.common.delivered")}</option>
+              <option value="returned">{t("reports.common.returned")}</option>
+              <option value="cancelled">{t("reports.common.cancelled")}</option>
+              <option value="on_hold">{t("reports.common.onHold")}</option>
+              <option value="trash">{t("reports.common.trash")}</option>
             </select>
 
             <select
@@ -219,10 +221,10 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
             >
-              <option value="all">All Payment Status</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="partial_paid">Partial Paid</option>
-              <option value="paid">Paid</option>
+              <option value="all">{t("reports.common.allPaymentStatus")}</option>
+              <option value="unpaid">{t("reports.common.unpaid")}</option>
+              <option value="partial_paid">{t("reports.common.partialPaid")}</option>
+              <option value="paid">{t("reports.common.paid")}</option>
             </select>
 
             <select
@@ -234,10 +236,10 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
             >
-              <option value="all">All Payment Type</option>
-              <option value="cod">COD</option>
-              <option value="gateway">Gateway</option>
-              <option value="mixed">Mixed</option>
+              <option value="all">{t("reports.common.allPaymentType")}</option>
+              <option value="cod">{t("reports.common.cod")}</option>
+              <option value="gateway">{t("reports.common.gateway")}</option>
+              <option value="mixed">{t("reports.common.mixed")}</option>
             </select>
 
             <div className="flex items-center gap-3">
@@ -249,7 +251,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 type="button"
                 disabled={listQuery.isFetching}
               >
-                Export Excel
+                {t("reports.common.exportExcel")}
               </Button>
 
               <Button
@@ -260,16 +262,16 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 type="button"
                 disabled={listQuery.isFetching}
               >
-                Export PDF
+                {t("reports.common.exportPdf")}
               </Button>
             </div>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatTile label="This Page Amount" value={money(pageTotals.amount)} isLoading={listQuery.isLoading} />
-          <StatTile label="This Page Cost" value={money(pageTotals.cost)} isLoading={listQuery.isLoading} />
-          <StatTile label="This Page Profit" value={money(pageTotals.profit)} isLoading={listQuery.isLoading} />
+          <StatTile label={t("reports.common.thisPageAmount")} value={money(pageTotals.amount)} isLoading={listQuery.isLoading} />
+          <StatTile label={t("reports.common.thisPageCost")} value={money(pageTotals.cost)} isLoading={listQuery.isLoading} />
+          <StatTile label={t("reports.common.thisPageProfit")} value={money(pageTotals.profit)} isLoading={listQuery.isLoading} />
         </div>
       </div>
 

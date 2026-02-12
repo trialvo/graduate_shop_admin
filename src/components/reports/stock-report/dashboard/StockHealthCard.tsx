@@ -2,11 +2,13 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { StockHealthSummary } from "../types";
 
 type Props = { summary: StockHealthSummary };
 
 const StockHealthCard: React.FC<Props> = ({ summary }) => {
+  const { t } = useTranslation();
   const total = Math.max(1, summary.inStock + summary.lowStock + summary.outOfStock);
 
   const inPct = (summary.inStock / total) * 100;
@@ -32,10 +34,8 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-gray-900 dark:text-white">Stock Health</div>
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Live stock distribution (in / low / out)
-          </div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.stockReport.stockHealth")}</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400" />
         </div>
 
         <div
@@ -46,7 +46,7 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
               : "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300"
           )}
         >
-          Alert: {summary.alert.active ? "ON" : "OFF"} • Limit: {summary.alert.limit}
+          {t("reports.stockReport.alert")}: {summary.alert.active ? "ON" : "OFF"} • {t("reports.stockReport.limit")}: {summary.alert.limit}
         </div>
       </div>
 
@@ -54,9 +54,9 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
 
       <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-12 md:items-center">
         <div className="md:col-span-5 space-y-3">
-          <Row label="In Stock" value={summary.inStock} tone="success" />
-          <Row label="Low Stock" value={summary.lowStock} tone="warning" />
-          <Row label="Out of Stock" value={summary.outOfStock} tone="error" />
+          <Row label={t("reports.stockReport.inStock")} value={summary.inStock} tone="success" />
+          <Row label={t("reports.stockReport.lowStock")} value={summary.lowStock} tone="warning" />
+          <Row label={t("reports.stockReport.outOfStock")} value={summary.outOfStock} tone="error" />
         </div>
 
         <div className="md:col-span-7 flex items-center justify-center">
@@ -64,7 +64,7 @@ const StockHealthCard: React.FC<Props> = ({ summary }) => {
             <div className="absolute inset-0 rounded-full" style={ringStyle} />
             <div className="absolute inset-[26px] rounded-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Active Items</div>
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t("reports.stockReport.totalActiveItems")}</div>
                 <div className="mt-1 text-3xl font-extrabold text-gray-900 dark:text-white">
                   {summary.totalActiveItems}
                 </div>

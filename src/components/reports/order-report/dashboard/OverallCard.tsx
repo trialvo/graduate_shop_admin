@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { OrderOverall } from "../types";
 
 type Props = { overall: OrderOverall; isLoading?: boolean };
@@ -9,6 +10,7 @@ type Props = { overall: OrderOverall; isLoading?: boolean };
 const bdt = (n: number) => `${Number(n || 0).toLocaleString()}৳`;
 
 const OverallCard: React.FC<Props> = ({ overall, isLoading }) => {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -17,7 +19,7 @@ const OverallCard: React.FC<Props> = ({ overall, isLoading }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="text-base font-semibold text-gray-900 dark:text-white">Overall</div>
+      <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.orderReport.overall")}</div>
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
       {isLoading ? (
@@ -34,7 +36,7 @@ const OverallCard: React.FC<Props> = ({ overall, isLoading }) => {
             <div className="text-4xl md:text-5xl font-extrabold tracking-tight text-brand-500">
               {bdt(overall.totalOrderAmount)}
             </div>
-            <div className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">Total Order Amount</div>
+            <div className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">{t("reports.orderReport.totalOrderAmount")}</div>
           </div>
 
           <div className="my-8 h-px w-full bg-gray-200 dark:bg-white/10" />
@@ -43,7 +45,7 @@ const OverallCard: React.FC<Props> = ({ overall, isLoading }) => {
             <div className="text-4xl md:text-5xl font-extrabold tracking-tight text-success-600 dark:text-success-500">
               {bdt(overall.totalOrderCost)}
             </div>
-            <div className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">Total Order Cost</div>
+            <div className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">{t("reports.orderReport.totalOrderCost")}</div>
           </div>
         </>
       )}

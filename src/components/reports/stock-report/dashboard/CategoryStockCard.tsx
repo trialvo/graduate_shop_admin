@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { StockCategoryLevel, StockCategoryRow } from "../types";
 
 type Props = {
@@ -27,6 +28,7 @@ const CategoryStockCard: React.FC<Props> = ({
   disablePrev,
   disableNext,
 }) => {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -37,9 +39,9 @@ const CategoryStockCard: React.FC<Props> = ({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-gray-900 dark:text-white">Category Stock Summary</div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.stockReport.categoryStockSummary")}</div>
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Breakdown by {level === "main" ? "Main" : level === "sub" ? "Sub" : "Child"} categories
+            {t("reports.stockReport.breakdownBy")} {level === "main" ? t("reports.productReport.main") : level === "sub" ? t("reports.productReport.sub") : t("reports.productReport.child")}
           </div>
         </div>
 
@@ -59,7 +61,7 @@ const CategoryStockCard: React.FC<Props> = ({
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/[0.04]"
                   )}
                 >
-                  {k === "main" ? "Main" : k === "sub" ? "Sub" : "Child"}
+                  {k === "main" ? t("reports.productReport.main") : k === "sub" ? t("reports.productReport.sub") : t("reports.productReport.child")}
                 </button>
               );
             })}
@@ -83,7 +85,7 @@ const CategoryStockCard: React.FC<Props> = ({
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
             )}
           >
-            Prev
+            {t("reports.common.prev")}
           </button>
           <button
             type="button"
@@ -96,7 +98,7 @@ const CategoryStockCard: React.FC<Props> = ({
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
             )}
           >
-            Next
+            {t("reports.common.next")}
           </button>
         </div>
       </div>
@@ -104,39 +106,39 @@ const CategoryStockCard: React.FC<Props> = ({
       <div className="mt-4 space-y-3">
         {isLoading
           ? Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={`sk-${i}`}
-                className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
-              >
-                <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-800" />
-                <div className="mt-2 h-3 w-2/3 rounded bg-gray-200 dark:bg-gray-800" />
-              </div>
-            ))
+            <div
+              key={`sk-${i}`}
+              className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
+            >
+              <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-800" />
+              <div className="mt-2 h-3 w-2/3 rounded bg-gray-200 dark:bg-gray-800" />
+            </div>
+          ))
           : rows.map((r) => (
-              <div
-                key={r.id}
-                className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{r.name}</div>
-                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      SKU: {r.totalSku} • In: {r.inStock} • Low: {r.lowStock} • Out: {r.outOfStock}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Pill tone="success" value={r.inStock} />
-                    <Pill tone="warning" value={r.lowStock} />
-                    <Pill tone="error" value={r.outOfStock} />
+            <div
+              key={r.id}
+              className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{r.name}</div>
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    SKU: {r.totalSku} • In: {r.inStock} • Low: {r.lowStock} • Out: {r.outOfStock}
                   </div>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <Pill tone="success" value={r.inStock} />
+                  <Pill tone="warning" value={r.lowStock} />
+                  <Pill tone="error" value={r.outOfStock} />
+                </div>
               </div>
-            ))}
+            </div>
+          ))}
 
         {!isLoading && rows.length === 0 && (
           <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
-            No category stock data found.
+            {t("reports.common.noData")}
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,19 +17,20 @@ type Props = {
 const money = (n: number) =>
   `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT`;
 
-const statusBadge = (status: ProductReportRow["status"]) => {
+function StatusBadge({ status, t }: { status: ProductReportRow["status"]; t: (key: string) => string }) {
   return status === "active" ? (
     <Badge size="sm" color="success" variant="light">
-      Active
+      {t("reports.productReport.active")}
     </Badge>
   ) : (
     <Badge size="sm" color="error" variant="light">
-      Inactive
+      {t("reports.productReport.inactive")}
     </Badge>
   );
-};
+}
 
 const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="w-full overflow-hidden rounded-[4px]">
@@ -37,39 +39,39 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-950">
                 <TableCell isHeader className="w-[70px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Sl
+                  {t("reports.orderReport.thSl")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[320px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Product
+                  {t("reports.productReport.product")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[260px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Category
+                  {t("reports.productReport.category")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[120px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Sold
+                  {t("reports.productReport.sold")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[160px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Revenue
+                  {t("reports.productReport.revenue")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[160px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Cost
+                  {t("reports.orderReport.thCost")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[160px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Profit
+                  {t("reports.orderReport.thProfit")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[120px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Status
+                  {t("reports.productReport.status")}
                 </TableCell>
 
                 <TableCell isHeader className="min-w-[140px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Updated
+                  {t("reports.productReport.updated")}
                 </TableCell>
               </TableRow>
             </TableHeader>
@@ -132,7 +134,7 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
                       {money(r.profit)}
                     </TableCell>
 
-                    <TableCell className="px-4 py-3">{statusBadge(r.status)}</TableCell>
+                    <TableCell className="px-4 py-3">{<StatusBadge status={r.status} t={t} />}</TableCell>
 
                     <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                       {r.updatedAt}
@@ -143,7 +145,7 @@ const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
               {!isLoading && rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={9} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                    No report data found.
+                    {t("reports.common.noData")}
                   </TableCell>
                 </TableRow>
               )}

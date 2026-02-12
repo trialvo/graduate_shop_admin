@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 import BrandLogo from "@/components/common/BrandLogo";
 import { useAppBranding } from "@/context/AppBrandingContext";
@@ -60,6 +61,7 @@ function upperOrDash(v?: string | null) {
 }
 
 export default function OrderInvoicePage() {
+  const { t } = useTranslation();
   const { branding } = useAppBranding();
   const { orderId } = useParams();
   const searchParams = useSearchParams();
@@ -75,7 +77,7 @@ export default function OrderInvoicePage() {
   const orderQuery = useQuery({
     queryKey: numericId ? ordersKeys.detail(numericId) : ordersKeys.detail("invalid"),
     queryFn: () => {
-      if (!numericId) throw new Error("Missing order id");
+      if (!numericId) throw new Error(t("orders.invoice.missingOrderId"));
       return getAdminOrderById(numericId);
     },
     enabled: Boolean(numericId),
@@ -159,7 +161,7 @@ export default function OrderInvoicePage() {
 
   useEffect(() => {
     if (orderQuery.isError) {
-      toast.error((orderQuery.error as Error)?.message || "Failed to load invoice");
+      toast.error((orderQuery.error as Error)?.message || t("orders.invoice.failedLoadInvoice"));
     }
   }, [orderQuery.isError, orderQuery.error]);
 
@@ -246,38 +248,38 @@ export default function OrderInvoicePage() {
           <div className="flex items-start justify-between gap-5">
             <div className="min-w-0">
               <h1 className="text-[22px] font-extrabold tracking-tight text-gray-900 dark:text-white">
-                INVOICE
+                {t("orders.invoice.title")}
               </h1>
 
               <div className="mt-3 grid grid-cols-1 gap-1.5 text-[12px] text-gray-700 dark:text-gray-200">
                 <div className="grid grid-cols-12 gap-2">
-                  <p className="col-span-5 text-gray-500 dark:text-gray-400">Invoice Number #</p>
+                  <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.invoiceNumber")}</p>
                   <p className="col-span-7 font-semibold">{invoiceMeta.orderNo}</p>
                 </div>
                 <div className="grid grid-cols-12 gap-2">
-                  <p className="col-span-5 text-gray-500 dark:text-gray-400">Invoice Date</p>
+                  <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.invoiceDate")}</p>
                   <p className="col-span-7 font-semibold">{created?.date || "—"}</p>
                 </div>
                 <div className="grid grid-cols-12 gap-2">
-                  <p className="col-span-5 text-gray-500 dark:text-gray-400">Due Date</p>
+                  <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.dueDate")}</p>
                   <p className="col-span-7 font-semibold">{invoiceMeta.dueDate}</p>
                 </div>
                 <div className="grid grid-cols-12 gap-2">
-                  <p className="col-span-5 text-gray-500 dark:text-gray-400">Payment Method</p>
+                  <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.paymentMethod")}</p>
                   <p className="col-span-7 font-semibold">{invoiceMeta.payMethod}</p>
                 </div>
                 <div className="grid grid-cols-12 gap-2">
-                  <p className="col-span-5 text-gray-500 dark:text-gray-400">Payment Status</p>
+                  <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.paymentStatus")}</p>
                   <p className="col-span-7 font-semibold">{invoiceMeta.payStatus}</p>
                 </div>
                 <div className="grid grid-cols-12 gap-2">
-                  <p className="col-span-5 text-gray-500 dark:text-gray-400">Order Status</p>
+                  <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.orderStatus")}</p>
                   <p className="col-span-7 font-semibold">{invoiceMeta.ordStatus}</p>
                 </div>
 
                 {courier?.delivery_title ? (
                   <div className="grid grid-cols-12 gap-2">
-                    <p className="col-span-5 text-gray-500 dark:text-gray-400">Delivery</p>
+                    <p className="col-span-5 text-gray-500 dark:text-gray-400">{t("orders.invoice.deliveryLabel")}</p>
                     <p className="col-span-7 font-semibold">{courier.delivery_title}</p>
                   </div>
                 ) : null}
@@ -297,31 +299,31 @@ export default function OrderInvoicePage() {
         <div className={cn("px-4 py-4", "avoid-break print-tight")}>
           <div className={cn("invoice-billing-grid grid grid-cols-1 gap-3 md:grid-cols-2")}>
             <div className="rounded-[10px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-              <p className="text-[13px] font-semibold text-gray-900 dark:text-white">Billed By</p>
+              <p className="text-[13px] font-semibold text-gray-900 dark:text-white">{t("orders.invoice.billedBy")}</p>
 
               <div className="mt-2 space-y-0.5 text-[12px] text-gray-700 dark:text-gray-200">
                 <p className="font-semibold">{billedBy.name}</p>
                 <p className="text-gray-600 dark:text-gray-300">{billedBy.address}</p>
                 <p>
-                  <span className="font-semibold">Email:</span> {billedBy.email}
+                  <span className="font-semibold">{t("orders.invoice.emailLabel")}</span> {billedBy.email}
                 </p>
                 <p>
-                  <span className="font-semibold">Phone:</span> {billedBy.phone}
+                  <span className="font-semibold">{t("orders.invoice.phoneLabel")}</span> {billedBy.phone}
                 </p>
               </div>
             </div>
 
             <div className="rounded-[10px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-              <p className="text-[13px] font-semibold text-gray-900 dark:text-white">Billed To</p>
+              <p className="text-[13px] font-semibold text-gray-900 dark:text-white">{t("orders.invoice.billedTo")}</p>
 
               <div className="mt-2 space-y-0.5 text-[12px] text-gray-700 dark:text-gray-200">
                 <p className="font-semibold">{billedTo.name}</p>
                 <p className="text-gray-600 dark:text-gray-300">{billedTo.address}</p>
                 <p>
-                  <span className="font-semibold">Email:</span> {billedTo.email}
+                  <span className="font-semibold">{t("orders.invoice.emailLabel")}</span> {billedTo.email}
                 </p>
                 <p>
-                  <span className="font-semibold">Phone:</span> {billedTo.phone}
+                  <span className="font-semibold">{t("orders.invoice.phoneLabel")}</span> {billedTo.phone}
                 </p>
               </div>
             </div>
@@ -335,10 +337,10 @@ export default function OrderInvoicePage() {
               <thead>
                 <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-950 dark:text-gray-300">
                   <th className="px-3 py-2.5 w-[46px]">#</th>
-                  <th className="px-3 py-2.5">Item</th>
-                  <th className="px-3 py-2.5 w-[70px]">Qty</th>
-                  <th className="px-3 py-2.5 w-[120px]">Unit</th>
-                  <th className="px-3 py-2.5 w-[130px] text-right">Total</th>
+                  <th className="px-3 py-2.5">{t("orders.invoice.thItem")}</th>
+                  <th className="px-3 py-2.5 w-[70px]">{t("orders.invoice.thQty")}</th>
+                  <th className="px-3 py-2.5 w-[120px]">{t("orders.invoice.thUnit")}</th>
+                  <th className="px-3 py-2.5 w-[130px] text-right">{t("orders.invoice.thTotal")}</th>
                 </tr>
               </thead>
 
@@ -346,7 +348,7 @@ export default function OrderInvoicePage() {
                 {orderQuery.isLoading || orderQuery.isFetching ? (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-[12px] text-gray-500 dark:text-gray-400">
-                      Loading...
+                      {t("orders.invoice.loading")}
                     </td>
                   </tr>
                 ) : productRows.length ? (
@@ -395,7 +397,7 @@ export default function OrderInvoicePage() {
                 ) : (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-[12px] text-gray-500 dark:text-gray-400">
-                      No items.
+                      {t("orders.invoice.noItems")}
                     </td>
                   </tr>
                 )}
@@ -409,9 +411,9 @@ export default function OrderInvoicePage() {
           <div className="grid grid-cols-12 gap-3">
             <div className="col-span-7">
               <div className="rounded-[10px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-[12px] font-semibold text-gray-900 dark:text-white">Total (in words)</p>
+                <p className="text-[12px] font-semibold text-gray-900 dark:text-white">{t("orders.invoice.totalInWords")}</p>
                 <p className="mt-1.5 text-[12px] text-gray-600 dark:text-gray-300">
-                  {formatBDT(totals.total)} only
+                  {formatBDT(totals.total)} {t("orders.invoice.only")}
                 </p>
               </div>
             </div>
@@ -420,36 +422,36 @@ export default function OrderInvoicePage() {
               <div className="rounded-[10px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="space-y-1.5 text-[12px]">
                   <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-                    <span>Subtotal</span>
+                    <span>{t("orders.invoice.subtotal")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">{formatBDT(totals.subtotal)}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-                    <span>Discount</span>
+                    <span>{t("orders.invoice.discount")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">{formatBDT(totals.discount)}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-                    <span>Delivery</span>
+                    <span>{t("orders.invoice.delivery")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">{formatBDT(totals.delivery)}</span>
                   </div>
 
                   <div className="my-2 h-px bg-gray-200 dark:bg-gray-800" />
 
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-semibold text-gray-900 dark:text-white">Total (BDT)</span>
+                    <span className="text-[13px] font-semibold text-gray-900 dark:text-white">{t("orders.invoice.totalBDT")}</span>
                     <span className="text-[16px] font-extrabold text-gray-900 dark:text-white">{formatBDT(totals.total)}</span>
                   </div>
 
                   <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-gray-600 dark:text-gray-300">
                     <div className="rounded-[10px] border border-gray-200 bg-white p-2.5 dark:border-gray-800 dark:bg-gray-950">
-                      <p>Paid</p>
+                      <p>{t("orders.invoice.paidLabel")}</p>
                       <p className="mt-0.5 text-[12px] font-semibold text-gray-900 dark:text-white">
                         {formatBDT(totals.paid)}
                       </p>
                     </div>
                     <div className="rounded-[10px] border border-gray-200 bg-white p-2.5 dark:border-gray-800 dark:bg-gray-950">
-                      <p>Due</p>
+                      <p>{t("orders.invoice.dueLabel")}</p>
                       <p className="mt-0.5 text-[12px] font-semibold text-gray-900 dark:text-white">
                         {formatBDT(totals.due)}
                       </p>
@@ -459,7 +461,7 @@ export default function OrderInvoicePage() {
                   <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-800">
                     <div className="flex flex-col items-end">
                       <div className="h-9 w-[170px] border-b border-gray-300 dark:border-gray-700" />
-                      <p className="mt-1.5 text-[10px] text-gray-500 dark:text-gray-400">Authorised Signatory</p>
+                      <p className="mt-1.5 text-[10px] text-gray-500 dark:text-gray-400">{t("orders.invoice.authorisedSignatory")}</p>
                     </div>
                   </div>
                 </div>
@@ -495,9 +497,9 @@ export default function OrderInvoicePage() {
 
         {/* Footer (very tight) */}
         <div className="border-t border-gray-200 px-4 py-3 text-center text-[11px] text-gray-600 dark:border-gray-800 dark:text-gray-300">
-          <p className="font-semibold text-gray-900 dark:text-white">Thank you for your Purchase!</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{t("orders.invoice.thankYou")}</p>
           <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-            Generated on {new Date().toLocaleString()}
+            {t("orders.invoice.generatedOn", { date: new Date().toLocaleString() })}
           </p>
         </div>
       </div>

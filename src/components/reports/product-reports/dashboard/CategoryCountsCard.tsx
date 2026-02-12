@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   main: number;
@@ -11,10 +12,11 @@ type Props = {
 };
 
 const CategoryCountsCard: React.FC<Props> = ({ main, sub, child, isLoading }) => {
+  const { t } = useTranslation();
   const rows = [
-    { label: "Main Categories", value: main },
-    { label: "Sub Categories", value: sub },
-    { label: "Child Categories", value: child },
+    { label: t("reports.productReport.mainCategories"), value: main },
+    { label: t("reports.productReport.subCategories"), value: sub },
+    { label: t("reports.productReport.childCategories"), value: child },
   ];
 
   return (
@@ -25,7 +27,7 @@ const CategoryCountsCard: React.FC<Props> = ({ main, sub, child, isLoading }) =>
         "p-5 sm:p-6"
       )}
     >
-      <div className="text-base font-semibold text-gray-900 dark:text-white">Categories</div>
+      <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.productReport.categories")}</div>
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
       {isLoading ? (

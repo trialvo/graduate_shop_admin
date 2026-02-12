@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 
 import type { TimePeriodKey } from "./types";
@@ -19,6 +20,7 @@ import TopSellingCategoriesCard from "./dashboard/TopSellingCategoriesCard";
 type Props = { period: TimePeriodKey };
 
 const ProductReportsDashboard: React.FC<Props> = ({ period }) => {
+  const { t } = useTranslation();
   const range = React.useMemo(() => getPeriodRange(period), [period]);
 
   const summaryQuery = useQuery({
@@ -49,11 +51,11 @@ const ProductReportsDashboard: React.FC<Props> = ({ period }) => {
     if (!s) return [];
 
     return [
-      { key: "active", label: "Active Products", qty: s.product_status.total_active },
-      { key: "inactive", label: "Inactive Products", qty: s.product_status.total_inactive },
-      { key: "under", label: "Under Limit Stock", qty: s.product_status.under_limit_stock },
-      { key: "above", label: "Above Limit Stock", qty: s.product_status.above_limit_stock },
-      { key: "coupon", label: "Active Coupons", qty: s.coupons.active },
+      { key: "active", label: t("reports.productReport.active"), qty: s.product_status.total_active },
+      { key: "inactive", label: t("reports.productReport.inactive"), qty: s.product_status.total_inactive },
+      { key: "under", label: t("reports.productReport.lowStock"), qty: s.product_status.under_limit_stock },
+      { key: "above", label: t("reports.productReport.inStock"), qty: s.product_status.above_limit_stock },
+      { key: "coupon", label: t("reports.productReport.active") + " Coupons", qty: s.coupons.active },
     ];
   }, [summary]);
 
@@ -66,7 +68,7 @@ const ProductReportsDashboard: React.FC<Props> = ({ period }) => {
     <div className="mt-6 space-y-6">
       {isError && (
         <div className="rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-          Failed to load product metrics. Please try again.
+          {t("reports.common.failedLoad")}
         </div>
       )}
 

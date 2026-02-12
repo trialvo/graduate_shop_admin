@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
+import { useTranslation } from "react-i18next";
 
 import { getMainCategories, getSubCategories, getChildCategories } from "@/api/categories.api";
 import { getProductMetricsReport } from "@/api/product-metrics.api";
@@ -29,11 +30,14 @@ const LIMIT_OPTIONS: SelectOption[] = [
   { value: "100", label: "100 rows" },
 ];
 
-const STATUS_OPTIONS: SelectOption[] = [
-  { value: "all", label: "All Status" },
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
+function useStatusOptions() {
+  const { t } = useTranslation();
+  return [
+    { value: "all", label: t("reports.common.allOrderStatus") },
+    { value: "active", label: t("reports.productReport.active") },
+    { value: "inactive", label: t("reports.productReport.inactive") },
+  ];
+}
 
 function toRow(apiRow: any): ProductReportRow {
   const buying = parseMoney(apiRow.metrics?.total_buying_price);
@@ -75,6 +79,8 @@ function moneyBDT(n: number) {
 }
 
 const ProductReportsReport: React.FC<Props> = ({ period }) => {
+  const { t } = useTranslation();
+  const STATUS_OPTIONS = useStatusOptions();
   const range = React.useMemo(() => getPeriodRange(period), [period]);
 
   const [search, setSearch] = React.useState("");
@@ -134,17 +140,17 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
 
   const mainOptions = React.useMemo(() => {
     const items = unwrapList<any>(mainQuery.data);
-    return toSelectOptions(items, "All Main Categories");
+    return toSelectOptions(items, t("reports.productReport.allMainCategories"));
   }, [mainQuery.data]);
 
   const subOptions = React.useMemo(() => {
     const items = unwrapList<any>(subQuery.data);
-    return toSelectOptions(items, "All Sub Categories");
+    return toSelectOptions(items, t("reports.productReport.allSubCategories"));
   }, [subQuery.data]);
 
   const childOptions = React.useMemo(() => {
     const items = unwrapList<any>(childQuery.data);
-    return toSelectOptions(items, "All Child Categories");
+    return toSelectOptions(items, t("reports.productReport.allChildCategories"));
   }, [childQuery.data]);
 
   // ======================
@@ -246,9 +252,9 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
       <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">All Reports</div>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">{t("reports.common.allReports")}</div>
             <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Range: {range.startDate} → {range.endDate} • Total: {total}
+              {t("reports.common.range")}: {range.startDate} → {range.endDate} • {t("reports.common.total")}: {total}
             </div>
             {note ? <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">{note}</div> : null}
           </div>
@@ -261,11 +267,11 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               onClick={() => reportQuery.refetch()}
               type="button"
             >
-              Refresh
+              {t("reports.common.refresh")}
             </Button>
 
             <Button variant="outline" className="h-10" onClick={clearFilters} type="button">
-              Reset
+              {t("reports.common.reset")}
             </Button>
           </div>
         </div>
@@ -278,7 +284,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               <Input
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                placeholder="Search product..."
+                placeholder={t("reports.productReport.searchProduct")}
                 className="h-11 rounded-[4px] border-gray-200 bg-white pr-10 dark:border-gray-800 dark:bg-gray-950"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -339,7 +345,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
             />
 
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Page {currentPage} of {totalPages}
+              {t("reports.common.page")} {currentPage} {t("reports.common.of")} {totalPages}
             </div>
 
             <div className="flex items-center gap-2">
@@ -350,7 +356,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
                 onClick={() => setOffset(Math.max(0, offset - safeLimit))}
                 type="button"
               >
-                Prev
+                {t("reports.common.prev")}
               </Button>
 
               <Button
@@ -360,7 +366,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
                 onClick={() => setOffset(offset + safeLimit)}
                 type="button"
               >
-                Next
+                {t("reports.common.next")}
               </Button>
             </div>
           </div>
@@ -373,7 +379,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               onClick={() => exportAll("csv")}
               type="button"
             >
-              Export CSV
+              {t("reports.common.exportExcel")}
             </Button>
 
             <Button
@@ -383,28 +389,28 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               onClick={() => exportAll("pdf")}
               type="button"
             >
-              Export PDF
+              {t("reports.common.exportPdf")}
             </Button>
           </div>
         </div>
 
         {/* Summary */}
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <SummaryBox label="Total Revenue" value={totals.revenue} />
-          <SummaryBox label="Total Cost" value={totals.cost} />
-          <SummaryBox label="Total Profit" value={totals.profit} tone={totals.profit >= 0 ? "success" : "danger"} />
+          <SummaryBox label={t("reports.productReport.totalRevenue")} value={totals.revenue} />
+          <SummaryBox label={t("reports.productReport.totalCost")} value={totals.cost} />
+          <SummaryBox label={t("reports.productReport.totalProfit")} value={totals.profit} tone={totals.profit >= 0 ? "success" : "danger"} />
         </div>
 
         {/* Errors */}
         {(mainQuery.isError || subQuery.isError || childQuery.isError) && (
           <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-            Failed to load categories. Please refresh.
+            {t("reports.common.failedLoad")}
           </div>
         )}
 
         {reportQuery.isError && (
           <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-            Failed to load report data. Please try again.
+            {t("reports.common.failedLoad")}
           </div>
         )}
       </div>

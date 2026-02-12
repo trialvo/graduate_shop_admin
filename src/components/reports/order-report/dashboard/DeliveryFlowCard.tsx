@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import {
   BadgeCheck,
   Box,
@@ -34,6 +35,7 @@ const iconByKey: Record<OrderStatusKey, React.ReactNode> = {
 };
 
 const DeliveryFlowCard: React.FC<Props> = ({ items, isLoading }) => {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -42,7 +44,7 @@ const DeliveryFlowCard: React.FC<Props> = ({ items, isLoading }) => {
         "p-5 sm:p-6"
       )}
     >
-      <div className="text-base font-semibold text-gray-900 dark:text-white">Delivery Flow</div>
+      <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.orderReport.deliveryFlow")}</div>
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
       {isLoading ? (

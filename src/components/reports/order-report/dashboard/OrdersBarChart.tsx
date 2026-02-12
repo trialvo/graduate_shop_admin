@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { TimePeriodKey, YearlyBarSeries } from "../types";
 import { periodLabel } from "../dateUtils";
 
@@ -19,6 +20,7 @@ type Props = {
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const OrdersBarChart: React.FC<Props> = ({ period, chart, isLoading }) => {
+  const { t } = useTranslation();
   const series = chart?.series ?? [];
   const years = chart?.years ?? ["-", "-", "-"];
 
@@ -43,8 +45,8 @@ const OrdersBarChart: React.FC<Props> = ({ period, chart, isLoading }) => {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-gray-900 dark:text-white">Yearly Comparison</div>
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Time period: {periodLabel(period)}</div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.orderReport.yearlyComparison")}</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("reports.common.timePeriod")}: {periodLabel(period)}</div>
         </div>
 
         <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -84,7 +86,7 @@ const OrdersBarChart: React.FC<Props> = ({ period, chart, isLoading }) => {
               </div>
 
               <div className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-                Grouped monthly delivered-flow orders
+                {t("reports.orderReport.groupedMonthly")}
               </div>
             </div>
           </div>

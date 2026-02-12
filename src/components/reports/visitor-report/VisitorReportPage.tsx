@@ -5,6 +5,7 @@ import React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 import MetricCard from "./MetricCard";
 import VisitorsAreaChart from "./VisitorsAreaChart";
@@ -29,14 +30,19 @@ import {
   getVisitorTopViewedProducts,
 } from "@/api/visitor-metrics.api";
 
-const PERIODS: Array<{ value: TimePeriodKey; label: string }> = [
-  { value: "today", label: "Today" },
-  { value: "last7", label: "Last 7 Days" },
-  { value: "thisMonth", label: "This Month" },
-  { value: "thisYear", label: "This Year" },
-];
+function usePeriodsOptions() {
+  const { t } = useTranslation();
+  return [
+    { value: "today" as TimePeriodKey, label: t("reports.common.today") },
+    { value: "last7" as TimePeriodKey, label: t("reports.common.last7") },
+    { value: "thisMonth" as TimePeriodKey, label: t("reports.common.thisMonth") },
+    { value: "thisYear" as TimePeriodKey, label: t("reports.common.thisYear") },
+  ];
+}
 
 export default function VisitorReportPage() {
+  const { t } = useTranslation();
+  const PERIODS = usePeriodsOptions();
   const [period, setPeriod] = React.useState<TimePeriodKey>("last7");
 
   const range = React.useMemo(() => getPeriodRange(period), [period]);
@@ -123,72 +129,72 @@ export default function VisitorReportPage() {
     return [
       {
         key: "active_now",
-        label: "Active Now",
+        label: t("reports.visitorReport.activeNow"),
         valueText: String(activeNow),
         hint: liveHint,
         tone: "brand",
       },
       {
         key: "today",
-        label: "Today",
+        label: t("reports.common.today"),
         valueText: String(today),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "yesterday",
-        label: "Yesterday",
+        label: t("reports.visitorReport.yesterday"),
         valueText: String(yesterday),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "growth",
-        label: "Daily Growth",
+        label: t("reports.visitorReport.dailyGrowth"),
         valueText: growth,
-        hint: "Today vs yesterday",
+        hint: t("reports.visitorReport.todayVsYesterday"),
         tone: growthTone as any,
       },
       {
         key: "this_week",
-        label: "This Week",
+        label: t("reports.visitorReport.thisWeek"),
         valueText: String(thisWeek),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "last_week",
-        label: "Last Week",
+        label: t("reports.visitorReport.lastWeek"),
         valueText: String(lastWeek),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "this_month",
-        label: "This Month",
+        label: t("reports.common.thisMonth"),
         valueText: String(thisMonth),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "last_month",
-        label: "Last Month",
+        label: t("reports.visitorReport.lastMonth"),
         valueText: String(lastMonth),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "this_year",
-        label: "This Year",
+        label: t("reports.common.thisYear"),
         valueText: String(thisYear),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
       {
         key: "last_year",
-        label: "Last Year",
+        label: t("reports.visitorReport.lastYear"),
         valueText: String(lastYear),
-        hint: "Unique visitors",
+        hint: t("reports.visitorReport.uniqueVisitors"),
         tone: "muted",
       },
     ];
@@ -239,17 +245,16 @@ export default function VisitorReportPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              Website Visitor Reports
+              {t("reports.visitorReport.title")}
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Monitor visitors, daily growth, and trend insights from server
-              logs.
+              {t("reports.visitorReport.description")}
             </p>
           </div>
 
           <div className="w-full lg:w-[260px]">
             <div className="mb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-              Time period
+              {t("reports.common.timePeriod")}
             </div>
             <select
               value={period}
@@ -276,13 +281,13 @@ export default function VisitorReportPage() {
         {/* Meta line */}
         <div className="mt-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 dark:text-gray-400">
           <div>
-            Selected:{" "}
+            {t("reports.visitorReport.selected")}:{" "}
             <span className="font-semibold">{periodLabel(period)}</span> •
-            Range: <span className="font-semibold">{range.startDate}</span> →{" "}
+            {t("reports.common.range")}: <span className="font-semibold">{range.startDate}</span> →{" "}
             <span className="font-semibold">{range.endDate}</span>
           </div>
           <div>
-            Generated:{" "}
+            {t("reports.visitorReport.generated")}:{" "}
             <span className="font-semibold">
               {reportQuery.data?.meta?.generated_at
                 ? new Date(reportQuery.data.meta.generated_at).toLocaleString()
@@ -295,15 +300,15 @@ export default function VisitorReportPage() {
         {(reportQuery.isError ||
           trendQuery.isError ||
           topViewedQuery.isError) && (
-          <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-            {String(
-              (reportQuery.error as any)?.message ||
+            <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+              {String(
+                (reportQuery.error as any)?.message ||
                 (trendQuery.error as any)?.message ||
                 (topViewedQuery.error as any)?.message ||
                 "Failed to load visitor report",
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
         {/* Metrics */}
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -315,8 +320,8 @@ export default function VisitorReportPage() {
         {/* Chart */}
         <div className="mt-6">
           <VisitorsAreaChart
-            title="Visitor Trend"
-            legend="Unique visitors"
+            title={t("reports.visitorReport.visitorTrend")}
+            legend={t("reports.visitorReport.uniqueVisitors")}
             points={points}
             metaText={trendMetaText}
           />

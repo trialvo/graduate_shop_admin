@@ -2,10 +2,12 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type Props = { qty: number; label: string; isLoading?: boolean };
 
 const MetricCard: React.FC<Props> = ({ qty, label, isLoading }) => {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -24,7 +26,7 @@ const MetricCard: React.FC<Props> = ({ qty, label, isLoading }) => {
         )}
 
         <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-          Qty
+          {t("reports.common.qty")}
         </div>
 
         {isLoading ? (

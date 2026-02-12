@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import type { TimePeriodKey } from "../types";
@@ -26,21 +27,24 @@ function safeNum(v: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function labelForStatus(k: OrderStatusKey) {
-  const map: Record<OrderStatusKey, string> = {
-    new: "New",
-    approved: "Approved",
-    processing: "Processing",
-    packaging: "Packaging",
-    shipped: "Shipped",
-    out_for_delivery: "Out for Delivery",
-    delivered: "Delivered",
-    returned: "Returned",
-    cancelled: "Cancelled",
-    on_hold: "On Hold",
-    trash: "Trash",
+function useLabelForStatus() {
+  const { t } = useTranslation();
+  return (k: OrderStatusKey) => {
+    const map: Record<OrderStatusKey, string> = {
+      new: t("reports.common.new"),
+      approved: t("reports.common.approved"),
+      processing: t("reports.common.processing"),
+      packaging: t("reports.common.packaging"),
+      shipped: t("reports.common.shipped"),
+      out_for_delivery: t("reports.common.outForDelivery"),
+      delivered: t("reports.common.delivered"),
+      returned: t("reports.common.returned"),
+      cancelled: t("reports.common.cancelled"),
+      on_hold: t("reports.common.onHold"),
+      trash: t("reports.common.trash"),
+    };
+    return map[k] ?? k;
   };
-  return map[k] ?? k;
 }
 
 function toneForStatus(k: OrderStatusKey) {
@@ -52,6 +56,7 @@ function toneForStatus(k: OrderStatusKey) {
 }
 
 const OrderReportDashboard: React.FC<Props> = ({ period }) => {
+  const { t } = useTranslation();
   const { startDate, endDate } = React.useMemo(() => startEndByPeriod(period), [period]);
 
   const dashboardQuery = useQuery({
@@ -93,11 +98,13 @@ const OrderReportDashboard: React.FC<Props> = ({ period }) => {
   const cancelledQty = safeNum(delivery?.cancelled) + safeNum(delivery?.trash);
   const pendingQty = Math.max(0, totalQty - deliveredQty - cancelledQty);
 
+  const labelForStatus = useLabelForStatus();
+
   const metrics = [
-    { key: "total" as const, label: "Total Orders", qty: totalQty },
-    { key: "delivered" as const, label: "Delivered", qty: deliveredQty },
-    { key: "cancelled" as const, label: "Cancelled/Trash", qty: cancelledQty },
-    { key: "pending" as const, label: "Pending", qty: pendingQty },
+    { key: "total" as const, label: t("reports.orderReport.totalOrders"), qty: totalQty },
+    { key: "delivered" as const, label: t("reports.common.delivered"), qty: deliveredQty },
+    { key: "cancelled" as const, label: t("reports.orderReport.cancelledTrash"), qty: cancelledQty },
+    { key: "pending" as const, label: t("reports.orderReport.pending"), qty: pendingQty },
   ];
 
   const todaySummary = {
@@ -171,7 +178,7 @@ const OrderReportDashboard: React.FC<Props> = ({ period }) => {
     <div className="mt-6 space-y-6">
       {isError ? (
         <div className="rounded-[4px] border border-error-500/30 bg-error-500/10 px-4 py-3 text-sm text-error-700 dark:text-error-300">
-          Failed to load order report data.
+          {t("reports.common.failedLoad")}
         </div>
       ) : null}
 

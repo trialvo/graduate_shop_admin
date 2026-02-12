@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import type { StockCategoryReportRow } from "../types";
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 const StockCategoryTable: React.FC<Props> = ({ rows, isLoading }) => {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="w-full overflow-hidden rounded-[4px]">
@@ -19,22 +21,22 @@ const StockCategoryTable: React.FC<Props> = ({ rows, isLoading }) => {
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-950">
                 <TableCell isHeader className="w-[80px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Sl
+                  {t("reports.orderReport.thSl")}
                 </TableCell>
                 <TableCell isHeader className="min-w-[320px] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Category
+                  {t("reports.productReport.category")}
                 </TableCell>
                 <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Total SKU
+                  {t("reports.stockReport.totalSku")}
                 </TableCell>
                 <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  In Stock
+                  {t("reports.stockReport.inStock")}
                 </TableCell>
                 <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Low Stock
+                  {t("reports.stockReport.lowStock")}
                 </TableCell>
                 <TableCell isHeader className="min-w-[140px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Out of Stock
+                  {t("reports.stockReport.outOfStock")}
                 </TableCell>
               </TableRow>
             </TableHeader>
@@ -71,7 +73,7 @@ const StockCategoryTable: React.FC<Props> = ({ rows, isLoading }) => {
               {!isLoading && rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={6} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                    No stock data found.
+                    {t("reports.common.noData")}
                   </TableCell>
                 </TableRow>
               )}

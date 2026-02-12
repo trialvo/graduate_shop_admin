@@ -11,6 +11,7 @@ import { api } from "@/api/client";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
+import { useTranslation } from "react-i18next";
 
 import type { TimePeriodKey, StockCategoryLevel, StockCategoryReportRow } from "../types";
 import { getPeriodRange, safeNumber } from "../stockUtils";
@@ -276,6 +277,7 @@ function buildCategoryRows(
 }
 
 export default function StockReportReport({ period }: Props) {
+  const { t } = useTranslation();
   const range = React.useMemo(() => getPeriodRange(period), [period]);
 
   /** view mode */
@@ -348,15 +350,15 @@ export default function StockReportReport({ period }: Props) {
   const childList = React.useMemo(() => unwrapList<any>(childQuery.data, "data"), [childQuery.data]);
 
   const mainOptions = React.useMemo(
-    () => [{ value: "", label: "All Main" }, ...mainList.map((m: any) => ({ value: String(m.id), label: String(m.name) }))],
+    () => [{ value: "", label: t("reports.productReport.allMainCategories") }, ...mainList.map((m: any) => ({ value: String(m.id), label: String(m.name) }))],
     [mainList]
   );
   const subOptions = React.useMemo(
-    () => [{ value: "", label: "All Sub" }, ...subList.map((s: any) => ({ value: String(s.id), label: String(s.name) }))],
+    () => [{ value: "", label: t("reports.productReport.allSubCategories") }, ...subList.map((s: any) => ({ value: String(s.id), label: String(s.name) }))],
     [subList]
   );
   const childOptions = React.useMemo(
-    () => [{ value: "", label: "All Child" }, ...childList.map((c: any) => ({ value: String(c.id), label: String(c.name) }))],
+    () => [{ value: "", label: t("reports.productReport.allChildCategories") }, ...childList.map((c: any) => ({ value: String(c.id), label: String(c.name) }))],
     [childList]
   );
 
@@ -434,9 +436,9 @@ export default function StockReportReport({ period }: Props) {
       <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">Reports</div>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">{t("reports.common.allReports")}</div>
             <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Range: {range.startDate} → {range.endDate}
+              {t("reports.common.range")}: {range.startDate} → {range.endDate}
               {view === "product" && productQuery.data?.note ? ` • ${productQuery.data.note}` : null}
             </div>
           </div>
@@ -454,7 +456,7 @@ export default function StockReportReport({ period }: Props) {
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/[0.04]"
                 )}
               >
-                Category Stock
+                {t("reports.stockReport.categoryStock")}
               </button>
               <button
                 type="button"
@@ -466,7 +468,7 @@ export default function StockReportReport({ period }: Props) {
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/[0.04]"
                 )}
               >
-                Product Report
+                {t("reports.productReport.title")}
               </button>
             </div>
           </div>
@@ -480,7 +482,7 @@ export default function StockReportReport({ period }: Props) {
               <Input
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                placeholder={view === "product" ? "Search product name..." : "Search category..."}
+                placeholder={view === "product" ? t("reports.productReport.searchProduct") : t("reports.stockReport.searchCategory")}
                 className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -512,9 +514,9 @@ export default function StockReportReport({ period }: Props) {
             {view === "category" ? (
               <Select
                 options={[
-                  { value: "main", label: "Main level" },
-                  { value: "sub", label: "Sub level" },
-                  { value: "child", label: "Child level" },
+                  { value: "main", label: t("reports.stockReport.mainLevel") },
+                  { value: "sub", label: t("reports.stockReport.subLevel") },
+                  { value: "child", label: t("reports.stockReport.childLevel") },
                 ]}
                 defaultValue={level}
                 onChange={(v) => setLevel(v as StockCategoryLevel)}
@@ -524,9 +526,9 @@ export default function StockReportReport({ period }: Props) {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Select
                   options={[
-                    { value: "all", label: "All Status" },
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "Inactive" },
+                    { value: "all", label: t("reports.common.allOrderStatus") },
+                    { value: "active", label: t("reports.productReport.active") },
+                    { value: "inactive", label: t("reports.productReport.inactive") },
                   ]}
                   defaultValue={status}
                   onChange={(v) => setStatus(v as any)}
@@ -557,7 +559,7 @@ export default function StockReportReport({ period }: Props) {
                   type="button"
                   onClick={() => exportStockCategoryAsCsv(categoryRows)}
                 >
-                  Export Excel
+                  {t("reports.common.exportExcel")}
                 </Button>
                 <Button
                   variant="outline"
@@ -566,7 +568,7 @@ export default function StockReportReport({ period }: Props) {
                   type="button"
                   onClick={() => exportStockCategoryAsPrintablePdf(categoryRows, "Stock Category Report")}
                 >
-                  Export PDF
+                  {t("reports.common.exportPdf")}
                 </Button>
               </>
             ) : (
@@ -578,7 +580,7 @@ export default function StockReportReport({ period }: Props) {
                   type="button"
                   onClick={() => exportProductMetricsAsCsv(productQuery.data?.data ?? [])}
                 >
-                  Export Excel
+                  {t("reports.common.exportExcel")}
                 </Button>
                 <Button
                   variant="outline"
@@ -587,7 +589,7 @@ export default function StockReportReport({ period }: Props) {
                   type="button"
                   onClick={() => exportProductMetricsAsPrintablePdf(productQuery.data?.data ?? [], "Product Metrics Report")}
                 >
-                  Export PDF
+                  {t("reports.common.exportPdf")}
                 </Button>
               </>
             )}
@@ -616,7 +618,7 @@ export default function StockReportReport({ period }: Props) {
           {/* pagination bar */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-              Total: {totalProducts.toLocaleString()} • Showing {Math.min(offset + 1, totalProducts)}-
+              {t("reports.common.total")}: {totalProducts.toLocaleString()} • {t("reports.common.showing")} {Math.min(offset + 1, totalProducts)}-
               {Math.min(offset + limit, totalProducts)}
             </div>
 
@@ -628,7 +630,7 @@ export default function StockReportReport({ period }: Props) {
                 disabled={!canPrev || productQuery.isFetching}
                 onClick={() => setOffset((p) => Math.max(0, p - limit))}
               >
-                Prev
+                {t("reports.common.prev")}
               </Button>
               <Button
                 variant="outline"
@@ -637,7 +639,7 @@ export default function StockReportReport({ period }: Props) {
                 disabled={!canNext || productQuery.isFetching}
                 onClick={() => setOffset((p) => p + limit)}
               >
-                Next
+                {t("reports.common.next")}
               </Button>
             </div>
           </div>
@@ -750,7 +752,7 @@ export default function StockReportReport({ period }: Props) {
                                     : "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300"
                                 )}
                               >
-                                {r.is_active ? "Active" : "Inactive"}
+                                {r.is_active ? t("reports.productReport.active") : t("reports.productReport.inactive")}
                               </span>
                             </td>
 
@@ -764,7 +766,7 @@ export default function StockReportReport({ period }: Props) {
                     {!productQuery.isLoading && (productQuery.data?.data ?? []).length === 0 && (
                       <tr>
                         <td colSpan={10} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                          No data found.
+                          {t("reports.common.noData")}
                         </td>
                       </tr>
                     )}

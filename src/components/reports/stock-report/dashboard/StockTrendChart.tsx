@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { StockTrendPoint, TimePeriodKey } from "../types";
 
 type Props = {
@@ -38,6 +39,7 @@ function toPath(values: number[], w: number, h: number, padding: number) {
 const YEAR_OPTIONS = [2024, 2025, 2026, 2027];
 
 const StockTrendChart: React.FC<Props> = ({ period, points, year, onYearChange, isLoading, errorText }) => {
+  const { t } = useTranslation();
   const inValues = points.map((p) => p.in);
   const outValues = points.map((p) => p.out);
 
@@ -58,16 +60,16 @@ const StockTrendChart: React.FC<Props> = ({ period, points, year, onYearChange, 
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-gray-900 dark:text-white">Stock Trend</div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.stockReport.stockTrend")}</div>
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Time period: {periodLabel(period)} • Year: {year}
+            {t("reports.common.timePeriod")}: {periodLabel(period)} • {t("reports.stockReport.year")}: {year}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-            <LegendDot className="bg-success-500" label="Stock In" />
-            <LegendDot className="bg-error-500" label="Stock Out" />
+            <LegendDot className="bg-success-500" label={t("reports.stockReport.stockIn")} />
+            <LegendDot className="bg-error-500" label={t("reports.stockReport.stockOut")} />
           </div>
 
           <select

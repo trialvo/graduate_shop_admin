@@ -2,6 +2,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   Filter,
@@ -83,6 +84,7 @@ export default function OrdersSelectionPage({
   onReset,
   onSelectOrder,
 }: Props) {
+  const { t } = useTranslation();
   const [local, setLocal] = useState<OrdersListParams>(params);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -120,11 +122,11 @@ export default function OrdersSelectionPage({
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-                Select an Order to Edit
+                {t("orders.ordersSelection.title")}
               </h1>
               {pagination ? (
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {pagination.total} orders found
+                  {t("orders.ordersSelection.ordersFound", { count: pagination.total })}
                 </p>
               ) : null}
             </div>
@@ -136,11 +138,11 @@ export default function OrdersSelectionPage({
               size="sm"
               onClick={() => {
                 syncFromUrl();
-                toast("Inputs synced from current filters");
+                toast(t("orders.ordersSelection.syncedToast"));
               }}
               startIcon={<RotateCcw size={14} />}
             >
-              Sync
+              {t("orders.ordersSelection.sync")}
             </Button>
 
             <Button
@@ -149,7 +151,7 @@ export default function OrdersSelectionPage({
               onClick={() => setFiltersOpen((s) => !s)}
               startIcon={<Filter size={14} />}
             >
-              {filtersOpen ? "Hide Filters" : "Filters"}
+              {filtersOpen ? t("orders.ordersSelection.hideFilters") : t("orders.ordersSelection.filters")}
             </Button>
           </div>
         </div>
@@ -168,14 +170,14 @@ export default function OrdersSelectionPage({
                     customer_email: e.target.value || undefined,
                   }))
                 }
-                placeholder="Search phone or email"
+                placeholder={t("orders.ordersSelection.searchPhoneEmail")}
                 className="bg-gray-50 dark:bg-gray-800/50"
               />
 
               <Select
                 options={[
-                  { value: "", label: "Type: Any" },
-                  { value: "regular", label: "Type: Regular" },
+                  { value: "", label: t("orders.ordersSelection.typeAny") },
+                  { value: "regular", label: t("orders.ordersSelection.typeRegular") },
                 ]}
                 defaultValue={local.order_type ?? ""}
                 onChange={(v) =>
@@ -186,18 +188,18 @@ export default function OrdersSelectionPage({
 
               <Select
                 options={[
-                  { value: "", label: "Status: Any" },
-                  { value: "new", label: "New" },
-                  { value: "approved", label: "Approved" },
-                  { value: "processing", label: "Processing" },
-                  { value: "packaging", label: "Packaging" },
-                  { value: "shipped", label: "Shipped" },
-                  { value: "out_for_delivery", label: "Out for delivery" },
-                  { value: "delivered", label: "Delivered" },
-                  { value: "returned", label: "Returned" },
-                  { value: "cancelled", label: "Cancelled" },
-                  { value: "on_hold", label: "On hold" },
-                  { value: "trash", label: "Trash" },
+                  { value: "", label: t("orders.ordersSelection.statusAny") },
+                  { value: "new", label: t("orders.ordersSelection.new") },
+                  { value: "approved", label: t("orders.ordersSelection.approved") },
+                  { value: "processing", label: t("orders.ordersSelection.processing") },
+                  { value: "packaging", label: t("orders.ordersSelection.packaging") },
+                  { value: "shipped", label: t("orders.ordersSelection.shipped") },
+                  { value: "out_for_delivery", label: t("orders.ordersSelection.outForDelivery") },
+                  { value: "delivered", label: t("orders.ordersSelection.delivered") },
+                  { value: "returned", label: t("orders.ordersSelection.returned") },
+                  { value: "cancelled", label: t("orders.ordersSelection.cancelled") },
+                  { value: "on_hold", label: t("orders.ordersSelection.onHold") },
+                  { value: "trash", label: t("orders.ordersSelection.trash") },
                 ]}
                 defaultValue={local.order_status ?? ""}
                 onChange={(v) =>
@@ -208,10 +210,10 @@ export default function OrdersSelectionPage({
 
               <Select
                 options={[
-                  { value: "", label: "Payment: Any" },
-                  { value: "paid", label: "Paid" },
-                  { value: "partial_paid", label: "Partial" },
-                  { value: "unpaid", label: "Unpaid" },
+                  { value: "", label: t("orders.ordersSelection.paymentAny") },
+                  { value: "paid", label: t("orders.ordersSelection.paid") },
+                  { value: "partial_paid", label: t("orders.ordersSelection.partial") },
+                  { value: "unpaid", label: t("orders.ordersSelection.unpaid") },
                 ]}
                 defaultValue={local.payment_status ?? ""}
                 onChange={(v) =>
@@ -222,10 +224,10 @@ export default function OrdersSelectionPage({
 
               <Select
                 options={[
-                  { value: "", label: "Pay Type: Any" },
-                  { value: "gateway", label: "Gateway" },
-                  { value: "cod", label: "COD" },
-                  { value: "mixed", label: "Mixed" },
+                  { value: "", label: t("orders.ordersSelection.payTypeAny") },
+                  { value: "gateway", label: t("orders.ordersSelection.gateway") },
+                  { value: "cod", label: t("orders.ordersSelection.cod") },
+                  { value: "mixed", label: t("orders.ordersSelection.mixed") },
                 ]}
                 defaultValue={local.payment_type ?? ""}
                 onChange={(v) =>
@@ -235,7 +237,7 @@ export default function OrdersSelectionPage({
               />
 
               <DatePicker
-                placeholder="Start"
+                placeholder={t("orders.ordersSelection.start")}
                 value={local.date_from ?? ""}
                 onChange={(v) =>
                   setLocal((p) => ({ ...p, date_from: v || undefined }))
@@ -244,7 +246,7 @@ export default function OrdersSelectionPage({
               />
 
               <DatePicker
-                placeholder="End"
+                placeholder={t("orders.ordersSelection.end")}
                 value={local.date_to ?? ""}
                 onChange={(v) =>
                   setLocal((p) => ({ ...p, date_to: v || undefined }))
@@ -269,7 +271,7 @@ export default function OrdersSelectionPage({
                 }}
                 startIcon={<Filter size={14} />}
               >
-                Apply Filters
+                {t("orders.ordersSelection.applyFilters")}
               </Button>
 
               <Button
@@ -277,11 +279,11 @@ export default function OrdersSelectionPage({
                 size="sm"
                 onClick={() => {
                   onReset();
-                  toast.success("Filters reset");
+                  toast.success(t("orders.ordersSelection.filtersReset"));
                 }}
                 startIcon={<SlidersHorizontal size={14} />}
               >
-                Reset
+                {t("orders.ordersSelection.reset")}
               </Button>
             </div>
           </div>
@@ -294,13 +296,13 @@ export default function OrdersSelectionPage({
           <div className="flex items-center gap-2">
             <FileText size={14} className="text-gray-400" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500">
-              Orders List
+              {t("orders.ordersSelection.ordersList")}
             </span>
           </div>
 
           {pagination ? (
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Showing{" "}
+              {t("orders.ordersSelection.showing")}{" "}
               <span className="font-semibold text-gray-900 dark:text-white">
                 {pagination.offset + 1}
               </span>{" "}
@@ -311,7 +313,7 @@ export default function OrdersSelectionPage({
                   pagination.total,
                 )}
               </span>{" "}
-              of{" "}
+              {t("orders.ordersSelection.of")}{" "}
               <span className="font-semibold text-gray-900 dark:text-white">
                 {pagination.total}
               </span>
@@ -330,25 +332,25 @@ export default function OrdersSelectionPage({
           </div>
         ) : listQuery.isError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/5 dark:text-red-400">
-            {(listQuery.error as any)?.message ?? "Failed to load orders"}
+            {(listQuery.error as any)?.message ?? t("orders.ordersSelection.failedLoad")}
           </div>
         ) : orders.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-800/30 dark:text-gray-400">
-            No orders found for current filters.
+            {t("orders.ordersSelection.noOrders")}
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
             <table className="min-w-[980px] w-full border-separate border-spacing-0">
               <thead>
                 <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
-                  <th className="px-4 py-3">Order</th>
-                  <th className="px-4 py-3">Customer</th>
-                  <th className="px-4 py-3">Phone</th>
-                  <th className="px-4 py-3">Payment</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Total</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">{t("orders.ordersSelection.thOrder")}</th>
+                  <th className="px-4 py-3">{t("orders.ordersSelection.thCustomer")}</th>
+                  <th className="px-4 py-3">{t("orders.ordersSelection.thPhone")}</th>
+                  <th className="px-4 py-3">{t("orders.ordersSelection.thPayment")}</th>
+                  <th className="px-4 py-3">{t("orders.ordersSelection.thStatus")}</th>
+                  <th className="px-4 py-3 text-right">{t("orders.ordersSelection.thTotal")}</th>
+                  <th className="px-4 py-3">{t("orders.ordersSelection.thCreated")}</th>
+                  <th className="px-4 py-3 text-right">{t("orders.ordersSelection.thAction")}</th>
                 </tr>
               </thead>
 
@@ -405,7 +407,7 @@ export default function OrdersSelectionPage({
                         {formatBDT(o.grand_total)} BDT
                       </div>
                       <div className="text-xs text-gray-400 dark:text-gray-500">
-                        Due: {formatBDT(o.due_amount)} BDT
+                        {t("orders.ordersSelection.due", { value: formatBDT(o.due_amount) })}
                       </div>
                     </td>
 
@@ -420,7 +422,7 @@ export default function OrdersSelectionPage({
                         onClick={() => onSelectOrder(o.id)}
                         startIcon={<Pencil size={13} />}
                       >
-                        Edit
+                        {t("orders.ordersSelection.edit")}
                       </Button>
                     </td>
                   </tr>
@@ -442,7 +444,7 @@ export default function OrdersSelectionPage({
               </span>
               <span className="text-gray-300 dark:text-gray-700">|</span>
               <span>
-                Limit:{" "}
+                {t("orders.ordersSelection.limit")}:{" "}
                 <span className="font-semibold text-gray-600 dark:text-gray-300">
                   {pagination.limit}
                 </span>
@@ -466,7 +468,7 @@ export default function OrdersSelectionPage({
                 }}
                 startIcon={<ChevronLeft size={14} />}
               >
-                Prev
+                {t("orders.ordersSelection.prev")}
               </Button>
 
               <Button
@@ -483,7 +485,7 @@ export default function OrdersSelectionPage({
                 }}
                 startIcon={<ChevronRight size={14} />}
               >
-                Next
+                {t("orders.ordersSelection.next")}
               </Button>
             </div>
           </div>

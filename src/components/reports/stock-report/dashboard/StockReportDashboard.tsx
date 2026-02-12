@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import type { TimePeriodKey, StockCategoryLevel, StockCategoryRow, StockHealthSummary, StockReportMetric, StockTrendPoint } from "../types";
@@ -19,12 +20,13 @@ import StockTrendChart from "./StockTrendChart";
 
 type Props = { period: TimePeriodKey };
 
-function buildMetrics(s: StockHealthSummary): StockReportMetric[] {
-  return [
-    { key: "total_active_items", label: "Total Active Items", qty: s.totalActiveItems },
-    { key: "in_stock", label: "In Stock", qty: s.inStock },
-    { key: "low_stock", label: "Low Stock", qty: s.lowStock },
-    { key: "out_of_stock", label: "Out of Stock", qty: s.outOfStock },
+function useBuildMetrics() {
+  const { t } = useTranslation();
+  return (s: StockHealthSummary): StockReportMetric[] => [
+    { key: "total_active_items", label: t("reports.stockReport.totalActiveItems"), qty: s.totalActiveItems },
+    { key: "in_stock", label: t("reports.stockReport.inStock"), qty: s.inStock },
+    { key: "low_stock", label: t("reports.stockReport.lowStock"), qty: s.lowStock },
+    { key: "out_of_stock", label: t("reports.stockReport.outOfStock"), qty: s.outOfStock },
   ];
 }
 
@@ -34,8 +36,8 @@ function mapCategoryRows(level: StockCategoryLevel, payload: any): StockCategory
 
   const list =
     level === "main" ? data.main_categories :
-    level === "sub" ? data.sub_categories :
-    data.child_categories;
+      level === "sub" ? data.sub_categories :
+        data.child_categories;
 
   if (!Array.isArray(list)) return [];
 
@@ -60,6 +62,8 @@ function mapTrendPoints(payload: any): StockTrendPoint[] {
 }
 
 const StockReportDashboard: React.FC<Props> = ({ period }) => {
+  const { t } = useTranslation();
+  const buildMetrics = useBuildMetrics();
   const range = React.useMemo(() => getPeriodRange(period), [period]);
 
   // dashboard summery
@@ -103,7 +107,7 @@ const StockReportDashboard: React.FC<Props> = ({ period }) => {
 
   const catRows = React.useMemo(() => mapCategoryRows(level, catQuery.data), [level, catQuery.data]);
 
-  const pageLabel = `Showing ${offset + 1} - ${offset + limit}`;
+  const pageLabel = `${t("reports.common.showing")} ${offset + 1} - ${offset + limit}`;
 
   // trend (year-based)
   const nowYear = new Date().getFullYear();
@@ -165,7 +169,7 @@ const StockReportDashboard: React.FC<Props> = ({ period }) => {
 
       {(dashQuery.isError || catQuery.isError) && (
         <div className="rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-          Failed to load stock dashboard data. Please refresh.
+          {t("reports.common.failedLoad")}
         </div>
       )}
     </div>

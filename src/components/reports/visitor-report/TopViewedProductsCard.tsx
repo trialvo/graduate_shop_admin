@@ -4,6 +4,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/button/Button";
+import { useTranslation } from "react-i18next";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import type { TopViewedProductRow } from "./types";
 
@@ -26,6 +27,7 @@ export default function TopViewedProductsCard({
   onPrev,
   onNext,
 }: Props) {
+  const { t } = useTranslation();
   const canPrev = offset > 0;
   const canNext = offset + limit < total;
 
@@ -39,9 +41,9 @@ export default function TopViewedProductsCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-gray-900 dark:text-white">Top Viewed Products</div>
+          <div className="text-base font-semibold text-gray-900 dark:text-white">{t("reports.visitorReport.topViewedProducts")}</div>
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Total: <span className="font-semibold">{total}</span> • Showing{" "}
+            {t("reports.common.total")}: <span className="font-semibold">{total}</span> • {t("reports.common.showing")}{" "}
             <span className="font-semibold">{Math.min(offset + 1, total)}</span>-
             <span className="font-semibold">{Math.min(offset + limit, total)}</span>
           </div>
@@ -49,10 +51,10 @@ export default function TopViewedProductsCard({
 
         <div className="flex items-center gap-2">
           <Button variant="outline" className="h-9" type="button" disabled={!canPrev || !!isLoading} onClick={onPrev}>
-            Prev
+            {t("reports.common.prev")}
           </Button>
           <Button variant="outline" className="h-9" type="button" disabled={!canNext || !!isLoading} onClick={onNext}>
-            Next
+            {t("reports.common.next")}
           </Button>
         </div>
       </div>
@@ -98,14 +100,14 @@ export default function TopViewedProductsCard({
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">{r.name}</div>
                   <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    Min price: <span className="font-semibold">{r.minPrice}</span> • Last viewed:{" "}
+                    {t("reports.visitorReport.minPrice")}: <span className="font-semibold">{r.minPrice}</span> • {t("reports.visitorReport.lastViewed")}:{" "}
                     <span className="font-semibold">{new Date(r.lastViewed).toLocaleString()}</span>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <div className="text-sm font-extrabold text-brand-600 dark:text-brand-400">{r.viewCount}</div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">views</div>
+                  <div className="text-[11px] text-gray-500 dark:text-gray-400">{t("reports.visitorReport.views")}</div>
                 </div>
               </div>
             </div>
@@ -113,7 +115,7 @@ export default function TopViewedProductsCard({
 
         {!isLoading && rows.length === 0 && (
           <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-10 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
-            No data found.
+            {t("reports.common.noData")}
           </div>
         )}
       </div>
