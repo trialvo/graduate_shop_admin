@@ -16,6 +16,7 @@ import {
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import DatePicker from "@/components/form/date-picker";
 
 import {
   getAdminOrders,
@@ -172,198 +173,108 @@ export default function OrdersSelectionPage({
       </div>
 
       {/* ─── Filters ──────────────────────────────────── */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-4 flex items-center gap-2">
-          <Filter size={14} className="text-gray-400" />
+      <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-3 flex items-center gap-2">
+          <Filter size={13} className="text-gray-400" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500">
-            Filter Options
+            Filters
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Order Type
-            </div>
-            <Select
-              options={[
-                { value: "", label: "Any" },
-                { value: "regular", label: "Regular" },
-              ]}
-              defaultValue={local.order_type ?? ""}
-              onChange={(v) =>
-                setLocal((p) => ({ ...p, order_type: v || undefined }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
+          {/* Search — first */}
+          <Input
+            value={local.customer_phone ?? local.customer_email ?? ""}
+            onChange={(e) =>
+              setLocal((p) => ({
+                ...p,
+                customer_phone: e.target.value || undefined,
+                customer_email: e.target.value || undefined,
+              }))
+            }
+            placeholder="Search phone or email"
+            className="bg-gray-50 dark:bg-gray-800/50"
+          />
 
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Order Status
-            </div>
-            <Select
-              options={[
-                { value: "", label: "Any" },
-                { value: "new", label: "New" },
-                { value: "approved", label: "Approved" },
-                { value: "processing", label: "Processing" },
-                { value: "packaging", label: "Packaging" },
-                { value: "shipped", label: "Shipped" },
-                { value: "out_for_delivery", label: "Out for delivery" },
-                { value: "delivered", label: "Delivered" },
-                { value: "returned", label: "Returned" },
-                { value: "cancelled", label: "Cancelled" },
-                { value: "on_hold", label: "On hold" },
-                { value: "trash", label: "Trash" },
-              ]}
-              defaultValue={local.order_status ?? ""}
-              onChange={(v) =>
-                setLocal((p) => ({ ...p, order_status: v || undefined }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+          <Select
+            options={[
+              { value: "", label: "Type: Any" },
+              { value: "regular", label: "Type: Regular" },
+            ]}
+            defaultValue={local.order_type ?? ""}
+            onChange={(v) =>
+              setLocal((p) => ({ ...p, order_type: v || undefined }))
+            }
+            className="bg-gray-50 dark:bg-gray-800/50"
+          />
 
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Payment Status
-            </div>
-            <Select
-              options={[
-                { value: "", label: "Any" },
-                { value: "paid", label: "Paid" },
-                { value: "partial_paid", label: "Partial paid" },
-                { value: "unpaid", label: "Unpaid" },
-              ]}
-              defaultValue={local.payment_status ?? ""}
-              onChange={(v) =>
-                setLocal((p) => ({ ...p, payment_status: v || undefined }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+          <Select
+            options={[
+              { value: "", label: "Status: Any" },
+              { value: "new", label: "New" },
+              { value: "approved", label: "Approved" },
+              { value: "processing", label: "Processing" },
+              { value: "packaging", label: "Packaging" },
+              { value: "shipped", label: "Shipped" },
+              { value: "out_for_delivery", label: "Out for delivery" },
+              { value: "delivered", label: "Delivered" },
+              { value: "returned", label: "Returned" },
+              { value: "cancelled", label: "Cancelled" },
+              { value: "on_hold", label: "On hold" },
+              { value: "trash", label: "Trash" },
+            ]}
+            defaultValue={local.order_status ?? ""}
+            onChange={(v) =>
+              setLocal((p) => ({ ...p, order_status: v || undefined }))
+            }
+            className="bg-gray-50 dark:bg-gray-800/50"
+          />
 
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Payment Type
-            </div>
-            <Select
-              options={[
-                { value: "", label: "Any" },
-                { value: "gateway", label: "Gateway" },
-                { value: "cod", label: "COD" },
-                { value: "mixed", label: "Mixed" },
-              ]}
-              defaultValue={local.payment_type ?? ""}
-              onChange={(v) =>
-                setLocal((p) => ({ ...p, payment_type: v || undefined }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+          <Select
+            options={[
+              { value: "", label: "Payment: Any" },
+              { value: "paid", label: "Paid" },
+              { value: "partial_paid", label: "Partial" },
+              { value: "unpaid", label: "Unpaid" },
+            ]}
+            defaultValue={local.payment_status ?? ""}
+            onChange={(v) =>
+              setLocal((p) => ({ ...p, payment_status: v || undefined }))
+            }
+            className="bg-gray-50 dark:bg-gray-800/50"
+          />
 
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Phone
-            </div>
-            <Input
-              value={local.customer_phone ?? ""}
-              onChange={(e) =>
-                setLocal((p) => ({
-                  ...p,
-                  customer_phone: e.target.value || undefined,
-                }))
-              }
-              placeholder="Search phone"
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+          <Select
+            options={[
+              { value: "", label: "Pay Type: Any" },
+              { value: "gateway", label: "Gateway" },
+              { value: "cod", label: "COD" },
+              { value: "mixed", label: "Mixed" },
+            ]}
+            defaultValue={local.payment_type ?? ""}
+            onChange={(v) =>
+              setLocal((p) => ({ ...p, payment_type: v || undefined }))
+            }
+            className="bg-gray-50 dark:bg-gray-800/50"
+          />
 
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Email
-            </div>
-            <Input
-              value={local.customer_email ?? ""}
-              onChange={(e) =>
-                setLocal((p) => ({
-                  ...p,
-                  customer_email: e.target.value || undefined,
-                }))
-              }
-              placeholder="Search email"
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+          <DatePicker
+            placeholder="Start"
+            value={local.date_from ?? ""}
+            onChange={(v) =>
+              setLocal((p) => ({ ...p, date_from: v || undefined }))
+            }
+            showToday={false}
+          />
 
-          <div className="lg:col-span-3">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Date From
-            </div>
-            <Input
-              type="date"
-              value={local.date_from ?? ""}
-              onChange={(e) =>
-                setLocal((p) => ({
-                  ...p,
-                  date_from: e.target.value || undefined,
-                }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
-
-          <div className="lg:col-span-3">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Date To
-            </div>
-            <Input
-              type="date"
-              value={local.date_to ?? ""}
-              onChange={(e) =>
-                setLocal((p) => ({
-                  ...p,
-                  date_to: e.target.value || undefined,
-                }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
-
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Limit
-            </div>
-            <Select
-              options={[
-                { value: "5", label: "5" },
-                { value: "10", label: "10" },
-                { value: "20", label: "20" },
-                { value: "50", label: "50" },
-              ]}
-              defaultValue={String(local.limit ?? params.limit ?? 10)}
-              onChange={(v) => setLocal((p) => ({ ...p, limit: Number(v) }))}
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
-
-          <div className="lg:col-span-2">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              Offset
-            </div>
-            <Input
-              type="number"
-              value={String(local.offset ?? params.offset ?? 0)}
-              onChange={(e) =>
-                setLocal((p) => ({
-                  ...p,
-                  offset: Number(e.target.value) || 0,
-                }))
-              }
-              className="bg-white dark:bg-gray-800/50"
-            />
-          </div>
+          <DatePicker
+            placeholder="End"
+            value={local.date_to ?? ""}
+            onChange={(v) =>
+              setLocal((p) => ({ ...p, date_to: v || undefined }))
+            }
+            showToday={false}
+          />
         </div>
       </div>
 

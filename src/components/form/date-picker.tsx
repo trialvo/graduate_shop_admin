@@ -79,7 +79,7 @@ function isAfterISO(aISO: string, bISO: string) {
   return aISO > bISO;
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = [
   "January",
   "February",
@@ -242,7 +242,6 @@ export default function DatePicker({
     if (idx < 0) return;
     const el = yearListRef.current;
     if (!el) return;
-    // each item ~36px, put selection in view
     el.scrollTop = Math.max(0, idx * 36 - 72);
   }, [yearOpen, years, view]);
 
@@ -256,21 +255,21 @@ export default function DatePicker({
 
   return (
     <div ref={rootRef} className={cn("relative w-full", className)}>
-      {/* Trigger */}
+      {/* ── Trigger ─────────────────────────── */}
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((s) => !s)}
         className={cn(
-          "relative h-10 w-full rounded-[4px] border bg-white px-3 pl-9 pr-9 text-left text-sm",
-          "transition-colors duration-150",
-          "outline-none focus-visible:outline-none focus-visible:border-brand-500",
+          "relative flex h-11 w-full items-center rounded-lg border bg-white pl-10 pr-9 text-left text-sm",
+          "transition-all duration-150",
+          "outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 focus-visible:ring-offset-1",
           "dark:bg-gray-900",
           disabled
-            ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500 opacity-70 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+            ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
             : error
-              ? "border-error-500 text-gray-900 dark:text-white/90"
-              : "border-gray-200 text-gray-900 dark:border-gray-700 dark:text-white/90",
+              ? "border-red-400 text-gray-900 dark:border-red-500 dark:text-white/90"
+              : "border-gray-300 text-gray-900 hover:border-gray-400 dark:border-gray-700 dark:text-white/90 dark:hover:border-gray-600",
         )}
         aria-label={placeholder}
       >
@@ -279,7 +278,7 @@ export default function DatePicker({
         </span>
 
         {display ? (
-          <span className="block truncate">{display}</span>
+          <span className="block truncate font-medium">{display}</span>
         ) : (
           <span className="block truncate text-gray-400">{placeholder}</span>
         )}
@@ -297,83 +296,89 @@ export default function DatePicker({
                 }
               }}
               className={cn(
-                "inline-flex h-7 w-7 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-500",
-                "hover:bg-gray-50",
-                "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/40",
+                "inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors",
+                "hover:bg-gray-100 hover:text-gray-600",
+                "dark:hover:bg-gray-800 dark:hover:text-gray-300",
               )}
               aria-label="Clear date"
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           </span>
         ) : null}
       </button>
 
       {hint ? (
-        <p className={cn("mt-1.5 text-xs", error ? "text-error-500" : "text-gray-500 dark:text-gray-400")}>
+        <p className={cn("mt-1.5 text-xs", error ? "text-red-500" : "text-gray-500 dark:text-gray-400")}>
           {hint}
         </p>
       ) : null}
 
-      {/* Popup */}
+      {/* ── Popup ──────────────────────────── */}
       {open ? (
-        <div className="absolute z-50 mt-2 w-full rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          {/* Header with Month + Year selectors */}
-          <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-800">
+        <div
+          className={cn(
+            "absolute z-50 mt-1.5 w-[min(320px,calc(100vw-24px))] rounded-xl border border-gray-200 bg-white shadow-lg",
+            "dark:border-gray-700 dark:bg-gray-900",
+            "animate-in fade-in-0 slide-in-from-top-1",
+          )}
+        >
+          {/* Header: month/year nav */}
+          <div className="flex items-center justify-between gap-1 px-3 py-2.5">
             <button
               type="button"
               onClick={() => setView((v) => addMonths(v, -1))}
               className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700",
-                "hover:bg-gray-50",
-                "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
+                "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors",
+                "hover:bg-gray-100 hover:text-gray-700",
+                "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
               )}
               aria-label="Previous month"
             >
               <ChevronLeft size={16} />
             </button>
 
-            <div className="relative flex-1">
-              <div className="flex items-center justify-center gap-2">
-                {/* Month button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMonthOpen((s) => !s);
-                    setYearOpen(false);
-                  }}
-                  className={cn(
-                    "inline-flex h-8 items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800",
-                    "hover:bg-gray-50",
-                    "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
-                  )}
-                >
-                  <span className="truncate">{MONTHS[viewMonth]}</span>
-                  <ChevronDown size={14} className={cn("transition-transform", monthOpen && "rotate-180")} />
-                </button>
+            <div className="relative flex items-center gap-1">
+              {/* Month */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMonthOpen((s) => !s);
+                  setYearOpen(false);
+                }}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold text-gray-800 transition-colors",
+                  "hover:bg-gray-100",
+                  "dark:text-gray-200 dark:hover:bg-gray-800",
+                  monthOpen && "bg-gray-100 dark:bg-gray-800",
+                )}
+              >
+                <span className="truncate">{MONTHS[viewMonth]}</span>
+                <ChevronDown size={12} className={cn("transition-transform", monthOpen && "rotate-180")} />
+              </button>
 
-                {/* Year button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setYearOpen((s) => !s);
-                    setMonthOpen(false);
-                  }}
-                  className={cn(
-                    "inline-flex h-8 items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800",
-                    "hover:bg-gray-50",
-                    "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
-                  )}
-                >
-                  <span className="truncate">{viewYear}</span>
-                  <ChevronDown size={14} className={cn("transition-transform", yearOpen && "rotate-180")} />
-                </button>
-              </div>
+              {/* Year */}
+              <button
+                type="button"
+                onClick={() => {
+                  setYearOpen((s) => !s);
+                  setMonthOpen(false);
+                }}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold text-gray-800 transition-colors",
+                  "hover:bg-gray-100",
+                  "dark:text-gray-200 dark:hover:bg-gray-800",
+                  yearOpen && "bg-gray-100 dark:bg-gray-800",
+                )}
+              >
+                <span className="truncate">{viewYear}</span>
+                <ChevronDown size={12} className={cn("transition-transform", yearOpen && "rotate-180")} />
+              </button>
 
-              {/* Month dropdown (responsive grid) */}
+              {/* Month dropdown */}
               {monthOpen ? (
-                <div className="absolute left-1/2 top-10 z-50 w-[min(360px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-                  <div className="grid grid-cols-3 gap-1 p-2 sm:grid-cols-4">
+                <div className="absolute left-1/2 top-10 z-50 w-[min(280px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                  <div className="grid grid-cols-3 gap-1 p-2">
                     {MONTHS.map((m, idx) => {
                       const active = idx === viewMonth;
                       return (
@@ -385,10 +390,10 @@ export default function DatePicker({
                             setMonthOpen(false);
                           }}
                           className={cn(
-                            "h-9 rounded-[4px] px-2 text-xs font-semibold transition-colors",
+                            "h-8 rounded-lg text-xs font-medium transition-colors",
                             active
-                              ? "bg-brand-500 text-white"
-                              : "bg-white text-gray-800 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
+                              ? "bg-brand-500 text-white shadow-sm"
+                              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
                           )}
                         >
                           {m.slice(0, 3)}
@@ -399,15 +404,11 @@ export default function DatePicker({
                 </div>
               ) : null}
 
-              {/* Year dropdown (scroll list) */}
+              {/* Year dropdown */}
               {yearOpen ? (
-                <div className="absolute left-1/2 top-10 z-50 w-[min(280px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-                  <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:text-gray-300">
-                    Select Year
-                  </div>
-
-                  <div ref={yearListRef} className="max-h-56 overflow-auto p-2">
-                    <div className="grid grid-cols-3 gap-1 sm:grid-cols-4">
+                <div className="absolute left-1/2 top-10 z-50 w-[min(240px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                  <div ref={yearListRef} className="max-h-52 overflow-auto p-2">
+                    <div className="grid grid-cols-3 gap-1">
                       {years.map((y) => {
                         const active = y === viewYear;
                         return (
@@ -419,10 +420,10 @@ export default function DatePicker({
                               setYearOpen(false);
                             }}
                             className={cn(
-                              "h-9 rounded-[4px] text-xs font-semibold transition-colors",
+                              "h-8 rounded-lg text-xs font-medium transition-colors",
                               active
-                                ? "bg-brand-500 text-white"
-                                : "bg-white text-gray-800 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
+                                ? "bg-brand-500 text-white shadow-sm"
+                                : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
                             )}
                           >
                             {y}
@@ -439,9 +440,9 @@ export default function DatePicker({
               type="button"
               onClick={() => setView((v) => addMonths(v, 1))}
               className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700",
-                "hover:bg-gray-50",
-                "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
+                "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors",
+                "hover:bg-gray-100 hover:text-gray-700",
+                "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
               )}
               aria-label="Next month"
             >
@@ -451,15 +452,15 @@ export default function DatePicker({
 
           {/* Quick actions */}
           {(showToday || showClear) ? (
-            <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-800">
+            <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-2 dark:border-gray-800">
               {showToday ? (
                 <button
                   type="button"
                   onClick={() => selectISO(toISO(new Date()))}
                   className={cn(
-                    "h-8 rounded-[4px] border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700",
-                    "hover:bg-gray-50",
-                    "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
+                    "h-7 rounded-lg px-2.5 text-[11px] font-semibold text-gray-600 transition-colors",
+                    "hover:bg-gray-100",
+                    "dark:text-gray-400 dark:hover:bg-gray-800",
                   )}
                 >
                   Today
@@ -480,9 +481,9 @@ export default function DatePicker({
                     setYearOpen(false);
                   }}
                   className={cn(
-                    "h-8 rounded-[4px] border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700",
-                    "hover:bg-gray-50",
-                    "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
+                    "h-7 rounded-lg px-2.5 text-[11px] font-semibold text-gray-600 transition-colors",
+                    "hover:bg-gray-100",
+                    "dark:text-gray-400 dark:hover:bg-gray-800",
                   )}
                 >
                   Clear
@@ -492,18 +493,18 @@ export default function DatePicker({
           ) : null}
 
           {/* Weekdays */}
-          <div className="grid grid-cols-7 gap-1 px-3 pt-2">
+          <div className="grid grid-cols-7 px-3 pt-1">
             {WEEKDAYS.map((d) => (
-              <div key={d} className="pb-1 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+              <div key={d} className="pb-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {d}
               </div>
             ))}
           </div>
 
           {/* Days */}
-          <div className="grid grid-cols-7 gap-1 px-3 pb-3">
+          <div className="grid grid-cols-7 gap-0.5 px-3 pb-3">
             {grid.map((cell, idx) => {
-              if (!cell.date || !cell.iso) return <div key={idx} className="h-9" />;
+              if (!cell.date || !cell.iso) return <div key={idx} className="h-8" />;
 
               const iso = cell.iso;
               const disabledDay = !withinRange(iso);
@@ -518,13 +519,13 @@ export default function DatePicker({
                   disabled={disabledDay}
                   onClick={() => selectISO(iso)}
                   className={cn(
-                    "h-9 rounded-[4px] text-sm transition-colors",
-                    "outline-none focus-visible:outline-none",
-                    disabledDay && "cursor-not-allowed opacity-40",
+                    "h-8 rounded-lg text-sm font-medium transition-all",
+                    "outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30",
+                    disabledDay && "cursor-not-allowed opacity-30",
                     isSelected
-                      ? "bg-brand-500 text-white"
-                      : "bg-white text-gray-800 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800/40",
-                    !isSelected && isToday && "border border-brand-500",
+                      ? "bg-brand-500 text-white shadow-sm"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                    !isSelected && isToday && "ring-1 ring-brand-500 ring-inset",
                   )}
                 >
                   {cell.date.getDate()}
