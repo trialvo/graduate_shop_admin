@@ -63,7 +63,7 @@ export default function ProductCard({ product, onClick }: Props) {
     >
       {/* ── Image Area ── */}
       <div className="relative overflow-hidden">
-        <div className="aspect-[4/3] w-full bg-gray-50 dark:bg-white/[0.03]">
+        <div className="aspect-square w-full bg-gray-50 dark:bg-white/[0.03]">
           <img
             src={cover}
             alt={name}
@@ -125,20 +125,20 @@ export default function ProductCard({ product, onClick }: Props) {
       </div>
 
       {/* ── Content ── */}
-      <div className="p-3">
+      <div className="p-2.5">
         {/* Name + Price */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-bold text-gray-900 dark:text-white">
+            <p className="truncate text-xs font-bold text-gray-900 dark:text-white">
               {name}
             </p>
-            <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
+            <p className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-500">
               ID: {String(p?.id)}
             </p>
           </div>
 
           <div className="flex-shrink-0 text-right">
-            <p className="text-[13px] font-extrabold text-brand-600 dark:text-brand-400">
+            <p className="text-xs font-extrabold text-brand-600 dark:text-brand-400">
               {range
                 ? range.min === range.max
                   ? formatBdt(range.min)
@@ -148,31 +148,30 @@ export default function ProductCard({ product, onClick }: Props) {
           </div>
         </div>
 
-        {/* Meta row */}
-        <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-          <div className="flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50/60 py-1.5 dark:border-gray-800 dark:bg-white/[0.03]">
-            <span className="text-[13px] font-bold text-gray-800 dark:text-gray-200">
+        <div className="mt-2 grid grid-cols-3 gap-1">
+          <div className="flex flex-col items-center rounded-md border border-gray-100 bg-gray-50/60 py-1 dark:border-gray-800 dark:bg-white/[0.03]">
+            <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200">
               {variationCount}
             </span>
-            <span className="text-[9px] font-medium text-gray-400 dark:text-gray-500">
+            <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500">
               Variants
             </span>
           </div>
 
-          <div className="flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50/60 py-1.5 dark:border-gray-800 dark:bg-white/[0.03]">
-            <span className={cn("text-[13px] font-bold", inStock ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
+          <div className="flex flex-col items-center rounded-md border border-gray-100 bg-gray-50/60 py-1 dark:border-gray-800 dark:bg-white/[0.03]">
+            <span className={cn("text-[11px] font-bold", inStock ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
               {Number.isFinite(totalStock) ? totalStock : 0}
             </span>
-            <span className="text-[9px] font-medium text-gray-400 dark:text-gray-500">
+            <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500">
               Stock
             </span>
           </div>
 
-          <div className="flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50/60 py-1.5 dark:border-gray-800 dark:bg-white/[0.03]">
-            <span className="text-[13px] font-bold text-gray-800 dark:text-gray-200">
+          <div className="flex flex-col items-center rounded-md border border-gray-100 bg-gray-50/60 py-1 dark:border-gray-800 dark:bg-white/[0.03]">
+            <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200">
               {String(p?.sub_category_id ?? "–")}
             </span>
-            <span className="text-[9px] font-medium text-gray-400 dark:text-gray-500">
+            <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500">
               Sub Cat
             </span>
           </div>

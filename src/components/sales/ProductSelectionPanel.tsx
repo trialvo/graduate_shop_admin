@@ -42,7 +42,7 @@ type Props = {
   onAddToCart: (item: CartItem) => void;
 };
 
-const DEFAULT_LIMIT = 6;
+const DEFAULT_LIMIT = 9;
 
 const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
   const [subCategoryId, setSubCategoryId] = React.useState<string>("all");
@@ -257,7 +257,7 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
         {/* Product Grid */}
         <div className="p-3">
           {loading ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
@@ -280,7 +280,7 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Try adjusting your filters or search</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
               {products.map((p) => (
                 <ProductCard
                   key={String(p.id)}
@@ -294,15 +294,16 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
             </div>
           )}
         </div>
+      </div>
 
-        <div className="px-3 pb-3">
-          <Pagination
-            page={page}
-            pageSize={limit}
-            total={total}
-            onPageChange={setPage}
-          />
-        </div>
+      {/* ── Sticky Pagination Footer ── */}
+      <div className="border-t border-gray-100 px-3 py-2.5 dark:border-gray-800">
+        <Pagination
+          page={page}
+          pageSize={limit}
+          total={total}
+          onPageChange={setPage}
+        />
       </div>
 
       <ProductAddModal
