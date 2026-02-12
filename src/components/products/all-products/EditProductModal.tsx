@@ -10,6 +10,7 @@ import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
+import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
 import {
   Table,
   TableBody,
@@ -374,10 +375,7 @@ export default function EditProductModal({
     [],
   );
   const [deleteImageIds, setDeleteImageIds] = React.useState<number[]>([]);
-  const [newFiles, setNewFiles] = React.useState<File[]>([]);
-  const [newPreviews, setNewPreviews] = React.useState<
-    { id: string; file: File; url: string }[]
-  >([]);
+  const [newImages, setNewImages] = React.useState<UploadedImage[]>([]);
 
   // variations
   const [variations, setVariations] = React.useState<VariationRow[]>([]);
@@ -434,7 +432,7 @@ export default function EditProductModal({
 
     setExistingImages(Array.isArray(p.images) ? p.images : []);
     setDeleteImageIds([]);
-    setNewFiles([]);
+    setNewImages([]);
 
     const vars = Array.isArray((p as any).variations)
       ? ((p as any).variations as VariationRow[])
@@ -453,19 +451,7 @@ export default function EditProductModal({
     });
   }, [enabled, productQuery.data]);
 
-  React.useEffect(() => {
-    const items = newFiles.map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}`,
-      file,
-      url: URL.createObjectURL(file),
-    }));
-
-    setNewPreviews(items);
-
-    return () => {
-      items.forEach((item) => URL.revokeObjectURL(item.url));
-    };
-  }, [newFiles]);
+  // newImages is managed by ImageMultiUploader (includes cropper)
 
   // dropdown options
   const mainOptions: Option[] = React.useMemo(
@@ -592,7 +578,7 @@ export default function EditProductModal({
       if (!productId) throw new Error("Missing product id");
 
       return updateProduct(productId, {
-        product_images: newFiles,
+        product_images: newImages.map((i) => i.file),
         name,
         slug,
 
@@ -767,17 +753,7 @@ export default function EditProductModal({
     });
   };
 
-  const addNewFiles = (files: File[]) => {
-    if (!files.length) return;
-    setNewFiles((prev) => {
-      const map = new Map<string, File>();
-      const all = [...prev, ...files];
-      all.forEach((file) => {
-        map.set(`${file.name}-${file.size}-${file.lastModified}`, file);
-      });
-      return Array.from(map.values());
-    });
-  };
+  // addNewFiles removed — ImageMultiUploader manages new images with built-in cropper
 
   const isBusy =
     productQuery.isFetching ||
@@ -996,7 +972,7 @@ export default function EditProductModal({
                     </p>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       Existing: {existingImages.length} | Marked delete:{" "}
-                      {deleteImageIds.length} | New: {newFiles.length}
+                      {deleteImageIds.length} | New: {newImages.length}
                     </span>
                   </div>
 
@@ -1050,77 +1026,14 @@ export default function EditProductModal({
                     </div>
                   )}
 
-                  <div className="mt-4 rounded-[6px] border border-dashed border-gray-300 p-4 dark:border-gray-800">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Upload new images
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          These will be sent as{" "}
-                          <code className="font-mono">product_images</code>{" "}
-                          (multi-file).
-                        </p>
-                      </div>
-
-                      {newFiles.length ? (
-                        <Button
-                          variant="outline"
-                          className="h-10"
-                          onClick={() => setNewFiles([])}
-                        >
-                          Clear all
-                        </Button>
-                      ) : null}
-                    </div>
-
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="mt-3 block w-full text-sm text-gray-700 dark:text-gray-300"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files ?? []);
-                        addNewFiles(files);
-                        e.currentTarget.value = "";
-                      }}
+                  <div className="mt-4">
+                    <ImageMultiUploader
+                      label="Upload new images"
+                      images={newImages}
+                      onChange={setNewImages}
+                      max={10}
+                      helperText="Images will be cropped one by one before upload."
                     />
-
-                    {newPreviews.length ? (
-                      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-                        {newPreviews.map((item, index) => (
-                          <div
-                            key={item.id}
-                            className="group relative overflow-hidden rounded-[6px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={item.url}
-                              alt={item.file.name}
-                              className="h-20 w-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
-                              onClick={() =>
-                                setNewFiles((prev) =>
-                                  prev.filter((_, i) => i !== index),
-                                )
-                              }
-                            >
-                              Remove
-                            </button>
-                            <div className="absolute inset-x-2 bottom-1 truncate text-[11px] text-white drop-shadow-sm">
-                              {item.file.name}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                        No new images selected yet.
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
