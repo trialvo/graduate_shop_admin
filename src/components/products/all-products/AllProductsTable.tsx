@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type { Product } from "./types";
 
@@ -65,38 +66,39 @@ const stickyActionCellClass = cn(
 );
 
 const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStatus, onEdit, onDelete }) => {
+  const { t } = useTranslation();
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
         <Table className="min-w-[1100px] border-collapse">
           <TableHeader>
             <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-950">
               <TableCell isHeader className="w-[70px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Sl
+                {t("products.table.sl")}
               </TableCell>
 
               <TableCell isHeader className="min-w-[320px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Product
+                {t("products.table.product")}
               </TableCell>
 
               <TableCell isHeader className="min-w-[170px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Position
+                {t("products.table.position")}
               </TableCell>
 
               <TableCell isHeader className="min-w-[360px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Category
+                {t("products.table.category")}
               </TableCell>
 
               <TableCell isHeader className="min-w-[220px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Stock
+                {t("products.table.stock")}
               </TableCell>
 
               <TableCell isHeader className="min-w-[240px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Price
+                {t("products.table.price")}
               </TableCell>
 
               <TableCell isHeader className="min-w-[140px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                Status
+                {t("products.table.status")}
               </TableCell>
 
               {/* ✅ Sticky Action header (right) */}
@@ -107,7 +109,7 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                   "min-w-[132px] px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-brand-500",
                 )}
               >
-                Action
+                {t("products.table.action")}
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -129,7 +131,7 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
 
                   <TableCell className="px-4 py-4">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={imageSrc}
@@ -172,9 +174,9 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                             lowStock ? "text-error-500" : "text-gray-900 dark:text-white",
                           )}
                         >
-                          Total: {p.stockQty}
+                          {t("products.table.totalLabel", { count: p.stockQty })}
                         </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Variants: {p.variantCount}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{t("products.table.variantsLabel", { count: p.variantCount })}</span>
                       </div>
 
                       <Button
@@ -189,7 +191,7 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
 
                       {lowStock ? (
                         <span className="rounded-full border border-error-100 bg-error-50 px-2 py-1 text-xs font-semibold text-error-500 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-                          Low
+                          {t("products.table.low")}
                         </span>
                       ) : null}
                     </div>
@@ -202,8 +204,8 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                       </div>
 
                       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span>Discount: {p.discount ?? 0}</span>
-                        <span>Sale: {formatMoney(p.salePrice ?? p.price)}</span>
+                        <span>{t("products.table.discount", { value: p.discount ?? 0 })}</span>
+                        <span>{t("products.table.sale", { value: formatMoney(p.salePrice ?? p.price) })}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -243,7 +245,7 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
             {products.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                  No products found.
+                  {t("products.table.noProducts")}
                 </TableCell>
               </TableRow>
             ) : null}

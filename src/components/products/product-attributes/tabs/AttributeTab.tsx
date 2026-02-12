@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { Download, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -153,18 +154,19 @@ function AttributeModal({
   submitting: boolean;
   loadingSingle: boolean;
 }) {
+  const { t } = useTranslation();
   if (!state.open) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[760px] overflow-hidden rounded-[8px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="w-full max-w-[760px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              {state.mode === "create" ? "Create Attribute" : "Update Attribute"}
+              {state.mode === "create" ? t("products.attributes.createAttribute") : t("products.attributes.updateAttribute")}
             </h3>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Attribute is the parent group. Variants are values under it.
+              {t("products.attributes.attributeDesc")}
             </p>
           </div>
 
@@ -189,7 +191,7 @@ function AttributeModal({
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Attribute Name <span className="text-error-500">*</span>
+                    {t("products.attributes.attributeName")} <span className="text-error-500">*</span>
                   </p>
                   <Input
                     placeholder="Weight / Size / Material"
@@ -200,7 +202,7 @@ function AttributeModal({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Priority
+                    {t("products.attributes.priority")}
                   </p>
                   <Select
                     options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
@@ -216,7 +218,7 @@ function AttributeModal({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
                   <div className="flex h-11 items-center">
                     <Switch
                       key={`attr-modal-st-${state.status}`}
@@ -225,7 +227,7 @@ function AttributeModal({
                       onChange={(checked) => setState((p) => ({ ...p, status: checked }))}
                     />
                     <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                      {state.status ? "Active" : "Inactive"}
+                      {state.status ? t("common.active") : t("common.inactive")}
                     </span>
                   </div>
                 </div>
@@ -233,7 +235,7 @@ function AttributeModal({
                 {state.mode === "create" ? (
                   <div className="space-y-2 md:col-span-2">
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Variants (optional, comma separated)
+                      {t("products.attributes.variantsOptional")}
                     </p>
                     <Input
                       placeholder="S, M, L, XL"
@@ -241,7 +243,7 @@ function AttributeModal({
                       onChange={(e) => setState((p) => ({ ...p, variantsCsv: e.target.value }))}
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      These will be created under this attribute automatically.
+                      {t("products.attributes.variantsAutoCreate")}
                     </p>
                   </div>
                 ) : null}
@@ -253,7 +255,7 @@ function AttributeModal({
                   onClick={() => setState((p) => ({ ...p, open: false }))}
                   disabled={submitting}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
 
                 <Button
@@ -261,7 +263,7 @@ function AttributeModal({
                   disabled={submitting || !state.name.trim()}
                   startIcon={state.mode === "create" ? <Plus size={16} /> : <Pencil size={16} />}
                 >
-                  {submitting ? "Saving..." : state.mode === "create" ? "Create" : "Update"}
+                  {submitting ? t("common.saving") : state.mode === "create" ? t("products.attributes.createAttribute") : t("common.update")}
                 </Button>
               </div>
             </>
@@ -300,18 +302,19 @@ function VariantModal({
   submitting: boolean;
   loadingSingle: boolean;
 }) {
+  const { t } = useTranslation();
   if (!state.open) return null;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[720px] overflow-hidden rounded-[8px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="w-full max-w-[720px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Update Variant
+              {t("products.attributes.updateVariant")}
             </h3>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Variant is a value under an attribute (e.g. XL under Size).
+              {t("products.attributes.variantDesc")}
             </p>
           </div>
 
@@ -336,7 +339,7 @@ function VariantModal({
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Attribute
+                    {t("products.attributes.attribute")}
                   </p>
                   <Select
                     options={attributeOptions}
@@ -353,7 +356,7 @@ function VariantModal({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Variant Name <span className="text-error-500">*</span>
+                    {t("products.attributes.variantName")} <span className="text-error-500">*</span>
                   </p>
                   <Input
                     placeholder="XL / Extra Large"
@@ -364,7 +367,7 @@ function VariantModal({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Priority
+                    {t("products.attributes.priority")}
                   </p>
                   <Select
                     options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
@@ -380,7 +383,7 @@ function VariantModal({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
                   <div className="flex h-11 items-center">
                     <Switch
                       key={`var-st-${state.status}`}
@@ -389,7 +392,7 @@ function VariantModal({
                       onChange={(checked) => setState((p) => ({ ...p, status: checked }))}
                     />
                     <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                      {state.status ? "Active" : "Inactive"}
+                      {state.status ? t("common.active") : t("common.inactive")}
                     </span>
                   </div>
                 </div>
@@ -401,7 +404,7 @@ function VariantModal({
                   onClick={() => setState((p) => ({ ...p, open: false }))}
                   disabled={submitting}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
 
                 <Button
@@ -409,7 +412,7 @@ function VariantModal({
                   disabled={submitting || !state.name.trim()}
                   startIcon={<Pencil size={16} />}
                 >
-                  {submitting ? "Saving..." : "Update"}
+                  {submitting ? t("common.saving") : t("common.update")}
                 </Button>
               </div>
             </>
@@ -423,6 +426,7 @@ function VariantModal({
 /* ---------------------- Main Tab ---------------------- */
 
 export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactNode }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -568,7 +572,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         }
       }
 
-      toast.success("Attribute created");
+      toast.success(t("products.attributes.attributeCreated"));
       qc.invalidateQueries({ queryKey: ["attributes"] });
       setAttrModal({
         open: false,
@@ -581,7 +585,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       });
     },
     onError: (err: any) => {
-      toast.error(parseApiError(err, "Failed to create attribute"));
+      toast.error(parseApiError(err, t("products.attributes.failedCreate")));
     },
   });
 
@@ -589,36 +593,36 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     mutationFn: ({ id, payload }: { id: number; payload: Parameters<typeof updateAttribute>[1] }) =>
       updateAttribute(id, payload),
     onSuccess: () => {
-      toast.success("Attribute updated");
+      toast.success(t("products.attributes.attributeUpdated"));
       qc.invalidateQueries({ queryKey: ["attributes"] });
       qc.invalidateQueries({ queryKey: ["attribute"] });
       setAttrModal((p) => ({ ...p, open: false }));
     },
     onError: (err: any) => {
-      toast.error(parseApiError(err, "Failed to update attribute"));
+      toast.error(parseApiError(err, t("products.attributes.failedUpdate")));
     },
   });
 
   const deleteAttrMutation = useMutation({
     mutationFn: deleteAttribute,
     onSuccess: () => {
-      toast.success("Attribute deleted");
+      toast.success(t("products.attributes.attributeDeleted"));
       qc.invalidateQueries({ queryKey: ["attributes"] });
     },
     onError: (err: any) => {
-      toast.error(parseApiError(err, "Failed to delete attribute"));
+      toast.error(parseApiError(err, t("products.attributes.failedDelete")));
     },
   });
 
   const createVarMutation = useMutation({
     mutationFn: createVariant,
     onSuccess: () => {
-      toast.success("Variant created");
+      toast.success(t("products.attributes.variantCreated"));
       qc.invalidateQueries({ queryKey: ["attributes"] });
       qc.invalidateQueries({ queryKey: ["attribute"] });
     },
     onError: (err: any) => {
-      toast.error(parseApiError(err, "Failed to create variant"));
+      toast.error(parseApiError(err, t("products.attributes.failedCreateVariant")));
     },
   });
 
@@ -626,26 +630,26 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     mutationFn: ({ id, payload }: { id: number; payload: Parameters<typeof updateVariant>[1] }) =>
       updateVariant(id, payload),
     onSuccess: () => {
-      toast.success("Variant updated");
+      toast.success(t("products.attributes.variantUpdated"));
       qc.invalidateQueries({ queryKey: ["attributes"] });
       qc.invalidateQueries({ queryKey: ["attribute"] });
       qc.invalidateQueries({ queryKey: ["variant"] });
       setVariantModal((p) => ({ ...p, open: false }));
     },
     onError: (err: any) => {
-      toast.error(parseApiError(err, "Failed to update variant"));
+      toast.error(parseApiError(err, t("products.attributes.failedUpdateVariant")));
     },
   });
 
   const deleteVarMutation = useMutation({
     mutationFn: deleteVariant,
     onSuccess: () => {
-      toast.success("Variant deleted");
+      toast.success(t("products.attributes.variantDeleted"));
       qc.invalidateQueries({ queryKey: ["attributes"] });
       qc.invalidateQueries({ queryKey: ["attribute"] });
     },
     onError: (err: any) => {
-      toast.error(parseApiError(err, "Failed to delete variant"));
+      toast.error(parseApiError(err, t("products.attributes.failedDeleteVariant")));
     },
   });
 
@@ -757,7 +761,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
   const onExport = () => {
     if (!rows.length) {
-      toast.error("Nothing to export");
+      toast.error(t("products.attributes.nothingToExport"));
       return;
     }
     exportCsv(rows);
@@ -765,17 +769,17 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         {/* Header */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">{tabsHeader}</div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button variant="outline" startIcon={<Download size={16} />} onClick={onExport}>
-                Export CSV
+                {t("common.export")} CSV
               </Button>
               <Button startIcon={<Plus size={16} />} onClick={openCreateAttribute}>
-                Create Attribute
+                {t("products.attributes.createAttribute")}
               </Button>
             </div>
           </div>
@@ -785,7 +789,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
           <div className="md:col-span-5">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Search
+              {t("common.search")}
             </p>
             <div className="relative">
               <Input
@@ -803,7 +807,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
           <div className="md:col-span-2">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Status
+              {t("common.status")}
             </p>
             <Select
               options={STATUS_OPTIONS}
@@ -818,7 +822,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
           <div className="md:col-span-2">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Priority
+              {t("products.attributes.priority")}
             </p>
             <Select
               options={PRIORITY_OPTIONS}
@@ -843,7 +847,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                 setPage(1);
               }}
             >
-              Reset
+              {t("common.reset")}
             </Button>
           </div>
         </div>
@@ -858,13 +862,13 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
           <span className={cn("flex items-center gap-2", isFetching ? "opacity-100" : "opacity-60")}>
             <span className={cn("h-2 w-2 rounded-full", isFetching ? "bg-brand-500" : "bg-gray-400")} />
-            {isFetching ? "Updating..." : "Up to date"}
+            {isFetching ? t("products.attributes.updating") : t("products.attributes.upToDate")}
           </span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         {isLoading ? (
           <TableSkeleton />
         ) : (
@@ -906,7 +910,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                             {row.name}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {row.variants?.length ?? 0} variants
+                            {row.variants?.length ?? 0} {t("products.attributes.variants")}
                           </p>
                         </div>
                       </td>
@@ -1038,7 +1042,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                         colSpan={7}
                         className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
-                        No attributes found.
+                        {t("products.attributes.noAttributes")}
                       </td>
                     </tr>
                   ) : null}

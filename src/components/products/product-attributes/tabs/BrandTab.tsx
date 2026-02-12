@@ -1,6 +1,7 @@
 // src/components/products/product-attributes/tabs/BrandTab.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { Download, Pencil, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -136,6 +137,7 @@ function BrandModal({
   submitting: boolean;
   loadingSingle: boolean;
 }) {
+  const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   if (!state.open) return null;
@@ -145,16 +147,16 @@ function BrandModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[720px] overflow-hidden rounded-[8px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="w-full max-w-[720px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              {state.mode === "create" ? "Create Brand" : "Update Brand"}
+              {state.mode === "create" ? t("products.attributes.createBrand") : t("products.attributes.updateBrand")}
             </h3>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
               {state.mode === "create"
-                ? "Add a new brand with optional image."
-                : "Update brand info and image."}
+                ? t("products.attributes.addBrandDesc")
+                : t("products.attributes.updateBrandDesc")}
             </p>
           </div>
 
@@ -180,7 +182,7 @@ function BrandModal({
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Brand Name <span className="text-error-500">*</span>
+                    {t("products.attributes.brandName")} <span className="text-error-500">*</span>
                   </p>
                   <Input
                     placeholder="e.g. Trialvo"
@@ -191,7 +193,7 @@ function BrandModal({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Priority
+                    {t("products.attributes.priority")}
                   </p>
                   <Select
                     options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
@@ -207,7 +209,7 @@ function BrandModal({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
                   <div className="flex h-11 items-center">
                     <Switch
                       key={`modal-status-${state.status}`}
@@ -216,14 +218,14 @@ function BrandModal({
                       onChange={(checked) => setState((p) => ({ ...p, status: checked }))}
                     />
                     <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                      {state.status ? "Active" : "Inactive"}
+                      {state.status ? t("common.active") : t("common.inactive")}
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Brand Image
+                    {t("products.attributes.brandImage")}
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -250,7 +252,7 @@ function BrandModal({
                       onClick={() => fileRef.current?.click()}
                       startIcon={<Upload size={16} />}
                     >
-                      Upload
+                      {t("common.upload")}
                     </Button>
 
                     <Button
@@ -265,7 +267,7 @@ function BrandModal({
                       disabled={!state.file && !state.previewUrl}
                       startIcon={<Trash2 size={16} />}
                     >
-                      Clear New
+                      {t("products.attributes.clearNew")}
                     </Button>
                   </div>
 
@@ -276,14 +278,14 @@ function BrandModal({
                         <img src={preview} alt="Preview" className="h-full w-full object-cover" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs text-gray-500">
-                          No image
+                          {t("products.attributes.noImage")}
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-1">
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Existing image will show automatically on edit.
+                        {t("products.attributes.existingImageInfo")}
                       </p>
                       {state.mode === "edit" && state.existingImgPath ? (
                         <p className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -301,7 +303,7 @@ function BrandModal({
                   onClick={() => setState((p) => ({ ...p, open: false }))}
                   disabled={submitting}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
 
                 <Button
@@ -309,7 +311,7 @@ function BrandModal({
                   disabled={submitting || !state.name.trim()}
                   startIcon={state.mode === "create" ? <Plus size={16} /> : <Pencil size={16} />}
                 >
-                  {submitting ? "Saving..." : state.mode === "create" ? "Create Brand" : "Update Brand"}
+                  {submitting ? t("common.saving") : state.mode === "create" ? t("products.attributes.createBrand") : t("products.attributes.updateBrand")}
                 </Button>
               </div>
             </>
@@ -321,6 +323,7 @@ function BrandModal({
 }
 
 export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   // filters
@@ -404,7 +407,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
   const createMutation = useMutation({
     mutationFn: createBrand,
     onSuccess: () => {
-      toast.success("Brand created");
+      toast.success(t("products.attributes.brandCreated"));
       qc.invalidateQueries({ queryKey: ["brands"] });
       setModal((p) => {
         if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
@@ -422,7 +425,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
       });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Failed to create brand";
+      const msg = err?.response?.data?.message ?? t("products.attributes.failedCreateBrand");
       toast.error(msg);
     },
   });
@@ -431,7 +434,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
     mutationFn: ({ id, payload }: { id: number; payload: Parameters<typeof updateBrand>[1] }) =>
       updateBrand(id, payload),
     onSuccess: () => {
-      toast.success("Brand updated");
+      toast.success(t("products.attributes.brandUpdated"));
       qc.invalidateQueries({ queryKey: ["brands"] });
       qc.invalidateQueries({ queryKey: ["brand"] });
 
@@ -441,7 +444,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
       });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Failed to update brand";
+      const msg = err?.response?.data?.message ?? t("products.attributes.failedUpdateBrand");
       toast.error(msg);
     },
   });
@@ -455,11 +458,11 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         return;
       }
 
-      toast.success("Brand deleted");
+      toast.success(t("products.attributes.brandDeleted"));
       qc.invalidateQueries({ queryKey: ["brands"] });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Failed to delete brand";
+      const msg = err?.response?.data?.message ?? t("products.attributes.failedDeleteBrand");
       toast.error(msg);
     },
   });
@@ -538,7 +541,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
   const onExport = () => {
     if (!rows.length) {
-      toast.error("Nothing to export");
+      toast.error(t("products.attributes.nothingToExport"));
       return;
     }
     exportCsv(rows);
@@ -546,17 +549,17 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         {/* Header + Actions */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">{tabsHeader}</div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button variant="outline" startIcon={<Download size={16} />} onClick={onExport}>
-                Export CSV
+                {t("common.export")} CSV
               </Button>
               <Button startIcon={<Plus size={16} />} onClick={openCreate}>
-                Create Brand
+                {t("products.attributes.createBrand")}
               </Button>
             </div>
           </div>
@@ -566,7 +569,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
           <div className="md:col-span-5">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Search
+              {t("common.search")}
             </p>
             <div className="relative">
               <Input
@@ -583,7 +586,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           </div>
 
           <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
             <Select
               options={STATUS_OPTIONS}
               placeholder="Status"
@@ -596,7 +599,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           </div>
 
           <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Priority</p>
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.attributes.priority")}</p>
             <Select
               options={PRIORITY_OPTIONS}
               placeholder="Priority"
@@ -620,7 +623,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                 setPage(1);
               }}
             >
-              Reset
+              {t("common.reset")}
             </Button>
           </div>
         </div>
@@ -631,13 +634,13 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           </span>
           <span className={cn("flex items-center gap-2", isFetching ? "opacity-100" : "opacity-60")}>
             <span className={cn("h-2 w-2 rounded-full", isFetching ? "bg-brand-500" : "bg-gray-400")} />
-            {isFetching ? "Updating..." : "Up to date"}
+            {isFetching ? t("products.attributes.updating") : t("products.attributes.upToDate")}
           </span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         {isLoading ? (
           <TableSkeleton />
         ) : (
@@ -737,7 +740,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                         colSpan={7}
                         className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
-                        No brands found.
+                        {t("products.attributes.noBrands")}
                       </td>
                     </tr>
                   ) : null}

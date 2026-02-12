@@ -1,5 +1,6 @@
 import Button from "@/components/ui/button/Button";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 function SubmitBar({
   onSubmit,
@@ -8,10 +9,11 @@ function SubmitBar({
   onSubmit: () => void;
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white px-6 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <p className="hidden text-xs text-gray-400 sm:block dark:text-gray-500">
-        Review all sections before creating.
+        {t("products.createProduct.reviewSections")}
       </p>
       <div className="flex w-full items-center gap-3 sm:w-auto">
         <Button
@@ -26,7 +28,7 @@ function SubmitBar({
             )
           }
         >
-          {loading ? "Creating Product..." : "Create Product"}
+          {loading ? t("products.createProduct.creatingProduct") : t("products.createProduct.createProduct")}
         </Button>
       </div>
     </div>

@@ -4,6 +4,7 @@
 import React from "react";
 import toast from "react-hot-toast";
 import { Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import BaseModal from "./BaseModal";
@@ -48,6 +49,7 @@ function sumStock(rows: { stock: number }[]) {
 }
 
 export default function StockVariantsModal({ open, productId, productName, onClose, onUpdated }: Props) {
+  const { t } = useTranslation();
   const enabled = open && !!productId;
 
   const variationsQuery = useQuery({
@@ -111,12 +113,12 @@ export default function StockVariantsModal({ open, productId, productName, onClo
       });
     },
     onSuccess: async () => {
-      toast.success("Stock updated");
+      toast.success(t("products.stockVariants.stockUpdated"));
       await variationsQuery.refetch();
       onUpdated?.();
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to update stock";
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? t("products.stockVariants.failedUpdate");
       toast.error(msg);
     },
   });
@@ -133,35 +135,35 @@ export default function StockVariantsModal({ open, productId, productName, onClo
         if (busy) return;
         onClose();
       }}
-      title="Update Stock"
-      description="Edit stock per variation (loaded from product/getvariations/:id)."
+      title={t("products.stockVariants.title")}
+      description={t("products.stockVariants.description")}
       widthClassName="w-[980px]"
       footer={
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Product: <span className="font-semibold text-gray-900 dark:text-white">{productName ?? "-"}</span>
-            {"  "}• Total variants: <span className="font-semibold">{totalVariants}</span>
-            {"  "}• Total stock: <span className="font-semibold">{totalStock}</span>
+            {t("products.stockVariants.productLabel")}: <span className="font-semibold text-gray-900 dark:text-white">{productName ?? "-"}</span>
+            {"  "}• {t("products.stockVariants.totalVariants")}: <span className="font-semibold">{totalVariants}</span>
+            {"  "}• {t("products.stockVariants.totalStock")}: <span className="font-semibold">{totalStock}</span>
           </div>
 
           <Button variant="outline" className="h-11" onClick={onClose} disabled={busy}>
-            Close
+            {t("common.close")}
           </Button>
         </div>
       }
     >
       {variationsQuery.isLoading ? (
-        <div className="py-14 text-center text-sm text-gray-500 dark:text-gray-400">Loading variations...</div>
+        <div className="py-14 text-center text-sm text-gray-500 dark:text-gray-400">{t("products.stockVariants.loadingVariations")}</div>
       ) : variationsQuery.isError ? (
-        <div className="py-14 text-center text-sm text-error-600">Failed to load variations.</div>
+        <div className="py-14 text-center text-sm text-error-600">{t("products.stockVariants.failedLoadVariations")}</div>
       ) : rows.length === 0 ? (
-        <div className="py-14 text-center text-sm text-gray-500 dark:text-gray-400">No variations found.</div>
+        <div className="py-14 text-center text-sm text-gray-500 dark:text-gray-400">{t("products.stockVariants.noVariations")}</div>
       ) : (
         <div className="overflow-x-auto">
           <Table className="min-w-[980px] border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
-                {["Color", "Variant", "SKU", "Buying", "Selling", "Discount", "Stock", "Action"].map((h) => (
+                {[t("products.stockVariants.color"), t("products.stockVariants.variant"), t("products.stockVariants.sku"), t("products.stockVariants.buying"), t("products.stockVariants.selling"), t("products.stockVariants.discount"), t("products.stockVariants.stock"), t("products.stockVariants.action")].map((h) => (
                   <TableCell key={h} isHeader className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                     {h}
                   </TableCell>

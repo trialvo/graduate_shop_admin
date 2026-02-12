@@ -6,6 +6,7 @@ import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 import { Check, Layers, Palette, Sparkles, Tag, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Option = { value: string; label: string };
 
@@ -118,16 +119,17 @@ function VariationsSection({
   matrix: VariantRow[];
   updateRow: (key: string, patch: Partial<VariantRow>) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Section
-      title="Variations"
-      description="Select colors and attribute variants to build a variation matrix."
+      title={t("products.createProduct.variationsTitle")}
+      description={t("products.createProduct.variationsDesc")}
       icon={<Layers className="h-5 w-5" />}
       headerRight={
         matrix.length > 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400">
             {matrix.filter((r) => r.active).length}
-            <span className="font-normal text-brand-500">active</span>
+            <span className="font-normal text-brand-500">{t("common.active")}</span>
           </span>
         ) : null
       }
@@ -144,14 +146,14 @@ function VariationsSection({
               </span>
               <div>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  Colors <span className="text-error-500">*</span>
+                  {t("products.createProduct.colorsLabel")} <span className="text-error-500">*</span>
                 </p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">Pick product colors</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">{t("products.createProduct.selectColors")}</p>
               </div>
             </div>
             {selectedColors.length > 0 && (
               <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-400">
-                {selectedColors.length} selected
+                {selectedColors.length} {t("products.attributes.selected").toLowerCase()}
               </span>
             )}
           </div>
@@ -162,7 +164,7 @@ function VariationsSection({
               key={`color-dd-${selectedColorIds.join("-")}`}
               options={colorOptions}
               placeholder={
-                colorOptions.length ? "Search & select a color..." : "All colors selected"
+                colorOptions.length ? t("products.createProduct.selectColors") : t("common.allSelected")
               }
               defaultValue=""
               onChange={(v) => {
@@ -218,7 +220,7 @@ function VariationsSection({
             {selectedColors.length === 0 && (
               <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50/50 py-6 dark:border-gray-700 dark:bg-white/[0.01]">
                 <Palette className="mb-2 h-6 w-6 text-gray-300 dark:text-gray-600" />
-                <p className="text-xs text-gray-400 dark:text-gray-500">No colors selected yet</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t("products.createProduct.selectColors")}</p>
               </div>
             )}
           </div>
@@ -227,15 +229,15 @@ function VariationsSection({
         {/* ──────────────────── Attribute & Variants Card ──────────────────── */}
         <div className="space-y-4">
           <div>
-            <FieldLabel>ATTRIBUTE *</FieldLabel>
+            <FieldLabel>{t("products.createProduct.attributeLabel")} *</FieldLabel>
             <Select
               options={attributeOptions}
-              placeholder="Select attribute"
+              placeholder={t("products.createProduct.selectAttribute")}
               value={String(attributeId)}
               onChange={(v) => setAttributeId(Number(v))}
             />
             <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-              Variants are loaded from the selected attribute.
+              {t("products.createProduct.selectSizes")}
             </p>
           </div>
 
@@ -248,9 +250,9 @@ function VariationsSection({
                 </span>
                 <div>
                   <p className="text-sm font-bold text-gray-900 dark:text-white">
-                    Attribute Variants <span className="text-error-500">*</span>
+                    {t("products.createProduct.sizesLabel")} <span className="text-error-500">*</span>
                   </p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">Click to toggle selection</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">{t("products.createProduct.selectSizes")}</p>
                 </div>
               </div>
               {selectedVariantIds.length > 0 && (
@@ -295,7 +297,7 @@ function VariationsSection({
 
                 {!availableVariants.length ? (
                   <span className="text-sm text-gray-400 dark:text-gray-500">
-                    No variants found for this attribute.
+                    {t("products.createProduct.noVariantsAvailable")}
                   </span>
                 ) : null}
               </div>
@@ -308,7 +310,7 @@ function VariationsSection({
       <div className="mt-6 overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="border-b border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-white/[0.02]">
           <p className="text-sm font-bold text-gray-900 dark:text-white">
-            Variation Matrix
+            {t("products.createProduct.variantMatrix")}
             {matrix.length > 0 && (
               <span className="ml-2 text-xs font-normal text-gray-400">
                 {matrix.length} total rows
@@ -348,7 +350,7 @@ function VariationsSection({
                     colSpan={8}
                     className="px-4 py-12 text-center text-sm text-gray-400 dark:text-gray-500"
                   >
-                    Select colors and attribute variants to generate rows.
+                    {t("products.createProduct.variantMatrixEmpty")}
                   </td>
                 </tr>
               ) : (
@@ -493,7 +495,7 @@ function VariationsSection({
                                 })
                               }
                             >
-                              Generate
+                              {t("products.createProduct.generateSkus")}
                             </Button>
                           </div>
                         </td>

@@ -4,6 +4,7 @@
 import React from "react";
 import Button from "@/components/ui/button/Button";
 import BaseModal from "./BaseModal";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   open: boolean;
@@ -20,31 +21,31 @@ export default function DeleteProductConfirmModal({
   onClose,
   onConfirm,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <BaseModal
       open={open}
-      title="Delete product"
-      description="This action cannot be undone. This will permanently delete the product."
+      title={t("products.confirmDelete.title")}
+      description={t("products.confirmDelete.description", { name: productName ?? "this product" })}
       widthClassName="w-[520px]"
       onClose={onClose}
       footer={
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={onConfirm}
             disabled={loading}
             className="bg-error-600 hover:bg-error-700"
           >
-            {loading ? "Deleting..." : "Delete"}
+            {loading ? t("products.confirmDelete.deleting") : t("common.delete")}
           </Button>
         </div>
       }
     >
-      <div className="rounded-[6px] border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200">
-        You’re about to delete:{" "}
-        <span className="font-semibold">{productName ?? "this product"}</span>
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200">
+        {t("products.confirmDelete.description", { name: productName ?? "this product" })}
       </div>
     </BaseModal>
   );

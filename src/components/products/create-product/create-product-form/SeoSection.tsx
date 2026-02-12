@@ -3,6 +3,7 @@ import Section from "./Section";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import { Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Option = { value: string; label: string };
 
@@ -39,6 +40,7 @@ function SeoSection({
     }>
   >;
 }) {
+  const { t } = useTranslation();
   const robotsOptions: Option[] = useMemo(
     () => [
       { value: "index, follow", label: "index, follow" },
@@ -51,13 +53,13 @@ function SeoSection({
 
   return (
     <Section
-      title="SEO & Open Graph"
-      description="Search engine optimization and social sharing metadata."
+      title={t("products.createProduct.seoTitle")}
+      description={t("products.createProduct.seoDesc")}
       icon={<Globe className="h-5 w-5" />}
     >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div>
-          <FieldLabel>META TITLE</FieldLabel>
+          <FieldLabel>{t("products.createProduct.metaTitle")}</FieldLabel>
           <Input
             value={seo.meta_title}
             onChange={(e) =>
@@ -66,12 +68,12 @@ function SeoSection({
                 meta_title: String(e.target.value),
               }))
             }
-            placeholder="Page title for search engines"
+            placeholder={t("products.createProduct.metaTitlePlaceholder")}
           />
         </div>
 
         <div>
-          <FieldLabel>CANONICAL URL</FieldLabel>
+          <FieldLabel>{t("products.createProduct.canonicalUrl")}</FieldLabel>
           <Input
             value={seo.canonical_url}
             onChange={(e) =>
@@ -85,7 +87,7 @@ function SeoSection({
         </div>
 
         <div className="lg:col-span-2">
-          <FieldLabel>META DESCRIPTION</FieldLabel>
+          <FieldLabel>{t("products.createProduct.metaDescription")}</FieldLabel>
           <Input
             value={seo.meta_description}
             onChange={(e) =>
@@ -94,15 +96,15 @@ function SeoSection({
                 meta_description: String(e.target.value),
               }))
             }
-            placeholder="Brief description for search results"
+            placeholder={t("products.createProduct.metaDescPlaceholder")}
           />
           <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-            Recommended: under 160 characters
+            {t("products.createProduct.metaDescHint")}
           </p>
         </div>
 
         <div className="lg:col-span-2">
-          <FieldLabel>META KEYWORDS</FieldLabel>
+          <FieldLabel>{t("products.createProduct.metaKeywords")}</FieldLabel>
           <Input
             value={seo.meta_keywords}
             onChange={(e) =>
@@ -111,12 +113,12 @@ function SeoSection({
                 meta_keywords: String(e.target.value),
               }))
             }
-            placeholder="keyword1, keyword2, keyword3"
+            placeholder={t("products.createProduct.metaKeywordsPlaceholder")}
           />
         </div>
 
         <div>
-          <FieldLabel>OG TITLE</FieldLabel>
+          <FieldLabel>{t("products.createProduct.ogTitle")}</FieldLabel>
           <Input
             value={seo.og_title}
             onChange={(e) =>
@@ -125,15 +127,15 @@ function SeoSection({
                 og_title: String(e.target.value),
               }))
             }
-            placeholder="Social share title"
+            placeholder={t("products.createProduct.ogTitlePlaceholder")}
           />
         </div>
 
         <div>
-          <FieldLabel>ROBOTS</FieldLabel>
+          <FieldLabel>{t("products.createProduct.robots")}</FieldLabel>
           <Select
             options={robotsOptions}
-            placeholder="Select robots directive"
+            placeholder={t("products.createProduct.robotsPlaceholder")}
             value={seo.robots}
             onChange={(v) =>
               setSeo((p) => ({ ...p, robots: String(v) }))
@@ -142,7 +144,7 @@ function SeoSection({
         </div>
 
         <div className="lg:col-span-2">
-          <FieldLabel>OG DESCRIPTION</FieldLabel>
+          <FieldLabel>{t("products.createProduct.ogDescription")}</FieldLabel>
           <Input
             value={seo.og_description}
             onChange={(e) =>
@@ -151,7 +153,7 @@ function SeoSection({
                 og_description: String(e.target.value),
               }))
             }
-            placeholder="Social share description"
+            placeholder={t("products.createProduct.ogDescPlaceholder")}
           />
         </div>
       </div>

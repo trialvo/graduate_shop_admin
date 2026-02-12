@@ -1,6 +1,7 @@
 // src/components/products/product-attributes/tabs/ColorTab.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { Download, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -135,18 +136,19 @@ function ColorModal({
   submitting: boolean;
   loadingSingle: boolean;
 }) {
+  const { t } = useTranslation();
   if (!state.open) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[680px] overflow-hidden rounded-[8px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="w-full max-w-[680px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              {state.mode === "create" ? "Create Color" : "Update Color"}
+              {state.mode === "create" ? t("products.attributes.createColor") : t("products.attributes.updateColor")}
             </h3>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Set name, hex code, status and priority.
+              {t("products.attributes.colorDesc")}
             </p>
           </div>
 
@@ -171,7 +173,7 @@ function ColorModal({
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Color Name <span className="text-error-500">*</span>
+                    {t("products.attributes.colorName")} <span className="text-error-500">*</span>
                   </p>
                   <Input
                     placeholder="Crimson Red"
@@ -182,7 +184,7 @@ function ColorModal({
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    HEX <span className="text-error-500">*</span>
+                    {t("products.attributes.hex")} <span className="text-error-500">*</span>
                   </p>
 
                   <div className="flex gap-3">
@@ -199,12 +201,12 @@ function ColorModal({
                   </div>
 
                   {!isHexColor(state.hex) ? (
-                    <p className="text-xs text-error-500">Invalid hex. Example: #EF4444</p>
+                    <p className="text-xs text-error-500">{t("products.attributes.invalidHex")}</p>
                   ) : null}
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Priority</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.attributes.priority")}</p>
                   <Select
                     options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
                     placeholder="Select priority"
@@ -219,7 +221,7 @@ function ColorModal({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
                   <div className="flex h-11 items-center">
                     <Switch
                       key={`modal-color-status-${state.status}`}
@@ -228,7 +230,7 @@ function ColorModal({
                       onChange={(checked) => setState((p) => ({ ...p, status: checked }))}
                     />
                     <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                      {state.status ? "Active" : "Inactive"}
+                      {state.status ? t("common.active") : t("common.inactive")}
                     </span>
                   </div>
                 </div>
@@ -240,7 +242,7 @@ function ColorModal({
                   onClick={() => setState((p) => ({ ...p, open: false }))}
                   disabled={submitting}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
 
                 <Button
@@ -248,7 +250,7 @@ function ColorModal({
                   disabled={submitting || !state.name.trim() || !isHexColor(state.hex)}
                   startIcon={state.mode === "create" ? <Plus size={16} /> : <Pencil size={16} />}
                 >
-                  {submitting ? "Saving..." : state.mode === "create" ? "Create Color" : "Update Color"}
+                  {submitting ? t("common.saving") : state.mode === "create" ? t("products.attributes.createColor") : t("products.attributes.updateColor")}
                 </Button>
               </div>
             </>
@@ -260,6 +262,7 @@ function ColorModal({
 }
 
 export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -336,7 +339,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
   const createMutation = useMutation({
     mutationFn: createColor,
     onSuccess: () => {
-      toast.success("Color created");
+      toast.success(t("products.attributes.colorCreated"));
       qc.invalidateQueries({ queryKey: ["colors"] });
       setModal({
         open: false,
@@ -349,7 +352,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
       });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Failed to create color";
+      const msg = err?.response?.data?.message ?? t("products.attributes.failedCreateColor");
       toast.error(msg);
     },
   });
@@ -358,13 +361,13 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
     mutationFn: ({ id, payload }: { id: number; payload: Parameters<typeof updateColor>[1] }) =>
       updateColor(id, payload),
     onSuccess: () => {
-      toast.success("Color updated");
+      toast.success(t("products.attributes.colorUpdated"));
       qc.invalidateQueries({ queryKey: ["colors"] });
       qc.invalidateQueries({ queryKey: ["color"] });
       setModal((p) => ({ ...p, open: false }));
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Failed to update color";
+      const msg = err?.response?.data?.message ?? t("products.attributes.failedUpdateColor");
       toast.error(msg);
     },
   });
@@ -378,11 +381,11 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         return;
       }
 
-      toast.success("Color deleted");
+      toast.success(t("products.attributes.colorDeleted"));
       qc.invalidateQueries({ queryKey: ["colors"] });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message ?? "Failed to delete color";
+      const msg = err?.response?.data?.message ?? t("products.attributes.failedDeleteColor");
       toast.error(msg);
     },
   });
@@ -446,7 +449,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
   const onExport = () => {
     if (!rows.length) {
-      toast.error("Nothing to export");
+      toast.error(t("products.attributes.nothingToExport"));
       return;
     }
     exportCsv(rows);
@@ -454,17 +457,17 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         {/* Header + Actions */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">{tabsHeader}</div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button variant="outline" startIcon={<Download size={16} />} onClick={onExport}>
-                Export CSV
+                {t("common.export")} CSV
               </Button>
               <Button startIcon={<Plus size={16} />} onClick={openCreate}>
-                Create Color
+                {t("products.attributes.createColor")}
               </Button>
             </div>
           </div>
@@ -473,7 +476,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         {/* Filters */}
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
           <div className="md:col-span-5">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Search</p>
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.search")}</p>
             <div className="relative">
               <Input
                 startIcon={<Search size={16} className="text-gray-400" />}
@@ -489,7 +492,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           </div>
 
           <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
             <Select
               options={STATUS_OPTIONS}
               placeholder="Status"
@@ -502,7 +505,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           </div>
 
           <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Priority</p>
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.attributes.priority")}</p>
             <Select
               options={PRIORITY_OPTIONS}
               placeholder="Priority"
@@ -526,7 +529,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                 setPage(1);
               }}
             >
-              Reset
+              {t("common.reset")}
             </Button>
           </div>
         </div>
@@ -537,13 +540,13 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
           </span>
           <span className={cn("flex items-center gap-2", isFetching ? "opacity-100" : "opacity-60")}>
             <span className={cn("h-2 w-2 rounded-full", isFetching ? "bg-brand-500" : "bg-gray-400")} />
-            {isFetching ? "Updating..." : "Up to date"}
+            {isFetching ? t("products.attributes.updating") : t("products.attributes.upToDate")}
           </span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         {isLoading ? (
           <TableSkeleton />
         ) : (
@@ -634,7 +637,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                         colSpan={8}
                         className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
-                        No colors found.
+                        {t("products.attributes.noColors")}
                       </td>
                     </tr>
                   ) : null}
