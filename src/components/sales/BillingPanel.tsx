@@ -14,7 +14,6 @@ import {
   StickyNote,
   Ticket,
   CheckCircle2,
-  Loader2,
   Plus,
 } from "lucide-react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
@@ -963,79 +962,63 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
           </div>
         </div>
 
-        {/* ═══════ Action Buttons ═══════ */}
-        <div className="grid grid-cols-12 gap-3 pt-2 pb-1">
-          <div className="col-span-12 md:col-span-6">
-            <Button
-              variant="outline"
-              className="w-full rounded-xl"
-              onClick={() =>
-                window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))
-              }
-            >
-              Clear Cart
-            </Button>
-          </div>
+      </div>
 
-          <div className="col-span-12 md:col-span-6">
-            <button
-              type="button"
-              disabled={
-                placing ||
-                (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
-              }
-              className={cn(
-                "flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition",
-                placing ||
-                  (mode === "existing" ? !canPlaceExisting : !canPlaceStranger)
-                  ? "cursor-not-allowed bg-brand-500/50"
-                  : "bg-brand-600 shadow-md hover:bg-brand-700"
-              )}
-              onClick={() => {
-                if (placing) return;
+      {/* ── Sticky Footer ── */}
+      <div className="flex items-center gap-3 border-t border-gray-200 bg-white px-5 py-3.5 dark:border-gray-800 dark:bg-gray-900">
+        <Button
+          variant="outline"
+          className="flex-1"
+          startIcon={<Trash2 size={15} />}
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))
+          }
+        >
+          Clear Cart
+        </Button>
 
-                const anyMissingVariation = cart.some(
-                  (i) => !Number(i.productVariationId)
+        <Button
+          variant="primary"
+          className="flex-1"
+          disabled={
+            mode === "existing" ? !canPlaceExisting : !canPlaceStranger
+          }
+          isLoading={placing}
+          loadingText="Placing..."
+          startIcon={<CheckCircle2 size={15} />}
+          onClick={() => {
+            if (placing) return;
+
+            const anyMissingVariation = cart.some(
+              (i) => !Number(i.productVariationId)
+            );
+            if (anyMissingVariation) {
+              toast.error("Select product variation before placing order");
+              return;
+            }
+
+            if (mode === "existing") {
+              if (!canPlaceExisting) {
+                toast.error(
+                  "Please select customer, address, delivery, and variation"
                 );
-                if (anyMissingVariation) {
-                  toast.error("Select product variation before placing order");
-                  return;
-                }
+                return;
+              }
+              placeExistingMutation.mutate();
+              return;
+            }
 
-                if (mode === "existing") {
-                  if (!canPlaceExisting) {
-                    toast.error(
-                      "Please select customer, address, delivery, and variation"
-                    );
-                    return;
-                  }
-                  placeExistingMutation.mutate();
-                  return;
-                }
-
-                if (!canPlaceStranger) {
-                  toast.error(
-                    "Please fill stranger info, delivery, and variation"
-                  );
-                  return;
-                }
-                placeStrangerMutation.mutate();
-              }}
-            >
-              {placing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Placing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Place Order
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+            if (!canPlaceStranger) {
+              toast.error(
+                "Please fill stranger info, delivery, and variation"
+              );
+              return;
+            }
+            placeStrangerMutation.mutate();
+          }}
+        >
+          Place Order
+        </Button>
       </div>
 
       <AddCustomerModal
