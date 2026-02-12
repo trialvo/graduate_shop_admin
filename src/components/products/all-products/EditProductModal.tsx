@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/table";
 
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 import { api } from "@/api/client";
 import { getProduct, updateProduct } from "@/api/products.api";
@@ -259,6 +260,7 @@ export default function EditProductModal({
   onClose,
   onUpdated,
 }: Props) {
+  const { t } = useTranslation();
   const enabled = open && !!productId;
 
   // lookups (load all, no params)
@@ -521,7 +523,7 @@ export default function EditProductModal({
 
   const childOptions: Option[] = React.useMemo(
     () => [
-      { value: "", label: "Select child category (optional)" },
+      { value: "", label: t("products.editProduct.selectChildCategory") },
       ...availableChild.map((c: any) => ({
         value: String(c.id),
         label: String(c.name),
@@ -540,7 +542,7 @@ export default function EditProductModal({
 
   const brandOptions: Option[] = React.useMemo(
     () => [
-      { value: "", label: "Select brand" },
+      { value: "", label: t("products.editProduct.selectBrand") },
       ...brandsRaw.map((b: any) => ({
         value: String(b.id),
         label: String(b.name ?? b.title ?? `#${b.id}`),
@@ -606,7 +608,7 @@ export default function EditProductModal({
   // ----------------------------
   const updateMutation = useMutation({
     mutationFn: async () => {
-      if (!productId) throw new Error("Missing product id");
+      if (!productId) throw new Error(t("products.editProduct.failedLoad"));
 
       // 1. Update the product itself
       const productRes = await updateProduct(productId, {
@@ -675,12 +677,12 @@ export default function EditProductModal({
         return;
       }
 
-      toast.success("Product updated");
+      toast.success(t("products.editProduct.productUpdated"));
       onUpdated?.();
       onClose();
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Failed to update product"));
+      toast.error(getApiErrorMessage(err, t("products.editProduct.failedUpdate")));
     },
   });
 
@@ -688,7 +690,7 @@ export default function EditProductModal({
   // Variations API helpers
   // ----------------------------
   const createVariation = async (payload: VariationDraft) => {
-    if (!productId) throw new Error("Missing product id");
+    if (!productId) throw new Error(t("products.editProduct.failedLoad"));
 
     const body = {
       product_id: productId,
@@ -706,7 +708,7 @@ export default function EditProductModal({
   };
 
   const updateVariation = async (id: number, payload: VariationDraft) => {
-    if (!productId) throw new Error("Missing product id");
+    if (!productId) throw new Error(t("products.editProduct.failedLoad"));
 
     const body = {
       product_id: productId,
@@ -731,11 +733,11 @@ export default function EditProductModal({
   const createVarMutation = useMutation({
     mutationFn: (payload: VariationDraft) => createVariation(payload),
     onSuccess: async () => {
-      toast.success("Variation added");
+      toast.success(t("products.editProduct.variationAdded"));
       await productQuery.refetch();
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Failed to add variation"));
+      toast.error(getApiErrorMessage(err, t("products.editProduct.failedAddVariation")));
     },
   });
 
@@ -743,25 +745,25 @@ export default function EditProductModal({
     mutationFn: ({ id, payload }: { id: number; payload: VariationDraft }) =>
       updateVariation(id, payload),
     onSuccess: async () => {
-      toast.success("Variation updated");
+      toast.success(t("products.editProduct.variationUpdated"));
       setVarEdit({});
       await productQuery.refetch();
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Failed to update variation"));
+      toast.error(getApiErrorMessage(err, t("products.editProduct.failedUpdateVariation")));
     },
   });
 
   const deleteVarMutation = useMutation({
     mutationFn: (id: number) => deleteVariation(id),
     onSuccess: async () => {
-      toast.success("Variation deleted");
+      toast.success(t("products.editProduct.variationDeleted"));
       setVarDeleteOpen(false);
       setVarDeleteId(null);
       await productQuery.refetch();
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Failed to delete variation"));
+      toast.error(getApiErrorMessage(err, t("products.editProduct.failedDeleteVariation")));
     },
   });
 
@@ -836,7 +838,7 @@ export default function EditProductModal({
             onClose();
           }}
         >
-          Cancel
+          {t("products.editProduct.cancel")}
         </Button>
 
         <Button
@@ -851,7 +853,7 @@ export default function EditProductModal({
             !subCategoryId
           }
         >
-          {updateMutation.isPending ? "Saving…" : "Save Changes"}
+          {updateMutation.isPending ? t("products.editProduct.saving") : t("products.editProduct.saveChanges")}
         </Button>
       </div>
     </div>
@@ -876,8 +878,8 @@ export default function EditProductModal({
           if (isBusy) return;
           onClose();
         }}
-        title="Edit Product"
-        description="Update product info, images and variations."
+        title={t("products.editProduct.modalTitle")}
+        description={t("products.editProduct.modalDesc")}
         widthClassName="w-[1100px]"
         footer={footer}
       >
@@ -889,7 +891,7 @@ export default function EditProductModal({
           </div>
         ) : productQuery.isError ? (
           <div className="py-14 text-center text-sm text-error-600">
-            Failed to load product.
+            {t("products.editProduct.failedLoad")}
           </div>
         ) : (
           <div className="space-y-7">
@@ -900,7 +902,7 @@ export default function EditProductModal({
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400">
                     <Package size={16} />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Basic Info</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.basicInfo")}</h3>
                 </div>
                 <span className="inline-flex items-center gap-1.5 rounded-md bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
@@ -911,24 +913,24 @@ export default function EditProductModal({
               <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Name <span className="text-error-500">*</span>
+                    {t("products.editProduct.nameLabel")} <span className="text-error-500">*</span>
                   </label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name" />
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("products.editProduct.productNamePh")} />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Slug <span className="text-error-500">*</span>
+                    {t("products.editProduct.slugLabel")} <span className="text-error-500">*</span>
                   </label>
-                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="product-slug" />
+                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder={t("products.editProduct.productSlugPh")} />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Category</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.categoryLabel")}</label>
                   <Select
                     key={`main-${mainCategoryId}`}
                     options={mainOptions}
-                    placeholder="Select category"
+                    placeholder={t("products.editProduct.selectCategory")}
                     defaultValue={mainCategoryId ? String(mainCategoryId) : ""}
                     onChange={(v) => {
                       setMainCategoryId(Number(v));
@@ -939,11 +941,11 @@ export default function EditProductModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Sub Category</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.subCategoryLabel")}</label>
                   <Select
                     key={`sub-${mainCategoryId}-${subCategoryId}`}
                     options={subOptions}
-                    placeholder="Select sub category"
+                    placeholder={t("products.editProduct.selectSubCategory")}
                     defaultValue={subCategoryId ? String(subCategoryId) : ""}
                     onChange={(v) => {
                       setSubCategoryId(Number(v));
@@ -953,22 +955,22 @@ export default function EditProductModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Child Category</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.childCategoryLabel")}</label>
                   <Select
                     key={`child-${subCategoryId}-${childCategoryId}`}
                     options={childOptions}
-                    placeholder="Select child category (optional)"
+                    placeholder={t("products.editProduct.selectChildCategory")}
                     defaultValue={childCategoryId ? String(childCategoryId) : ""}
                     onChange={(v) => setChildCategoryId(v ? Number(v) : 0)}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Brand</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.brandLabel")}</label>
                   <Select
                     key={`brand-${brandId}`}
                     options={brandOptions}
-                    placeholder="Select brand"
+                    placeholder={t("products.editProduct.selectBrand")}
                     defaultValue={brandId ? String(brandId) : ""}
                     onChange={(v) => setBrandId(v ? Number(v) : 0)}
                   />
@@ -983,21 +985,21 @@ export default function EditProductModal({
                   <ImageIcon size={16} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Media</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Product images & video</p>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.mediaTitle")}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t("products.editProduct.mediaDesc")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="rounded-md bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-400">
-                    {existingImages.length} existing
+                    {existingImages.length} {t("products.editProduct.existingBadge")}
                   </span>
                   {deleteImageIds.length > 0 && (
                     <span className="rounded-md bg-error-50 px-2 py-0.5 text-[11px] font-semibold text-error-600 dark:bg-error-500/10 dark:text-error-400">
-                      {deleteImageIds.length} to delete
+                      {deleteImageIds.length} {t("products.editProduct.toDeleteBadge")}
                     </span>
                   )}
                   {newImages.length > 0 && (
                     <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                      {newImages.length} new
+                      {newImages.length} {t("products.editProduct.newBadge")}
                     </span>
                   )}
                 </div>
@@ -1007,19 +1009,19 @@ export default function EditProductModal({
                 {/* Video URL */}
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    <Video size={13} /> Video URL
+                    <Video size={13} /> {t("products.editProduct.videoUrlLabel")}
                   </label>
                   <Input
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://youtube.com/... or direct video link"
+                    placeholder={t("products.editProduct.videoUrlPh")}
                   />
                 </div>
 
                 {/* Existing Images */}
                 <div>
                   <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    <ImageIcon size={13} /> Existing Images
+                    <ImageIcon size={13} /> {t("products.editProduct.existingImages")}
                   </label>
 
                   {existingImages.length ? (
@@ -1037,7 +1039,7 @@ export default function EditProductModal({
                                 ? "border-error-400 ring-2 ring-error-400/20"
                                 : "border-gray-200 hover:border-brand-300 hover:shadow-md dark:border-gray-700 dark:hover:border-brand-600",
                             )}
-                            title={marked ? "Click to restore" : "Click to mark for deletion"}
+                            title={marked ? t("products.editProduct.clickRestore") : t("products.editProduct.clickMarkDelete")}
                           >
                             <img
                               src={toPublicUrl(img.path)}
@@ -1050,7 +1052,7 @@ export default function EditProductModal({
                             {marked ? (
                               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-error-500/10">
                                 <Trash2 size={18} className="text-error-500" />
-                                <span className="text-[10px] font-bold text-error-600">REMOVE</span>
+                                <span className="text-[10px] font-bold text-error-600">{t("products.editProduct.removeLabel")}</span>
                               </div>
                             ) : (
                               <div className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -1062,17 +1064,17 @@ export default function EditProductModal({
                       })}
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">No existing images.</p>
+                    <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{t("products.editProduct.noExistingImages")}</p>
                   )}
                 </div>
 
                 {/* New Images (with cropper) */}
                 <ImageMultiUploader
-                  label="Upload New Images"
+                  label={t("products.editProduct.uploadNewImages")}
                   images={newImages}
                   onChange={setNewImages}
                   max={10}
-                  helperText="Each image will be cropped to 1200×1200 before upload."
+                  helperText={t("products.editProduct.uploadCropHint")}
                 />
               </div>
             </div>
@@ -1083,13 +1085,13 @@ export default function EditProductModal({
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
                   <ToggleLeft size={16} />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Product Flags</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.productFlags")}</h3>
               </div>
               <div className="grid grid-cols-1 gap-px bg-gray-100 dark:bg-gray-800 sm:grid-cols-3">
                 {[
-                  { label: "Status", desc: "Show in storefront", icon: ToggleLeft, value: status, onChange: setStatus },
-                  { label: "Featured", desc: "Highlight as featured", icon: Star, value: featured, onChange: setFeatured },
-                  { label: "Best Deal", desc: "Tag as best deal", icon: Zap, value: bestDeal, onChange: setBestDeal },
+                  { label: t("products.editProduct.flagStatus"), desc: t("products.editProduct.flagStatusDesc"), icon: ToggleLeft, value: status, onChange: setStatus },
+                  { label: t("products.editProduct.flagFeatured"), desc: t("products.editProduct.flagFeaturedDesc"), icon: Star, value: featured, onChange: setFeatured },
+                  { label: t("products.editProduct.flagBestDeal"), desc: t("products.editProduct.flagBestDealDesc"), icon: Zap, value: bestDeal, onChange: setBestDeal },
                 ].map((x) => (
                   <div key={x.label} className="flex items-center justify-between gap-3 bg-white px-5 py-4 dark:bg-gray-900">
                     <div className="flex items-center gap-3">
@@ -1112,14 +1114,14 @@ export default function EditProductModal({
                   <FileText size={16} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Description</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Rich text product description</p>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.descriptionTitle")}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t("products.editProduct.descriptionDesc")}</p>
                 </div>
               </div>
 
               <div className="p-5">
                 <RichTextEditor
-                  label="Long Description"
+                  label={t("products.editProduct.longDescLabel")}
                   value={longDescription}
                   onChange={setLongDescription}
                   heightClassName="min-h-[260px]"
@@ -1135,23 +1137,23 @@ export default function EditProductModal({
                     <Layers size={16} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Variations</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Color, variant, prices, stock &amp; SKU</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.variationsTitle")}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t("products.editProduct.variationsDesc")}</p>
                   </div>
                 </div>
 
                 <span className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-50 px-2.5 text-xs font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-400">
-                  <Layers size={12} /> {variations.length} variation{variations.length !== 1 ? "s" : ""}
+                  <Layers size={12} /> {variations.length} {variations.length !== 1 ? t("products.editProduct.variationCount_other", { count: variations.length }) : t("products.editProduct.variationCount_one", { count: variations.length })}
                 </span>
               </div>
               <div className="px-5 py-1 w-[50%]">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Attribute
+                  {t("products.editProduct.attributeLabel")}
                 </p>
                 <Select
                   key={`attr-${attributeId}`}
                   options={attributeOptions}
-                  placeholder="Select attribute"
+                  placeholder={t("products.editProduct.selectAttribute")}
                   defaultValue={attributeId ? String(attributeId) : ""}
                   onChange={(v) => setAttributeId(Number(v))}
                 />
@@ -1162,12 +1164,12 @@ export default function EditProductModal({
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
                   <div className="md:col-span-1">
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      Color
+                      {t("products.editProduct.colorLabel")}
                     </p>
                     <Select
                       key={`add-color-${addDraft.color_id}`}
                       options={colorOptions}
-                      placeholder="Color"
+                      placeholder={t("products.editProduct.colorLabel")}
                       defaultValue={
                         addDraft.color_id ? String(addDraft.color_id) : ""
                       }
@@ -1179,14 +1181,14 @@ export default function EditProductModal({
 
                   <div className="md:col-span-1">
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      Variant
+                      {t("products.editProduct.variantLabel")}
                     </p>
 
                     {variantOptionsFromAttr.length ? (
                       <Select
                         key={`add-variant-${attributeId}-${addDraft.variant_id}`}
                         options={variantOptionsFromAttr}
-                        placeholder="Variant"
+                        placeholder={t("products.editProduct.variantLabel")}
                         defaultValue={
                           addDraft.variant_id ? String(addDraft.variant_id) : ""
                         }
@@ -1214,7 +1216,7 @@ export default function EditProductModal({
 
                   <div>
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      Buy
+                      {t("products.editProduct.buyLabel")}
                     </p>
                     <Input
                       type="number"
@@ -1233,7 +1235,7 @@ export default function EditProductModal({
 
                   <div>
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      Sell
+                      {t("products.editProduct.sellLabel")}
                     </p>
                     <Input
                       type="number"
@@ -1252,7 +1254,7 @@ export default function EditProductModal({
 
                   <div>
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      Discount
+                      {t("products.editProduct.discountLabel")}
                     </p>
                     <Input
                       type="number"
@@ -1268,7 +1270,7 @@ export default function EditProductModal({
 
                   <div>
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      Stock
+                      {t("products.editProduct.stockLabel")}
                     </p>
                     <Input
                       type="number"
@@ -1287,7 +1289,7 @@ export default function EditProductModal({
 
                   <div className="md:col-span-4">
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                      SKU
+                      {t("products.editProduct.skuLabel")}
                     </p>
                     <div className="flex items-center gap-2">
                       <Input
@@ -1325,7 +1327,7 @@ export default function EditProductModal({
                           }));
                         }}
                       >
-                        Generate
+                        {t("products.editProduct.generate")}
                       </Button>
                     </div>
                   </div>
@@ -1346,7 +1348,7 @@ export default function EditProductModal({
                         })
                       }
                     >
-                      Reset
+                      {t("products.editProduct.reset")}
                     </Button>
 
                     <Button
@@ -1354,16 +1356,16 @@ export default function EditProductModal({
                       startIcon={<Plus className="h-4 w-4" />}
                       onClick={() => {
                         if (!addDraft.color_id)
-                          return toast.error("Select a color");
+                          return toast.error(t("products.editProduct.selectColor"));
                         if (!addDraft.variant_id)
-                          return toast.error("Set variant_id");
+                          return toast.error(t("products.editProduct.setVariantId"));
                         if (addDraft.selling_price <= 0)
-                          return toast.error("Selling price required");
+                          return toast.error(t("products.editProduct.sellingPriceRequired"));
                         createVarMutation.mutate(addDraft);
                       }}
                       disabled={createVarMutation.isPending}
                     >
-                      Add Variation
+                      {t("products.editProduct.addVariation")}
                     </Button>
                   </div>
                 </div>
@@ -1375,21 +1377,21 @@ export default function EditProductModal({
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                       {[
-                        "Color",
-                        "Variant",
-                        "Buying",
-                        "Selling",
-                        "Discount",
-                        "Stock",
-                        "SKU",
-                        "Action",
+                        t("products.editProduct.thColor"),
+                        t("products.editProduct.thVariant"),
+                        t("products.editProduct.thBuying"),
+                        t("products.editProduct.thSelling"),
+                        t("products.editProduct.thDiscount"),
+                        t("products.editProduct.thStock"),
+                        t("products.editProduct.thSku"),
+                        t("products.editProduct.thAction"),
                       ].map((h) => (
                         <TableCell
                           key={h}
                           isHeader
                           className={[
                             "px-4 py-4 text-left text-xs font-semibold text-brand-500",
-                            h === "Action"
+                            h === t("products.editProduct.thAction")
                               ? "sticky right-0 z-10 bg-gray-50 dark:bg-gray-950"
                               : "",
                           ]
@@ -1419,7 +1421,7 @@ export default function EditProductModal({
                               <Select
                                 key={`edit-color-${v.id}-${draft?.color_id}`}
                                 options={colorOptions}
-                                placeholder="Color"
+                                placeholder={t("products.editProduct.colorLabel")}
                                 defaultValue={String(draft?.color_id ?? colorId)}
                                 onChange={(val) =>
                                   patchEditVariation(v.id, { color_id: Number(val) })
@@ -1432,7 +1434,7 @@ export default function EditProductModal({
                                 <Select
                                   key={`edit-variant-${v.id}-${draft?.variant_id}-${attributeId}`}
                                   options={variantOptionsFromAttr}
-                                  placeholder="Variant"
+                                  placeholder={t("products.editProduct.variantLabel")}
                                   defaultValue={String(draft?.variant_id ?? variantId)}
                                   onChange={(val) =>
                                     patchEditVariation(v.id, { variant_id: Number(val) })
@@ -1525,7 +1527,7 @@ export default function EditProductModal({
                                     });
                                   }}
                                 >
-                                  Generate
+                                  {t("products.editProduct.generate")}
                                 </Button>
                               </div>
                             </TableCell>
@@ -1548,23 +1550,21 @@ export default function EditProductModal({
                         );
                       })
                     ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
-                      >
-                        No variations found for this product.
-                      </TableCell>
-                    </TableRow>
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                        >
+                          {t("products.editProduct.noVariations")}
+                        </TableCell>
+                      </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </div>
 
               <div className="border-t border-gray-200 px-5 py-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                Tip: If your Attribute API returns numeric variants, the Variant
-                dropdown will show automatically. Otherwise, you can enter
-                variant_id manually.
+                {t("products.editProduct.variantTip")}
               </div>
             </div>
 
@@ -1575,22 +1575,22 @@ export default function EditProductModal({
                   <Globe size={16} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">SEO Settings</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Meta tags, OG and robots</p>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.seoTitle")}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t("products.editProduct.seoDesc")}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Meta Title</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.metaTitle")}</label>
                   <Input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Canonical URL</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.canonicalUrl")}</label>
                   <Input value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)} />
                 </div>
                 <div className="space-y-1.5 lg:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Meta Description</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.metaDescription")}</label>
                   <textarea
                     className="min-h-[80px] w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     value={metaDescription}
@@ -1598,19 +1598,19 @@ export default function EditProductModal({
                   />
                 </div>
                 <div className="space-y-1.5 lg:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Meta Keywords</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.metaKeywords")}</label>
                   <Input value={metaKeywords} onChange={(e) => setMetaKeywords(e.target.value)} placeholder="keyword1, keyword2, keyword3" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">OG Title</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.ogTitle")}</label>
                   <Input value={ogTitle} onChange={(e) => setOgTitle(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Robots</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.robots")}</label>
                   <Input value={robots} onChange={(e) => setRobots(e.target.value)} placeholder="index, follow" />
                 </div>
                 <div className="space-y-1.5 lg:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">OG Description</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("products.editProduct.ogDescription")}</label>
                   <textarea
                     className="min-h-[70px] w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-800 dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     value={ogDescription}
@@ -1631,8 +1631,8 @@ export default function EditProductModal({
           setVarDeleteOpen(false);
           setVarDeleteId(null);
         }}
-        title="Delete Variation"
-        description="This action cannot be undone."
+        title={t("products.editProduct.deleteVarTitle")}
+        description={t("products.editProduct.deleteVarDesc")}
         widthClassName="w-[520px]"
         footer={
           <div className="flex items-center justify-end gap-2">
@@ -1645,7 +1645,7 @@ export default function EditProductModal({
                 setVarDeleteId(null);
               }}
             >
-              Cancel
+              {t("products.editProduct.cancel")}
             </Button>
             <Button
               className="h-10 bg-error-600 hover:bg-error-700"
@@ -1655,13 +1655,13 @@ export default function EditProductModal({
               }}
               disabled={deleteVarMutation.isPending}
             >
-              Delete
+              {t("products.editProduct.delete")}
             </Button>
           </div>
         }
       >
         <div className="text-sm text-gray-700 dark:text-gray-300">
-          Are you sure you want to delete this variation?
+          {t("products.editProduct.deleteVarConfirm")}
         </div>
       </BaseModal>
     </>

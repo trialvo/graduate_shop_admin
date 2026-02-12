@@ -24,6 +24,7 @@ import RichTextEditor from "@/components/ui/editor/RichTextEditor";
 import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
 import VideoUploader from "@/components/ui/upload/VideoUploader";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 import { getBrands } from "@/api/brands.api";
 import { getColors } from "@/api/colors.api";
@@ -180,19 +181,20 @@ function getSuccessProductId(res: unknown): number | null {
 /* ----------------------------- UI Components ----------------------------- */
 
 function PageHeader() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          Create Product
+          {t("products.createProduct.createProductTitle")}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Fill in product details, variations, media, and SEO metadata.
+          {t("products.createProduct.createProductSubtitle")}
         </p>
       </div>
       <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400">
         <Package className="h-3 w-3" />
-        New Product
+        {t("products.createProduct.newProduct")}
       </span>
     </div>
   );
@@ -207,6 +209,7 @@ function FloatingErrorBanner({
   visible: boolean;
   onDismiss: () => void;
 }) {
+  const { t } = useTranslation();
   if (!message || !visible) return null;
 
   return (
@@ -234,8 +237,8 @@ function FloatingErrorBanner({
               "dark:border-error-900/40 dark:bg-white/[0.03] dark:text-error-300 dark:hover:bg-white/[0.06]",
             )}
             onClick={onDismiss}
-            aria-label="Dismiss error"
-            title="Dismiss"
+            aria-label={t("products.createProduct.dismissError")}
+            title={t("products.createProduct.dismiss")}
           >
             <X size={16} />
           </button>
@@ -256,19 +259,20 @@ function MediaSection({
   videoUrl: string;
   setVideoUrl: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Section
-      title="Media"
-      description="Upload product images and add a video URL."
+      title={t("products.createProduct.mediaTitle")}
+      description={t("products.createProduct.mediaDesc")}
       icon={<ImageIcon className="h-5 w-5" />}
     >
       <div className="space-y-6">
-        <ImageMultiUploader label="Product Images" images={images} onChange={setImages} max={10} />
+        <ImageMultiUploader label={t("products.createProduct.productImages")} images={images} onChange={setImages} max={10} />
 
         <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-white/[0.015]">
           <div className="mb-3 flex items-center gap-2">
             <Video className="h-4 w-4 text-brand-500" />
-            <p className="text-sm font-bold text-gray-900 dark:text-white">Video URL</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{t("products.createProduct.videoUrl")}</p>
           </div>
           <VideoUploader label="" value={videoUrl} onChange={setVideoUrl} />
         </div>
@@ -288,15 +292,16 @@ function DescriptionsSection({
   longDescription: string;
   setLongDescription: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Section
-      title="Descriptions"
-      description="Describe the product for customers."
+      title={t("products.createProduct.descriptionsTitle")}
+      description={t("products.createProduct.descriptionsDesc")}
       icon={<FileText className="h-5 w-5" />}
     >
       <div className="space-y-6">
         <RichTextEditor
-          label="Long Description"
+          label={t("products.createProduct.longDescription")}
           value={longDescription}
           onChange={setLongDescription}
           heightClassName="min-h-[260px]"
@@ -325,31 +330,32 @@ function FlagsSection({
     }>
   >;
 }) {
+  const { t } = useTranslation();
   const items = [
     {
       key: "status" as const,
-      label: "Status",
-      description: "Product is active and visible",
+      label: t("products.createProduct.flagStatus"),
+      description: t("products.createProduct.flagStatusDesc"),
       icon: <ToggleLeft className="h-5 w-5" />,
     },
     {
       key: "featured" as const,
-      label: "Featured",
-      description: "Show in featured collection",
+      label: t("products.createProduct.flagFeatured"),
+      description: t("products.createProduct.flagFeaturedDesc"),
       icon: <Star className="h-5 w-5" />,
     },
     {
       key: "best_deal" as const,
-      label: "Best Deal",
-      description: "Highlight as a best deal",
+      label: t("products.createProduct.flagBestDeal"),
+      description: t("products.createProduct.flagBestDealDesc"),
       icon: <Zap className="h-5 w-5" />,
     },
   ];
 
   return (
     <Section
-      title="Flags & Visibility"
-      description="Marketing and visibility toggles."
+      title={t("products.createProduct.flagsTitle")}
+      description={t("products.createProduct.flagsDesc")}
       icon={<ToggleLeft className="h-5 w-5" />}
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -395,6 +401,7 @@ function FlagsSection({
 /* ----------------------------- Page Component ---------------------------- */
 
 export default function CreateProductPage() {
+  const { t } = useTranslation();
   // -------------------- Form State --------------------
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
@@ -708,25 +715,25 @@ export default function CreateProductPage() {
 
   // -------------------- Validation --------------------
   const validate = () => {
-    if (!productName.trim()) return "Product name is required.";
-    if (!productSlug.trim()) return "Slug is required.";
-    if (!mainCategoryId) return "Main category is required.";
-    if (!subCategoryId) return "Sub category is required.";
+    if (!productName.trim()) return t("products.createProduct.valProductName");
+    if (!productSlug.trim()) return t("products.createProduct.valSlug");
+    if (!mainCategoryId) return t("products.createProduct.valMainCategory");
+    if (!subCategoryId) return t("products.createProduct.valSubCategory");
 
     // ✅ child category এখন optional, তাই আর required না
     // if (!childCategoryId) return "Child category is required.";
 
-    if (!brandId) return "Brand is required.";
-    if (!attributeId) return "Attribute is required.";
+    if (!brandId) return t("products.createProduct.valBrand");
+    if (!attributeId) return t("products.createProduct.valAttribute");
 
-    if (selectedColorIds.length === 0) return "Select at least 1 color.";
-    if (selectedVariantIds.length === 0) return "Select at least 1 variant (from attribute).";
+    if (selectedColorIds.length === 0) return t("products.createProduct.valColor");
+    if (selectedVariantIds.length === 0) return t("products.createProduct.valVariant");
 
     const activeRows = matrix.filter((r) => r.active);
-    if (!activeRows.length) return "At least 1 active variation required.";
+    if (!activeRows.length) return t("products.createProduct.valActiveVariation");
 
     const invalid = activeRows.find((r) => r.sellingPrice <= 0);
-    if (invalid) return "Selling price must be > 0 for all active variations.";
+    if (invalid) return t("products.createProduct.valSellingPrice");
 
     return null;
   };
@@ -739,7 +746,7 @@ export default function CreateProductPage() {
       const anyRes = res as any;
 
       if (anyRes?.success === true) {
-        toast.success(productId ? `Product created (ID: ${productId})` : "Product created");
+        toast.success(productId ? `${t("products.createProduct.productCreated")} (ID: ${productId})` : t("products.createProduct.productCreated"));
         setValidationError("");
         setErrorBannerVisible(false);
         return;
@@ -748,7 +755,7 @@ export default function CreateProductPage() {
       const msg =
         (typeof anyRes?.error === "string" && anyRes.error.trim()) ||
         (typeof anyRes?.message === "string" && anyRes.message.trim()) ||
-        "Failed to create product";
+        t("products.createProduct.failedCreateProduct");
 
       toast.error(msg);
       setValidationError(msg);

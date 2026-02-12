@@ -5,6 +5,7 @@ import Select, { type Option } from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 import type { CategoryEntity, MainCategory, SubCategory } from "./types";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   tab: CategoryEntity;
@@ -65,25 +66,26 @@ export default function CategoryFiltersBar({
   loadingMainOptions,
   loadingSubOptions,
 }: Props) {
+  const { t } = useTranslation();
   const pageFrom = total === 0 ? 0 : offset + 1;
   const pageTo = Math.min(offset + limit, total);
 
   const priorityOptions = useMemo(() => [1, 2, 3, 4, 5], []);
 
   const statusSelectOptions: Option[] = [
-    { label: "All", value: "all" },
-    { label: "Enabled", value: "true" },
-    { label: "Disabled", value: "false" },
+    { label: t("common.all"), value: "all" },
+    { label: t("common.enabled"), value: "true" },
+    { label: t("common.disabled"), value: "false" },
   ];
 
   const featuredSelectOptions: Option[] = [
-    { label: "All", value: "all" },
-    { label: "Featured", value: "true" },
-    { label: "Not featured", value: "false" },
+    { label: t("common.all"), value: "all" },
+    { label: t("products.categories.featured"), value: "true" },
+    { label: t("products.categories.notFeatured"), value: "false" },
   ];
 
   const prioritySelectOptions: Option[] = [
-    { label: "All", value: "all" },
+    { label: t("common.all"), value: "all" },
     ...priorityOptions.map((p) => ({ label: String(p), value: String(p) })),
   ];
 
@@ -93,30 +95,30 @@ export default function CategoryFiltersBar({
   }));
 
   const mainSelectOptions: Option[] = [
-    { label: loadingMainOptions ? "Loading..." : "All main categories", value: "all" },
+    { label: loadingMainOptions ? t("common.loading") : t("products.categories.allMainCategories"), value: "all" },
     ...mainOptions.map((m) => ({ label: `#${m.id} - ${m.name}`, value: String(m.id) })),
   ];
 
   const subSelectOptions: Option[] = [
-    { label: loadingSubOptions ? "Loading..." : "All sub categories", value: "all" },
+    { label: loadingSubOptions ? t("common.loading") : t("products.categories.allSubCategories"), value: "all" },
     ...subOptions.map((s) => ({ label: `#${s.id} - ${s.name}`, value: String(s.id) })),
   ];
 
   return (
-    <div className="mb-4 rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+    <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
         {/* Search */}
         <div className="md:col-span-4">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search name</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.categories.searchName")}</label>
           <input
             value={name}
             onChange={(e) => {
               setName(e.target.value);
               setOffset(0);
             }}
-            placeholder="Type category name..."
+            placeholder={t("products.categories.searchPlaceholder")}
             className={cn(
-              "h-11 w-full rounded-[4px] border bg-white px-3 text-sm text-gray-900 outline-none",
+              "h-11 w-full rounded-lg border bg-white px-3 text-sm text-gray-900 outline-none",
               "border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20",
               "dark:border-gray-800 dark:bg-gray-900 dark:text-white",
             )}
@@ -126,7 +128,7 @@ export default function CategoryFiltersBar({
         {tab === "sub" ? (
           <div className="md:col-span-3">
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Main category
+              {t("products.categories.mainCategory")}
             </label>
             <Select
               value={mainCategoryId === "all" ? "all" : String(mainCategoryId)}
@@ -142,7 +144,7 @@ export default function CategoryFiltersBar({
         {tab === "child" ? (
           <div className="md:col-span-3">
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Sub category
+              {t("products.categories.subCategory")}
             </label>
             <Select
               value={subCategoryId === "all" ? "all" : String(subCategoryId)}
@@ -157,7 +159,7 @@ export default function CategoryFiltersBar({
 
         <div className="md:col-span-2">
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Status
+            {t("common.status")}
           </label>
           <Select
             value={status === "all" ? "all" : status ? "true" : "false"}
@@ -171,7 +173,7 @@ export default function CategoryFiltersBar({
 
         <div className="md:col-span-2">
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Featured
+            {t("products.categories.featured")}
           </label>
           <Select
             value={featured === "all" ? "all" : featured ? "true" : "false"}
@@ -185,7 +187,7 @@ export default function CategoryFiltersBar({
 
         <div className="md:col-span-1">
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Priority
+            {t("products.categories.priority")}
           </label>
           <Select
             value={priority === "all" ? "all" : String(priority)}
@@ -199,7 +201,7 @@ export default function CategoryFiltersBar({
 
         <div className="md:col-span-2">
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Per page
+            {t("products.categories.perPage")}
           </label>
           <Select
             value={String(limit)}
@@ -214,8 +216,8 @@ export default function CategoryFiltersBar({
 
       <div className="mt-3 flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-300 md:flex-row md:items-center md:justify-between">
         <div>
-          Showing <span className="font-semibold text-gray-900 dark:text-white">{pageFrom}</span>{" "}
-          - <span className="font-semibold text-gray-900 dark:text-white">{pageTo}</span> of{" "}
+          {t("products.categories.showing")} <span className="font-semibold text-gray-900 dark:text-white">{pageFrom}</span>{" "}
+          - <span className="font-semibold text-gray-900 dark:text-white">{pageTo}</span> {t("products.categories.of")}{" "}
           <span className="font-semibold text-gray-900 dark:text-white">{total}</span>
         </div>
 
@@ -225,14 +227,14 @@ export default function CategoryFiltersBar({
             onClick={() => setOffset(Math.max(0, offset - limit))}
             disabled={offset === 0}
           >
-            Prev
+            {t("products.categories.prev")}
           </Button>
           <Button
             variant="outline"
             onClick={() => setOffset(offset + limit)}
             disabled={offset + limit >= total}
           >
-            Next
+            {t("products.categories.next")}
           </Button>
         </div>
       </div>

@@ -14,6 +14,7 @@ import RichTextEditor from "@/components/ui/editor/RichTextEditor";
 import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
 import VideoUploader from "@/components/ui/upload/VideoUploader";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 import { getAttributes } from "@/api/attributes.api";
 import { getVariants } from "@/api/variants.api";
@@ -58,6 +59,7 @@ type Props = {
 };
 
 export default function ProductForm({ mode, productId, initialProduct, onSuccess, onClose }: Props) {
+  const { t } = useTranslation();
   // Data (mock for now)
   const categories = INITIAL_CATEGORIES;
   const subCategories = INITIAL_SUB_CATEGORIES;
@@ -238,23 +240,23 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
   }, [mode, initialProduct, attributes.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validate = () => {
-    if (!productName.trim()) return "Product name is required.";
-    if (!productSlug.trim()) return "Product slug is required.";
-    if (!categoryId) return "Main category is required.";
-    if (!subCategoryId) return "Sub category is required.";
-    if (!childCategoryId) return "Child category is required.";
-    if (!brandId) return "Brand is required.";
-    if (!attributeId) return "Attribute is required.";
+    if (!productName.trim()) return t("products.createProduct.valProductName");
+    if (!productSlug.trim()) return t("products.createProduct.valSlugRequired");
+    if (!categoryId) return t("products.createProduct.valMainCategory");
+    if (!subCategoryId) return t("products.createProduct.valSubCategory");
+    if (!childCategoryId) return t("products.createProduct.valChildCategory");
+    if (!brandId) return t("products.createProduct.valBrand");
+    if (!attributeId) return t("products.createProduct.valAttribute");
 
-    if (selectedColorIds.length === 0) return "Select at least 1 color.";
-    if (selectedVariantIds.length === 0) return "Select at least 1 variant value.";
-    if (variantMatrix.length === 0) return "Variation matrix is empty.";
+    if (selectedColorIds.length === 0) return t("products.createProduct.valColor");
+    if (selectedVariantIds.length === 0) return t("products.createProduct.valVariantValue");
+    if (variantMatrix.length === 0) return t("products.createProduct.valMatrixEmpty");
 
     const activeRows = variantMatrix.filter((r) => r.active);
-    if (!activeRows.length) return "At least one active variation is required.";
+    if (!activeRows.length) return t("products.createProduct.valActiveVariationRequired");
 
     const invalidPrice = activeRows.find((r) => r.sellingPrice <= 0);
-    if (invalidPrice) return "Selling price must be greater than 0 for all active variations.";
+    if (invalidPrice) return t("products.createProduct.valSellingPriceGt0");
 
     return null;
   };
@@ -276,20 +278,20 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: (res) => {
-      toast.success(`Product created (ID: ${res.productId})`);
+      toast.success(`${t("products.createProduct.productCreated")} (ID: ${res.productId})`);
       onSuccess?.();
     },
-    onError: (err: any) => toast.error(parseApiError(err, "Failed to create product")),
+    onError: (err: any) => toast.error(parseApiError(err, t("products.createProduct.failedCreateProduct"))),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: any }) => updateProduct(id, payload),
     onSuccess: () => {
-      toast.success("Product updated");
+      toast.success(t("products.createProduct.productUpdated"));
       onSuccess?.();
       onClose?.();
     },
-    onError: (err: any) => toast.error(parseApiError(err, "Failed to update product")),
+    onError: (err: any) => toast.error(parseApiError(err, t("products.createProduct.failedUpdateProduct"))),
   });
 
   const onSubmit = () => {
@@ -339,7 +341,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
     }
 
     if (!productId) {
-      toast.error("Missing productId");
+      toast.error(t("products.createProduct.missingProductId"));
       return;
     }
 
@@ -357,31 +359,31 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
   return (
     <div className="space-y-6">
       {validationError ? (
-        <div className="rounded-[4px] border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+        <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
           {validationError}
         </div>
       ) : null}
 
       {/* Basic Info */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("products.createProduct.basicInfoTitle")}</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Product Name <span className="text-error-500">*</span>
+              {t("products.createProduct.productNameLabel")} <span className="text-error-500">*</span>
             </p>
-            <Input value={productName} onChange={(e) => setProductName(String(e.target.value))} placeholder="Product name" />
+            <Input value={productName} onChange={(e) => setProductName(String(e.target.value))} placeholder={t("products.createProduct.enterProductName")} />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Product Slug <span className="text-error-500">*</span>
+                {t("products.createProduct.productSlug")} <span className="text-error-500">*</span>
               </p>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Auto</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{t("products.createProduct.autoLabel")}</span>
                 <Switch
                   key={`slug-${slugLocked}`}
                   label=""
@@ -402,57 +404,57 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Main Category *</p>
-            <Select options={categoryOptions} placeholder="Select" defaultValue={String(categoryId)} onChange={(v) => setCategoryId(Number(v))} />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.mainCategoryStar")}</p>
+            <Select options={categoryOptions} placeholder={t("products.createProduct.selectPlaceholder")} defaultValue={String(categoryId)} onChange={(v) => setCategoryId(Number(v))} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Sub Category *</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.subCategoryStar")}</p>
             <Select
               key={`sub-${categoryId}-${subCategoryId}`}
               options={subOptions}
-              placeholder="Select"
+              placeholder={t("products.createProduct.selectPlaceholder")}
               defaultValue={String(subCategoryId)}
               onChange={(v) => setSubCategoryId(Number(v))}
             />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Child Category *</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.childCategoryStar")}</p>
             <Select
               key={`child-${subCategoryId}-${childCategoryId}`}
               options={childOptions}
-              placeholder="Select"
+              placeholder={t("products.createProduct.selectPlaceholder")}
               defaultValue={String(childCategoryId)}
               onChange={(v) => setChildCategoryId(Number(v))}
             />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Brand *</p>
-            <Select options={brandOptions} placeholder="Select" defaultValue={String(brandId)} onChange={(v) => setBrandId(Number(v))} />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.brandStar")}</p>
+            <Select options={brandOptions} placeholder={t("products.createProduct.selectPlaceholder")} defaultValue={String(brandId)} onChange={(v) => setBrandId(Number(v))} />
           </div>
 
           <div className="space-y-2 lg:col-span-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Attribute *</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.attributeStar")}</p>
             <Select
               key={`attr-${attributeId}`}
               options={attributeOptions}
-              placeholder="Select attribute"
+              placeholder={t("products.createProduct.selectAttribute")}
               defaultValue={String(attributeId)}
               onChange={(v) => setAttributeId(Number(v))}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              This attribute controls which variants will be selectable for variations.
+              {t("products.createProduct.attributeHint")}
             </p>
           </div>
 
           {/* SKU base (optional, not required by API but useful) */}
           <div className="space-y-2 lg:col-span-2">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">SKU Base (helper)</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.skuBase")}</p>
 
-              <div className="inline-flex rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <div className="inline-flex rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <button
                   type="button"
                   onClick={() => setSkuMode("auto")}
@@ -463,7 +465,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]",
                   )}
                 >
-                  Auto
+                  {t("products.createProduct.autoLabel")}
                 </button>
                 <button
                   type="button"
@@ -475,14 +477,14 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]",
                   )}
                 >
-                  Manual
+                  {t("products.createProduct.manualLabel")}
                 </button>
               </div>
             </div>
 
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
               <div className="flex-1">
-                <Input value={sku} onChange={(e) => setSku(String(e.target.value))} disabled={skuMode === "auto"} placeholder="SKU base" />
+                <Input value={sku} onChange={(e) => setSku(String(e.target.value))} disabled={skuMode === "auto"} placeholder={t("products.createProduct.skuBasePlaceholder")} />
               </div>
               <div className="flex gap-2">
                 <Button
@@ -491,10 +493,10 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
                   disabled={!sku.trim()}
                   startIcon={<Copy size={16} />}
                 >
-                  Copy
+                  {t("products.createProduct.copy")}
                 </Button>
                 <Button onClick={generateSku} disabled={skuMode !== "auto"} startIcon={<Wand2 size={16} />}>
-                  Generate
+                  {t("products.createProduct.generate")}
                 </Button>
               </div>
             </div>
@@ -503,8 +505,8 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
       </div>
 
       {/* Variations Matrix */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Variations</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("products.createProduct.variationsTitleForm")}</h2>
 
         {/* <VariantMatrix
           colors={colors}
@@ -525,13 +527,13 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
       </div>
 
       {/* Media */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Media</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("products.createProduct.mediaTitle")}</h2>
 
         {/* Existing images (edit only) */}
         {mode === "edit" && existingImages.length ? (
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Existing Images</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.createProduct.existingImages")}</p>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {existingImages.map((img) => {
@@ -540,7 +542,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
                   <div
                     key={img.id}
                     className={cn(
-                      "overflow-hidden rounded-[8px] border bg-white dark:bg-gray-900",
+                      "overflow-hidden rounded-lg border bg-white dark:bg-gray-900",
                       marked ? "border-error-300 dark:border-error-900/40" : "border-gray-200 dark:border-gray-800",
                     )}
                   >
@@ -565,7 +567,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
                         )}
                         onClick={() => setDeleteImgModal({ open: true, imageId: img.id })}
                       >
-                        {marked ? "Marked for delete" : "Delete image"}
+                        {marked ? t("products.createProduct.markedForDelete") : t("products.createProduct.deleteImage")}
                       </button>
                     </div>
                   </div>
@@ -574,31 +576,31 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Deleted images will be sent as <span className="font-semibold">delete_image_ids</span> in update payload.
+              {t("products.createProduct.deleteImageHint")}
             </p>
           </div>
         ) : null}
 
         {/* New images upload */}
         <ImageMultiUploader
-          label="Upload Images"
+          label={t("products.createProduct.uploadImages")}
           images={newImages}
           onChange={setNewImages}
           max={10}
-          helperText="Upload new images (multi)."
+          helperText={t("products.createProduct.uploadImagesHint")}
         />
 
         <VideoUploader
-          label="Video URL"
+          label={t("products.createProduct.videoUrl")}
           value={videoUrl}
           onChange={setVideoUrl}
-          helperText="Paste YouTube URL (video_path)."
+          helperText={t("products.createProduct.videoUrlHint")}
         />
       </div>
 
       {/* Descriptions */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Descriptions</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("products.createProduct.descriptionsTitle")}</h2>
 
         {/* <RichTextEditor
           label="Short Description"
@@ -609,31 +611,31 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
         /> */}
 
         <RichTextEditor
-          label="Long Description"
+          label={t("products.createProduct.longDescLabel")}
           value={longDescription}
           onChange={setLongDescription}
-          placeholder="Long description"
+          placeholder={t("products.createProduct.longDescLabel")}
           heightClassName="min-h-[260px]"
         />
       </div>
 
       {/* SEO */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">SEO</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("products.createProduct.seoTitleForm")}</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Title</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.metaTitle")}</p>
             <Input value={seo.metaTitle} onChange={(e) => setSeo((p) => ({ ...p, metaTitle: String(e.target.value) }))} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Canonical URL</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.canonicalUrl")}</p>
             <Input value={seo.canonicalUrl} onChange={(e) => setSeo((p) => ({ ...p, canonicalUrl: String(e.target.value) }))} />
           </div>
 
           <div className="space-y-2 lg:col-span-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Description</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.metaDescription")}</p>
             <textarea
               className="min-h-[110px] w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
               value={seo.metaDescription}
@@ -642,17 +644,17 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
           </div>
 
           <div className="space-y-2 lg:col-span-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Meta Keywords</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.metaKeywords")}</p>
             <Input value={seo.metaKeywords} onChange={(e) => setSeo((p) => ({ ...p, metaKeywords: String(e.target.value) }))} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">OG Title</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.ogTitle")}</p>
             <Input value={seo.ogTitle} onChange={(e) => setSeo((p) => ({ ...p, ogTitle: String(e.target.value) }))} />
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Robots</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.robots")}</p>
             <Select
               options={ROBOTS_OPTIONS}
               placeholder="robots"
@@ -662,7 +664,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
           </div>
 
           <div className="space-y-2 lg:col-span-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">OG Description</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.createProduct.ogDescription")}</p>
             <textarea
               className="min-h-[90px] w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
               value={seo.ogDescription}
@@ -673,19 +675,19 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
       </div>
 
       {/* Flags */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Flags</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("products.createProduct.flagsLabel")}</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(
             [
-              { key: "status", label: "Status" },
-              { key: "featured", label: "Featured" },
-              { key: "freeDelivery", label: "Free Delivery" },
-              { key: "bestDeal", label: "Best Deal" },
+              { key: "status", label: t("products.createProduct.flagStatus") },
+              { key: "featured", label: t("products.createProduct.flagFeatured") },
+              { key: "freeDelivery", label: t("products.createProduct.flagFreeDelivery") },
+              { key: "bestDeal", label: t("products.createProduct.flagBestDeal") },
             ] as const
           ).map((item) => (
-            <div key={item.key} className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div key={item.key} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
                 <Switch
@@ -714,19 +716,19 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
           startIcon={mode === "create" ? <CheckCircle2 size={16} /> : <Pencil size={16} />}
         >
           {createMutation.isPending || updateMutation.isPending
-            ? "Saving..."
+            ? t("products.createProduct.savingBtn")
             : mode === "create"
-              ? "Create Product"
-              : "Update Product"}
+              ? t("products.createProduct.createProduct")
+              : t("products.createProduct.updateProduct")}
         </Button>
       </div>
 
       {/* Delete image confirm */}
       <ConfirmDeleteModal
         open={deleteImgModal.open}
-        title="Delete this image?"
-        description="This will mark the image for deletion on update."
-        confirmText="Mark Delete"
+        title={t("products.createProduct.deleteImageTitle")}
+        description={t("products.createProduct.deleteImageDesc")}
+        confirmText={t("products.createProduct.markDelete")}
         onClose={() => setDeleteImgModal({ open: false })}
         onConfirm={() => {
           const id = deleteImgModal.imageId;

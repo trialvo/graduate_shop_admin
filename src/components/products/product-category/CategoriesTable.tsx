@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import Button from "@/components/ui/button/Button";
 import { toPublicUrl } from "@/config/env";
 import type { CategoryEntity, MainCategory, SubCategory, ChildCategory } from "./types";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   tab: CategoryEntity;
@@ -41,8 +42,9 @@ function Badge({
 }
 
 function ImageThumb({ src, alt }: { src?: string | null; alt: string }) {
+  const { t } = useTranslation();
   const full = src ? toPublicUrl(src) : "";
-  if (!full) return <span className="text-xs text-gray-400">No image</span>;
+  if (!full) return <span className="text-xs text-gray-400">{t("products.categories.noImage")}</span>;
 
   return (
     <div className="flex items-center gap-2">
@@ -50,7 +52,7 @@ function ImageThumb({ src, alt }: { src?: string | null; alt: string }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={full} alt={alt} className="h-full w-full object-cover" />
       </div>
-      <span className="text-xs text-gray-500 dark:text-gray-400">Has image</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400">{t("products.categories.hasImage")}</span>
     </div>
   );
 }
@@ -74,15 +76,16 @@ function Actions({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex justify-end gap-2">
       <Button variant="outline" size="sm" onClick={onEdit}>
         <Pencil size={14} className="mr-1" />
-        Edit
+        {t("common.edit")}
       </Button>
       <Button variant="danger" size="sm" onClick={onDelete}>
         <Trash2 size={14} className="mr-1" />
-        Delete
+        {t("common.delete")}
       </Button>
     </div>
   );
@@ -97,6 +100,7 @@ function MainHierarchy({
   onEdit,
   onDelete,
 }: Pick<Props, "rows" | "loading" | "onEdit" | "onDelete">) {
+  const { t } = useTranslation();
   const mains = rows as MainCategory[];
   const [openMain, setOpenMain] = useState<Record<number, boolean>>({});
   const [openSub, setOpenSub] = useState<Record<number, boolean>>({});
@@ -104,10 +108,10 @@ function MainHierarchy({
   const cols = 8;
 
   return (
-    <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Main categories (hierarchy)</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.categories.mainHierarchy")}</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Expand to view sub + child categories loaded from <span className="font-medium">mainCategories</span> API.
           </p>
@@ -120,12 +124,12 @@ function MainHierarchy({
             <tr>
               <th className="p-3"> </th>
               <th className="p-3">ID</th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Image</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Featured</th>
-              <th className="p-3">Priority</th>
-              <th className="p-3 text-right">Actions</th>
+              <th className="p-3">{t("products.categories.name")}</th>
+              <th className="p-3">{t("products.categories.image")}</th>
+              <th className="p-3">{t("common.status")}</th>
+              <th className="p-3">{t("products.categories.featured")}</th>
+              <th className="p-3">{t("products.categories.priority")}</th>
+              <th className="p-3 text-right">{t("common.actions")}</th>
             </tr>
           </thead>
 
@@ -135,7 +139,7 @@ function MainHierarchy({
             {!loading && mains.length === 0 && (
               <tr>
                 <td colSpan={cols} className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  No categories found for current filters.
+                  {t("products.categories.noCategories")}
                 </td>
               </tr>
             )}
@@ -175,10 +179,10 @@ function MainHierarchy({
                       </td>
 
                       <td className="p-3">
-                        {m.status ? <Badge tone="green">Enabled</Badge> : <Badge tone="red">Disabled</Badge>}
+                        {m.status ? <Badge tone="green">{t("common.enabled")}</Badge> : <Badge tone="red">{t("common.disabled")}</Badge>}
                       </td>
 
-                      <td className="p-3">{m.featured ? <Badge tone="green">Yes</Badge> : <Badge tone="gray">No</Badge>}</td>
+                      <td className="p-3">{m.featured ? <Badge tone="green">{t("common.yes")}</Badge> : <Badge tone="gray">{t("common.no")}</Badge>}</td>
 
                       <td className="p-3">
                         <Badge tone="gray">{m.priority}</Badge>
@@ -198,28 +202,28 @@ function MainHierarchy({
                           <div className="p-4">
                             <div className="mb-3 flex items-center justify-between">
                               <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                Sub categories
+                                {t("products.categories.subCategories")}
                               </div>
                               <Badge tone="blue">{subList.length} total</Badge>
                             </div>
 
                             {subList.length === 0 ? (
-                              <div className="rounded-[4px] border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                                No sub categories for this main category.
+                              <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                                {t("products.categories.noCategories")}
                               </div>
                             ) : (
-                              <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                              <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <table className="w-full text-left text-sm">
                                   <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                     <tr>
                                       <th className="p-3"> </th>
                                       <th className="p-3">ID</th>
-                                      <th className="p-3">Name</th>
-                                      <th className="p-3">Image</th>
-                                      <th className="p-3">Status</th>
-                                      <th className="p-3">Featured</th>
-                                      <th className="p-3">Priority</th>
-                                      <th className="p-3 text-right">Actions</th>
+                                      <th className="p-3">{t("products.categories.name")}</th>
+                                      <th className="p-3">{t("products.categories.image")}</th>
+                                      <th className="p-3">{t("common.status")}</th>
+                                      <th className="p-3">{t("products.categories.featured")}</th>
+                                      <th className="p-3">{t("products.categories.priority")}</th>
+                                      <th className="p-3 text-right">{t("common.actions")}</th>
                                     </tr>
                                   </thead>
 
@@ -259,10 +263,10 @@ function MainHierarchy({
                                             </td>
 
                                             <td className="p-3">
-                                              {s.status ? <Badge tone="green">Enabled</Badge> : <Badge tone="red">Disabled</Badge>}
+                                              {s.status ? <Badge tone="green">{t("common.enabled")}</Badge> : <Badge tone="red">{t("common.disabled")}</Badge>}
                                             </td>
 
-                                            <td className="p-3">{s.featured ? <Badge tone="green">Yes</Badge> : <Badge tone="gray">No</Badge>}</td>
+                                            <td className="p-3">{s.featured ? <Badge tone="green">{t("common.yes")}</Badge> : <Badge tone="gray">{t("common.no")}</Badge>}</td>
 
                                             <td className="p-3">
                                               <Badge tone="gray">{s.priority}</Badge>
@@ -282,14 +286,14 @@ function MainHierarchy({
                                                 <div className="p-4">
                                                   <div className="mb-3 flex items-center justify-between">
                                                     <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                                      Child categories
+                                                      {t("products.categories.childCategories")}
                                                     </div>
                                                     <Badge tone="blue">{childList.length} total</Badge>
                                                   </div>
 
                                                   {childList.length === 0 ? (
                                                     <div className="rounded-[4px] border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                                                      No child categories for this sub category.
+                                                      {t("products.categories.noCategories")}
                                                     </div>
                                                   ) : (
                                                     <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -297,12 +301,12 @@ function MainHierarchy({
                                                         <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                                           <tr>
                                                             <th className="p-3">ID</th>
-                                                            <th className="p-3">Name</th>
-                                                            <th className="p-3">Image</th>
-                                                            <th className="p-3">Status</th>
-                                                            <th className="p-3">Featured</th>
-                                                            <th className="p-3">Priority</th>
-                                                            <th className="p-3 text-right">Actions</th>
+                                                            <th className="p-3">{t("products.categories.name")}</th>
+                                                            <th className="p-3">{t("products.categories.image")}</th>
+                                                            <th className="p-3">{t("common.status")}</th>
+                                                            <th className="p-3">{t("products.categories.featured")}</th>
+                                                            <th className="p-3">{t("products.categories.priority")}</th>
+                                                            <th className="p-3 text-right">{t("common.actions")}</th>
                                                           </tr>
                                                         </thead>
                                                         <tbody>
@@ -323,10 +327,10 @@ function MainHierarchy({
                                                                 <ImageThumb src={c.img_path} alt={c.name} />
                                                               </td>
                                                               <td className="p-3">
-                                                                {c.status ? <Badge tone="green">Enabled</Badge> : <Badge tone="red">Disabled</Badge>}
+                                                                {c.status ? <Badge tone="green">{t("common.enabled")}</Badge> : <Badge tone="red">{t("common.disabled")}</Badge>}
                                                               </td>
                                                               <td className="p-3">
-                                                                {c.featured ? <Badge tone="green">Yes</Badge> : <Badge tone="gray">No</Badge>}
+                                                                {c.featured ? <Badge tone="green">{t("common.yes")}</Badge> : <Badge tone="gray">{t("common.no")}</Badge>}
                                                               </td>
                                                               <td className="p-3">
                                                                 <Badge tone="gray">{c.priority}</Badge>
@@ -378,23 +382,24 @@ function SubHierarchy({
   onEdit,
   onDelete,
 }: Pick<Props, "rows" | "loading" | "isRefreshing" | "onEdit" | "onDelete">) {
+  const { t } = useTranslation();
   const subs = rows as SubCategory[];
   const [openSub, setOpenSub] = useState<Record<number, boolean>>({});
 
   const cols = 8;
 
   return (
-    <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Sub categories (nested)</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.categories.subNested")}</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Expand any sub category to view its child categories (from <span className="font-medium">subCategories</span> API).
           </p>
         </div>
 
         {isRefreshing ? (
-          <div className="text-xs font-medium text-brand-600 dark:text-brand-200">Refreshing…</div>
+          <div className="text-xs font-medium text-brand-600 dark:text-brand-200">{t("products.categories.refreshing")}</div>
         ) : null}
       </div>
 
@@ -404,13 +409,13 @@ function SubHierarchy({
             <tr>
               <th className="p-3"> </th>
               <th className="p-3">ID</th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Image</th>
-              <th className="p-3">Main ID</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Featured</th>
-              <th className="p-3">Priority</th>
-              <th className="p-3 text-right">Actions</th>
+              <th className="p-3">{t("products.categories.name")}</th>
+              <th className="p-3">{t("products.categories.image")}</th>
+              <th className="p-3">{t("products.categories.mainId")}</th>
+              <th className="p-3">{t("common.status")}</th>
+              <th className="p-3">{t("products.categories.featured")}</th>
+              <th className="p-3">{t("products.categories.priority")}</th>
+              <th className="p-3 text-right">{t("common.actions")}</th>
             </tr>
           </thead>
 
@@ -421,7 +426,7 @@ function SubHierarchy({
             {!loading && subs.length === 0 && (
               <tr>
                 <td colSpan={9} className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  No sub categories found for current filters.
+                  {t("products.categories.noCategories")}
                 </td>
               </tr>
             )}
@@ -465,11 +470,11 @@ function SubHierarchy({
                       </td>
 
                       <td className="p-3">
-                        {s.status ? <Badge tone="green">Enabled</Badge> : <Badge tone="red">Disabled</Badge>}
+                        {s.status ? <Badge tone="green">{t("common.enabled")}</Badge> : <Badge tone="red">{t("common.disabled")}</Badge>}
                       </td>
 
                       <td className="p-3">
-                        {s.featured ? <Badge tone="green">Yes</Badge> : <Badge tone="gray">No</Badge>}
+                        {s.featured ? <Badge tone="green">{t("common.yes")}</Badge> : <Badge tone="gray">{t("common.no")}</Badge>}
                       </td>
 
                       <td className="p-3">
@@ -490,28 +495,28 @@ function SubHierarchy({
                           <div className="p-4">
                             <div className="mb-3 flex items-center justify-between">
                               <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                Child categories
+                                {t("products.categories.childCategories")}
                               </div>
                               <Badge tone="blue">{childList.length} total</Badge>
                             </div>
 
                             {childList.length === 0 ? (
-                              <div className="rounded-[4px] border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                                No child categories for this sub category.
+                              <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                                {t("products.categories.noCategories")}
                               </div>
                             ) : (
-                              <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                              <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <table className="w-full text-left text-sm">
                                   <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                     <tr>
                                       <th className="p-3">ID</th>
-                                      <th className="p-3">Name</th>
-                                      <th className="p-3">Image</th>
-                                      <th className="p-3">Sub ID</th>
-                                      <th className="p-3">Status</th>
-                                      <th className="p-3">Featured</th>
-                                      <th className="p-3">Priority</th>
-                                      <th className="p-3 text-right">Actions</th>
+                                      <th className="p-3">{t("products.categories.name")}</th>
+                                      <th className="p-3">{t("products.categories.image")}</th>
+                                      <th className="p-3">{t("products.categories.subId")}</th>
+                                      <th className="p-3">{t("common.status")}</th>
+                                      <th className="p-3">{t("products.categories.featured")}</th>
+                                      <th className="p-3">{t("products.categories.priority")}</th>
+                                      <th className="p-3 text-right">{t("common.actions")}</th>
                                     </tr>
                                   </thead>
 
@@ -538,11 +543,11 @@ function SubHierarchy({
                                         </td>
 
                                         <td className="p-3">
-                                          {c.status ? <Badge tone="green">Enabled</Badge> : <Badge tone="red">Disabled</Badge>}
+                                          {c.status ? <Badge tone="green">{t("common.enabled")}</Badge> : <Badge tone="red">{t("common.disabled")}</Badge>}
                                         </td>
 
                                         <td className="p-3">
-                                          {c.featured ? <Badge tone="green">Yes</Badge> : <Badge tone="gray">No</Badge>}
+                                          {c.featured ? <Badge tone="green">{t("common.yes")}</Badge> : <Badge tone="gray">{t("common.no")}</Badge>}
                                         </td>
 
                                         <td className="p-3">
@@ -579,11 +584,12 @@ function SubHierarchy({
  *  DEFAULT flat tables (Child tab uses flat list)
  *  ========================= */
 export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEdit, onDelete }: Props) {
+  const { t } = useTranslation();
   const headerTitle = useMemo(() => {
-    if (tab === "main") return "Main categories";
-    if (tab === "sub") return "Sub categories";
-    return "Child categories";
-  }, [tab]);
+    if (tab === "main") return t("products.categories.mainCategory");
+    if (tab === "sub") return t("products.categories.subCategory");
+    return t("products.categories.childFlat");
+  }, [tab, t]);
 
   // MAIN
   if (tab === "main") {
@@ -607,7 +613,7 @@ export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEd
   const cols = 8;
 
   return (
-    <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{headerTitle}</h2>
@@ -617,7 +623,7 @@ export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEd
         </div>
 
         {isRefreshing ? (
-          <div className="text-xs font-medium text-brand-600 dark:text-brand-200">Refreshing…</div>
+          <div className="text-xs font-medium text-brand-600 dark:text-brand-200">{t("products.categories.refreshing")}</div>
         ) : null}
       </div>
 
@@ -626,13 +632,13 @@ export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEd
           <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
             <tr>
               <th className="p-3">ID</th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Image</th>
-              <th className="p-3">Sub ID</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Featured</th>
-              <th className="p-3">Priority</th>
-              <th className="p-3 text-right">Actions</th>
+              <th className="p-3">{t("products.categories.name")}</th>
+              <th className="p-3">{t("products.categories.image")}</th>
+              <th className="p-3">{t("products.categories.subId")}</th>
+              <th className="p-3">{t("common.status")}</th>
+              <th className="p-3">{t("products.categories.featured")}</th>
+              <th className="p-3">{t("products.categories.priority")}</th>
+              <th className="p-3 text-right">{t("common.actions")}</th>
             </tr>
           </thead>
 
@@ -643,7 +649,7 @@ export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEd
             {!loading && rows.length === 0 && (
               <tr>
                 <td colSpan={cols} className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  No categories found for current filters.
+                  {t("products.categories.noCategories")}
                 </td>
               </tr>
             )}
@@ -671,11 +677,11 @@ export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEd
                   </td>
 
                   <td className="p-3">
-                    {r.status ? <Badge tone="green">Enabled</Badge> : <Badge tone="red">Disabled</Badge>}
+                    {r.status ? <Badge tone="green">{t("common.enabled")}</Badge> : <Badge tone="red">{t("common.disabled")}</Badge>}
                   </td>
 
                   <td className="p-3">
-                    {r.featured ? <Badge tone="green">Yes</Badge> : <Badge tone="gray">No</Badge>}
+                    {r.featured ? <Badge tone="green">{t("common.yes")}</Badge> : <Badge tone="gray">{t("common.no")}</Badge>}
                   </td>
 
                   <td className="p-3">

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/config/env";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   label: string;
@@ -25,6 +26,7 @@ export default function ImagePickerSquare({
   existingUrl,
   onChange,
 }: Props) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [blobUrl, setBlobUrl] = useState<string>("");
 
@@ -58,7 +60,7 @@ export default function ImagePickerSquare({
       <div className="flex justify-center md:justify-end">
         <div
           className={cn(
-            "relative h-32 w-32 overflow-hidden rounded-[4px] border-2 border-dashed",
+            "relative h-32 w-32 overflow-hidden rounded-lg border-2 border-dashed",
             "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900",
           )}
           role="button"
@@ -93,7 +95,7 @@ export default function ImagePickerSquare({
                   />
                 </svg>
               </div>
-              <p className="text-xs font-medium">Upload Image</p>
+              <p className="text-xs font-medium">{t("products.categories.uploadImage")}</p>
             </div>
           )}
 
@@ -132,7 +134,7 @@ export default function ImagePickerSquare({
           className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           onClick={() => onChange(null)}
         >
-          Remove selected
+          {t("products.categories.removeSelected")}
         </button>
       </div>
     </div>

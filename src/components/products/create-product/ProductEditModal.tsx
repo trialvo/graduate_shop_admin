@@ -5,6 +5,7 @@ import React from "react";
 import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 import ProductForm from "./ProductForm";
 import { getProduct, type ProductEntity, type ProductSingleResponseEntity } from "@/api/products.api";
@@ -49,6 +50,7 @@ const toProductEntity = (product: ProductSingleResponseEntity): ProductEntity =>
 };
 
 export default function ProductEditModal({ open, productId, onClose, onUpdated }: Props) {
+  const { t } = useTranslation();
   const enabled = open && Boolean(productId);
 
   const { data, isLoading } = useQuery({
@@ -63,12 +65,12 @@ export default function ProductEditModal({ open, productId, onClose, onUpdated }
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[1100px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="w-full max-w-[1100px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
-            <p className="text-base font-semibold text-gray-900 dark:text-white">Edit Product</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-white">{t("products.categories.editProductTitle")}</p>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Update product fields, upload images, and remove existing images.
+              {t("products.categories.editProductDesc")}
             </p>
           </div>
 

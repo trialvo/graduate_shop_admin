@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import {
   createChildCategory,
   createMainCategory,
@@ -37,20 +38,21 @@ import CreateEditCategoryModal, { type EditModalState } from "./CreateEditCatego
 import CategoryFiltersBar from "./CategoryFiltersBar";
 import CategoriesTable from "./CategoriesTable";
 
-const TABS: { id: CategoryEntity; label: string; hint: string }[] = [
-  { id: "main", label: "Main Categories", hint: "Top-level categories (includes sub & child hierarchy)" },
-  { id: "sub", label: "Sub Categories", hint: "Second-level categories under a main category" },
-  { id: "child", label: "Child Categories", hint: "Third-level categories under a sub category" },
+const TABS: { id: CategoryEntity; labelKey: string; hintKey: string }[] = [
+  { id: "main", labelKey: "products.categories.mainCategories", hintKey: "products.categories.mainHint" },
+  { id: "sub", labelKey: "products.categories.subCategories", hintKey: "products.categories.subHint" },
+  { id: "child", labelKey: "products.categories.childCategories", hintKey: "products.categories.childHint" },
 ];
 
 function getApiErrorFromResponse(res: any) {
   if (typeof res?.error === "string" && res.error.trim()) return res.error.trim();
   if (typeof res?.message === "string" && res.message.trim()) return res.message.trim();
-  if (Number.isFinite(Number(res?.flag)) && Number(res.flag) >= 400) return "Something went wrong";
+  if (Number.isFinite(Number(res?.flag)) && Number(res.flag) >= 400) return "products.categories.somethingWentWrong";
   return null;
 }
 
 export default function ProductCategoryPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [tab, setTab] = useState<CategoryEntity>("main");
@@ -122,7 +124,7 @@ export default function ProductCategoryPage() {
     setEditState({ open: true, entity, mode: "edit", id });
 
   const onDelete = (entity: CategoryEntity, id: number) => {
-    const ok = window.confirm("Are you sure you want to delete this category?");
+    const ok = window.confirm(t("products.categories.confirmDelete"));
     if (!ok) return;
 
     if (entity === "main") delMain.mutate(id);
@@ -166,11 +168,11 @@ export default function ProductCategoryPage() {
         return;
       }
 
-      toast.success(mode === "create" ? "Category created" : "Category updated");
+      toast.success(mode === "create" ? t("products.categories.categoryCreated") : t("products.categories.categoryUpdated"));
       await invalidateAll();
       setEditState((s) => ({ ...s, open: false }));
     } catch (e: any) {
-      toast.error(e?.message || "Failed");
+      toast.error(e?.message || t("common.error"));
       throw e;
     }
   };
@@ -183,35 +185,35 @@ export default function ProductCategoryPage() {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="mb-4 rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Product Categories</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t("products.categories.title")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Create and manage main, sub, and child categories (TanStack caching + instant edits).
+            {t("products.categories.description")}
           </p>
         </div>
 
         {/* Tabs + create */}
         <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex w-full flex-wrap gap-2">
-            {TABS.map((t) => {
-              const active = tab === t.id;
+            {TABS.map((tabItem) => {
+              const active = tab === tabItem.id;
               return (
                 <button
-                  key={t.id}
+                  key={tabItem.id}
                   type="button"
                   onClick={() => {
-                    setTab(t.id);
+                    setTab(tabItem.id);
                     setOffset(0);
                   }}
                   className={cn(
-                    "inline-flex items-center rounded-[4px] border px-3 py-2 text-sm font-semibold transition",
+                    "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-semibold transition",
                     active
                       ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-200"
                       : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]",
                   )}
                 >
-                  {t.label}
+                  {t(tabItem.labelKey)}
                 </button>
               );
             })}
@@ -219,11 +221,11 @@ export default function ProductCategoryPage() {
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <div className="text-xs text-gray-500 dark:text-gray-400 md:mr-2">
-              {TABS.find((x) => x.id === tab)?.hint}
+              {t(TABS.find((x) => x.id === tab)?.hintKey ?? "")}
             </div>
 
             <Button variant="primary" onClick={openCreate}>
-              + Create {tab === "main" ? "Main" : tab === "sub" ? "Sub" : "Child"} Category
+              {tab === "main" ? t("products.categories.createMain") : tab === "sub" ? t("products.categories.createSub") : t("products.categories.createChild")}
             </Button>
           </div>
         </div>
