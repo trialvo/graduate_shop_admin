@@ -67,7 +67,7 @@ const ProductReportsDashboard: React.FC<Props> = ({ period }) => {
   return (
     <div className="mt-6 space-y-6">
       {isError && (
-        <div className="rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+        <div className="rounded-xl border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
           {t("reports.common.failedLoad")}
         </div>
       )}

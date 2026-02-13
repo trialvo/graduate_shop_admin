@@ -39,7 +39,7 @@ const DeliveryFlowCard: React.FC<Props> = ({ items, isLoading }) => {
   return (
     <div
       className={cn(
-        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "h-full rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -51,7 +51,7 @@ const DeliveryFlowCard: React.FC<Props> = ({ items, isLoading }) => {
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {Array.from({ length: 12 }).map((_, idx) => (
             <div key={`sk-${idx}`} className="flex flex-col items-center text-center gap-2">
-              <div className="h-14 w-14 animate-pulse rounded-[4px] bg-gray-200 dark:bg-gray-800" />
+              <div className="h-14 w-14 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
               <div className="h-3 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
             </div>
           ))}
@@ -83,7 +83,7 @@ function FlowTile({ item }: { item: DeliveryFlowItem }) {
     <div className="flex flex-col items-center text-center gap-2">
       <div
         className={cn(
-          "relative h-14 w-14 rounded-[4px] border flex items-center justify-center",
+          "relative h-14 w-14 rounded-xl border flex items-center justify-center",
           "bg-gray-50 dark:bg-gray-950 border-gray-200 dark:border-gray-800",
           "shadow-theme-xs"
         )}

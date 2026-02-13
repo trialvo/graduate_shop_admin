@@ -101,9 +101,9 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Left: URL input */}
-        <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center gap-2 text-gray-900 dark:text-white">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-[4px] bg-brand-500/10 text-brand-600 dark:text-brand-400">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
               <Video size={18} />
             </span>
             <div className="leading-tight">
@@ -132,7 +132,7 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
         </div>
 
         {/* Right: Preview */}
-        <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Preview</p>
 
@@ -140,7 +140,7 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
               <button
                 type="button"
                 className={cn(
-                  "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border",
+                  "inline-flex h-9 w-9 items-center justify-center rounded-xl border",
                   "border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50",
                   "dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10",
                 )}
@@ -153,7 +153,7 @@ export default function VideoUploader({ label, value, onChange, helperText }: Pr
             ) : null}
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-[4px] border border-gray-200 dark:border-gray-800">
+          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
             {preview.kind === "none" ? (
               <div className="flex h-64 items-center justify-center bg-gray-50 text-sm text-gray-500 dark:bg-gray-950 dark:text-gray-400">
                 Paste a URL to preview

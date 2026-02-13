@@ -104,7 +104,7 @@ const Input: FC<InputProps> = ({
           disabled={disabled}
           className={cn(
             // ✅ radius max 4px
-            "h-10 w-full rounded-[4px] border px-3 text-sm",
+            "h-10 w-full rounded-xl border px-3 text-sm",
             // ✅ no focus ring / no box shadow; focus is border-only
             "outline-none focus-visible:outline-none",
             "transition-colors duration-150",

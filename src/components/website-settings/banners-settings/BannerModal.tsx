@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Crop as CropIcon, Image as ImageIcon, Link2, UploadCloud, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
@@ -50,6 +51,7 @@ function getApiErrorMessage(err: unknown): string {
   return "Something went wrong!";
 }
 
+
 const typeOptions: Option[] = TYPES.map((t) => ({ value: t, label: t }));
 
 type LinkMode = "manual" | "product" | "category";
@@ -81,6 +83,7 @@ function pickList<T>(payload: any, key: string): T[] {
 }
 
 export default function BannerModal({ open, mode, initial, onClose }: Props) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -132,9 +135,9 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
 
   const linkModeOptions: Option[] = useMemo(
     () => [
-      { value: "manual", label: "Manual" },
-      { value: "product", label: "Product" },
-      { value: "category", label: "Category" },
+      { value: "manual", label: t("bannerModal.linkModeManual") },
+      { value: "product", label: t("bannerModal.linkModeProduct") },
+      { value: "category", label: t("bannerModal.linkModeCategory") },
     ],
     []
   );
@@ -276,7 +279,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   // ✅ when user picks a file -> open crop modal immediately
   const openCropForFile = (f: File) => {
     if (!isImageFile(f)) {
-      toast.error("Please select an image file");
+      toast.error(t("bannerModal.selectImageFile"));
       return;
     }
     const src = URL.createObjectURL(f);
@@ -315,7 +318,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   // Optional: allow re-crop current local file
   const reCropCurrent = () => {
     if (!imageFile) {
-      toast.error("No local image to crop. Upload a new image first.");
+      toast.error(t("bannerModal.noCropImage"));
       return;
     }
     openCropForFile(imageFile);
@@ -353,12 +356,12 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
     },
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success("Banner created");
+        toast.success(t("bannerModal.bannerCreated"));
         qc.invalidateQueries({ queryKey: ["banners"] });
         onClose();
         return;
       }
-      toast.error(res?.message || res?.error || "Failed to create banner");
+      toast.error(res?.message || res?.error || t("bannerModal.createFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -408,13 +411,13 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
     },
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success("Banner updated");
+        toast.success(t("bannerModal.bannerUpdated"));
         qc.invalidateQueries({ queryKey: ["banners"] });
         qc.invalidateQueries({ queryKey: ["banner", editingId] });
         onClose();
         return;
       }
-      toast.error(res?.message || res?.error || "Update failed");
+      toast.error(res?.message || res?.error || t("bannerModal.updateFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -465,13 +468,13 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   const selectProduct = (p: ProductEntity) => {
     const next = buildProductPath({ id: p.id, slug: p.slug });
     setPath(next);
-    toast.success("Product path set");
+    toast.success(t("bannerModal.productPathSet"));
   };
 
   const selectChildCategory = (c: { id: number; name: string }) => {
     const next = buildCategoryPath({ id: c.id, name: c.name });
     setPath(next);
-    toast.success("Category path set");
+    toast.success(t("bannerModal.categoryPathSet"));
   };
 
   if (!open) return null;
@@ -483,18 +486,18 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
           type="button"
           className="absolute inset-0 bg-black/60"
           onClick={() => !pending && onClose()}
-          aria-label="Close overlay"
+          aria-label={t("bannerModal.closeOverlay")}
         />
 
-        <div className="relative w-[96vw] max-w-6xl overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+        <div className="relative w-[96vw] max-w-6xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
           {/* Header */}
           <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-4 py-4 dark:border-gray-800 sm:px-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {mode === "create" ? "Add New Banner" : "Edit Banner"}
+                {mode === "create" ? t("bannerModal.titleCreate") : t("bannerModal.titleEdit")}
               </h3>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Upload করলে auto crop আসবে (Fixed ratio 3:1)
+                {t("bannerModal.subtitle")}
               </p>
             </div>
 
@@ -512,24 +515,24 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               {/* Left */}
               <div className="space-y-6 lg:col-span-2">
-                <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Banner Information</h4>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t("bannerModal.bannerInfo")}</h4>
 
                   <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                     <div className="space-y-2 md:col-span-2">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Title <span className="text-error-500">*</span>
+                        {t("bannerModal.titleLabel")} <span className="text-error-500">*</span>
                       </p>
-                      <Input placeholder="New banner" value={title} onChange={(e) => setTitle(e.target.value)} />
+                      <Input placeholder={t("bannerModal.titlePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
 
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Zone <span className="text-error-500">*</span>
+                        {t("bannerModal.zoneLabel")} <span className="text-error-500">*</span>
                       </p>
                       <Select
                         options={zoneOptions}
-                        placeholder="Select zone"
+                        placeholder={t("bannerModal.zonePlaceholder")}
                         defaultValue={zone}
                         onChange={(v) => setZone(String(v))}
                       />
@@ -537,11 +540,11 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
 
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Type <span className="text-error-500">*</span>
+                        {t("bannerModal.typeLabel")} <span className="text-error-500">*</span>
                       </p>
                       <Select
                         options={typeOptions}
-                        placeholder="Select type"
+                        placeholder={t("bannerModal.typePlaceholder")}
                         defaultValue={type}
                         onChange={(v) => setType(String(v))}
                       />
@@ -550,12 +553,12 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                     {/* ✅ Dynamic Path Builder */}
                     <div className="space-y-2 md:col-span-2">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Path (optional)</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("bannerModal.pathLabel")}</p>
 
                         <div className="w-full sm:w-[240px]">
                           <Select
                             options={linkModeOptions}
-                            placeholder="Path source"
+                            placeholder={t("bannerModal.pathSourcePlaceholder")}
                             defaultValue={linkMode}
                             onChange={(v) => onChangeLinkMode(String(v) as LinkMode)}
                           />
@@ -565,26 +568,26 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                       {linkMode === "manual" ? (
                         <>
                           <Input
-                            placeholder="/campaign/winter-sale or https://..."
+                            placeholder={t("bannerModal.manualPathPlaceholder")}
                             value={path}
                             onChange={(e) => setPath(e.target.value)}
                           />
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Empty রাখলে backend এ <b>null</b> হবে।
+                            {t("bannerModal.manualPathHint")}
                           </p>
                         </>
                       ) : (
                         <>
-                          <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
+                          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                               <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                                 <Link2 size={16} />
-                                {linkMode === "product" ? "Select Product" : "Select Category"}
+                                {linkMode === "product" ? t("bannerModal.selectProduct") : t("bannerModal.selectCategory")}
                               </div>
 
                               <div className="w-full sm:w-[320px]">
                                 <Input
-                                  placeholder={linkMode === "product" ? "Search product..." : "Search category..."}
+                                  placeholder={linkMode === "product" ? t("bannerModal.searchProduct") : t("bannerModal.searchCategory")}
                                   value={linkMode === "product" ? productSearch : categorySearch}
                                   onChange={(e) => {
                                     const v = e.target.value;
@@ -597,7 +600,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
 
                             {/* Selected path preview */}
                             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="text-xs text-gray-600 dark:text-gray-300">Selected path</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-300">{t("bannerModal.selectedPath")}</div>
                               <div className="w-full sm:max-w-[520px]">
                                 <div className="truncate rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
                                   {path?.trim() ? path.trim() : "—"}
@@ -606,14 +609,14 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                             </div>
 
                             {/* List */}
-                            <div className="mt-3 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                            <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                               <div className="border-b border-gray-200 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
                                 {linkMode === "product" ? (
-                                  productsQuery.isFetching ? "Loading products..." : `${productList.length} products`
+                                  productsQuery.isFetching ? t("bannerModal.loadingProducts") : t("bannerModal.productsCount", { count: productList.length })
                                 ) : childCatsQuery.isFetching ? (
-                                  "Loading categories..."
+                                  t("bannerModal.loadingCategories")
                                 ) : (
-                                  `${childCategoryList.length} categories`
+                                  t("bannerModal.categoriesCount", { count: childCategoryList.length })
                                 )}
                               </div>
 
@@ -649,13 +652,13 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                                           </div>
 
                                           <div className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                            Set
+                                            {t("bannerModal.set")}
                                           </div>
                                         </div>
                                       </button>
                                     ))
                                   ) : (
-                                    <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No products found.</div>
+                                    <div className="p-4 text-sm text-gray-500 dark:text-gray-400">{t("bannerModal.noProducts")}</div>
                                   )
                                 ) : childCatsQuery.isLoading ? (
                                   <div className="p-3">
@@ -688,19 +691,19 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                                         </div>
 
                                         <div className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                          Set
+                                          {t("bannerModal.set")}
                                         </div>
                                       </div>
                                     </button>
                                   ))
                                 ) : (
-                                  <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No categories found.</div>
+                                  <div className="p-4 text-sm text-gray-500 dark:text-gray-400">{t("bannerModal.noCategories")}</div>
                                 )}
                               </div>
                             </div>
 
                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                              Select করলে auto path set হবে।
+                              {t("bannerModal.autoPathHint")}
                             </p>
                           </div>
                         </>
@@ -709,21 +712,21 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                   </div>
 
                   <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Featured</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Highlight this banner</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("bannerModal.featured")}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{t("bannerModal.featuredHint")}</p>
                         </div>
                         <Switch label="" defaultChecked={featured} onChange={(c) => setFeatured(c)} />
                       </div>
                     </div>
 
-                    <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Status</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{status ? "Active" : "Inactive"}</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("bannerModal.statusLabel")}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{status ? t("bannerModal.statusActive") : t("bannerModal.statusInactive")}</p>
                         </div>
                         <Switch label="" defaultChecked={status} onChange={(c) => setStatus(c)} />
                       </div>
@@ -731,26 +734,26 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                   </div>
 
                   {mode === "edit" && bannerQuery.isFetching ? (
-                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">Loading banner...</p>
+                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t("bannerModal.loadingBanner")}</p>
                   ) : null}
                 </div>
               </div>
 
               {/* Right Upload */}
               <div className="space-y-6">
-                <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Banner Image</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Upload করলে auto crop popup আসবে (3:1)</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("bannerModal.bannerImage")}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t("bannerModal.imageSubtitle")}</p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" onClick={pickImage} disabled={pending}>
-                        Upload
+                        {t("bannerModal.upload")}
                       </Button>
                       <Button variant="outline" onClick={resetImage} disabled={pending}>
-                        Reset
+                        {t("bannerModal.reset")}
                       </Button>
                       <Button
                         variant="outline"
@@ -758,14 +761,14 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                         disabled={pending || !imageFile}
                         startIcon={<CropIcon size={16} />}
                       >
-                        Crop
+                        {t("bannerModal.crop")}
                       </Button>
                     </div>
                   </div>
 
                   <div
                     className={cn(
-                      "mt-4 overflow-hidden rounded-[4px] border transition",
+                      "mt-4 overflow-hidden rounded-xl border transition",
                       dragOver ? "border-brand-500" : "border-gray-200 dark:border-gray-800"
                     )}
                     onDragEnter={(e) => {
@@ -806,14 +809,14 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                             onClick={pickImage}
                             disabled={pending}
                           >
-                            <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-300 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-300 bg-white shadow-theme-xs dark:border-gray-700 dark:bg-gray-900">
                               <UploadCloud size={20} />
                             </div>
                             <div className="text-center">
                               <p className="text-sm font-semibold">
-                                {mode === "create" ? "Upload Banner (required)" : "Upload New Image (optional)"}
+                                {mode === "create" ? t("bannerModal.uploadRequired") : t("bannerModal.uploadOptional")}
                               </p>
-                              <p className="mt-1 text-xs">Drag & drop or click to select</p>
+                              <p className="mt-1 text-xs">{t("bannerModal.dragDrop")}</p>
                             </div>
                           </button>
                         )}
@@ -824,7 +827,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                         <span className="inline-flex h-7 items-center gap-2 rounded-lg border border-gray-200 bg-white px-2 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                           <ImageIcon size={14} />
-                          {imageFileName ?? (imageUrl ? "Current image" : "No file selected")}
+                          {imageFileName ?? (imageUrl ? t("bannerModal.currentImage") : t("bannerModal.noFileSelected"))}
                         </span>
 
                         {imgMeta ? (
@@ -846,7 +849,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                             </span>
                           </div>
                         ) : (
-                          <span className="text-gray-500 dark:text-gray-400">Crop ratio 3:1 enforced</span>
+                          <span className="text-gray-500 dark:text-gray-400">{t("bannerModal.cropRatioEnforced")}</span>
                         )}
                       </div>
                     </div>
@@ -861,12 +864,12 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
                   />
                 </div>
 
-                <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Best practice</h4>
+                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t("bannerModal.bestPractice")}</h4>
                   <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400">
-                    <li>• Crop করে 3:1 perfect fit নাও</li>
-                    <li>• Text edges থেকে দূরে রাখো</li>
-                    <li>• High quality image use করো</li>
+                    <li>• {t("bannerModal.tipCrop")}</li>
+                    <li>• {t("bannerModal.tipText")}</li>
+                    <li>• {t("bannerModal.tipQuality")}</li>
                   </ul>
                 </div>
               </div>
@@ -876,10 +879,10 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
           {/* Footer */}
           <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-4 py-4 dark:border-gray-800 sm:flex-row sm:justify-end sm:px-6">
             <Button variant="outline" onClick={() => !pending && onClose()} disabled={pending}>
-              Cancel
+              {t("bannerModal.cancel")}
             </Button>
             <Button onClick={submit} disabled={!canSave || pending}>
-              {pending ? "Saving..." : mode === "create" ? "Submit" : "Update"}
+              {pending ? t("bannerModal.saving") : mode === "create" ? t("bannerModal.submit") : t("bannerModal.update")}
             </Button>
           </div>
         </div>

@@ -16,7 +16,7 @@ const InventoryValuationCard: React.FC<Props> = ({ totalBuyingValue, totalSellin
   return (
     <div
       className={cn(
-        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "h-full rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -31,14 +31,14 @@ const InventoryValuationCard: React.FC<Props> = ({ totalBuyingValue, totalSellin
         </div>
       ) : (
         <div className="mt-6 space-y-4">
-          <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t("reports.productReport.totalBuyingValue")}</div>
             <div className="mt-1 text-lg font-extrabold text-gray-900 dark:text-white">
               {formatBdt(totalBuyingValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
 
-          <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t("reports.productReport.totalSellingValue")}</div>
             <div className="mt-1 text-lg font-extrabold text-gray-900 dark:text-white">
               {formatBdt(totalSellingValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

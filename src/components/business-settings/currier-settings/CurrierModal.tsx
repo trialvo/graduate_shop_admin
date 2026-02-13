@@ -227,7 +227,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
 
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
-          <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="h-11 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {status ? "Active" : "Inactive"}
             </p>
@@ -266,7 +266,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Set Default Provider
           </p>
-          <div className="h-11 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="h-11 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {setDefault ? "Yes" : "No"}
             </p>
@@ -279,7 +279,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
       </div>
 
       {/* Credentials */}
-      <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -296,7 +296,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
         </div>
 
         {!canSave ? (
-          <div className="mt-3 rounded-[4px] border border-warning-200 bg-warning-50 px-4 py-3 text-xs font-semibold text-warning-700 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300">
+          <div className="mt-3 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 text-xs font-semibold text-warning-700 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300">
             Please fill all required fields (since you started entering credentials).
           </div>
         ) : null}
@@ -322,7 +322,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
       </div>
 
       {/* Image */}
-      <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -335,7 +335,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
         </div>
 
         <div className="mt-4 flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
             {imagePreview ? (
               <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
             ) : (
@@ -344,7 +344,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
               Upload
               <input
                 type="file"
@@ -380,7 +380,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
       </div>
 
       {/* Danger zone */}
-      <div className="mt-6 rounded-[4px] border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
+      <div className="mt-6 rounded-xl border border-error-200 bg-error-50 p-4 dark:border-error-900/40 dark:bg-error-500/10">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 text-error-600 dark:text-error-300">
             <AlertTriangle size={18} />
@@ -393,7 +393,7 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
               If enabled, it wipes this provider config from database.
             </p>
 
-            <div className="mt-3 flex items-center justify-between rounded-[4px] border border-error-200 bg-white px-4 py-3 dark:border-error-900/40 dark:bg-gray-900">
+            <div className="mt-3 flex items-center justify-between rounded-xl border border-error-200 bg-white px-4 py-3 dark:border-error-900/40 dark:bg-gray-900">
               <p className="text-sm font-semibold text-error-700 dark:text-error-200">
                 {armWipe ? "Armed: setnull=true" : "Not armed"}
               </p>

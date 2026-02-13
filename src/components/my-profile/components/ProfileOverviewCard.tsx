@@ -31,7 +31,7 @@ export default function ProfileOverviewCard({
     user.status === "active" ? "bg-success-600 text-white" : "bg-gray-600 text-white";
 
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="flex flex-col items-center text-center">
         <div className="relative">
           <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">

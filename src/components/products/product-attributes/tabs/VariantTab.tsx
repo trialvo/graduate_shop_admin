@@ -307,7 +307,7 @@ export default function VariantTab({
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+          <div className="mt-4 rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
             {error}
           </div>
         ) : null}
@@ -337,7 +337,7 @@ export default function VariantTab({
                     key={c.id}
                     onClick={() => toggleColor(c.id)}
                     className={[
-                      "flex items-center gap-2 rounded-[4px] border px-3 py-2 text-left text-sm font-semibold transition",
+                      "flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
                       active
                         ? "border-brand-500 bg-brand-500/10 text-gray-900 dark:text-white"
                         : "border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03] text-gray-700 dark:text-gray-300",
@@ -373,7 +373,7 @@ export default function VariantTab({
                   <div
                     key={a.id}
                     className={[
-                      "rounded-[4px] border p-4",
+                      "rounded-xl border p-4",
                       missing
                         ? "border-error-200 bg-error-50 dark:border-error-900/40 dark:bg-error-500/10"
                         : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",

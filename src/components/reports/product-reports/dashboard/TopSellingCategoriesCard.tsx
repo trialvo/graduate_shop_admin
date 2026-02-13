@@ -26,7 +26,7 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
   return (
     <div
       className={cn(
-        "rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -37,7 +37,7 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
           <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400" />
         </div>
 
-        <div className="inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
+        <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
           <TabButton active={tab === "main"} onClick={() => setTab("main")}>{t("reports.productReport.main")}</TabButton>
           <TabButton active={tab === "sub"} onClick={() => setTab("sub")}>{t("reports.productReport.sub")}</TabButton>
           <TabButton active={tab === "child"} onClick={() => setTab("child")}>{t("reports.productReport.child")}</TabButton>
@@ -62,13 +62,13 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
               <div
                 key={c.id}
                 className={cn(
-                  "rounded-[4px] border border-gray-200 dark:border-gray-800",
+                  "rounded-xl border border-gray-200 dark:border-gray-800",
                   "bg-white dark:bg-gray-950",
                   "p-4"
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="h-12 w-12 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
                     {img ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={img} alt={c.name} className="h-full w-full object-cover" />
@@ -105,7 +105,7 @@ const TopSellingCategoriesCard: React.FC<Props> = ({ isLoading, main, sub, child
           })}
 
           {list.length === 0 && (
-            <div className="col-span-full rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+            <div className="col-span-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
               {t("reports.common.noData")}
             </div>
           )}

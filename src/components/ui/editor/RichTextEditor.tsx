@@ -386,7 +386,7 @@ export default function RichTextEditor({
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
         </p>
-        <div className="h-12 w-full animate-pulse rounded-[4px] bg-gray-100 dark:bg-gray-800" />
+        <div className="h-12 w-full animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800" />
       </div>
     );
   }
@@ -399,7 +399,7 @@ export default function RichTextEditor({
 
       <div
         className={cn(
-          "overflow-hidden rounded-[4px] border bg-white dark:bg-gray-900",
+          "overflow-hidden rounded-xl border bg-white dark:bg-gray-900",
           isFocused
             ? "border-primary-400 ring-2 ring-primary-400/15 dark:border-primary-500/60 dark:ring-primary-500/15"
             : "border-gray-200 dark:border-gray-800",

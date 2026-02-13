@@ -236,7 +236,7 @@ export default function VisitorReportPage() {
     <div className="w-full px-4 py-6 md:px-8">
       <div
         className={cn(
-          "rounded-[4px] border border-gray-200 dark:border-gray-800",
+          "rounded-xl border border-gray-200 dark:border-gray-800",
           "bg-white dark:bg-gray-900",
           "p-4 sm:p-6",
         )}
@@ -260,7 +260,7 @@ export default function VisitorReportPage() {
               value={period}
               onChange={(e) => setPeriod(e.target.value as TimePeriodKey)}
               className={cn(
-                "h-11 w-full rounded-[4px] border border-gray-200 dark:border-gray-800",
+                "h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800",
                 "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
                 "outline-none focus:ring-2 focus:ring-brand-500/30 px-3",
               )}
@@ -300,7 +300,7 @@ export default function VisitorReportPage() {
         {(reportQuery.isError ||
           trendQuery.isError ||
           topViewedQuery.isError) && (
-            <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+            <div className="mt-4 rounded-xl border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
               {String(
                 (reportQuery.error as any)?.message ||
                 (trendQuery.error as any)?.message ||

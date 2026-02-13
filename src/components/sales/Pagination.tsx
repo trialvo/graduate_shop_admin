@@ -1,5 +1,6 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/button/Button";
 
@@ -39,6 +40,7 @@ function buildPages(page: number, totalPages: number) {
 }
 
 const Pagination: React.FC<Props> = ({ page, pageSize, total, onPageChange, className }) => {
+  const { t } = useTranslation();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = clamp(page, 1, totalPages);
   const items = buildPages(safePage, totalPages);
@@ -48,9 +50,9 @@ const Pagination: React.FC<Props> = ({ page, pageSize, total, onPageChange, clas
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.02]", className)}>
       <p className="text-[11px] text-gray-500 dark:text-gray-400">
-        Page <span className="font-semibold text-gray-800 dark:text-white">{safePage}</span> of{" "}
+        {t("sales.page")} <span className="font-semibold text-gray-800 dark:text-white">{safePage}</span> {t("sales.of")}{" "}
         <span className="font-semibold text-gray-800 dark:text-white">{totalPages}</span> •{" "}
-        <span className="font-semibold text-gray-800 dark:text-white">{total}</span> items
+        <span className="font-semibold text-gray-800 dark:text-white">{total}</span> {t("sales.items")}
       </p>
 
       <div className="flex items-center gap-1">
@@ -61,7 +63,7 @@ const Pagination: React.FC<Props> = ({ page, pageSize, total, onPageChange, clas
           disabled={safePage === 1}
           startIcon={<ChevronLeft size={14} />}
         >
-          <span className="hidden sm:inline">Prev</span>
+          <span className="hidden sm:inline">{t("sales.prev")}</span>
         </Button>
 
         <div className="hidden items-center gap-1 sm:flex">
@@ -101,7 +103,7 @@ const Pagination: React.FC<Props> = ({ page, pageSize, total, onPageChange, clas
           disabled={safePage === totalPages}
           endIcon={<ChevronRight size={14} />}
         >
-          <span className="hidden sm:inline">Next</span>
+          <span className="hidden sm:inline">{t("sales.next")}</span>
         </Button>
       </div>
     </div>

@@ -16,7 +16,7 @@ const ProductReportsPage: React.FC = () => {
     <div className="w-full px-4 py-6 md:px-8">
       <div
         className={cn(
-          "rounded-[4px] border border-gray-200 dark:border-gray-800",
+          "rounded-xl border border-gray-200 dark:border-gray-800",
           "bg-white dark:bg-gray-900",
           "p-4 sm:p-6"
         )}

@@ -251,7 +251,7 @@ const AllProductsPage: React.FC = () => {
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* Toolbar */}
-      <div className="rounded-[4px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
+      <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Search */}

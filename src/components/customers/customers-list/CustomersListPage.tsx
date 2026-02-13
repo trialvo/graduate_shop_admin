@@ -165,7 +165,7 @@ function IconBadge({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 rounded-[4px] border px-3 py-2 text-xs font-semibold",
+        "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold",
         ok
           ? "border-success-200 bg-success-50 text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300"
           : "border-error-200 bg-error-50 text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300",
@@ -458,7 +458,7 @@ export default function CustomersListPage() {
                       {/* CUSTOMER */}
                       <TableCell className="px-3 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="relative h-10 w-10 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                          <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={imgUrl}
@@ -643,7 +643,7 @@ export default function CustomersListPage() {
                           <button
                             type="button"
                             className={cn(
-                              "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border shadow-theme-xs",
+                              "inline-flex h-9 w-9 items-center justify-center rounded-xl border shadow-theme-xs",
                               row.isDeleted
                                 ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
                                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]",
@@ -665,7 +665,7 @@ export default function CustomersListPage() {
                           {row.isDeleted ? (
                             <button
                               type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-[4px] border border-success-200 bg-success-50 text-success-700 shadow-theme-xs hover:bg-success-100 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300 dark:hover:bg-success-500/20"
+                              className="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-xl border border-success-200 bg-success-50 text-success-700 shadow-theme-xs hover:bg-success-100 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300 dark:hover:bg-success-500/20"
                               onClick={() => openRestore(row)}
                               aria-label="Restore user"
                               title="Restore user"
@@ -675,7 +675,7 @@ export default function CustomersListPage() {
                           ) : (
                             <button
                               type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-[4px] border border-warning-200 bg-warning-50 text-warning-700 shadow-theme-xs hover:bg-warning-100 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300 dark:hover:bg-warning-500/20"
+                              className="inline-flex h-9 w-9 items-center justify-center gap-2 rounded-xl border border-warning-200 bg-warning-50 text-warning-700 shadow-theme-xs hover:bg-warning-100 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300 dark:hover:bg-warning-500/20"
                               onClick={() => openDelete(row)}
                               aria-label="Deactivate user"
                               title="Deactivate user"

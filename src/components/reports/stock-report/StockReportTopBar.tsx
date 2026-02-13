@@ -33,7 +33,7 @@ const StockReportTopBar: React.FC<Props> = ({ activeTab, onTabChange, period, on
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400" />
 
-        <div className="mt-4 inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
+        <div className="mt-4 inline-flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
           <button
             type="button"
             onClick={() => onTabChange("dashboard")}
@@ -68,7 +68,7 @@ const StockReportTopBar: React.FC<Props> = ({ activeTab, onTabChange, period, on
           value={period}
           onChange={(e) => onPeriodChange(e.target.value as TimePeriodKey)}
           className={cn(
-            "h-11 w-full rounded-[4px] border border-gray-200 dark:border-gray-800",
+            "h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800",
             "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
             "outline-none focus:ring-2 focus:ring-brand-500/30 px-3"
           )}

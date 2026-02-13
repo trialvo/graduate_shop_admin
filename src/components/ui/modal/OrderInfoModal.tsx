@@ -117,7 +117,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
           <div className="grid grid-cols-12 gap-6">
             {/* Customer */}
             <div className="col-span-12 md:col-span-6">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
                 <div className="flex items-start gap-4">
                   <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800 flex items-center justify-center">
                     {order.customerImage ? (
@@ -180,7 +180,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
 
             {/* Shipping */}
             <div className="col-span-12 md:col-span-6">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   Shipping Address
                 </p>
@@ -239,7 +239,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                 </div>
 
                 {orderNote ? (
-                  <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
                     <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
                       NOTE
                     </p>
@@ -253,7 +253,7 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
           </div>
 
           {/* Product Details Table */}
-          <div className="mt-6 overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+          <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
             <div className="overflow-x-auto">
               <table className="min-w-[980px] w-full border-collapse">
                 <thead>

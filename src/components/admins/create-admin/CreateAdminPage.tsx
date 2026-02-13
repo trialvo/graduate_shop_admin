@@ -260,7 +260,7 @@ export default function CreateAdminPage() {
         {/* LEFT */}
         <div className="lg:col-span-8 space-y-5">
           {/* Profile */}
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Admin image & basic contact info.</p>
@@ -287,7 +287,7 @@ export default function CreateAdminPage() {
 
                   <div
                     className={cn(
-                      "mt-2 grid grid-cols-1 gap-4 rounded-[4px] border bg-gray-50 p-4 dark:bg-gray-800/40",
+                      "mt-2 grid grid-cols-1 gap-4 rounded-xl border bg-gray-50 p-4 dark:bg-gray-800/40",
                       isDragging ? "border-brand-500" : "border-gray-200 dark:border-gray-800",
                     )}
                     onDragEnter={(e) => {
@@ -315,7 +315,7 @@ export default function CreateAdminPage() {
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
-                        <div className="relative h-16 w-16 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                        <div className="relative h-16 w-16 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                           {form.avatarPreviewUrl ? (
                             <img
                               src={form.avatarPreviewUrl}
@@ -328,7 +328,7 @@ export default function CreateAdminPage() {
                             </div>
                           )}
 
-                          <div className="absolute bottom-1 right-1 rounded-[4px] border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                          <div className="absolute bottom-1 right-1 rounded-xl border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
                             <Camera size={14} />
                           </div>
                         </div>
@@ -442,7 +442,7 @@ export default function CreateAdminPage() {
                     value={form.joinDate}
                     onChange={(v) => setForm({ ...form, joinDate: v })}
                     placeholder="Joining Date"
-                    className="rounded-[4px]"
+                    className="rounded-xl"
                     disabled={submitState === "saving"}
                     showToday
                     showClear
@@ -463,7 +463,7 @@ export default function CreateAdminPage() {
           </div>
 
           {/* Access */}
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Access</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -485,7 +485,7 @@ export default function CreateAdminPage() {
                     onChange={(v) => setForm({ ...form, role: v as AdminRole })}
                     isLoading={rolesQuery.isLoading}
                     disabled={rolesQuery.isLoading || rolesQuery.isError || submitState === "saving"}
-                    className="rounded-[4px]"
+                    className="rounded-xl"
                   />
 
                   {errors.roleErr ? <p className="text-xs text-error-500">{errors.roleErr}</p> : null}
@@ -518,7 +518,7 @@ export default function CreateAdminPage() {
                     placeholder="Minimum 6 characters"
                     error={Boolean(errors.passErr)}
                     hint={errors.passErr || ""}
-                    className="rounded-[4px]"
+                    className="rounded-xl"
                   />
                 </div>
 
@@ -533,14 +533,14 @@ export default function CreateAdminPage() {
                     placeholder="Re-enter password"
                     error={Boolean(errors.confirmErr)}
                     hint={errors.confirmErr || ""}
-                    className="rounded-[4px]"
+                    className="rounded-xl"
                   />
                 </div>
               </div>
 
-              <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
                     <ShieldCheck size={18} />
                   </div>
 
@@ -575,13 +575,13 @@ export default function CreateAdminPage() {
           </div>
 
           {submitState === "success" ? (
-            <div className="rounded-[4px] border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
+            <div className="rounded-xl border border-success-200 bg-success-50 p-4 text-sm text-success-700 dark:border-success-900/40 dark:bg-success-500/10 dark:text-success-300">
               Admin created successfully.
             </div>
           ) : null}
 
           {submitState === "error" ? (
-            <div className="rounded-[4px] border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+            <div className="rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
               Failed to create admin. Try again.
             </div>
           ) : null}
@@ -589,7 +589,7 @@ export default function CreateAdminPage() {
 
         {/* RIGHT preview */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -599,7 +599,7 @@ export default function CreateAdminPage() {
 
             <div className="p-4">
               <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 rounded-[4px] bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <div className="relative h-14 w-14 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden">
                   {form.avatarPreviewUrl ? (
                     <img src={form.avatarPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
                   ) : (
@@ -637,14 +637,14 @@ export default function CreateAdminPage() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-[4px] border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
                 <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
                 <p className="line-clamp-3">{form.note || "-"}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>- Assign roles carefully to avoid permission risks.</li>

@@ -195,7 +195,7 @@ export default function Select({
         disabled={disabled || isLoading}
         onClick={() => setOpen((s) => !s)}
         className={cn(
-          "flex h-10 w-full items-center justify-between gap-2 rounded-[4px] border px-3 text-sm font-medium",
+          "flex h-10 w-full items-center justify-between gap-2 rounded-xl border px-3 text-sm font-medium",
           "border-gray-200 bg-white text-gray-800 shadow-theme-xs hover:bg-gray-50",
           "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.04]",
           "outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500/30",

@@ -11,7 +11,7 @@ const MetricCard: React.FC<Props> = ({ qty, label, isLoading }) => {
   return (
     <div
       className={cn(
-        "rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}

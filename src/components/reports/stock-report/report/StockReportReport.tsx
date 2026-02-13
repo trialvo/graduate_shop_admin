@@ -433,7 +433,7 @@ export default function StockReportReport({ period }: Props) {
   return (
     <div className="mt-6 space-y-5">
       {/* Header + mode switch + filters */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-white">{t("reports.common.allReports")}</div>
@@ -445,12 +445,12 @@ export default function StockReportReport({ period }: Props) {
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
             {/* view switch */}
-            <div className="inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-950">
+            <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-950">
               <button
                 type="button"
                 onClick={() => setView("category")}
                 className={cn(
-                  "h-10 px-4 rounded-[4px] text-sm font-semibold transition",
+                  "h-10 px-4 rounded-xl text-sm font-semibold transition",
                   view === "category"
                     ? "bg-brand-500 text-white shadow-theme-xs"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/[0.04]"
@@ -462,7 +462,7 @@ export default function StockReportReport({ period }: Props) {
                 type="button"
                 onClick={() => setView("product")}
                 className={cn(
-                  "h-10 px-4 rounded-[4px] text-sm font-semibold transition",
+                  "h-10 px-4 rounded-xl text-sm font-semibold transition",
                   view === "product"
                     ? "bg-brand-500 text-white shadow-theme-xs"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/[0.04]"
@@ -483,7 +483,7 @@ export default function StockReportReport({ period }: Props) {
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 placeholder={view === "product" ? t("reports.productReport.searchProduct") : t("reports.stockReport.searchCategory")}
-                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             </div>
@@ -494,19 +494,19 @@ export default function StockReportReport({ period }: Props) {
                 options={mainOptions}
                 defaultValue={mainId}
                 onChange={(v) => setMainId(String(v))}
-                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
               />
               <Select
                 options={subOptions}
                 defaultValue={subId}
                 onChange={(v) => setSubId(String(v))}
-                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
               />
               <Select
                 options={childOptions}
                 defaultValue={childId}
                 onChange={(v) => setChildId(String(v))}
-                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
               />
             </div>
 
@@ -520,7 +520,7 @@ export default function StockReportReport({ period }: Props) {
                 ]}
                 defaultValue={level}
                 onChange={(v) => setLevel(v as StockCategoryLevel)}
-                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
               />
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -532,7 +532,7 @@ export default function StockReportReport({ period }: Props) {
                   ]}
                   defaultValue={status}
                   onChange={(v) => setStatus(v as any)}
-                  className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                  className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
                 />
                 <Select
                   options={[
@@ -542,7 +542,7 @@ export default function StockReportReport({ period }: Props) {
                   ]}
                   defaultValue={String(limit)}
                   onChange={(v) => setLimit(Number(v))}
-                  className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+                  className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
                 />
               </div>
             )}
@@ -598,13 +598,13 @@ export default function StockReportReport({ period }: Props) {
 
         {/* Loading / Error */}
         {view === "category" && categorySummeryQuery.isError && (
-          <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+          <div className="mt-4 rounded-xl border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
             {String((categorySummeryQuery.error as any)?.message || "Failed to load category stock summary")}
           </div>
         )}
 
         {view === "product" && productQuery.isError && (
-          <div className="mt-4 rounded-[4px] border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+          <div className="mt-4 rounded-xl border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
             {String((productQuery.error as any)?.message || "Failed to load product report")}
           </div>
         )}
@@ -645,8 +645,8 @@ export default function StockReportReport({ period }: Props) {
           </div>
 
           {/* product table */}
-          <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-            <div className="w-full overflow-hidden rounded-[4px]">
+          <div className="rounded-xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+            <div className="w-full overflow-hidden rounded-xl">
               <div className="max-w-full overflow-x-auto custom-scrollbar">
                 <table className="min-w-[1200px] w-full">
                   <thead>

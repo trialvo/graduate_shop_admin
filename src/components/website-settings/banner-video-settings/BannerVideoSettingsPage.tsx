@@ -179,7 +179,7 @@ export default function BannerVideoSettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-        <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("bannerVideos.stats.total")}
           </p>
@@ -191,7 +191,7 @@ export default function BannerVideoSettingsPage() {
           </p>
         </div>
 
-        <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("bannerVideos.stats.linked")}
           </p>
@@ -203,7 +203,7 @@ export default function BannerVideoSettingsPage() {
           </p>
         </div>
 
-        <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("bannerVideos.stats.standalone")}
           </p>
@@ -215,7 +215,7 @@ export default function BannerVideoSettingsPage() {
           </p>
         </div>
 
-        <div className="rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("bannerVideos.stats.pageSize")}
           </p>
@@ -239,7 +239,7 @@ export default function BannerVideoSettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -296,7 +296,7 @@ export default function BannerVideoSettingsPage() {
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="h-12 w-20 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                      <div className="h-12 w-20 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                         {row.thumb ? (
                           <img
                             src={toPublicUrl(row.thumb)}

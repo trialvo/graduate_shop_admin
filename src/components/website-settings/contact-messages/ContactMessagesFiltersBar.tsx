@@ -205,7 +205,7 @@ export default function ContactMessagesFiltersBar({
             onClick={() => setShowFilters((v) => !v)}
             startIcon={<SlidersHorizontal size={14} />}
           >
-            <span className="hidden sm:inline">Filters</span>
+            <span className="hidden sm:inline">{t("contactMessages.filters.filtersButton")}</span>
           </Button>
 
           <Button
@@ -240,7 +240,7 @@ export default function ContactMessagesFiltersBar({
           <div className="flex items-center gap-2 pb-3">
             <Filter size={14} className="text-gray-400" />
             <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Advanced Filters
+              {t("contactMessages.filters.advancedFilters")}
             </p>
           </div>
 

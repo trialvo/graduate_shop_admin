@@ -1,5 +1,6 @@
 import React from "react";
 import { Star, Tag, Truck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -34,6 +35,7 @@ function getCoverImage(p: any) {
 }
 
 export default function ProductCard({ product, onClick }: Props) {
+  const { t } = useTranslation();
   const p: any = product;
 
   const name = String(p?.name ?? p?.title ?? "Untitled Product");
@@ -55,7 +57,7 @@ export default function ProductCard({ product, onClick }: Props) {
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white text-left",
+        "group relative w-full overflow-hidden rounded-2xl border border-gray-200/80 bg-white text-left",
         "shadow-sm transition-all duration-200",
         "hover:border-brand-200 hover:shadow-md hover:ring-1 hover:ring-brand-100",
         "dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-500/30 dark:hover:ring-brand-500/10"
@@ -85,17 +87,17 @@ export default function ProductCard({ product, onClick }: Props) {
         <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
           {p?.featured ? (
             <span className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-              <Star className="h-2.5 w-2.5" /> Featured
+              <Star className="h-2.5 w-2.5" /> {t("sales.featured")}
             </span>
           ) : null}
           {p?.best_deal ? (
             <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-              Best Deal
+              {t("sales.bestDeal")}
             </span>
           ) : null}
           {p?.free_delivery ? (
             <span className="inline-flex items-center gap-1 rounded-lg bg-gray-900/75 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm backdrop-blur-sm">
-              <Truck className="h-2.5 w-2.5" /> Free
+              <Truck className="h-2.5 w-2.5" /> {t("sales.free")}
             </span>
           ) : null}
         </div>
@@ -110,7 +112,7 @@ export default function ProductCard({ product, onClick }: Props) {
                 : "bg-red-50/90 text-red-700 dark:bg-red-500/20 dark:text-red-300"
             )}
           >
-            {inStock ? "In Stock" : "Out"}
+            {inStock ? t("sales.inStock") : t("sales.outLabel")}
           </span>
         </div>
 
@@ -118,7 +120,7 @@ export default function ProductCard({ product, onClick }: Props) {
         {discount ? (
           <div className="absolute bottom-2.5 left-2.5">
             <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-              <Tag className="h-2.5 w-2.5" /> Sale
+              <Tag className="h-2.5 w-2.5" /> {t("sales.saleLabel")}
             </span>
           </div>
         ) : null}
@@ -154,7 +156,7 @@ export default function ProductCard({ product, onClick }: Props) {
               {variationCount}
             </span>
             <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500">
-              Variants
+              {t("sales.variantsLabel")}
             </span>
           </div>
 
@@ -163,7 +165,7 @@ export default function ProductCard({ product, onClick }: Props) {
               {Number.isFinite(totalStock) ? totalStock : 0}
             </span>
             <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500">
-              Stock
+              {t("sales.stock")}
             </span>
           </div>
 
@@ -172,7 +174,7 @@ export default function ProductCard({ product, onClick }: Props) {
               {String(p?.sub_category_id ?? "–")}
             </span>
             <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500">
-              Sub Cat
+              {t("sales.subCat")}
             </span>
           </div>
         </div>

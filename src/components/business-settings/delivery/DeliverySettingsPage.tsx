@@ -160,7 +160,7 @@ export default function DeliverySettingsPage() {
           ? Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-[220px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+              className="h-[220px] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
             />
           ))
           : filtered.map((card) => {
@@ -169,12 +169,12 @@ export default function DeliverySettingsPage() {
             return (
               <div
                 key={card.id}
-                className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
                         {imgUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -251,7 +251,7 @@ export default function DeliverySettingsPage() {
 
                   <button
                     type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
                     onClick={() => {
                       setDeleteTargetId(card.id);
                       setDeleteTargetTitle(card.title);
@@ -267,14 +267,14 @@ export default function DeliverySettingsPage() {
           })}
 
         {!listQuery.isLoading && filtered.length === 0 ? (
-          <div className="md:col-span-2 xl:col-span-4 rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <div className="md:col-span-2 xl:col-span-4 rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             {t("businessSettings.delivery.noAreas")}
           </div>
         ) : null}
       </div>
 
       {/* Pagination (API) */}
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <Pagination
           totalItems={totalItems}
           page={page}

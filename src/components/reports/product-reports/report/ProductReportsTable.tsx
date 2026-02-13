@@ -32,8 +32,8 @@ function StatusBadge({ status, t }: { status: ProductReportRow["status"]; t: (ke
 const ProductReportsTable: React.FC<Props> = ({ rows, isLoading }) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="w-full overflow-hidden rounded-[4px]">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="w-full overflow-hidden rounded-xl">
         <div className="max-w-full overflow-x-auto custom-scrollbar">
           <Table className="min-w-[1200px]">
             <TableHeader>

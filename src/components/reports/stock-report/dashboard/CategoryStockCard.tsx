@@ -32,7 +32,7 @@ const CategoryStockCard: React.FC<Props> = ({
   return (
     <div
       className={cn(
-        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "h-full rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -46,7 +46,7 @@ const CategoryStockCard: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-[4px] border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-950">
+          <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-950">
             {(["main", "sub", "child"] as const).map((k) => {
               const active = level === k;
               return (
@@ -55,7 +55,7 @@ const CategoryStockCard: React.FC<Props> = ({
                   type="button"
                   onClick={() => onLevelChange(k)}
                   className={cn(
-                    "h-9 px-3 rounded-[4px] text-xs font-semibold transition",
+                    "h-9 px-3 rounded-xl text-xs font-semibold transition",
                     active
                       ? "bg-brand-500 text-white"
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/[0.04]"
@@ -79,7 +79,7 @@ const CategoryStockCard: React.FC<Props> = ({
             onClick={onPrev}
             disabled={disablePrev}
             className={cn(
-              "h-9 px-3 rounded-[4px] text-xs font-semibold border",
+              "h-9 px-3 rounded-xl text-xs font-semibold border",
               disablePrev
                 ? "border-gray-200 text-gray-400 dark:border-gray-800"
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
@@ -92,7 +92,7 @@ const CategoryStockCard: React.FC<Props> = ({
             onClick={onNext}
             disabled={disableNext}
             className={cn(
-              "h-9 px-3 rounded-[4px] text-xs font-semibold border",
+              "h-9 px-3 rounded-xl text-xs font-semibold border",
               disableNext
                 ? "border-gray-200 text-gray-400 dark:border-gray-800"
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.04]"
@@ -108,7 +108,7 @@ const CategoryStockCard: React.FC<Props> = ({
           ? Array.from({ length: 5 }).map((_, i) => (
             <div
               key={`sk-${i}`}
-              className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
+              className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
             >
               <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-800" />
               <div className="mt-2 h-3 w-2/3 rounded bg-gray-200 dark:bg-gray-800" />
@@ -117,7 +117,7 @@ const CategoryStockCard: React.FC<Props> = ({
           : rows.map((r) => (
             <div
               key={r.id}
-              className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
+              className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -137,7 +137,7 @@ const CategoryStockCard: React.FC<Props> = ({
           ))}
 
         {!isLoading && rows.length === 0 && (
-          <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
             {t("reports.common.noData")}
           </div>
         )}

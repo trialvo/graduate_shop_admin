@@ -240,7 +240,7 @@ export default function CreateCustomerPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT: FORM */}
         <div className="space-y-6 lg:col-span-8">
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Profile
@@ -252,7 +252,7 @@ export default function CreateCustomerPage() {
 
             <div className="space-y-6 p-5">
               {/* Profile Image + Upload + Status (RESPONSIVE GRID) */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
                   {/* Preview */}
                   <div className="md:col-span-4 lg:col-span-3">
@@ -260,7 +260,7 @@ export default function CreateCustomerPage() {
                       Profile Photo
                     </p>
 
-                    <div className="mt-2 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                       <div className="aspect-square w-full">
                         {previewUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -293,10 +293,10 @@ export default function CreateCustomerPage() {
                       </span>
                     </p>
 
-                    <div className="mt-2 rounded-[4px] border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="mt-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                             <ImageIcon size={18} />
                           </div>
 
@@ -350,7 +350,7 @@ export default function CreateCustomerPage() {
                       Status
                     </p>
 
-                    <div className="mt-2 flex items-center justify-between rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="mt-2 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {form.is_active === "active" ? "Active" : "Inactive"}
@@ -574,7 +574,7 @@ export default function CreateCustomerPage() {
 
         {/* RIGHT: Preview Card */}
         <div className="space-y-6 lg:col-span-4">
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Live Preview
@@ -586,7 +586,7 @@ export default function CreateCustomerPage() {
 
             <div className="p-5">
               <div className="flex items-start gap-4">
-                <div className="h-14 w-14 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                <div className="h-14 w-14 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                   {previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -634,14 +634,14 @@ export default function CreateCustomerPage() {
 
               <div
                 className={cn(
-                  "mt-5 rounded-[4px] border p-4",
+                  "mt-5 rounded-xl border p-4",
                   canSubmit
                     ? "border-success-200 bg-success-50 dark:border-success-900/40 dark:bg-success-500/10"
                     : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10"
                 )}
               >
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
                     {canSubmit ? (
                       <BadgeCheck size={18} />
                     ) : (
@@ -661,7 +661,7 @@ export default function CreateCustomerPage() {
             </div>
           </div>
 
-          <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Tips
             </p>

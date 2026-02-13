@@ -22,7 +22,7 @@ export default function ActiveInactiveSwitch({
       <div
         className={cn(
           // ✅ max height 40px
-          "grid h-10 grid-cols-2 overflow-hidden rounded-[4px] border bg-white dark:bg-gray-900",
+          "grid h-10 grid-cols-2 overflow-hidden rounded-xl border bg-white dark:bg-gray-900",
           disabled
             ? "border-gray-200 opacity-70 dark:border-gray-800"
             : isActive

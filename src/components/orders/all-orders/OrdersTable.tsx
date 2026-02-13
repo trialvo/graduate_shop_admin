@@ -167,7 +167,7 @@ export default function OrdersTable({ rows }: Props) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {/* ✅ Key fix:
             - table-layout: fixed => columns don't expand and force height
             - truncate everywhere => single line

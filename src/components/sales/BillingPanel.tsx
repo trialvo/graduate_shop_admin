@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Trash2,
   ChevronLeft,
@@ -101,10 +102,12 @@ function CustomerRow({
   u,
   active,
   onPick,
+  t,
 }: {
   u: AdminUserEntity;
   active: boolean;
   onPick: () => void;
+  t: (key: string) => string;
 }) {
   const img = toPublicUrlSafe(u.img_path);
   const fallback = imageFallbackSvgDataUri(userFullName(u));
@@ -162,7 +165,7 @@ function CustomerRow({
                   badgeClass("ok")
                 )}
               >
-                Verified
+                {t("sales.verified")}
               </span>
             ) : (
               <span
@@ -171,7 +174,7 @@ function CustomerRow({
                   badgeClass("warn")
                 )}
               >
-                Not verified
+                {t("sales.notVerified")}
               </span>
             )}
           </div>
@@ -187,20 +190,20 @@ function CustomerRow({
             <div className="col-span-12 md:col-span-6 min-w-0">
               <div className="flex items-center gap-1.5 truncate">
                 <Phone size={13} className="text-gray-400" />
-                <span className="truncate">{phone || "No phone"}</span>
+                <span className="truncate">{phone || t("sales.noPhone")}</span>
               </div>
             </div>
 
             <div className="col-span-12 md:col-span-6">
               <div className="flex items-center gap-1.5">
                 <MapPin size={13} className="text-gray-400" />
-                <span>{addrCount} address(es)</span>
+                <span>{addrCount} {t("sales.addressCount")}</span>
               </div>
             </div>
 
             <div className="col-span-12 md:col-span-6">
               <div className="flex items-center justify-between gap-2">
-                <span>Total spent</span>
+                <span>{t("sales.totalSpent")}</span>
                 <span className="font-semibold text-gray-900 dark:text-white">
                   {formatCurrencyBDT(Number(u.total_spent ?? 0))}
                 </span>
@@ -211,7 +214,7 @@ function CustomerRow({
 
         {active ? (
           <div className="mt-1 flex-shrink-0 rounded-full bg-brand-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-            Selected
+            {t("sales.selected")}
           </div>
         ) : null}
       </div>
@@ -220,6 +223,7 @@ function CustomerRow({
 }
 
 export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<CustomerMode>("existing");
 
   // ---------- EXISTING USER FLOW ----------
@@ -489,7 +493,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm",
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm",
         "dark:border-gray-800 dark:bg-gray-900"
       )}
     >
@@ -500,8 +504,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             <Receipt className="h-4 w-4" />
           </span>
           <div>
-            <p className="text-sm font-bold text-gray-900 dark:text-white">Billing</p>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500">Cart, customer & payment</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{t("sales.billing")}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">{t("sales.billingSubtitle")}</p>
           </div>
         </div>
 
@@ -517,7 +521,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             )}
           >
-            Existing
+            {t("sales.existing")}
           </button>
           <button
             type="button"
@@ -529,7 +533,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             )}
           >
-            Stranger
+            {t("sales.stranger")}
           </button>
         </div>
       </div>
@@ -540,7 +544,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         {/* ═══════ Cart Items ═══════ */}
         <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-white/[0.02]">
           <div className="flex items-center justify-between mb-3">
-            <SectionLabel icon={<ShoppingCart size={14} />}>Cart Items</SectionLabel>
+            <SectionLabel icon={<ShoppingCart size={14} />}>{t("sales.cartItems")}</SectionLabel>
             <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[11px] font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
               {cart.length}
             </span>
@@ -550,7 +554,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             {cart.length === 0 ? (
               <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-6 dark:border-gray-700 dark:bg-gray-800/40">
                 <ShoppingCart className="mb-2 h-6 w-6 text-gray-300 dark:text-gray-600" />
-                <p className="text-xs text-gray-400 dark:text-gray-500">Cart is empty</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t("sales.cartIsEmpty")}</p>
               </div>
             ) : (
               cart.map((i) => (
@@ -630,7 +634,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <SectionLabel icon={<User2 size={14} />}>
-                  {mode === "existing" ? "Customer" : "Stranger Customer"}
+                  {mode === "existing" ? t("sales.customer") : t("sales.strangerCustomer")}
                 </SectionLabel>
 
                 {mode === "existing" ? (
@@ -638,7 +642,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     onClick={() => setAddCustomerOpen(true)}
                     className="h-8 gap-1.5 rounded-lg px-3 text-xs"
                   >
-                    <Plus size={14} /> Add
+                    <Plus size={14} /> {t("sales.add")}
                   </Button>
                 ) : null}
               </div>
@@ -652,7 +656,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                         setUsersOffset(0);
                         setUserQ(e.target.value);
                       }}
-                      placeholder="Search by name, email or phone..."
+                      placeholder={t("sales.searchByNameEmailPhone")}
                       className={inputClass}
                     />
                   </div>
@@ -660,11 +664,11 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   <div className="mt-3 space-y-2">
                     {usersQuery.isLoading ? (
                       <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-400">
-                        Loading customers...
+                        {t("sales.loadingCustomers")}
                       </div>
                     ) : users.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-400">
-                        No customers found.
+                        {t("sales.noCustomersFound")}
                       </div>
                     ) : (
                       users.map((u) => (
@@ -673,6 +677,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                           u={u}
                           active={Number(customerId) === Number(u.id)}
                           onPick={() => setCustomerId(Number(u.id))}
+                          t={t}
                         />
                       ))
                     )}
@@ -680,7 +685,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
                   <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <div>
-                      Showing{" "}
+                      {t("sales.showing")}{" "}
                       <span className="font-semibold text-gray-800 dark:text-gray-200">
                         {usersTotal === 0
                           ? 0
@@ -704,7 +709,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                         )}
                       >
                         <ChevronLeft size={14} />
-                        Prev
+                        {t("sales.prev")}
                       </button>
 
                       <button
@@ -718,7 +723,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                             : "text-gray-700 ring-gray-200 hover:bg-gray-50 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-white/[0.03]"
                         )}
                       >
-                        Next
+                        {t("sales.next")}
                         <ChevronRight size={14} />
                       </button>
                     </div>
@@ -727,19 +732,19 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   {/* Address */}
                   <div className="mt-3 rounded-xl border border-gray-200/80 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-white/[0.02]">
                     <div className="flex items-center justify-between gap-3 mb-3">
-                      <SectionLabel icon={<MapPin size={14} />}>Address</SectionLabel>
+                      <SectionLabel icon={<MapPin size={14} />}>{t("sales.address")}</SectionLabel>
                       <Button
                         variant="outline"
                         onClick={() => {
                           if (!selectedUser) {
-                            toast.error("Select a customer first");
+                            toast.error(t("sales.selectCustomerError"));
                             return;
                           }
                           setManualAddressOpen(true);
                         }}
                         className="h-8 gap-1.5 rounded-lg px-3 text-xs"
                       >
-                        <Plus size={14} /> Add
+                        <Plus size={14} /> {t("sales.add")}
                       </Button>
                     </div>
 
@@ -755,8 +760,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     >
                       <option value="">
                         {selectedUser
-                          ? "Choose address"
-                          : "Select customer first"}
+                          ? t("sales.chooseAddress")
+                          : t("sales.selectCustomerFirst")}
                       </option>
                       {addresses.map((a: any) => (
                         <option key={a.id} value={a.id}>
@@ -770,7 +775,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               ) : (
                 <div className="grid grid-cols-12 gap-3">
                   <div className="col-span-12 md:col-span-6">
-                    <SectionLabel>Name</SectionLabel>
+                    <SectionLabel>{t("sales.name")}</SectionLabel>
                     <input
                       value={strangerName}
                       onChange={(e) => setStrangerName(e.target.value)}
@@ -779,7 +784,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
 
                   <div className="col-span-12 md:col-span-6">
-                    <SectionLabel>Phone</SectionLabel>
+                    <SectionLabel>{t("sales.phone")}</SectionLabel>
                     <input
                       value={strangerPhone}
                       onChange={(e) => setStrangerPhone(e.target.value)}
@@ -788,7 +793,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
 
                   <div className="col-span-12">
-                    <SectionLabel>Full address</SectionLabel>
+                    <SectionLabel>{t("sales.fullAddress")}</SectionLabel>
                     <input
                       value={strangerFullAddress}
                       onChange={(e) => setStrangerFullAddress(e.target.value)}
@@ -797,7 +802,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
 
                   <div className="col-span-12 md:col-span-4">
-                    <SectionLabel>City</SectionLabel>
+                    <SectionLabel>{t("sales.city")}</SectionLabel>
                     <input
                       value={strangerCity}
                       onChange={(e) => setStrangerCity(e.target.value)}
@@ -806,7 +811,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
 
                   <div className="col-span-12 md:col-span-4">
-                    <SectionLabel>Zip</SectionLabel>
+                    <SectionLabel>{t("sales.zip")}</SectionLabel>
                     <input
                       value={strangerZip}
                       onChange={(e) => setStrangerZip(e.target.value)}
@@ -815,7 +820,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   </div>
 
                   <div className="col-span-12 md:col-span-4">
-                    <SectionLabel>Email</SectionLabel>
+                    <SectionLabel>{t("sales.email")}</SectionLabel>
                     <input
                       value={strangerEmail}
                       onChange={(e) => setStrangerEmail(e.target.value)}
@@ -832,7 +837,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             <div className="space-y-4">
               {/* Delivery */}
               <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
-                <SectionLabel icon={<Truck size={14} />}>Delivery Charge</SectionLabel>
+                <SectionLabel icon={<Truck size={14} />}>{t("sales.deliveryChargeLabel")}</SectionLabel>
                 <select
                   value={deliveryChargeId ?? ""}
                   onChange={(e) =>
@@ -844,8 +849,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 >
                   <option value="">
                     {deliveryChargesQuery.isLoading
-                      ? "Loading..."
-                      : "Choose delivery charge"}
+                      ? t("sales.loading")
+                      : t("sales.chooseDeliveryCharge")}
                   </option>
                   {deliveryCharges.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -859,25 +864,25 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               <div className="rounded-xl border border-gray-200/80 bg-gradient-to-b from-gray-50 to-white p-4 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
                 <div className="space-y-2.5 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t("sales.subtotal")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
                       {formatCurrencyBDT(subtotal)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Delivery</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t("sales.delivery")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
                       {formatCurrencyBDT(deliveryFee)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Discount</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t("sales.discount")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
                       {formatCurrencyBDT(0)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Tax</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t("sales.tax")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
                       {formatCurrencyBDT(0)}
                     </span>
@@ -885,7 +890,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
                   <div className="border-t border-gray-200 pt-3 dark:border-gray-700">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">Total</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{t("sales.total")}</span>
                       <span className="text-lg font-extrabold text-brand-600 dark:text-brand-400">
                         {formatCurrencyBDT(total)}
                       </span>
@@ -896,29 +901,29 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
               {/* Coupon */}
               <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
-                <SectionLabel icon={<Ticket size={14} />}>Coupon</SectionLabel>
+                <SectionLabel icon={<Ticket size={14} />}>{t("sales.coupon")}</SectionLabel>
                 <input
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="Optional coupon code"
+                  placeholder={t("sales.optionalCouponCode")}
                   className={cn(inputClass, "mt-2")}
                 />
               </div>
 
               {/* Note */}
               <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
-                <SectionLabel icon={<StickyNote size={14} />}>Note</SectionLabel>
+                <SectionLabel icon={<StickyNote size={14} />}>{t("sales.note")}</SectionLabel>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Optional note for delivery / admin"
+                  placeholder={t("sales.optionalNote")}
                   className="mt-2 min-h-[80px] w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10"
                 />
               </div>
 
               {/* Payment */}
               <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
-                <SectionLabel icon={<CreditCard size={14} />}>Payment</SectionLabel>
+                <SectionLabel icon={<CreditCard size={14} />}>{t("sales.payment")}</SectionLabel>
                 <div className="mt-2.5 flex items-center gap-2">
                   <button
                     type="button"
@@ -930,7 +935,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                         : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-700"
                     )}
                   >
-                    COD
+                    {t("sales.cod")}
                   </button>
                   <button
                     type="button"
@@ -942,17 +947,17 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                         : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-700"
                     )}
                   >
-                    bKash
+                    {t("sales.bkash")}
                   </button>
                 </div>
 
                 {payBy === "bkash" ? (
                   <div className="mt-3">
-                    <SectionLabel>bKash TRX ID</SectionLabel>
+                    <SectionLabel>{t("sales.bkashTrxId")}</SectionLabel>
                     <input
                       value={trx}
                       onChange={(e) => setTrx(e.target.value)}
-                      placeholder="Enter transaction id"
+                      placeholder={t("sales.enterTransactionId")}
                       className={cn(inputClass, "mt-1")}
                     />
                   </div>
@@ -974,7 +979,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             window.dispatchEvent(new CustomEvent("new-sale-clear-cart"))
           }
         >
-          Clear Cart
+          {t("sales.clearCart")}
         </Button>
 
         <Button
@@ -984,7 +989,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
             mode === "existing" ? !canPlaceExisting : !canPlaceStranger
           }
           isLoading={placing}
-          loadingText="Placing..."
+          loadingText={t("sales.placing")}
           startIcon={<CheckCircle2 size={15} />}
           onClick={() => {
             if (placing) return;
@@ -993,14 +998,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               (i) => !Number(i.productVariationId)
             );
             if (anyMissingVariation) {
-              toast.error("Select product variation before placing order");
+              toast.error(t("sales.selectVariationError"));
               return;
             }
 
             if (mode === "existing") {
               if (!canPlaceExisting) {
                 toast.error(
-                  "Please select customer, address, delivery, and variation"
+                  t("sales.existingOrderError")
                 );
                 return;
               }
@@ -1010,14 +1015,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
             if (!canPlaceStranger) {
               toast.error(
-                "Please fill stranger info, delivery, and variation"
+                t("sales.strangerOrderError")
               );
               return;
             }
             placeStrangerMutation.mutate();
           }}
         >
-          Place Order
+          {t("sales.placeOrder")}
         </Button>
       </div>
 
@@ -1032,17 +1037,17 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
           <div className="w-full max-w-[760px] overflow-hidden rounded-xl bg-white shadow-theme-lg dark:bg-gray-900">
             <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white px-6 py-4 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                Add Address
+                {t("sales.addAddress")}
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Create a manual address for this customer.
+                {t("sales.createManualAddress")}
               </p>
             </div>
 
             <div className="px-6 py-6">
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <SectionLabel>Name</SectionLabel>
+                  <SectionLabel>{t("sales.name")}</SectionLabel>
                   <input
                     value={manualAddressName}
                     onChange={(e) => setManualAddressName(e.target.value)}
@@ -1051,7 +1056,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <SectionLabel>Phone</SectionLabel>
+                  <SectionLabel>{t("sales.phone")}</SectionLabel>
                   <input
                     value={manualAddressPhone}
                     onChange={(e) => setManualAddressPhone(e.target.value)}
@@ -1060,7 +1065,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12">
-                  <SectionLabel>Full Address</SectionLabel>
+                  <SectionLabel>{t("sales.fullAddress")}</SectionLabel>
                   <input
                     value={manualAddressFull}
                     onChange={(e) => setManualAddressFull(e.target.value)}
@@ -1069,7 +1074,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <SectionLabel>City</SectionLabel>
+                  <SectionLabel>{t("sales.city")}</SectionLabel>
                   <input
                     value={manualAddressCity}
                     onChange={(e) => setManualAddressCity(e.target.value)}
@@ -1078,7 +1083,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <SectionLabel>Zip</SectionLabel>
+                  <SectionLabel>{t("sales.zip")}</SectionLabel>
                   <input
                     value={manualAddressZip}
                     onChange={(e) => setManualAddressZip(e.target.value)}
@@ -1087,7 +1092,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </div>
 
                 <div className="col-span-12 md:col-span-4">
-                  <SectionLabel>Type</SectionLabel>
+                  <SectionLabel>{t("sales.type")}</SectionLabel>
                   <select
                     value={manualAddressType}
                     onChange={(e) =>
@@ -1110,7 +1115,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   className="rounded-xl"
                   onClick={() => setManualAddressOpen(false)}
                 >
-                  Cancel
+                  {t("sales.cancel")}
                 </Button>
                 <Button
                   className="rounded-xl"
@@ -1128,7 +1133,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                       !manualAddressPhone.trim() ||
                       !manualAddressFull.trim()
                     ) {
-                      toast.error("Name, phone, and address are required");
+                      toast.error(t("sales.addressRequiredError"));
                       return;
                     }
 
@@ -1144,8 +1149,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   }}
                 >
                   {createAddressMutation.isPending
-                    ? "Saving..."
-                    : "Save Address"}
+                    ? t("sales.saving")
+                    : t("sales.saveAddress")}
                 </Button>
               </div>
             </div>

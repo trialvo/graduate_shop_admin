@@ -97,7 +97,7 @@ export default function TestSmsCard({ activeProviderLabel, variant = "card" }: P
   }
 
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">Test SMS</h3>

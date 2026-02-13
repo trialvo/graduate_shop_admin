@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Copy,
   ExternalLink,
@@ -27,30 +28,13 @@ import type {
   SocialKey,
 } from "./types";
 
-const THEME_OPTIONS: Option[] = [
-  { value: "auto", label: "Auto" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
+// Moved inside component to use t()
 
-const WIDTH_OPTIONS: Option[] = [
-  { value: "xl", label: "Max Width: XL" },
-  { value: "2xl", label: "Max Width: 2XL" },
-  { value: "full", label: "Full Width" },
-];
+// Moved inside component to use t()
 
-const PRIORITY_OPTIONS: Option[] = [
-  { value: "Low", label: "Low" },
-  { value: "Normal", label: "Normal" },
-  { value: "Medium", label: "Medium" },
-  { value: "High", label: "High" },
-];
+// Moved inside component to use t()
 
-const COLUMN_TYPE_OPTIONS: Option[] = [
-  { value: "links", label: "Links Column" },
-  { value: "text", label: "Text Column" },
-  { value: "contact", label: "Contact Column" },
-];
+// Moved inside component to use t()
 
 function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(16).slice(2)}-${Date.now()}`;
@@ -90,9 +74,35 @@ const SOCIAL_LABELS: Record<SocialKey, string> = {
 };
 
 export default function FooterSettingsPage() {
+  const { t } = useTranslation();
   const [data, setData] = useState<FooterSettings>(INITIAL_FOOTER_SETTINGS);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const THEME_OPTIONS: Option[] = [
+    { value: "auto", label: t("footerSettings.themeOptions.auto") },
+    { value: "light", label: t("footerSettings.themeOptions.light") },
+    { value: "dark", label: t("footerSettings.themeOptions.dark") },
+  ];
+
+  const WIDTH_OPTIONS: Option[] = [
+    { value: "xl", label: t("footerSettings.widthOptions.xl") },
+    { value: "2xl", label: t("footerSettings.widthOptions.2xl") },
+    { value: "full", label: t("footerSettings.widthOptions.full") },
+  ];
+
+  const PRIORITY_OPTIONS: Option[] = [
+    { value: "Low", label: t("footerSettings.priority.low") },
+    { value: "Normal", label: t("footerSettings.priority.normal") },
+    { value: "Medium", label: t("footerSettings.priority.medium") },
+    { value: "High", label: t("footerSettings.priority.high") },
+  ];
+
+  const COLUMN_TYPE_OPTIONS: Option[] = [
+    { value: "links", label: t("footerSettings.columns.typeLinks") },
+    { value: "text", label: t("footerSettings.columns.typeText") },
+    { value: "contact", label: t("footerSettings.columns.typeContact") },
+  ];
 
   // UI helpers
   const enabledColumns = useMemo(
@@ -323,14 +333,14 @@ export default function FooterSettingsPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Footer Settings
+            {t("footerSettings.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Build your footer dynamically: branding, columns, links, socials, newsletter and legal.
+            {t("footerSettings.subtitle")}
           </p>
           {lastSavedAt ? (
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Last saved: {lastSavedAt}
+              {t("footerSettings.lastSaved", { time: lastSavedAt })}
             </p>
           ) : null}
         </div>
@@ -341,10 +351,10 @@ export default function FooterSettingsPage() {
             startIcon={<RefreshCw size={16} />}
             onClick={reset}
           >
-            Reset
+            {t("footerSettings.reset")}
           </Button>
           <Button startIcon={<Save size={16} />} onClick={save} disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("footerSettings.saving") : t("footerSettings.saveChanges")}
           </Button>
         </div>
       </div>
@@ -353,19 +363,19 @@ export default function FooterSettingsPage() {
         {/* LEFT CONFIG */}
         <div className="space-y-6">
           {/* Layout */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Layout
+              {t("footerSettings.layout.title")}
             </h2>
 
             <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Theme Mode
+                  {t("footerSettings.layout.themeMode")}
                 </p>
                 <Select
                   options={THEME_OPTIONS}
-                  placeholder="Select"
+                  placeholder={t("footerSettings.select")}
                   defaultValue={data.theme}
                   onChange={updateTheme}
                 />
@@ -373,24 +383,24 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2 md:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Container Width
+                  {t("footerSettings.layout.containerWidth")}
                 </p>
                 <Select
                   options={WIDTH_OPTIONS}
-                  placeholder="Select"
+                  placeholder={t("footerSettings.select")}
                   defaultValue={data.layout.maxWidth}
                   onChange={updateMaxWidth}
                 />
               </div>
 
               <div className="space-y-2 md:col-span-3">
-                <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Divider line (top border)
+                      {t("footerSettings.layout.dividerTitle")}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Show a subtle divider above footer content.
+                      {t("footerSettings.layout.dividerHint")}
                     </p>
                   </div>
                   <Switch
@@ -404,14 +414,14 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Branding */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Branding
+                  {t("footerSettings.branding.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Logo, brand name and short tagline.
+                  {t("footerSettings.branding.subtitle")}
                 </p>
               </div>
               <Switch
@@ -424,13 +434,13 @@ export default function FooterSettingsPage() {
             <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Logo URL
+                  {t("footerSettings.branding.logoUrl")}
                 </p>
                 <div className="flex items-center gap-2">
                   <Input
                     value={data.branding.logoUrl}
                     onChange={(e) => updateBranding("logoUrl", e.target.value)}
-                    placeholder="/logo.png"
+                    placeholder={t("footerSettings.branding.logoPlaceholder")}
                   />
                   <Button
                     variant="outline"
@@ -444,37 +454,37 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Brand Name
+                  {t("footerSettings.branding.brandName")}
                 </p>
                 <Input
                   value={data.branding.brandName}
                   onChange={(e) => updateBranding("brandName", e.target.value)}
-                  placeholder="Your brand"
+                  placeholder={t("footerSettings.branding.brandPlaceholder")}
                 />
               </div>
 
               <div className="space-y-2 md:col-span-1">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Tagline
+                  {t("footerSettings.branding.tagline")}
                 </p>
                 <Input
                   value={data.branding.tagline}
                   onChange={(e) => updateBranding("tagline", e.target.value)}
-                  placeholder="Short message..."
+                  placeholder={t("footerSettings.branding.taglinePlaceholder")}
                 />
               </div>
             </div>
           </div>
 
           {/* Footer Columns */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Footer Columns
+                  {t("footerSettings.columns.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Create multiple columns (links, text or contact).
+                  {t("footerSettings.columns.subtitle")}
                 </p>
               </div>
 
@@ -483,7 +493,7 @@ export default function FooterSettingsPage() {
                 startIcon={<Plus size={16} />}
                 onClick={addColumn}
               >
-                Add Column
+                {t("footerSettings.columns.addColumn")}
               </Button>
             </div>
 
@@ -491,31 +501,31 @@ export default function FooterSettingsPage() {
               {data.columns.map((col) => (
                 <div
                   key={col.id}
-                  className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="space-y-2 md:col-span-1">
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Title
+                            {t("footerSettings.columns.columnTitle")}
                           </p>
                           <Input
                             value={col.title}
                             onChange={(e) =>
                               updateColumn(col.id, { title: e.target.value })
                             }
-                            placeholder="Column title"
+                            placeholder={t("footerSettings.columns.columnTitlePlaceholder")}
                           />
                         </div>
 
                         <div className="space-y-2">
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Type
+                            {t("footerSettings.columns.type")}
                           </p>
                           <Select
                             options={COLUMN_TYPE_OPTIONS}
-                            placeholder="Select"
+                            placeholder={t("footerSettings.select")}
                             defaultValue={col.type}
                             onChange={(v) =>
                               onChangeColumnType(col.id, v as FooterColumnType)
@@ -525,11 +535,11 @@ export default function FooterSettingsPage() {
 
                         <div className="space-y-2">
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Priority
+                            {t("footerSettings.columns.priority")}
                           </p>
                           <Select
                             options={PRIORITY_OPTIONS}
-                            placeholder="Select"
+                            placeholder={t("footerSettings.select")}
                             defaultValue={col.priority}
                             onChange={(v) =>
                               updateColumn(col.id, { priority: v as Priority })
@@ -543,12 +553,12 @@ export default function FooterSettingsPage() {
                         {col.type === "text" ? (
                           <div className="space-y-2">
                             <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                              Text
+                              {t("footerSettings.columns.text")}
                             </p>
                             <TextArea
                               value={col.text ?? ""}
                               onChange={(v) => updateColumn(col.id, { text: v })}
-                              placeholder="Write a short footer description..."
+                              placeholder={t("footerSettings.columns.textPlaceholder")}
                             />
                           </div>
                         ) : null}
@@ -557,21 +567,21 @@ export default function FooterSettingsPage() {
                           <div className="space-y-4">
                             <div className="space-y-2">
                               <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                Address
+                                {t("footerSettings.columns.address")}
                               </p>
                               <TextArea
                                 value={col.contactAddress ?? ""}
                                 onChange={(v) =>
                                   updateColumn(col.id, { contactAddress: v })
                                 }
-                                placeholder="Address line..."
+                                placeholder={t("footerSettings.columns.addressPlaceholder")}
                               />
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div className="space-y-2">
                                 <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                  Phones (comma separated)
+                                  {t("footerSettings.columns.phones")}
                                 </p>
                                 <Input
                                   value={(col.contactPhones ?? []).join(", ")}
@@ -583,13 +593,13 @@ export default function FooterSettingsPage() {
                                         .filter(Boolean),
                                     })
                                   }
-                                  placeholder="+8801..., +8801..."
+                                  placeholder={t("footerSettings.columns.phonesPlaceholder")}
                                 />
                               </div>
 
                               <div className="space-y-2">
                                 <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                  Emails (comma separated)
+                                  {t("footerSettings.columns.emails")}
                                 </p>
                                 <Input
                                   value={(col.contactEmails ?? []).join(", ")}
@@ -601,7 +611,7 @@ export default function FooterSettingsPage() {
                                         .filter(Boolean),
                                     })
                                   }
-                                  placeholder="support@..., hello@..."
+                                  placeholder={t("footerSettings.columns.emailsPlaceholder")}
                                 />
                               </div>
                             </div>
@@ -612,14 +622,14 @@ export default function FooterSettingsPage() {
                           <div className="space-y-3">
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                Links
+                                {t("footerSettings.columns.links")}
                               </p>
                               <Button
                                 variant="outline"
                                 startIcon={<Plus size={16} />}
                                 onClick={() => addLink(col.id)}
                               >
-                                Add Link
+                                {t("footerSettings.columns.addLink")}
                               </Button>
                             </div>
 
@@ -627,7 +637,7 @@ export default function FooterSettingsPage() {
                               <table className="min-w-[980px] w-full border-collapse">
                                 <thead>
                                   <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
-                                    {["Label", "URL", "External", "Enabled", "Priority", "Action"].map(
+                                    {[t("footerSettings.table.label"), t("footerSettings.table.url"), t("footerSettings.table.external"), t("footerSettings.table.enabled"), t("footerSettings.table.priority"), t("footerSettings.table.action")].map(
                                       (h) => (
                                         <th
                                           key={h}
@@ -653,7 +663,7 @@ export default function FooterSettingsPage() {
                                               label: e.target.value,
                                             })
                                           }
-                                          placeholder="Label"
+                                          placeholder={t("footerSettings.table.labelPlaceholder")}
                                         />
                                       </td>
                                       <td className="px-4 py-3">
@@ -665,7 +675,7 @@ export default function FooterSettingsPage() {
                                                 href: e.target.value,
                                               })
                                             }
-                                            placeholder="/path or https://..."
+                                            placeholder={t("footerSettings.table.urlPlaceholder")}
                                           />
                                           <Button
                                             variant="outline"
@@ -709,7 +719,7 @@ export default function FooterSettingsPage() {
                                         <div className="max-w-[180px]">
                                           <Select
                                             options={PRIORITY_OPTIONS}
-                                            placeholder="Select"
+                                            placeholder={t("footerSettings.select")}
                                             defaultValue={l.priority}
                                             onChange={(v) =>
                                               updateLink(col.id, l.id, {
@@ -726,7 +736,7 @@ export default function FooterSettingsPage() {
                                           onClick={() => removeLink(col.id, l.id)}
                                           startIcon={<Trash2 size={14} />}
                                         >
-                                          Delete
+                                          {t("footerSettings.table.delete")}
                                         </Button>
                                       </td>
                                     </tr>
@@ -738,7 +748,7 @@ export default function FooterSettingsPage() {
                                         colSpan={6}
                                         className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                                       >
-                                        No links yet. Click “Add Link”.
+                                        {t("footerSettings.columns.noLinks")}
                                       </td>
                                     </tr>
                                   ) : null}
@@ -754,7 +764,7 @@ export default function FooterSettingsPage() {
                     <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                          Enabled
+                          {t("footerSettings.columns.enabled")}
                         </span>
                         <Switch
                           label=""
@@ -769,7 +779,7 @@ export default function FooterSettingsPage() {
                         onClick={() => removeColumn(col.id)}
                         startIcon={<Trash2 size={14} />}
                       >
-                        Remove
+                        {t("footerSettings.columns.remove")}
                       </Button>
                     </div>
                   </div>
@@ -777,22 +787,22 @@ export default function FooterSettingsPage() {
               ))}
 
               {data.columns.length === 0 ? (
-                <div className="rounded-[4px] border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                  No columns created.
+                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                  {t("footerSettings.columns.noColumns")}
                 </div>
               ) : null}
             </div>
           </div>
 
           {/* Newsletter */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Newsletter
+                  {t("footerSettings.newsletter.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Enable newsletter block for your footer.
+                  {t("footerSettings.newsletter.subtitle")}
                 </p>
               </div>
               <Switch
@@ -805,23 +815,23 @@ export default function FooterSettingsPage() {
             <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Title
+                  {t("footerSettings.newsletter.fieldTitle")}
                 </p>
                 <Input
                   value={data.newsletter.title}
                   onChange={(e) => updateNewsletter("title", e.target.value)}
-                  placeholder="Join our newsletter"
+                  placeholder={t("footerSettings.newsletter.titlePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Button Label
+                  {t("footerSettings.newsletter.buttonLabel")}
                 </p>
                 <Input
                   value={data.newsletter.buttonLabel}
                   onChange={(e) => updateNewsletter("buttonLabel", e.target.value)}
-                  placeholder="Subscribe"
+                  placeholder={t("footerSettings.newsletter.buttonPlaceholder")}
                 />
               </div>
 
@@ -838,31 +848,31 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2 md:col-span-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Placeholder
+                  {t("footerSettings.newsletter.placeholder")}
                 </p>
                 <Input
                   value={data.newsletter.placeholder}
                   onChange={(e) => updateNewsletter("placeholder", e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={t("footerSettings.newsletter.placeholderDefault")}
                 />
               </div>
             </div>
           </div>
 
           {/* Social Links */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Social Links
+              {t("footerSettings.social.title")}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Enable/disable social buttons & set URLs.
+              {t("footerSettings.social.subtitle")}
             </p>
 
             <div className="mt-5 space-y-3">
               {data.socials.map((s) => (
                 <div
                   key={s.key}
-                  className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -870,7 +880,7 @@ export default function FooterSettingsPage() {
                         {SOCIAL_LABELS[s.key]}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Key: {s.key}
+                        {t("footerSettings.social.key", { key: s.key })}
                       </p>
                     </div>
 
@@ -878,7 +888,7 @@ export default function FooterSettingsPage() {
                       <div className="w-[160px]">
                         <Select
                           options={PRIORITY_OPTIONS}
-                          placeholder="Select"
+                          placeholder={t("footerSettings.select")}
                           defaultValue={s.priority}
                           onChange={(v) => updateSocial(s.key, { priority: v as Priority })}
                         />
@@ -915,14 +925,14 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Payments */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Payments
+                  {t("footerSettings.payments.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Show accepted payment icons in footer.
+                  {t("footerSettings.payments.subtitle")}
                 </p>
               </div>
               <Switch
@@ -935,14 +945,14 @@ export default function FooterSettingsPage() {
             <div className="mt-5 space-y-4">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Title
+                  {t("footerSettings.payments.fieldTitle")}
                 </p>
                 <Input
                   value={data.payments.title}
                   onChange={(e) =>
                     updatePayments("title", e.target.value)
                   }
-                  placeholder="We Accept"
+                  placeholder={t("footerSettings.payments.titlePlaceholder")}
                 />
               </div>
 
@@ -950,7 +960,7 @@ export default function FooterSettingsPage() {
                 {data.payments.icons.map((p) => (
                   <div
                     key={p.id}
-                    className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                    className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -974,14 +984,14 @@ export default function FooterSettingsPage() {
           </div>
 
           {/* Legal */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Legal
+                  {t("footerSettings.legal.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Copyright and policy links.
+                  {t("footerSettings.legal.subtitle")}
                 </p>
               </div>
               <Switch
@@ -995,7 +1005,7 @@ export default function FooterSettingsPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Copyright Text
+                    {t("footerSettings.legal.copyrightText")}
                   </p>
                   <Button
                     variant="outline"
@@ -1003,27 +1013,27 @@ export default function FooterSettingsPage() {
                     onClick={() => safeCopy(data.legal.copyrightText)}
                     startIcon={<Copy size={14} />}
                   >
-                    Copy
+                    {t("footerSettings.legal.copy")}
                   </Button>
                 </div>
 
                 <Input
                   value={data.legal.copyrightText}
                   onChange={(e) => updateLegal("copyrightText", e.target.value)}
-                  placeholder="© {year} Your Company. All rights reserved."
+                  placeholder={t("footerSettings.legal.copyrightPlaceholder")}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Tip: use <span className="font-semibold">{`{year}`}</span> placeholder.
+                  {t("footerSettings.legal.copyrightTip")}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Show Policy Links
+                    {t("footerSettings.legal.showPolicies")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Privacy policy, terms, refund policy etc.
+                    {t("footerSettings.legal.policiesHint")}
                   </p>
                 </div>
                 <Switch
@@ -1037,14 +1047,14 @@ export default function FooterSettingsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Policy Links
+                      {t("footerSettings.legal.policyLinks")}
                     </p>
                     <Button
                       variant="outline"
                       startIcon={<Plus size={16} />}
                       onClick={addPolicy}
                     >
-                      Add Policy
+                      {t("footerSettings.legal.addPolicy")}
                     </Button>
                   </div>
 
@@ -1052,7 +1062,7 @@ export default function FooterSettingsPage() {
                     <table className="min-w-[980px] w-full border-collapse">
                       <thead>
                         <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
-                          {["Label", "URL", "External", "Enabled", "Priority", "Action"].map(
+                          {[t("footerSettings.table.label"), t("footerSettings.table.url"), t("footerSettings.table.external"), t("footerSettings.table.enabled"), t("footerSettings.table.priority"), t("footerSettings.table.action")].map(
                             (h) => (
                               <th
                                 key={h}
@@ -1076,7 +1086,7 @@ export default function FooterSettingsPage() {
                                 onChange={(e) =>
                                   updatePolicy(p.id, { label: e.target.value })
                                 }
-                                placeholder="Privacy Policy"
+                                placeholder={t("footerSettings.legal.policyPlaceholder")}
                               />
                             </td>
                             <td className="px-4 py-3">
@@ -1086,7 +1096,7 @@ export default function FooterSettingsPage() {
                                   onChange={(e) =>
                                     updatePolicy(p.id, { href: e.target.value })
                                   }
-                                  placeholder="/privacy-policy"
+                                  placeholder={t("footerSettings.legal.policyUrlPlaceholder")}
                                 />
                                 <Button
                                   variant="outline"
@@ -1122,7 +1132,7 @@ export default function FooterSettingsPage() {
                               <div className="max-w-[180px]">
                                 <Select
                                   options={PRIORITY_OPTIONS}
-                                  placeholder="Select"
+                                  placeholder={t("footerSettings.select")}
                                   defaultValue={p.priority}
                                   onChange={(v) =>
                                     updatePolicy(p.id, { priority: v as Priority })
@@ -1137,7 +1147,7 @@ export default function FooterSettingsPage() {
                                 onClick={() => removePolicy(p.id)}
                                 startIcon={<Trash2 size={14} />}
                               >
-                                Delete
+                                {t("footerSettings.table.delete")}
                               </Button>
                             </td>
                           </tr>
@@ -1149,7 +1159,7 @@ export default function FooterSettingsPage() {
                               colSpan={6}
                               className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                             >
-                              No policy links.
+                              {t("footerSettings.legal.noPolicies")}
                             </td>
                           </tr>
                         ) : null}
@@ -1164,14 +1174,14 @@ export default function FooterSettingsPage() {
 
         {/* RIGHT PREVIEW */}
         <div className="space-y-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Live Preview
+                  {t("footerSettings.preview.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  This preview uses your theme classes to match the dashboard.
+                  {t("footerSettings.preview.subtitle")}
                 </p>
               </div>
 
@@ -1180,13 +1190,13 @@ export default function FooterSettingsPage() {
                 startIcon={<Eye size={16} />}
                 onClick={() => console.log("Open storefront preview")}
               >
-                Preview
+                {t("footerSettings.preview.previewButton")}
               </Button>
             </div>
 
             <div
               className={[
-                "mt-6 rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden",
+                "mt-6 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden",
               ].join(" ")}
             >
               <div className={["mx-auto w-full px-6 py-8", containerWidthClass].join(" ")}>
@@ -1200,8 +1210,8 @@ export default function FooterSettingsPage() {
                     {data.branding.enabled ? (
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200">
-                            Logo
+                          <div className="h-10 w-10 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200">
+                            {t("footerSettings.preview.logo")}
                           </div>
                           <div>
                             <p className="text-base font-semibold text-gray-900 dark:text-white">
@@ -1216,7 +1226,7 @@ export default function FooterSettingsPage() {
                     ) : null}
 
                     {data.newsletter.enabled ? (
-                      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {data.newsletter.title}
                         </p>
@@ -1232,9 +1242,9 @@ export default function FooterSettingsPage() {
                     ) : null}
 
                     {enabledSocials.length ? (
-                      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Follow Us
+                          {t("footerSettings.social.followUs")}
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {enabledSocials.map((s) => (
@@ -1243,7 +1253,7 @@ export default function FooterSettingsPage() {
                               href={s.url || "#"}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center rounded-[4px] border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                              className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                             >
                               {SOCIAL_LABELS[s.key]}
                             </a>
@@ -1311,7 +1321,7 @@ export default function FooterSettingsPage() {
                           {enabledPaymentIcons.map((p) => (
                             <span
                               key={p.id}
-                              className="inline-flex items-center rounded-[4px] border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                              className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
                             >
                               {p.label}
                             </span>
@@ -1346,19 +1356,19 @@ export default function FooterSettingsPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                ✅ Backend ready: You can store this settings JSON in DB and render footer on storefront.
+                {t("footerSettings.preview.backendNote")}
               </p>
             </div>
           </div>
 
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Export / Integration
+              {t("footerSettings.export.title")}
             </p>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Save output as JSON and render from storefront footer.
+              {t("footerSettings.export.subtitle")}
             </p>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -1367,14 +1377,14 @@ export default function FooterSettingsPage() {
                 onClick={() => safeCopy(JSON.stringify(data, null, 2))}
                 startIcon={<Copy size={16} />}
               >
-                Copy JSON
+                {t("footerSettings.export.copyJson")}
               </Button>
 
               <Button
                 variant="outline"
                 onClick={() => console.log("Deploy footer settings")}
               >
-                Deploy (demo)
+                {t("footerSettings.export.deploy")}
               </Button>
             </div>
           </div>

@@ -155,7 +155,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
 
   return (
     <div className="mt-6 space-y-5">
-      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-white">{t("reports.common.allReports")}</div>
@@ -170,7 +170,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
                 value={query}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
                 placeholder={t("reports.common.searchPlaceholder")}
-                className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 pr-10"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             </div>
@@ -179,7 +179,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
               value={orderType}
               onChange={(e) => setOrderType(e.target.value as OrderTypeFilter)}
               className={cn(
-                "h-11 rounded-[4px] border border-gray-200 dark:border-gray-800",
+                "h-11 rounded-xl border border-gray-200 dark:border-gray-800",
                 "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
@@ -193,7 +193,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
               value={orderStatus}
               onChange={(e) => setOrderStatus(e.target.value as OrderStatusFilter)}
               className={cn(
-                "h-11 rounded-[4px] border border-gray-200 dark:border-gray-800",
+                "h-11 rounded-xl border border-gray-200 dark:border-gray-800",
                 "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
@@ -216,7 +216,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
               value={paymentStatus}
               onChange={(e) => setPaymentStatus(e.target.value as PaymentStatusFilter)}
               className={cn(
-                "h-11 rounded-[4px] border border-gray-200 dark:border-gray-800",
+                "h-11 rounded-xl border border-gray-200 dark:border-gray-800",
                 "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
@@ -231,7 +231,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
               value={paymentType}
               onChange={(e) => setPaymentType(e.target.value as PaymentTypeFilter)}
               className={cn(
-                "h-11 rounded-[4px] border border-gray-200 dark:border-gray-800",
+                "h-11 rounded-xl border border-gray-200 dark:border-gray-800",
                 "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
                 "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
               )}
@@ -291,7 +291,7 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
 
 function StatTile({ label, value, isLoading }: { label: string; value: string; isLoading?: boolean }) {
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
       <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</div>
       {isLoading ? (
         <div className="mt-2 h-6 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />

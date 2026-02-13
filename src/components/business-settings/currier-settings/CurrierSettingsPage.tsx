@@ -191,7 +191,7 @@ export default function CurrierSettingsPage() {
       </div>
 
       {courierQuery.isError ? (
-        <div className="rounded-[4px] border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+        <div className="rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
           {t("businessSettings.currier.failedLoad")}
         </div>
       ) : null}
@@ -201,7 +201,7 @@ export default function CurrierSettingsPage() {
           ? Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+              className="h-[180px] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
             />
           ))
           : filtered.map((g) => {
@@ -212,12 +212,12 @@ export default function CurrierSettingsPage() {
             return (
               <div
                 key={g.provider}
-                className="overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                         {g.imagePath ? (
                           <img
                             src={toPublicUrl(g.imagePath) ?? undefined}
@@ -313,7 +313,7 @@ export default function CurrierSettingsPage() {
           })}
 
         {!courierQuery.isLoading && filtered.length === 0 ? (
-          <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <div className="col-span-full rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             {t("businessSettings.currier.noCurriers")}
           </div>
         ) : null}

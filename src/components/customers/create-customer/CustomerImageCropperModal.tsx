@@ -116,7 +116,7 @@ export default function CustomerImageCropperModal({
         aria-label="Close overlay"
       />
 
-      <div className="relative w-[96vw] max-w-3xl overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="relative w-[96vw] max-w-3xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -131,7 +131,7 @@ export default function CustomerImageCropperModal({
             type="button"
             onClick={() => !saving && onClose()}
             className={cn(
-              "inline-flex h-9 w-9 items-center justify-center rounded-[4px] border",
+              "inline-flex h-9 w-9 items-center justify-center rounded-xl border",
               "border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50",
               "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
             )}
@@ -144,8 +144,8 @@ export default function CustomerImageCropperModal({
         <div className="px-6 py-5">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
-                <div className="relative w-full overflow-hidden rounded-[4px] bg-black">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
+                <div className="relative w-full overflow-hidden rounded-xl bg-black">
                   <div className="pt-[100%]" />
                   <div className="absolute inset-0">
                     <Cropper
@@ -165,7 +165,7 @@ export default function CustomerImageCropperModal({
             </div>
 
             <div className="space-y-5">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">Zoom</p>
                 <div className="mt-3">
                   <input
@@ -185,7 +185,7 @@ export default function CustomerImageCropperModal({
                 </div>
               </div>
 
-              <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Tips</h4>
                 <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400">
                   <li>Drag the image to position</li>

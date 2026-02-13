@@ -65,7 +65,7 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
         {/* Left Preview */}
         <div className="col-span-12 md:col-span-5 border-b bg-white md:border-b-0 md:border-r border-gray-200 dark:border-gray-800 dark:bg-gray-900">
           <div className="p-6">
-            <div className="overflow-hidden rounded-[4px] ring-1 ring-gray-200 dark:ring-gray-800">
+            <div className="overflow-hidden rounded-xl ring-1 ring-gray-200 dark:ring-gray-800">
               <img
                 src={displayImage}
                 alt={displayTitle}
@@ -93,7 +93,7 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                 ))}
             </div>
 
-            <div className="mt-5 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
+            <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-300">
                   Unit Price
@@ -131,7 +131,7 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                       <button
                         key={v.id}
                         onClick={() => setVariant(v.name)}
-                        className={`rounded-[4px] px-4 py-2 text-sm font-medium ring-1 ${
+                        className={`rounded-xl px-4 py-2 text-sm font-medium ring-1 ${
                           active
                             ? "bg-brand-500 text-white ring-brand-500"
                             : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-800"
@@ -158,7 +158,7 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                       <button
                         key={s.id}
                         onClick={() => setSize(s.name)}
-                        className={`rounded-[4px] px-4 py-2 text-sm font-medium ring-1 ${
+                        className={`rounded-xl px-4 py-2 text-sm font-medium ring-1 ${
                           active
                             ? "bg-brand-500 text-white ring-brand-500"
                             : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-800"
@@ -178,11 +178,11 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                 Quantity
               </p>
 
-              <div className="flex items-center justify-between rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="h-10 w-10 rounded-[4px] border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200"
+                    className="h-10 w-10 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200"
                   >
                     <Minus size={16} />
                   </button>
@@ -194,12 +194,12 @@ const ProductAddModal = ({ open, onClose, product, onAdd }: Props) => {
                     onChange={(e) =>
                       setQty(Math.max(1, Number(e.target.value) || 1))
                     }
-                    className="h-10 w-20 rounded-[4px] border border-gray-200 text-center font-semibold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                    className="h-10 w-20 rounded-xl border border-gray-200 text-center font-semibold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
                   />
 
                   <button
                     onClick={() => setQty((q) => q + 1)}
-                    className="h-10 w-10 rounded-[4px] bg-brand-500 text-white hover:bg-brand-600"
+                    className="h-10 w-10 rounded-xl bg-brand-500 text-white hover:bg-brand-600"
                   >
                     <Plus size={16} />
                   </button>

@@ -34,7 +34,7 @@ export default function TopViewedProductsCard({
   return (
     <div
       className={cn(
-        "h-full rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "h-full rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -66,7 +66,7 @@ export default function TopViewedProductsCard({
           Array.from({ length: 6 }).map((_, i) => (
             <div
               key={`sk-${i}`}
-              className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
+              className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
             >
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded bg-gray-200 dark:bg-gray-800" />
@@ -83,10 +83,10 @@ export default function TopViewedProductsCard({
           rows.map((r) => (
             <div
               key={String(r.id)}
-              className="rounded-[4px] border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
+              className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950"
             >
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 overflow-hidden rounded-[4px] border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                <div className="h-12 w-12 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
                   {r.image ? (
                     <img
                       src={toPublicUrl(r.image)}
@@ -114,7 +114,7 @@ export default function TopViewedProductsCard({
           ))}
 
         {!isLoading && rows.length === 0 && (
-          <div className="rounded-[4px] border border-gray-200 bg-white px-4 py-10 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
             {t("reports.common.noData")}
           </div>
         )}

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Copy,
   ExternalLink,
@@ -55,6 +56,7 @@ const SOCIAL_ICONS: Record<SocialKey, React.ReactNode> = {
 };
 
 export default function ContactPageSettingsPage() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<ContactPageSettings>(
     INITIAL_CONTACT_SETTINGS
   );
@@ -268,15 +270,14 @@ export default function ContactPageSettingsPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Contact Page
+            {t("contactPageSettings.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure your storefront contact section (address, phone, email,
-            business hours, social links and map).
+            {t("contactPageSettings.subtitle")}
           </p>
           {lastSavedAt ? (
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Last saved: {lastSavedAt}
+              {t("contactPageSettings.lastSaved", { time: lastSavedAt })}
             </p>
           ) : null}
         </div>
@@ -287,7 +288,7 @@ export default function ContactPageSettingsPage() {
             startIcon={<RefreshCw size={16} />}
             onClick={onReset}
           >
-            Reset
+            {t("contactPageSettings.reset")}
           </Button>
 
           <Button
@@ -295,7 +296,7 @@ export default function ContactPageSettingsPage() {
             onClick={onSave}
             disabled={saving}
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("contactPageSettings.saving") : t("contactPageSettings.saveChanges")}
           </Button>
         </div>
       </div>
@@ -304,99 +305,99 @@ export default function ContactPageSettingsPage() {
         {/* LEFT: SETTINGS */}
         <div className="space-y-6">
           {/* Page Intro */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Page Intro
+              {t("contactPageSettings.pageIntro.title")}
             </h2>
 
             <div className="mt-5 grid grid-cols-1 gap-5">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Heading
+                  {t("contactPageSettings.pageIntro.heading")}
                 </p>
                 <Input
                   value={settings.contactInfo.heading}
                   onChange={(e) => updateContactInfo("heading", e.target.value)}
-                  placeholder="Get in Touch"
+                  placeholder={t("contactPageSettings.pageIntro.headingPlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Sub Heading
+                  {t("contactPageSettings.pageIntro.subHeading")}
                 </p>
                 <TextArea
                   value={settings.contactInfo.subHeading}
                   onChange={(v) => updateContactInfo("subHeading", v)}
-                  placeholder="Short description..."
+                  placeholder={t("contactPageSettings.pageIntro.subHeadingPlaceholder")}
                 />
               </div>
             </div>
           </div>
 
           {/* Contact Information */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Contact Information
+              {t("contactPageSettings.contactInfo.title")}
             </h2>
 
             <div className="mt-5 space-y-5">
               {/* Address */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-brand-500" />
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Address
+                    {t("contactPageSettings.contactInfo.address")}
                   </p>
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Title
+                      {t("contactPageSettings.contactInfo.addressTitle")}
                     </p>
                     <Input
                       value={settings.contactInfo.addressTitle}
                       onChange={(e) =>
                         updateContactInfo("addressTitle", e.target.value)
                       }
-                      placeholder="Shop & Display Center Address"
+                      placeholder={t("contactPageSettings.contactInfo.addressTitlePlaceholder")}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Address Text
+                      {t("contactPageSettings.contactInfo.addressText")}
                     </p>
                     <TextArea
                       value={settings.contactInfo.addressText}
                       onChange={(v) => updateContactInfo("addressText", v)}
-                      placeholder="House, Road, Sector..."
+                      placeholder={t("contactPageSettings.contactInfo.addressTextPlaceholder")}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Note
+                      {t("contactPageSettings.contactInfo.note")}
                     </p>
                     <Input
                       value={settings.contactInfo.addressNote}
                       onChange={(e) =>
                         updateContactInfo("addressNote", e.target.value)
                       }
-                      placeholder="(10am-10pm, Open Everyday)"
+                      placeholder={t("contactPageSettings.contactInfo.notePlaceholder")}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Phone */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Phone size={16} className="text-brand-500" />
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Phone
+                      {t("contactPageSettings.contactInfo.phone")}
                     </p>
                   </div>
                   <Button
@@ -404,21 +405,21 @@ export default function ContactPageSettingsPage() {
                     startIcon={<Plus size={16} />}
                     onClick={addPhone}
                   >
-                    Add
+                    {t("contactPageSettings.add")}
                   </Button>
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-3">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Title
+                      {t("contactPageSettings.contactInfo.phoneTitle")}
                     </p>
                     <Input
                       value={settings.contactInfo.callTitle}
                       onChange={(e) =>
                         updateContactInfo("callTitle", e.target.value)
                       }
-                      placeholder="Call Us"
+                      placeholder={t("contactPageSettings.contactInfo.callTitlePlaceholder")}
                     />
                   </div>
 
@@ -441,24 +442,24 @@ export default function ContactPageSettingsPage() {
 
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Note
+                      {t("contactPageSettings.contactInfo.note")}
                     </p>
                     <Input
                       value={settings.contactInfo.callNote}
                       onChange={(e) => updateContactInfo("callNote", e.target.value)}
-                      placeholder="(10am-10pm, Open Everyday)"
+                      placeholder={t("contactPageSettings.contactInfo.notePlaceholder")}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Email */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Mail size={16} className="text-brand-500" />
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Email
+                      {t("contactPageSettings.contactInfo.email")}
                     </p>
                   </div>
                   <Button
@@ -466,19 +467,19 @@ export default function ContactPageSettingsPage() {
                     startIcon={<Plus size={16} />}
                     onClick={addEmail}
                   >
-                    Add
+                    {t("contactPageSettings.add")}
                   </Button>
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-3">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Title
+                      {t("contactPageSettings.contactInfo.emailTitle")}
                     </p>
                     <Input
                       value={settings.contactInfo.mailTitle}
                       onChange={(e) => updateContactInfo("mailTitle", e.target.value)}
-                      placeholder="Mail Us"
+                      placeholder={t("contactPageSettings.contactInfo.mailTitlePlaceholder")}
                     />
                   </div>
 
@@ -502,14 +503,14 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Business hours */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Business Hours
+                      {t("contactPageSettings.businessHours.title")}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Add rows like “Online Operations”, “Everyday”, “Closed Tuesday”, etc.
+                      {t("contactPageSettings.businessHours.subtitle")}
                     </p>
                   </div>
 
@@ -518,32 +519,32 @@ export default function ContactPageSettingsPage() {
                     startIcon={<Plus size={16} />}
                     onClick={addBusinessRow}
                   >
-                    Add Row
+                    {t("contactPageSettings.businessHours.addRow")}
                   </Button>
                 </div>
 
                 <div className="mt-4 space-y-3">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Title
+                      {t("contactPageSettings.businessHours.fieldTitle")}
                     </p>
                     <Input
                       value={settings.contactInfo.businessTitle}
                       onChange={(e) =>
                         updateContactInfo("businessTitle", e.target.value)
                       }
-                      placeholder="Business Hours"
+                      placeholder={t("contactPageSettings.businessHours.titlePlaceholder")}
                     />
                   </div>
 
                   {settings.contactInfo.businessRows.map((r) => (
                     <div
                       key={r.id}
-                      className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                      className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                          Row
+                          {t("contactPageSettings.businessHours.row")}
                         </p>
                         <div className="flex items-center gap-2">
                           <Switch
@@ -566,26 +567,26 @@ export default function ContactPageSettingsPage() {
                       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div className="space-y-2">
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Label
+                            {t("contactPageSettings.businessHours.label")}
                           </p>
                           <Input
                             value={r.label}
                             onChange={(e) =>
                               updateBusinessRow(r.id, { label: e.target.value })
                             }
-                            placeholder="Everyday (7 Days a Week)"
+                            placeholder={t("contactPageSettings.businessHours.labelPlaceholder")}
                           />
                         </div>
                         <div className="space-y-2">
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            Time (optional)
+                            {t("contactPageSettings.businessHours.time")}
                           </p>
                           <Input
                             value={r.time}
                             onChange={(e) =>
                               updateBusinessRow(r.id, { time: e.target.value })
                             }
-                            placeholder="10:00 AM - 11:00 PM"
+                            placeholder={t("contactPageSettings.businessHours.timePlaceholder")}
                           />
                         </div>
                       </div>
@@ -594,14 +595,14 @@ export default function ContactPageSettingsPage() {
 
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Footer Note (optional)
+                      {t("contactPageSettings.businessHours.footerNote")}
                     </p>
                     <Input
                       value={settings.contactInfo.businessFooterNote}
                       onChange={(e) =>
                         updateContactInfo("businessFooterNote", e.target.value)
                       }
-                      placeholder="Example: Closed on Tuesday"
+                      placeholder={t("contactPageSettings.businessHours.footerNotePlaceholder")}
                     />
                   </div>
                 </div>
@@ -610,23 +611,23 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Social Links */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Follow Us
+              {t("contactPageSettings.socialLinks.title")}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Enable / disable social buttons and update URLs.
+              {t("contactPageSettings.socialLinks.subtitle")}
             </p>
 
             <div className="mt-5 space-y-3">
               {settings.socialLinks.map((s) => (
                 <div
                   key={s.key}
-                  className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200">
                         {SOCIAL_ICONS[s.key]}
                       </div>
                       <div>
@@ -656,7 +657,7 @@ export default function ContactPageSettingsPage() {
                         }}
                         disabled={!s.url}
                       >
-                        Open
+                        {t("contactPageSettings.socialLinks.open")}
                       </Button>
                     </div>
                   </div>
@@ -664,20 +665,20 @@ export default function ContactPageSettingsPage() {
                   <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        Label
+                        {t("contactPageSettings.socialLinks.label")}
                       </p>
                       <Input
                         value={s.label}
                         onChange={(e) =>
                           updateSocial(s.key, { label: e.target.value })
                         }
-                        placeholder="Facebook"
+                        placeholder={t("contactPageSettings.socialLinks.labelPlaceholder")}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        URL
+                        {t("contactPageSettings.socialLinks.url")}
                       </p>
                       <Input
                         value={s.url}
@@ -694,40 +695,40 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Map */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Map
+              {t("contactPageSettings.map.title")}
             </h2>
 
             <div className="mt-5 grid grid-cols-1 gap-5">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Map Title
+                  {t("contactPageSettings.map.mapTitle")}
                 </p>
                 <Input
                   value={settings.contactInfo.mapTitle}
                   onChange={(e) => updateContactInfo("mapTitle", e.target.value)}
-                  placeholder="Find Us"
+                  placeholder={t("contactPageSettings.map.mapTitlePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Map Subtitle
+                  {t("contactPageSettings.map.mapSubtitle")}
                 </p>
                 <Input
                   value={settings.contactInfo.mapSubTitle}
                   onChange={(e) =>
                     updateContactInfo("mapSubTitle", e.target.value)
                   }
-                  placeholder="Visit our shop..."
+                  placeholder={t("contactPageSettings.map.mapSubtitlePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Google Map Embed URL
+                    {t("contactPageSettings.map.embedUrl")}
                   </p>
                   <Button
                     variant="outline"
@@ -735,57 +736,57 @@ export default function ContactPageSettingsPage() {
                     onClick={() => safeCopy(settings.contactInfo.mapEmbedUrl)}
                     startIcon={<Copy size={14} />}
                   >
-                    Copy
+                    {t("contactPageSettings.map.copy")}
                   </Button>
                 </div>
                 <Input
                   value={settings.contactInfo.mapEmbedUrl}
                   onChange={(e) => updateContactInfo("mapEmbedUrl", e.target.value)}
-                  placeholder="https://www.google.com/maps?q=...&output=embed"
+                  placeholder={t("contactPageSettings.map.embedUrlPlaceholder")}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Tip: Google Maps → Share → Embed a map URL.
+                  {t("contactPageSettings.map.embedTip")}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Contact Form */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Contact Form
+              {t("contactPageSettings.contactForm.title")}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Control fields, required validation and message recipient emails.
+              {t("contactPageSettings.contactForm.subtitle")}
             </p>
 
             <div className="mt-5 grid grid-cols-1 gap-5">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Form Title
+                  {t("contactPageSettings.contactForm.formTitle")}
                 </p>
                 <Input
                   value={settings.contactForm.title}
                   onChange={(e) => updateContactFormTop("title", e.target.value)}
-                  placeholder="Send us a Message"
+                  placeholder={t("contactPageSettings.contactForm.formTitlePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Success Message
+                  {t("contactPageSettings.contactForm.successMessage")}
                 </p>
                 <TextArea
                   value={settings.contactForm.successMessage}
                   onChange={(v) => updateContactFormTop("successMessage", v)}
-                  placeholder="Message to show after successful submission..."
+                  placeholder={t("contactPageSettings.contactForm.successPlaceholder")}
                 />
               </div>
 
               {/* Fields */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Fields
+                  {t("contactPageSettings.contactForm.fields")}
                 </p>
 
                 <div className="mt-4 space-y-3">
@@ -794,7 +795,7 @@ export default function ContactPageSettingsPage() {
                     return (
                       <div
                         key={key}
-                        className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                        className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div>
@@ -809,7 +810,7 @@ export default function ContactPageSettingsPage() {
                           <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2">
                               <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                Enabled
+                                {t("contactPageSettings.contactForm.enabled")}
                               </p>
                               <Switch
                                 label=""
@@ -822,7 +823,7 @@ export default function ContactPageSettingsPage() {
 
                             <div className="flex items-center gap-2">
                               <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                Required
+                                {t("contactPageSettings.contactForm.required")}
                               </p>
                               <Switch
                                 label=""
@@ -838,27 +839,27 @@ export default function ContactPageSettingsPage() {
                         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                           <div className="space-y-2">
                             <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                              Label
+                              {t("contactPageSettings.contactForm.label")}
                             </p>
                             <Input
                               value={f.label}
                               onChange={(e) =>
                                 updateField(key, { label: e.target.value })
                               }
-                              placeholder="Label"
+                              placeholder={t("contactPageSettings.contactForm.labelPlaceholder")}
                             />
                           </div>
 
                           <div className="space-y-2">
                             <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                              Placeholder
+                              {t("contactPageSettings.contactForm.placeholder")}
                             </p>
                             <Input
                               value={f.placeholder}
                               onChange={(e) =>
                                 updateField(key, { placeholder: e.target.value })
                               }
-                              placeholder="Placeholder"
+                              placeholder={t("contactPageSettings.contactForm.placeholderDefault")}
                             />
                           </div>
                         </div>
@@ -869,14 +870,14 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Recipient Emails */}
-              <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Recipient Emails
+                      {t("contactPageSettings.contactForm.recipientEmails")}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Contact form submissions will be routed to these emails (backend needed).
+                      {t("contactPageSettings.contactForm.recipientHint")}
                     </p>
                   </div>
                   <Button
@@ -884,7 +885,7 @@ export default function ContactPageSettingsPage() {
                     startIcon={<Plus size={16} />}
                     onClick={addRecipient}
                   >
-                    Add
+                    {t("contactPageSettings.add")}
                   </Button>
                 </div>
 
@@ -913,14 +914,14 @@ export default function ContactPageSettingsPage() {
 
         {/* RIGHT: LIVE PREVIEW */}
         <div className="space-y-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Live Preview
+                  {t("contactPageSettings.preview.title")}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Preview how your storefront contact page can look.
+                  {t("contactPageSettings.preview.subtitle")}
                 </p>
               </div>
 
@@ -929,11 +930,11 @@ export default function ContactPageSettingsPage() {
                 startIcon={<ExternalLink size={16} />}
                 onClick={() => console.log("Open storefront preview")}
               >
-                Preview
+                {t("contactPageSettings.preview.previewBtn")}
               </Button>
             </div>
 
-            <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <div>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {settings.contactInfo.heading}
@@ -945,7 +946,7 @@ export default function ContactPageSettingsPage() {
 
               <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Contact form preview */}
-                <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                   <p className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
                     <Mail size={18} className="text-brand-500" /> {settings.contactForm.title}
                   </p>
@@ -998,19 +999,19 @@ export default function ContactPageSettingsPage() {
                   </div>
 
                   <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
-                    <Button variant="outline">Cancel</Button>
-                    <Button>Send Message</Button>
+                    <Button variant="outline">{t("contactPageSettings.preview.cancel")}</Button>
+                    <Button>{t("contactPageSettings.preview.sendMessage")}</Button>
                   </div>
                 </div>
 
                 {/* Contact info preview */}
-                <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                   <p className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-                    <MapPin size={18} className="text-brand-500" /> Contact Information
+                    <MapPin size={18} className="text-brand-500" /> {t("contactPageSettings.preview.contactInformation")}
                   </p>
 
                   <div className="mt-5 space-y-4">
-                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.addressTitle}
                       </p>
@@ -1024,7 +1025,7 @@ export default function ContactPageSettingsPage() {
                       ) : null}
                     </div>
 
-                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.callTitle}
                       </p>
@@ -1042,7 +1043,7 @@ export default function ContactPageSettingsPage() {
                       ) : null}
                     </div>
 
-                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.mailTitle}
                       </p>
@@ -1055,7 +1056,7 @@ export default function ContactPageSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {settings.contactInfo.businessTitle}
                       </p>
@@ -1085,9 +1086,9 @@ export default function ContactPageSettingsPage() {
               </div>
 
               {/* Social Preview */}
-              <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
-                  Follow Us
+                  {t("contactPageSettings.preview.followUs")}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {enabledSocials.length ? (
@@ -1097,7 +1098,7 @@ export default function ContactPageSettingsPage() {
                         href={s.url || "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                       >
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                           {SOCIAL_ICONS[s.key]}
@@ -1107,14 +1108,14 @@ export default function ContactPageSettingsPage() {
                     ))
                   ) : (
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No social links enabled.
+                      {t("contactPageSettings.preview.noSocialLinks")}
                     </p>
                   )}
                 </div>
               </div>
 
               {/* Map Preview */}
-              <div className="mt-6 rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-base font-semibold text-gray-900 dark:text-white">
@@ -1134,11 +1135,11 @@ export default function ContactPageSettingsPage() {
                     }}
                     disabled={!settings.contactInfo.mapEmbedUrl}
                   >
-                    Open
+                    {t("contactPageSettings.socialLinks.open")}
                   </Button>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-[4px] border border-gray-200 dark:border-gray-800">
+                <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
                   <iframe
                     title="map"
                     src={settings.contactInfo.mapEmbedUrl}
@@ -1152,9 +1153,9 @@ export default function ContactPageSettingsPage() {
           </div>
 
           {/* Helper */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              ✅ Backend ready: Save the settings in DB and load them in your storefront Contact page.
+              {t("contactPageSettings.helperText")}
             </p>
           </div>
         </div>

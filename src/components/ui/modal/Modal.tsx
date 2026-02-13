@@ -53,7 +53,7 @@ export default function Modal({
         className={cn(
           "relative z-[10000] w-full bg-white shadow-theme-xs dark:bg-gray-900",
           "overflow-hidden", // ✅ IMPORTANT: clip header/footer so rounded corners show
-          "rounded-[4px]", // default
+          "rounded-xl", // default
           sizeClass,
           contentClassName // ✅ e.g. rounded-[6px]
         )}
@@ -73,7 +73,7 @@ export default function Modal({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] text-gray-500 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
               aria-label="Close"
             >
               ✕

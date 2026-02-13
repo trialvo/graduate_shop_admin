@@ -160,7 +160,7 @@ export default function PaymentSettingsPage() {
           ? Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+              className="h-[180px] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
             />
           ))
           : filtered.map((g) => {
@@ -170,11 +170,11 @@ export default function PaymentSettingsPage() {
             return (
               <div
                 key={g.provider}
-                className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+                className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm font-extrabold text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                       {logo}
                     </div>
 
@@ -249,7 +249,7 @@ export default function PaymentSettingsPage() {
           })}
 
         {!paymentQuery.isLoading && filtered.length === 0 ? (
-          <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <div className="col-span-full rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             {t("businessSettings.payment.noGateway")}
           </div>
         ) : null}

@@ -20,10 +20,10 @@ function Row({
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-between rounded-[4px] border border-gray-200 bg-white px-4 py-4 text-left shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+      className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-4 text-left shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
     >
       <div className="flex items-center gap-3">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
           {icon}
         </span>
         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -41,7 +41,7 @@ function Row({
 export default function ProfileQuickLinksCard({ counts }: Props) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-3 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="space-y-3">
         <Row
           icon={<Bell size={18} className="text-error-500" />}

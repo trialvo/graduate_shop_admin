@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -65,6 +66,8 @@ export default function ProductAddModal({
   product,
   onAdd,
 }: Props) {
+  const { t } = useTranslation();
+
   const productId = React.useMemo(() => {
     const raw = product?.id;
     const n = Number(raw);
@@ -162,7 +165,7 @@ export default function ProductAddModal({
             {title}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Select color & variant, then add to cart
+            {t("sales.selectColorVariant")}
           </p>
         </div>
 
@@ -181,12 +184,12 @@ export default function ProductAddModal({
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-16 dark:border-gray-700">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-              Loading product...
+              {t("sales.loadingProduct")}
             </p>
           </div>
         ) : singleQuery.isError ? (
           <div className="rounded-xl border border-error-200 bg-error-50 p-6 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-950/30 dark:text-error-200">
-            Failed to load product.
+            {t("sales.failedToLoadProduct")}
           </div>
         ) : single ? (
           <div className="grid grid-cols-12 gap-6">
@@ -212,20 +215,20 @@ export default function ProductAddModal({
                   </Swiper>
                 ) : (
                   <div className="flex h-[320px] items-center justify-center bg-gray-50 text-sm text-gray-400 dark:bg-white/[0.03] dark:text-gray-500 sm:h-[360px]">
-                    No images
+                    {t("sales.noImages")}
                   </div>
                 )}
 
                 {/* SKU + Stock chips */}
                 <div className="grid grid-cols-2 gap-2 p-3">
                   <div className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.03]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">SKU</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{t("sales.sku")}</p>
                     <p className="mt-0.5 truncate text-xs font-bold text-gray-800 dark:text-gray-200">
                       {sku || "—"}
                     </p>
                   </div>
                   <div className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 dark:border-gray-800 dark:bg-white/[0.03]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Stock</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{t("sales.stock")}</p>
                     <p
                       className={cn(
                         "mt-0.5 text-xs font-bold",
@@ -256,7 +259,7 @@ export default function ProductAddModal({
                   )}
 
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Brand</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{t("sales.brand")}</p>
                     <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
                       {single.brand?.name ?? "—"}
                     </p>
@@ -265,7 +268,7 @@ export default function ProductAddModal({
 
                 <div className="mt-4 space-y-2">
                   <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-4 py-3 dark:border-gray-800 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Category</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{t("sales.category")}</p>
                     <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                       {single.main_category?.name ?? "—"} •{" "}
                       {single.sub_category?.name ?? "—"} •{" "}
@@ -274,7 +277,7 @@ export default function ProductAddModal({
                   </div>
 
                   <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-4 py-3 dark:border-gray-800 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Attribute</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{t("sales.attribute")}</p>
                     <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                       {single.attribute?.name ?? "—"}
                     </p>
@@ -285,26 +288,26 @@ export default function ProductAddModal({
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {single.status ? (
                     <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                      Active
+                      {t("sales.active")}
                     </span>
                   ) : (
                     <span className="rounded-lg bg-error-50 px-2.5 py-1 text-[10px] font-bold text-error-700 dark:bg-error-500/10 dark:text-error-300">
-                      Inactive
+                      {t("sales.inactive")}
                     </span>
                   )}
                   {single.featured ? (
                     <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-[10px] font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
-                      Featured
+                      {t("sales.featured")}
                     </span>
                   ) : null}
                   {single.best_deal ? (
                     <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                      Best Deal
+                      {t("sales.bestDeal")}
                     </span>
                   ) : null}
                   {single.free_delivery ? (
                     <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:bg-white/[0.06] dark:text-gray-300">
-                      Free Delivery
+                      {t("sales.freeDelivery")}
                     </span>
                   ) : null}
                 </div>
@@ -317,7 +320,7 @@ export default function ProductAddModal({
               <div className="rounded-xl border border-gray-200/80 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 {/* Colors */}
                 <div>
-                  <Label>Colors</Label>
+                  <Label>{t("sales.colors")}</Label>
                   <div className="flex flex-wrap gap-2">
                     {(single.available_colors ?? []).map((c) => {
                       const active = c.id === colorId;
@@ -357,7 +360,7 @@ export default function ProductAddModal({
 
                 {/* Variants */}
                 <div className="mt-5">
-                  <Label>Variants</Label>
+                  <Label>{t("sales.variantsLabel")}</Label>
                   <div className="flex flex-wrap gap-2">
                     {(single.available_variants ?? []).map((v) => {
                       const active = v.id === variantId;
@@ -401,19 +404,19 @@ export default function ProductAddModal({
 
               {/* Pricing Summary */}
               <div className="rounded-xl border border-gray-200/80 bg-gradient-to-b from-gray-50 to-white p-5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
-                <Label>Pricing Details</Label>
+                <Label>{t("sales.pricingDetails")}</Label>
                 <div className="grid grid-cols-12 gap-3">
                   <div className="col-span-12 sm:col-span-5">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      Selected
+                      {t("sales.selected")}
                     </p>
                     <p className="mt-1 text-sm font-bold text-gray-900 dark:text-white">
                       {selectedVariation
                         ? `${selectedVariation.color.name} • ${selectedVariation.variant.name}`
-                        : "Select color & variant"}
+                        : t("sales.selectColorAndVariant")}
                     </p>
                     <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
-                      Discount:{" "}
+                      {t("sales.discountLbl")}:{" "}
                       {selectedVariation
                         ? discountLabel(selectedVariation)
                         : "—"}
@@ -422,7 +425,7 @@ export default function ProductAddModal({
 
                   <div className="col-span-4 sm:col-span-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      Buying
+                      {t("sales.buyingLabel")}
                     </p>
                     <p className="mt-1 text-sm font-bold text-gray-900 dark:text-white">
                       {formatBdt(buyingPrice)}
@@ -431,7 +434,7 @@ export default function ProductAddModal({
 
                   <div className="col-span-4 sm:col-span-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      Selling
+                      {t("sales.sellingLabel")}
                     </p>
                     <p className="mt-1 text-sm font-bold text-gray-900 dark:text-white">
                       {formatBdt(sellingPrice)}
@@ -440,13 +443,13 @@ export default function ProductAddModal({
 
                   <div className="col-span-4 sm:col-span-3">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      Final
+                      {t("sales.finalLabel")}
                     </p>
                     <p className="mt-1 text-sm font-extrabold text-brand-600 dark:text-brand-400">
                       {formatBdt(finalPrice)}
                     </p>
                     <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
-                      Profit:{" "}
+                      {t("sales.profitLabel")}:{" "}
                       <span
                         className={cn(
                           "font-bold",
@@ -467,7 +470,7 @@ export default function ProductAddModal({
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                   {/* Quantity */}
                   <div>
-                    <Label>Quantity</Label>
+                    <Label>{t("sales.quantity")}</Label>
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
@@ -504,7 +507,7 @@ export default function ProductAddModal({
                       className="h-10 rounded-xl border border-gray-200 bg-white px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200 dark:hover:bg-gray-700"
                       onClick={onClose}
                     >
-                      Cancel
+                      {t("sales.cancel")}
                     </button>
 
                     <button
@@ -519,7 +522,7 @@ export default function ProductAddModal({
                       onClick={() => {
                         if (!single || !selectedVariation) return;
                         if (!selectedVariation.in_stock) {
-                          toast.error("Out of stock");
+                          toast.error(t("sales.outOfStock"));
                           return;
                         }
 
@@ -546,7 +549,7 @@ export default function ProductAddModal({
                       }}
                     >
                       <ShoppingCart className="h-4 w-4" />
-                      Add to Cart
+                      {t("sales.addToCart")}
                     </button>
                   </div>
                 </div>
@@ -554,7 +557,7 @@ export default function ProductAddModal({
 
               {/* Long Description */}
               <div className="rounded-xl border border-gray-200/80 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-                <Label>Long Description</Label>
+                <Label>{t("sales.longDescription")}</Label>
                 <RichTextPreview html={single.long_description ?? ""} />
               </div>
             </div>

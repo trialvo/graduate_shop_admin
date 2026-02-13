@@ -1,6 +1,7 @@
 import React from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/button/Button";
 import { getAdminUsers, type AdminUserEntity } from "@/api/admin-users.api";
@@ -38,6 +39,7 @@ export default function CustomerSearchDropdown({
   disabled = false,
   className,
 }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
 
@@ -95,7 +97,7 @@ export default function CustomerSearchDropdown({
         )}
       >
         <span className={cn("min-w-0 truncate", !selected && "text-gray-400")}>
-          {selected ? userLabel(selected) : "Select customer"}
+          {selected ? userLabel(selected) : t("sales.selectCustomerDropdown")}
         </span>
         <ChevronDown className="h-4 w-4 text-gray-400" />
       </button>
@@ -109,7 +111,7 @@ export default function CustomerSearchDropdown({
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search by name / email / phone"
+                placeholder={t("sales.searchByNameEmailPhoneShort")}
                 className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
               />
             </div>
@@ -118,10 +120,10 @@ export default function CustomerSearchDropdown({
           {/* list */}
           <div className="max-h-72 overflow-auto custom-scrollbar p-2">
             {query.isLoading ? (
-              <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+              <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{t("sales.loading")}</div>
             ) : users.length === 0 ? (
               <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                No customers found
+                {t("sales.noCustomersFoundShort")}
               </div>
             ) : (
               <div className="space-y-1">
@@ -161,9 +163,9 @@ export default function CustomerSearchDropdown({
                     onClick={() => query.fetchNextPage()}
                     disabled={query.isFetchingNextPage}
                     isLoading={query.isFetchingNextPage}
-                    loadingText="Loading..."
+                    loadingText={t("sales.loading")}
                   >
-                    Load more
+                    {t("sales.loadMore")}
                   </Button>
                 ) : null}
               </div>

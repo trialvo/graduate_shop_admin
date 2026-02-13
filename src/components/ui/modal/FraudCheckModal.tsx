@@ -233,13 +233,13 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
 
         <div className="max-h-[620px] overflow-y-auto px-6 py-6 custom-scrollbar">
           {!fraud ? (
-            <div className="rounded-[4px] border border-gray-200 bg-gray-50 p-6 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
               Fraud check data is not available for this order.
             </div>
           ) : (
             <div className="space-y-6">
               {!fraud.success ? (
-                <div className="rounded-[4px] border border-error-200 bg-error-50 p-4 text-sm text-error-700">
+                <div className="rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700">
                   <div className="flex items-center gap-2 font-semibold">
                     <AlertTriangle size={16} />
                     Fraud check failed
@@ -253,7 +253,7 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
 
               <div className="grid grid-cols-12 gap-6 items-stretch">
                 <div className="col-span-12 lg:col-span-4 h-full">
-                  <div className="h-full rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] flex flex-col">
+                  <div className="h-full rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] flex flex-col">
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-[6px] border border-gray-200 bg-white text-brand-500 shadow-theme-xs dark:border-gray-800 dark:bg-gray-950">
                         {statusIcon(fraud.status)}
@@ -277,10 +277,10 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
-                      <span className="rounded-[4px] border border-gray-200 bg-gray-50 px-2 py-1 text-center font-semibold dark:border-gray-800 dark:bg-gray-900">
+                      <span className="rounded-xl border border-gray-200 bg-gray-50 px-2 py-1 text-center font-semibold dark:border-gray-800 dark:bg-gray-900">
                         Delivered: {fraud.totalDelivered}
                       </span>
-                      <span className="rounded-[4px] border border-gray-200 bg-gray-50 px-2 py-1 text-center font-semibold dark:border-gray-800 dark:bg-gray-900">
+                      <span className="rounded-xl border border-gray-200 bg-gray-50 px-2 py-1 text-center font-semibold dark:border-gray-800 dark:bg-gray-900">
                         Cancelled: {fraud.totalCancel}
                       </span>
                     </div>
@@ -310,7 +310,7 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
                       <div
                         key={card.label}
                         className={cn(
-                          "col-span-12 sm:col-span-6 lg:col-span-3 rounded-[4px] border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]",
+                          "col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]",
                         )}
                       >
                         <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">
@@ -323,7 +323,7 @@ export default function FraudCheckModal({ open, onClose, order }: Props) {
                     ))}
                   </div>
 
-                  <div className="rounded-[4px] border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+                  <div className="rounded-xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
                     <div className="overflow-x-auto">
                       <table className="min-w-[620px] w-full border-collapse">
                         <thead>

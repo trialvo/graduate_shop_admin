@@ -276,7 +276,7 @@ export default function ServiceSettingsPage() {
             <div
               key={`${name}-${opt.value}`}
               className={cn(
-                "rounded-[4px] border p-3 transition",
+                "rounded-xl border p-3 transition",
                 active
                   ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200"
                   : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",
@@ -332,10 +332,10 @@ export default function ServiceSettingsPage() {
       {activeTab === "services" ? (
         <>
           {/* SMS Section */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                   <MessageSquareText size={18} />
                 </div>
 
@@ -383,7 +383,7 @@ export default function ServiceSettingsPage() {
                 ? Array.from({ length: 2 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-[180px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+                    className="h-[180px] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
                   />
                 ))
                 : smsCards.map((c) => {
@@ -392,7 +392,7 @@ export default function ServiceSettingsPage() {
                   return (
                     <div
                       key={c.provider}
-                      className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+                      className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -460,7 +460,7 @@ export default function ServiceSettingsPage() {
                         </button>
 
                         {/* ✅ Set Active Provider toggle */}
-                        <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:w-[240px]">
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:w-[240px]">
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                               {t("businessSettings.service.setActiveProvider")}
@@ -492,10 +492,10 @@ export default function ServiceSettingsPage() {
           </div>
 
           {/* Email Section */}
-          <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                   <Mail size={18} />
                 </div>
 
@@ -534,19 +534,19 @@ export default function ServiceSettingsPage() {
                 Array.from({ length: 2 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-[84px] animate-pulse rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
+                    className="h-[84px] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900"
                   />
                 ))
               ) : emailCard ? (
                 <>
-                  <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_HOST</p>
                     <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
                       {emailCard.host || "—"}
                     </p>
                   </div>
 
-                  <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_USER</p>
                     <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
                       {emailCard.user || "—"}
@@ -554,7 +554,7 @@ export default function ServiceSettingsPage() {
                   </div>
                 </>
               ) : (
-                <div className="col-span-full rounded-[4px] border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                <div className="col-span-full rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   {t("businessSettings.service.emailNotFound")}
                 </div>
               )}
@@ -563,9 +563,9 @@ export default function ServiceSettingsPage() {
         </>
       ) : (
         <div className="space-y-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+              <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <ShieldCheck size={18} />
               </div>
 
@@ -582,9 +582,9 @@ export default function ServiceSettingsPage() {
 
           <div className="grid grid-cols-12 gap-5">
             <div className="col-span-12 lg:col-span-6">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
                     <KeyRound size={16} />
                   </div>
                   <div>
@@ -606,9 +606,9 @@ export default function ServiceSettingsPage() {
             </div>
 
             <div className="col-span-12 lg:col-span-6">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
                     <KeySquare size={16} />
                   </div>
                   <div>
@@ -630,9 +630,9 @@ export default function ServiceSettingsPage() {
             </div>
 
             <div className="col-span-12 lg:col-span-6">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
                     <Phone size={16} />
                   </div>
                   <div>
@@ -657,9 +657,9 @@ export default function ServiceSettingsPage() {
             </div>
 
             <div className="col-span-12 lg:col-span-6">
-              <div className="rounded-[4px] border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-brand-500 dark:border-gray-800 dark:bg-gray-900">
                     <Bell size={16} />
                   </div>
                   <div>
@@ -674,7 +674,7 @@ export default function ServiceSettingsPage() {
 
                 <div className="mt-4 space-y-3">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {t("businessSettings.service.emailNotification")}
@@ -695,7 +695,7 @@ export default function ServiceSettingsPage() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 rounded-[4px] border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {t("businessSettings.service.smsNotification")}
@@ -717,7 +717,7 @@ export default function ServiceSettingsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                     {orderNotifyChannel.email && orderNotifyChannel.sms
                       ? t("businessSettings.service.notifyBoth")
                       : orderNotifyChannel.email

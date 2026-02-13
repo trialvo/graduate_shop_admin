@@ -344,7 +344,7 @@ export default function AdminsListPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
           <Table className="min-w-[1200px] border-collapse">
             <TableHeader>
@@ -447,7 +447,7 @@ export default function AdminsListPage() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                         onClick={() => openEdit(row)}
                         aria-label="Edit"
                         title="Edit"
@@ -457,7 +457,7 @@ export default function AdminsListPage() {
 
                       <button
                         type="button"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-error-200 bg-white text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-300 dark:hover:bg-error-500/10"
                         onClick={() => openDelete(row)}
                         aria-label="Delete"
                         title="Delete"

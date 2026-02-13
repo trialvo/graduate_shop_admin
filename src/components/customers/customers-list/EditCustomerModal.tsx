@@ -282,7 +282,7 @@ export default function EditCustomerModal({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT */}
         <div className="space-y-6 lg:col-span-8">
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -298,7 +298,7 @@ export default function EditCustomerModal({
                     Profile Image (user_profile)
                   </p>
 
-                  <div className="mt-2 rounded-[4px] border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+                  <div className="mt-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                         <ImageIcon className="h-4 w-4 text-gray-400" />
@@ -310,7 +310,7 @@ export default function EditCustomerModal({
                       <div className="flex flex-wrap items-center gap-2">
                         <label
                           className={cn(
-                            "inline-flex cursor-pointer items-center justify-center rounded-[4px] border px-4 py-2 text-sm font-semibold shadow-theme-xs",
+                            "inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold shadow-theme-xs",
                             anyPending
                               ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
                               : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]",
@@ -375,7 +375,7 @@ export default function EditCustomerModal({
 
                 <div className="md:col-span-1">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</p>
-                  <div className="mt-2 flex h-[120px] items-center justify-center rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                  <div className="mt-2 flex h-[120px] items-center justify-center rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     {form.previewUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={form.previewUrl} alt="preview" className="h-full w-full object-cover" />
@@ -515,11 +515,11 @@ export default function EditCustomerModal({
 
         {/* RIGHT */}
         <div className="space-y-6 lg:col-span-4">
-          <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Preview</p>
 
             <div className="mt-4 flex items-start gap-3">
-              <div className="h-12 w-12 rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+              <div className="h-12 w-12 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                 {form.previewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={form.previewUrl} alt={fullName} className="h-full w-full object-cover" />
@@ -552,7 +552,7 @@ export default function EditCustomerModal({
 
             <div
               className={cn(
-                "mt-4 rounded-[4px] border p-4",
+                "mt-4 rounded-xl border p-4",
                 canSave
                   ? "border-success-200 bg-success-50 dark:border-success-900/40 dark:bg-success-500/10"
                   : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10",

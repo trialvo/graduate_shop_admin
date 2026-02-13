@@ -19,7 +19,7 @@ import ProfileImageCropperModal from "./components/ProfileImageCropperModal";
 
 function SkeletonCard() {
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="animate-pulse space-y-4">
         <div className="h-8 w-40 rounded bg-gray-100 dark:bg-gray-900" />
         <div className="h-4 w-full rounded bg-gray-100 dark:bg-gray-900" />

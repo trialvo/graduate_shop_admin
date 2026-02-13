@@ -53,7 +53,7 @@ const StockTrendChart: React.FC<Props> = ({ period, points, year, onYearChange, 
   return (
     <div
       className={cn(
-        "rounded-[4px] border border-gray-200 dark:border-gray-800",
+        "rounded-xl border border-gray-200 dark:border-gray-800",
         "bg-white dark:bg-white/[0.03]",
         "p-5 sm:p-6"
       )}
@@ -76,7 +76,7 @@ const StockTrendChart: React.FC<Props> = ({ period, points, year, onYearChange, 
             value={String(year)}
             onChange={(e) => onYearChange(Number(e.target.value))}
             className={cn(
-              "h-10 rounded-[4px] border border-gray-200 dark:border-gray-800",
+              "h-10 rounded-xl border border-gray-200 dark:border-gray-800",
               "bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white",
               "px-3 outline-none focus:ring-2 focus:ring-brand-500/30"
             )}
@@ -93,7 +93,7 @@ const StockTrendChart: React.FC<Props> = ({ period, points, year, onYearChange, 
       <div className="mt-4 h-px w-full bg-gray-200 dark:bg-white/10" />
 
       {errorText ? (
-        <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+        <div className="mt-4 rounded-xl border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
           {errorText}
         </div>
       ) : null}

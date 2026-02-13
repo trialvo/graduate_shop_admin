@@ -249,7 +249,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
   return (
     <div className="mt-6 space-y-5">
       {/* Toolbar */}
-      <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-white">{t("reports.common.allReports")}</div>
@@ -285,7 +285,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 placeholder={t("reports.productReport.searchProduct")}
-                className="h-11 rounded-[4px] border-gray-200 bg-white pr-10 dark:border-gray-800 dark:bg-gray-950"
+                className="h-11 rounded-xl border-gray-200 bg-white pr-10 dark:border-gray-800 dark:bg-gray-950"
               />
               <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             </div>
@@ -297,7 +297,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               options={STATUS_OPTIONS}
               defaultValue={status}
               onChange={(v) => setStatus(v as any)}
-              className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+              className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
             />
           </div>
 
@@ -307,7 +307,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               options={mainOptions}
               defaultValue={mainId}
               onChange={(v) => setMainId(String(v))}
-              className="h-11 rounded-[4px] border-gray-200 dark:border-gray-800"
+              className="h-11 rounded-xl border-gray-200 dark:border-gray-800"
             />
           </div>
 
@@ -318,7 +318,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               defaultValue={subId}
               onChange={(v) => setSubId(String(v))}
               disabled={mainId === "all" || subQuery.isLoading}
-              className={cn("h-11 rounded-[4px] border-gray-200 dark:border-gray-800", mainId === "all" && "opacity-60")}
+              className={cn("h-11 rounded-xl border-gray-200 dark:border-gray-800", mainId === "all" && "opacity-60")}
             />
           </div>
 
@@ -329,7 +329,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               defaultValue={childId}
               onChange={(v) => setChildId(String(v))}
               disabled={subId === "all" || childQuery.isLoading}
-              className={cn("h-11 rounded-[4px] border-gray-200 dark:border-gray-800", subId === "all" && "opacity-60")}
+              className={cn("h-11 rounded-xl border-gray-200 dark:border-gray-800", subId === "all" && "opacity-60")}
             />
           </div>
         </div>
@@ -341,7 +341,7 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
               options={LIMIT_OPTIONS}
               defaultValue={String(limit)}
               onChange={(v) => setLimit(Number(v))}
-              className="h-11 w-full rounded-[4px] border-gray-200 dark:border-gray-800 sm:w-[160px]"
+              className="h-11 w-full rounded-xl border-gray-200 dark:border-gray-800 sm:w-[160px]"
             />
 
             <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -403,13 +403,13 @@ const ProductReportsReport: React.FC<Props> = ({ period }) => {
 
         {/* Errors */}
         {(mainQuery.isError || subQuery.isError || childQuery.isError) && (
-          <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+          <div className="mt-4 rounded-xl border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
             {t("reports.common.failedLoad")}
           </div>
         )}
 
         {reportQuery.isError && (
-          <div className="mt-4 rounded-[4px] border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+          <div className="mt-4 rounded-xl border border-error-500/30 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
             {t("reports.common.failedLoad")}
           </div>
         )}
@@ -438,7 +438,7 @@ function SummaryBox({
         : "text-gray-900 dark:text-white";
 
   return (
-    <div className="rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
       <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</div>
       <div className={cn("mt-1 text-lg font-extrabold", cls)}>{moneyBDT(value)}</div>
     </div>

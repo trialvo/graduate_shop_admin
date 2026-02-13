@@ -1,6 +1,7 @@
 import React from "react";
 import toast from "react-hot-toast";
 import { UserPlus, Upload, Image as ImageIcon, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
@@ -40,6 +41,7 @@ function parseYmd(value: string): Date | null {
 }
 
 export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
+  const { t } = useTranslation();
   const [userProfile, setUserProfile] = React.useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
@@ -105,11 +107,11 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
         return;
       }
 
-      toast.success(res?.message ?? "User created successfully");
+      toast.success(res?.message ?? t("sales.orderPlaced"));
       onCreated({ id, email: createdEmail });
       onClose();
     } catch (e: any) {
-      toast.error(e?.message ? String(e.message) : "Failed to create user");
+      toast.error(e?.message ? String(e.message) : t("sales.failedOrder"));
     } finally {
       setSaving(false);
     }
@@ -122,10 +124,10 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
       {/* Header */}
       <div className="border-b border-gray-200 px-6 py-5 dark:border-gray-800">
         <h3 id={titleId} className="text-lg font-semibold text-gray-900 dark:text-white/90">
-          Add New Customer
+          {t("sales.addNewCustomer")}
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Create customer and auto-select for billing.
+          {t("sales.createCustomerSubtitle")}
         </p>
       </div>
 
@@ -138,9 +140,9 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    Profile Image (optional)
+                    {t("sales.profileImage")}
                   </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Upload JPG/PNG supported</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t("sales.uploadSupported")}</p>
                 </div>
 
                 {previewUrl ? (
@@ -155,7 +157,7 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
                       className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-white/[0.03]"
                     >
                       <X size={16} />
-                      Remove
+                      {t("sales.remove")}
                     </button>
                   </div>
                 ) : (
@@ -175,14 +177,14 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
               >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                    {userProfile ? userProfile.name : "Upload customer photo"}
+                    {userProfile ? userProfile.name : t("sales.uploadCustomerPhoto")}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Max 5MB recommended</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t("sales.maxSize")}</div>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-400">
                   <Upload size={16} />
-                  Browse
+                  {t("sales.browse")}
                 </div>
 
                 <input
@@ -199,7 +201,7 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
 
             {/* Email */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Email</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.email")}</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -210,19 +212,19 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
 
             {/* Password */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Password</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.password")}</label>
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="e.g. 12345678"
                 className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Required for account login.</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("sales.requiredForLogin")}</p>
             </div>
 
             {/* First name */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">First Name</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.firstName")}</label>
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -233,7 +235,7 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
 
             {/* Last name */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Last Name</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.lastName")}</label>
               <input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -244,7 +246,7 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
 
             {/* Phone */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Phone</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.phone")}</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -255,22 +257,22 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
 
             {/* Gender */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Gender</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.genderLabel")}</label>
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as AdminUserGender)}
                 className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               >
-                <option value="unspecified">Unspecified</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                <option value="unspecified">{t("sales.unspecified")}</option>
+                <option value="male">{t("sales.male")}</option>
+                <option value="female">{t("sales.female")}</option>
+                <option value="other">{t("sales.other")}</option>
               </select>
             </div>
 
             {/* ✅ DOB: DatePicker */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Date of Birth</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.dateOfBirth")}</label>
 
               {/* ADAPTER: store YYYY-MM-DD but DatePicker uses Date */}
               <DatePicker
@@ -291,14 +293,14 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
 
             {/* Status */}
             <div className="col-span-12 md:col-span-6">
-              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Status</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.status")}</label>
               <select
                 value={isActive}
                 onChange={(e) => setIsActive(e.target.value as "active" | "inactive")}
                 className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="active">{t("sales.active")}</option>
+                <option value="inactive">{t("sales.inactive")}</option>
               </select>
             </div>
           </div>
@@ -308,15 +310,15 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
       {/* Footer */}
       <div className="border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Required: Email + Password + First Name + Phone</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("sales.requiredFields")}</p>
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={onClose} disabled={saving}>
-              Cancel
+              {t("sales.cancel")}
             </Button>
 
             <Button startIcon={<UserPlus size={16} />} disabled={!canSave || saving} onClick={handleCreate}>
-              {saving ? "Saving..." : "Save Customer"}
+              {saving ? t("sales.saving") : t("sales.saveCustomer")}
             </Button>
           </div>
         </div>

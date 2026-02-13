@@ -289,7 +289,7 @@ export default function EditAdminModal({
         {/* Left */}
         <div className="lg:col-span-8 space-y-6">
           {/* Profile */}
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -306,7 +306,7 @@ export default function EditAdminModal({
                   </p>
 
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="relative h-16 w-16 rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                    <div className="relative h-16 w-16 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
                       {draft.avatarPreviewUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -326,7 +326,7 @@ export default function EditAdminModal({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                      <label className="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
                         Upload
                         <input
                           type="file"
@@ -467,7 +467,7 @@ export default function EditAdminModal({
           </div>
 
           {/* Role & Status */}
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Access & Status</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -525,7 +525,7 @@ export default function EditAdminModal({
           </div>
 
           {/* Password */}
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -578,7 +578,7 @@ export default function EditAdminModal({
                   </div>
 
                   {errors.pass ? (
-                    <div className="md:col-span-2 rounded-[4px] border border-error-200 bg-error-50 p-3 text-xs font-semibold text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
+                    <div className="md:col-span-2 rounded-xl border border-error-200 bg-error-50 p-3 text-xs font-semibold text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300">
                       {errors.pass}
                     </div>
                   ) : null}
@@ -596,7 +596,7 @@ export default function EditAdminModal({
 
         {/* Right Preview */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">How it will appear in the list.</p>
@@ -604,7 +604,7 @@ export default function EditAdminModal({
 
             <div className="p-5">
               <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 rounded-[4px] bg-gray-100 dark:bg-gray-800">
+                <div className="relative h-14 w-14 rounded-xl bg-gray-100 dark:bg-gray-800">
                   {draft.avatarPreviewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -645,14 +645,14 @@ export default function EditAdminModal({
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[4px] border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+              <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
                 <p className="font-semibold text-gray-900 dark:text-white mb-1">Address</p>
                 <p className="line-clamp-3">{draft.address || "-"}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[4px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
             <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>Use Super Admin role carefully.</li>

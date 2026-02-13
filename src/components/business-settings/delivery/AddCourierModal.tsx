@@ -232,7 +232,7 @@ export default function AddCourierModal({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Left */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Courier Info</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Title, zone type and pricing.</p>
 
@@ -287,7 +287,7 @@ export default function AddCourierModal({
 
                 <div className="space-y-2 md:col-span-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Availability</p>
-                  <div className="flex items-center justify-between rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40">
+                  <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40">
                     <div>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">{status ? "Enabled" : "Disabled"}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Disable to stop showing this delivery option.</p>
@@ -302,7 +302,7 @@ export default function AddCourierModal({
 
           {/* Right */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="rounded-[4px] border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Delivery Image</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Uploaded as <span className="font-mono">delivery_img</span> (optional).
@@ -310,7 +310,7 @@ export default function AddCourierModal({
 
               <div className="mt-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+                  <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
                     {imgPreviewUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={imgPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
@@ -320,7 +320,7 @@ export default function AddCourierModal({
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    <label className="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
+                    <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]">
                       Upload
                       <input
                         type="file"
@@ -350,7 +350,7 @@ export default function AddCourierModal({
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-[4px] border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Preview</p>
 
                   <p className="mt-2 text-base font-semibold text-gray-900 dark:text-white">{title.trim() || "—"}</p>

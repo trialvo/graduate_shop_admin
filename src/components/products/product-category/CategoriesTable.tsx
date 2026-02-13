@@ -48,7 +48,7 @@ function ImageThumb({ src, alt }: { src?: string | null; alt: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="h-9 w-9 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+      <div className="h-9 w-9 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={full} alt={alt} className="h-full w-full object-cover" />
       </div>
@@ -155,7 +155,7 @@ function MainHierarchy({
                       <td className="p-3">
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                           onClick={() => setOpenMain((p) => ({ ...p, [m.id]: !p[m.id] }))}
                           aria-label={isOpen ? "Collapse" : "Expand"}
                         >
@@ -239,7 +239,7 @@ function MainHierarchy({
                                             <td className="p-3">
                                               <button
                                                 type="button"
-                                                className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                                                 onClick={() => setOpenSub((p) => ({ ...p, [subOpenKey]: !p[subOpenKey] }))}
                                                 aria-label={subIsOpen ? "Collapse" : "Expand"}
                                               >
@@ -292,11 +292,11 @@ function MainHierarchy({
                                                   </div>
 
                                                   {childList.length === 0 ? (
-                                                    <div className="rounded-[4px] border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                                                    <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                                                       {t("products.categories.noCategories")}
                                                     </div>
                                                   ) : (
-                                                    <div className="rounded-[4px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                                                    <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                                       <table className="w-full text-left text-sm">
                                                         <thead className="bg-gray-50 text-xs font-semibold text-gray-600 dark:bg-white/5 dark:text-gray-300">
                                                           <tr>
@@ -442,7 +442,7 @@ function SubHierarchy({
                       <td className="p-3">
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                           onClick={() => setOpenSub((p) => ({ ...p, [s.id]: !p[s.id] }))}
                           aria-label={isOpen ? "Collapse" : "Expand"}
                         >

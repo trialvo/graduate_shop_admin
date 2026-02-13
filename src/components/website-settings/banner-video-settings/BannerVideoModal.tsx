@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Save, Tag, Link as LinkIcon, Image as ImageIcon, Hash } from "lucide-react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import Modal from "@/components/ui/modal/Modal";
 import Button from "@/components/ui/button/Button";
@@ -63,6 +64,7 @@ function compactPayload<T extends Record<string, any>>(input: T): Partial<T> {
 }
 
 export default function BannerVideoModal({ open, mode, initial, onClose }: Props) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const isEdit = mode === "edit";
   const editingId = initial?.id ?? null;
@@ -124,21 +126,21 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
 
   const handleChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (value: string) => {
-      setHasUserChanges(true);
-      setter(value);
-    };
+      (value: string) => {
+        setHasUserChanges(true);
+        setter(value);
+      };
 
   const createMut = useMutation({
     mutationFn: (payload: CreateBannerVideoPayload) => createBannerVideo(payload),
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success(res?.message || "Banner video created");
+        toast.success(res?.message || t("bannerVideoModal.created"));
         qc.invalidateQueries({ queryKey: ["banner-videos"] });
         onClose();
         return;
       }
-      toast.error(res?.message || res?.error || "Failed to create banner video");
+      toast.error(res?.message || res?.error || t("bannerVideoModal.createFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -148,13 +150,13 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
       updateBannerVideo(id, payload),
     onSuccess: (res: any) => {
       if (res?.success === true) {
-        toast.success(res?.message || "Banner video updated");
+        toast.success(res?.message || t("bannerVideoModal.updated"));
         qc.invalidateQueries({ queryKey: ["banner-videos"] });
         qc.invalidateQueries({ queryKey: ["banner-video", editingId] });
         onClose();
         return;
       }
-      toast.error(res?.message || res?.error || "Failed to update banner video");
+      toast.error(res?.message || res?.error || t("bannerVideoModal.updateFailed"));
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -164,7 +166,7 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
   const onSave = () => {
     const trimmedVideo = videoUrl.trim();
     if (!trimmedVideo && !isEdit) {
-      toast.error("Video URL is required");
+      toast.error(t("bannerVideoModal.videoUrlRequired"));
       return;
     }
 
@@ -178,12 +180,12 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
 
     if (isEdit) {
       if (!editingId) {
-        toast.error("Missing video id");
+        toast.error(t("bannerVideoModal.missingId"));
         return;
       }
       const payload: UpdateBannerVideoPayload = payloadBase;
       if (!Object.keys(payload).length) {
-        toast("No changes to update");
+        toast(t("bannerVideoModal.noChanges"));
         return;
       }
       updateMut.mutate({ id: editingId, payload });
@@ -205,15 +207,15 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
       open={open}
       onClose={onClose}
       size="lg"
-      title={isEdit ? "Edit Banner Video" : "Create Banner Video"}
-      description="Manage promotional banner videos and their storefront links."
+      title={isEdit ? t("bannerVideoModal.titleEdit") : t("bannerVideoModal.titleCreate")}
+      description={t("bannerVideoModal.description")}
       footer={
         <>
           <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
+            {t("bannerVideoModal.cancel")}
           </Button>
           <Button onClick={onSave} startIcon={<Save size={16} />} disabled={saving}>
-            {saving ? "Saving..." : isEdit ? "Update Video" : "Create Video"}
+            {saving ? t("bannerVideoModal.saving") : isEdit ? t("bannerVideoModal.updateVideo") : t("bannerVideoModal.createVideo")}
           </Button>
         </>
       }
@@ -221,31 +223,31 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Input
-          placeholder="Product ID (optional)"
+          placeholder={t("bannerVideoModal.productIdPlaceholder")}
           type="number"
           value={productId}
           onChange={(e) => handleChange(setProductId)(e.target.value)}
           startIcon={<Hash size={16} />}
-          hint="Leave empty for standalone/unlinked."
+          hint={t("bannerVideoModal.productIdHint")}
         />
 
         <Input
-          placeholder="Label (optional)"
+          placeholder={t("bannerVideoModal.labelPlaceholder")}
           value={label}
           onChange={(e) => handleChange(setLabel)(e.target.value)}
           startIcon={<Tag size={16} />}
         />
 
         <Input
-          placeholder="Path (optional)"
+          placeholder={t("bannerVideoModal.pathPlaceholder")}
           value={path}
           onChange={(e) => handleChange(setPath)(e.target.value)}
           startIcon={<LinkIcon size={16} />}
-          hint="Example: /testing or /product/slug"
+          hint={t("bannerVideoModal.pathHint")}
         />
 
         <Input
-          placeholder="Thumbnail URL (optional)"
+          placeholder={t("bannerVideoModal.thumbPlaceholder")}
           value={thumb}
           onChange={(e) => handleChange(setThumb)(e.target.value)}
           startIcon={<ImageIcon size={16} />}
@@ -253,19 +255,19 @@ export default function BannerVideoModal({ open, mode, initial, onClose }: Props
       </div>
 
       {thumbPreview ? (
-        <div className="rounded-[4px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Thumbnail Preview</p>
-          <div className="mt-3 h-36 overflow-hidden rounded-[4px] border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t("bannerVideoModal.thumbPreview")}</p>
+          <div className="mt-3 h-36 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
             <img src={thumbPreview} alt="Thumbnail preview" className="h-full w-full object-cover" />
           </div>
         </div>
       ) : null}
 
       <VideoUploader
-        label="Video URL"
+        label={t("bannerVideoModal.videoUrlLabel")}
         value={videoUrl}
         onChange={(next) => handleChange(setVideoUrl)(next)}
-        helperText="Use a YouTube link or direct video URL (.mp4/.webm)."
+        helperText={t("bannerVideoModal.videoUrlHelper")}
       />
     </Modal>
   );
