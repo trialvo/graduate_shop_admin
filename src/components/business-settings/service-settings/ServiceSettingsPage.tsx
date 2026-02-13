@@ -1,20 +1,20 @@
 // src/components/business-settings/service-settings/ServiceSettingsPage.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
   Bell,
   KeyRound,
   KeySquare,
+  Loader2,
   Mail,
   MessageSquareText,
   Phone,
-  Plus,
   Settings,
   ShieldCheck,
   Smartphone,
-  X,
+  UserCircle,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -23,7 +23,9 @@ import Button from "@/components/ui/button/Button";
 import Radio from "@/components/form/input/Radio";
 import Switch from "@/components/form/switch/Switch";
 import { cn } from "@/lib/utils";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
+import { getAdmins, type AdminListResponse } from "@/api/admin.api";
 import {
   getEmailSystemConfig,
   getSmsSystemConfig,
@@ -103,13 +105,38 @@ export default function ServiceSettingsPage() {
   const [orderNotifyChannel, setOrderNotifyChannel] =
     useState<OrderNotifyChannel>({ email: true, sms: false });
 
-  // Admin order notification
-  const [adminSmsEnabled, setAdminSmsEnabled] = useState(true);
-  const [adminEmailEnabled, setAdminEmailEnabled] = useState(true);
-  const [adminNotifyNumbers, setAdminNotifyNumbers] = useState<string[]>([]);
-  const [adminNotifyEmails, setAdminNotifyEmails] = useState<string[]>([]);
-  const [phoneInput, setPhoneInput] = useState("");
-  const [emailInput, setEmailInput] = useState("");
+  // Admin order notification — per-admin toggles
+  const [adminNotifyPrefs, setAdminNotifyPrefs] = useState<
+    Record<number, { sms: boolean; email: boolean }>
+  >({});
+
+  const adminsQuery = useQuery({
+    queryKey: ["admins", "notifyList"],
+    queryFn: () => getAdmins({ limit: 100 }),
+    retry: 1,
+  });
+
+  const adminList = adminsQuery.data?.data ?? [];
+
+  const toggleAdminPref = useCallback(
+    (id: number, channel: "sms" | "email", checked: boolean) => {
+      setAdminNotifyPrefs((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], [channel]: checked },
+      }));
+    },
+    [],
+  );
+
+  const adminNotifySummary = useMemo(() => {
+    let smsCount = 0;
+    let emailCount = 0;
+    for (const prefs of Object.values(adminNotifyPrefs)) {
+      if (prefs.sms) smsCount++;
+      if (prefs.email) emailCount++;
+    }
+    return { smsCount, emailCount };
+  }, [adminNotifyPrefs]);
 
   const permissionTabs = [
     { id: "services", label: t("businessSettings.service.tabServices"), icon: MessageSquareText },
@@ -165,12 +192,7 @@ export default function ServiceSettingsPage() {
     setResetMethod("both");
     setOrderVerifyPolicy("sms_required");
     setOrderNotifyChannel({ email: true, sms: false });
-    setAdminSmsEnabled(true);
-    setAdminEmailEnabled(false);
-    setAdminNotifyNumbers([]);
-    setAdminNotifyEmails([]);
-    setPhoneInput("");
-    setEmailInput("");
+    setAdminNotifyPrefs({});
     toast.success(t("businessSettings.service.permissionReset"));
   };
 
@@ -750,223 +772,137 @@ export default function ServiceSettingsPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-                  {/* SMS Channel */}
-                  <div className={cn(
-                    "rounded-xl border p-4 transition",
-                    adminSmsEnabled
-                      ? "border-brand-200 bg-brand-50/50 dark:border-brand-500/30 dark:bg-brand-500/5"
-                      : "border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900",
-                  )}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                          "inline-flex h-8 w-8 items-center justify-center rounded-lg",
-                          adminSmsEnabled
-                            ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
-                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-                        )}>
-                          <Phone size={14} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {t("businessSettings.service.adminSmsChannel")}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {t("businessSettings.service.adminSmsChannelHint")}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        label=""
-                        checked={adminSmsEnabled}
-                        onChange={setAdminSmsEnabled}
-                      />
+                {/* Admin list */}
+                <div className="mt-5">
+                  {adminsQuery.isLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400">
+                      <Loader2 size={16} className="animate-spin" />
+                      {t("businessSettings.service.adminListLoading")}
                     </div>
+                  ) : adminList.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">
+                      {t("businessSettings.service.adminListEmpty")}
+                    </p>
+                  ) : (
+                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+                      {/* Table header */}
+                      <div className="grid grid-cols-12 gap-3 border-b border-gray-200 bg-gray-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                        <div className="col-span-4">{t("businessSettings.service.adminColName")}</div>
+                        <div className="col-span-3">{t("businessSettings.service.adminColEmail")}</div>
+                        <div className="col-span-3">{t("businessSettings.service.adminColPhone")}</div>
+                        <div className="col-span-1 text-center">{t("businessSettings.service.adminColSms")}</div>
+                        <div className="col-span-1 text-center">{t("businessSettings.service.adminColEmail2")}</div>
+                      </div>
 
-                    {adminSmsEnabled && (
-                      <div className="mt-4 space-y-3">
-                        <div className="flex gap-2">
-                          <input
-                            type="tel"
-                            value={phoneInput}
-                            onChange={(e) => setPhoneInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                const num = phoneInput.trim();
-                                if (num && !adminNotifyNumbers.includes(num)) {
-                                  setAdminNotifyNumbers((prev) => [...prev, num]);
-                                  setPhoneInput("");
-                                }
-                              }
-                            }}
-                            placeholder={t("businessSettings.service.adminPhonePlaceholder")}
-                            className="h-10 flex-1 rounded-lg border border-gray-300 bg-white px-3.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              const num = phoneInput.trim();
-                              if (num && !adminNotifyNumbers.includes(num)) {
-                                setAdminNotifyNumbers((prev) => [...prev, num]);
-                                setPhoneInput("");
-                              }
-                            }}
+                      {/* Admin rows */}
+                      {adminList.map((admin) => {
+                        const prefs = adminNotifyPrefs[admin.id] ?? { sms: false, email: false };
+                        const hasPhone = !!admin.phone;
+                        const hasEmail = !!admin.email;
+                        const fullName = [admin.first_name, admin.last_name].filter(Boolean).join(" ") || admin.email;
+                        const initials = (
+                          (admin.first_name?.[0] ?? "") + (admin.last_name?.[0] ?? "")
+                        ).toUpperCase() || "?";
+
+                        return (
+                          <div
+                            key={admin.id}
+                            className="grid grid-cols-12 items-center gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50/60 dark:border-gray-800 dark:hover:bg-white/[0.02]"
                           >
-                            <Plus size={14} className="mr-1" />
-                            {t("businessSettings.service.addBtn")}
-                          </Button>
-                        </div>
+                            {/* Name + Avatar */}
+                            <div className="col-span-4 flex items-center gap-3 min-w-0">
+                              {admin.profile_img_path ? (
+                                <img
+                                  src={toPublicUrl(admin.profile_img_path)}
+                                  alt={fullName}
+                                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
+                                  {initials}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                                  {fullName}
+                                </p>
+                                {admin.roles?.[0] && (
+                                  <p className="truncate text-xs text-gray-400 dark:text-gray-500">
+                                    {admin.roles[0]}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
 
-                        {adminNotifyNumbers.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {adminNotifyNumbers.map((num) => (
-                              <span
-                                key={num}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                              >
-                                <Phone size={12} className="text-brand-500" />
-                                {num}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setAdminNotifyNumbers((prev) =>
-                                      prev.filter((n) => n !== num),
-                                    )
-                                  }
-                                  className="ml-0.5 rounded-full p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                  aria-label={`Remove ${num}`}
-                                >
-                                  <X size={12} />
-                                </button>
-                              </span>
-                            ))}
+                            {/* Email */}
+                            <div className="col-span-3 min-w-0">
+                              {hasEmail ? (
+                                <p className="flex items-center gap-1.5 truncate text-sm text-gray-700 dark:text-gray-300">
+                                  <Mail size={12} className="shrink-0 text-gray-400" />
+                                  {admin.email}
+                                </p>
+                              ) : (
+                                <p className="text-xs italic text-gray-400 dark:text-gray-600">
+                                  {t("businessSettings.service.adminNoEmail")}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Phone */}
+                            <div className="col-span-3 min-w-0">
+                              {hasPhone ? (
+                                <p className="flex items-center gap-1.5 truncate text-sm text-gray-700 dark:text-gray-300">
+                                  <Phone size={12} className="shrink-0 text-gray-400" />
+                                  {admin.phone}
+                                </p>
+                              ) : (
+                                <p className="text-xs italic text-gray-400 dark:text-gray-600">
+                                  {t("businessSettings.service.adminNoPhone")}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* SMS toggle */}
+                            <div className="col-span-1 flex justify-center">
+                              <Switch
+                                label=""
+                                checked={prefs.sms}
+                                onChange={(checked) => toggleAdminPref(admin.id, "sms", checked)}
+                                disabled={!hasPhone}
+                              />
+                            </div>
+
+                            {/* Email toggle */}
+                            <div className="col-span-1 flex justify-center">
+                              <Switch
+                                label=""
+                                checked={prefs.email}
+                                onChange={(checked) => toggleAdminPref(admin.id, "email", checked)}
+                                disabled={!hasEmail}
+                              />
+                            </div>
                           </div>
-                        ) : (
-                          <p className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-2.5 text-center text-xs text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">
-                            {t("businessSettings.service.adminPhoneEmpty")}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Email Channel */}
-                  <div className={cn(
-                    "rounded-xl border p-4 transition",
-                    adminEmailEnabled
-                      ? "border-brand-200 bg-brand-50/50 dark:border-brand-500/30 dark:bg-brand-500/5"
-                      : "border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900",
-                  )}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                          "inline-flex h-8 w-8 items-center justify-center rounded-lg",
-                          adminEmailEnabled
-                            ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
-                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-                        )}>
-                          <Mail size={14} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {t("businessSettings.service.adminEmailChannel")}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {t("businessSettings.service.adminEmailChannelHint")}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        label=""
-                        checked={adminEmailEnabled}
-                        onChange={setAdminEmailEnabled}
-                      />
+                        );
+                      })}
                     </div>
-
-                    {adminEmailEnabled && (
-                      <div className="mt-4 space-y-3">
-                        <div className="flex gap-2">
-                          <input
-                            type="email"
-                            value={emailInput}
-                            onChange={(e) => setEmailInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                const email = emailInput.trim();
-                                if (email && !adminNotifyEmails.includes(email)) {
-                                  setAdminNotifyEmails((prev) => [...prev, email]);
-                                  setEmailInput("");
-                                }
-                              }
-                            }}
-                            placeholder={t("businessSettings.service.adminEmailPlaceholder")}
-                            className="h-10 flex-1 rounded-lg border border-gray-300 bg-white px-3.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              const email = emailInput.trim();
-                              if (email && !adminNotifyEmails.includes(email)) {
-                                setAdminNotifyEmails((prev) => [...prev, email]);
-                                setEmailInput("");
-                              }
-                            }}
-                          >
-                            <Plus size={14} className="mr-1" />
-                            {t("businessSettings.service.addBtn")}
-                          </Button>
-                        </div>
-
-                        {adminNotifyEmails.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {adminNotifyEmails.map((email) => (
-                              <span
-                                key={email}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                              >
-                                <Mail size={12} className="text-brand-500" />
-                                {email}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setAdminNotifyEmails((prev) =>
-                                      prev.filter((e) => e !== email),
-                                    )
-                                  }
-                                  className="ml-0.5 rounded-full p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                  aria-label={`Remove ${email}`}
-                                >
-                                  <X size={12} />
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-2.5 text-center text-xs text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">
-                            {t("businessSettings.service.adminEmailEmpty")}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
 
                 {/* Summary */}
-                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                  {adminSmsEnabled && adminEmailEnabled
-                    ? t("businessSettings.service.adminNotifyBoth", {
-                      phones: adminNotifyNumbers.length,
-                      emails: adminNotifyEmails.length,
-                    })
-                    : adminSmsEnabled
-                      ? t("businessSettings.service.adminNotifySmsOnly", { count: adminNotifyNumbers.length })
-                      : adminEmailEnabled
-                        ? t("businessSettings.service.adminNotifyEmailOnly", { count: adminNotifyEmails.length })
-                        : t("businessSettings.service.adminNotifyDisabled")}
-                </div>
+                {adminList.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                    {adminNotifySummary.smsCount > 0 && adminNotifySummary.emailCount > 0
+                      ? t("businessSettings.service.adminNotifyBoth", {
+                        sms: adminNotifySummary.smsCount,
+                        email: adminNotifySummary.emailCount,
+                      })
+                      : adminNotifySummary.smsCount > 0
+                        ? t("businessSettings.service.adminNotifySmsOnly", { count: adminNotifySummary.smsCount })
+                        : adminNotifySummary.emailCount > 0
+                          ? t("businessSettings.service.adminNotifyEmailOnly", { count: adminNotifySummary.emailCount })
+                          : t("businessSettings.service.adminNotifyDisabled")}
+                  </div>
+                )}
               </div>
             </div>
           </div>
