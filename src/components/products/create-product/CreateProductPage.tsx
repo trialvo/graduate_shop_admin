@@ -458,14 +458,14 @@ export default function CreateProductPage() {
   // -------------------- Lookups --------------------
   const { data: mainRes, isLoading: mainLoading } = useQuery({
     queryKey: ["mainCategories-all"],
-    queryFn: () => getMainCategories(),
+    queryFn: () => getMainCategories({ limit: 9999 }),
     staleTime: 60_000,
     retry: 1,
   });
 
   const { data: subRes, isLoading: subLoading } = useQuery({
     queryKey: ["subCategories-by-main", mainCategoryId],
-    queryFn: () => getSubCategories({ main_category_id: mainCategoryId }),
+    queryFn: () => getSubCategories({ main_category_id: mainCategoryId, limit: 9999 }),
     enabled: !!mainCategoryId,
     staleTime: 60_000,
     retry: 1,
@@ -473,7 +473,7 @@ export default function CreateProductPage() {
 
   const { data: childRes, isLoading: childLoading } = useQuery({
     queryKey: ["childCategories-by-sub", subCategoryId],
-    queryFn: () => getChildCategories({ sub_category_id: subCategoryId }),
+    queryFn: () => getChildCategories({ sub_category_id: subCategoryId, limit: 9999 }),
     enabled: !!subCategoryId,
     staleTime: 60_000,
     retry: 1,
@@ -481,21 +481,21 @@ export default function CreateProductPage() {
 
   const { data: brandRes, isLoading: brandLoading } = useQuery({
     queryKey: ["brands-all"],
-    queryFn: () => getBrands(),
+    queryFn: () => getBrands({ limit: 9999 }),
     staleTime: 60_000,
     retry: 1,
   });
 
   const { data: colorRes, isLoading: colorLoading } = useQuery({
     queryKey: ["colors-all"],
-    queryFn: () => getColors(),
+    queryFn: () => getColors({ limit: 9999 }),
     staleTime: 60_000,
     retry: 1,
   });
 
   const { data: attrRes, isLoading: attrLoading } = useQuery({
     queryKey: ["attributes-all"],
-    queryFn: () => getAttributes(),
+    queryFn: () => getAttributes({ limit: 9999 }),
     staleTime: 60_000,
     retry: 1,
   });

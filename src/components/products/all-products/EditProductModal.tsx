@@ -284,7 +284,7 @@ export default function EditProductModal({
 
   const { data: colorsRes, isFetching: colorsFetching } = useQuery({
     queryKey: ["colors-all"],
-    queryFn: () => getColors({} as any),
+    queryFn: () => getColors({ limit: 9999 }),
     staleTime: 60_000,
   });
 

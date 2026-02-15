@@ -61,7 +61,7 @@ export default function StockVariantsModal({ open, productId, productName, onClo
 
   const { data: colorsRes } = useQuery({
     queryKey: ["colors-all"],
-    queryFn: () => getColors({} as any),
+    queryFn: () => getColors({ limit: 9999 }),
     staleTime: 60_000,
   });
 
