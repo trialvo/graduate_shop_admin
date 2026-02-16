@@ -901,7 +901,8 @@
     "calendar": "ক্যালেন্ডার",
     "support": "সাপোর্ট",
     "footerSettings": "ফুটার সেটিংস",
-    "contactPage": "কন্ট্যাক্ট পেজ"
+    "contactPage": "কন্ট্যাক্ট পেজ",
+    "analyticsSettings": "অ্যানালিটিক্স"
   },
   "orders": {
     "title": "অর্ডার ব্যবস্থাপনা",
@@ -2602,5 +2603,102 @@
     "warning": "সতর্কতা",
     "info": "তথ্য",
     "allSelected": "সব নির্বাচিত"
+  },
+  "analyticsSettings": {
+    "pageTitle": "অ্যানালিটিক্স ও ট্র্যাকিং",
+    "pageSubtitle": "অ্যানালিটিক্স প্ল্যাটফর্ম, পিক্সেল ট্র্যাকিং এবং আচরণ পর্যবেক্ষণ কনফিগার করুন।",
+    "refresh": "রিফ্রেশ",
+    "updated": "আপডেট হয়েছে!",
+    "updateFailed": "আপডেট ব্যর্থ",
+    "update": "আপডেট",
+    "updating": "আপডেট হচ্ছে...",
+    "active": "সক্রিয়",
+    "inactive": "নিষ্ক্রিয়",
+    "notConfigured": "কনফিগার করা হয়নি",
+    "overview": {
+      "googleAnalytics": "গুগল অ্যানালিটিক্স",
+      "tagManager": "ট্যাগ ম্যানেজার",
+      "facebookPixel": "ফেসবুক পিক্সেল",
+      "autoPageView": "অটো পেজ ভিউ"
+    },
+    "ga": {
+      "title": "গুগল অ্যানালিটিক্স",
+      "measurementId": "মেজারমেন্ট আইডি",
+      "measurementIdPlaceholder": "G-XXXXXXXXXX",
+      "configuration": "কনফিগারেশন",
+      "anonymizeIp": "আইপি গোপন করুন",
+      "anonymizeIpDesc": "অ্যানালিটিক্স ডেটায় ব্যবহারকারীর আইপি ঠিকানা লুকান",
+      "sendPageView": "পেজ ভিউ পাঠান",
+      "sendPageViewDesc": "স্বয়ংক্রিয়ভাবে পেজ ভিউ ইভেন্ট পাঠান",
+      "debugMode": "ডিবাগ মোড",
+      "debugModeDesc": "টেস্টিংয়ের জন্য ডিবাগ মোড সক্রিয় করুন",
+      "updateSuccess": "গুগল অ্যানালিটিক্স আপডেট হয়েছে!"
+    },
+    "gtm": {
+      "title": "গুগল ট্যাগ ম্যানেজার",
+      "gtmId": "GTM কন্টেইনার আইডি",
+      "gtmIdPlaceholder": "GTM-XXXXXXX",
+      "authToken": "অথ টোকেন",
+      "authTokenPlaceholder": "ঐচ্ছিক অথ স্ট্রিং",
+      "previewEnv": "প্রিভিউ এনভায়রনমেন্ট",
+      "previewEnvPlaceholder": "ঐচ্ছিক প্রিভিউ স্ট্রিং",
+      "updateSuccess": "ট্যাগ ম্যানেজার আপডেট হয়েছে!"
+    },
+    "fb": {
+      "title": "ফেসবুক পিক্সেল",
+      "pixelId": "পিক্সেল আইডি",
+      "pixelIdPlaceholder": "123456789012345",
+      "advancedMatching": "অ্যাডভান্সড ম্যাচিং",
+      "enableAdvancedMatching": "অ্যাডভান্সড ম্যাচিং সক্রিয় করুন",
+      "enableAdvancedMatchingDesc": "ভালো অ্যাট্রিবিউশনের জন্য কাস্টমার ডেটা পাঠান",
+      "email": "ইমেইল",
+      "phone": "ফোন",
+      "firstName": "প্রথম নাম",
+      "lastName": "শেষ নাম",
+      "externalId": "এক্সটার্নাল আইডি",
+      "trackEvents": "ট্র্যাক ইভেন্ট",
+      "pageView": "পেজ ভিউ",
+      "viewContent": "কন্টেন্ট দেখুন",
+      "addToCart": "কার্টে যোগ করুন",
+      "initiateCheckout": "চেকআউট শুরু",
+      "purchase": "ক্রয়",
+      "search": "সার্চ",
+      "lead": "লিড",
+      "completeRegistration": "রেজিস্ট্রেশন সম্পন্ন",
+      "conversionApi": "কনভার্সন API (CAPI)",
+      "enableConversionApi": "কনভার্সন API সক্রিয় করুন",
+      "enableConversionApiDesc": "উন্নত নির্ভুলতার জন্য সার্ভার-সাইড ট্র্যাকিং",
+      "accessToken": "অ্যাক্সেস টোকেন",
+      "accessTokenPlaceholder": "EAAxxxxxxx...",
+      "testEventCode": "টেস্ট ইভেন্ট কোড",
+      "testEventCodePlaceholder": "TEST12345",
+      "updateSuccess": "ফেসবুক পিক্সেল আপডেট হয়েছে!"
+    },
+    "tracking": {
+      "title": "ট্র্যাকিং আচরণ",
+      "subtitle": "আপনার সাইটে কী ট্র্যাক হবে তা নিয়ন্ত্রণ করুন",
+      "autoPageView": "অটো পেজ ভিউ",
+      "autoPageViewDesc": "সব পেজে স্বয়ংক্রিয়ভাবে পেজ ভিউ ট্র্যাক করুন",
+      "trackScroll": "স্ক্রল ট্র্যাক",
+      "trackScrollDesc": "ব্যবহারকারীরা পেজে কতদূর স্ক্রল করে তা পর্যবেক্ষণ করুন",
+      "trackButtonClicks": "বাটন ক্লিক ট্র্যাক",
+      "trackButtonClicksDesc": "সব বাটন ক্লিক ইন্টারঅ্যাকশন রেকর্ড করুন",
+      "trackSearch": "সার্চ ট্র্যাক",
+      "trackSearchDesc": "ব্যবহারকারীদের সার্চ কোয়েরি পর্যবেক্ষণ করুন",
+      "updateSuccess": "ট্র্যাকিং আপডেট হয়েছে!"
+    },
+    "meta": {
+      "title": "সাইট মেটা",
+      "subtitle": "অ্যানালিটিক্সের জন্য সাধারণ সাইট কনফিগারেশন",
+      "siteName": "সাইটের নাম",
+      "siteNamePlaceholder": "আমার ই-কমার্স",
+      "currency": "মুদ্রা",
+      "currencyPlaceholder": "BDT",
+      "environment": "এনভায়রনমেন্ট",
+      "production": "প্রোডাকশন",
+      "staging": "স্টেজিং",
+      "development": "ডেভেলপমেন্ট",
+      "updateSuccess": "সাইট মেটা আপডেট হয়েছে!"
+    }
   }
 }

@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
       BarChart3,
       Tag,
@@ -125,6 +126,8 @@ function SectionCard({
       dirty,
       onUpdate,
       updating,
+      updateLabel,
+      updatingLabel,
 }: {
       icon: React.ReactNode;
       title: string;
@@ -137,6 +140,8 @@ function SectionCard({
       dirty?: boolean;
       onUpdate?: () => void;
       updating?: boolean;
+      updateLabel?: string;
+      updatingLabel?: string;
 }) {
       const [open, setOpen] = useState(defaultOpen);
 
@@ -203,7 +208,7 @@ function SectionCard({
                                                 ) : (
                                                       <Save size={16} />
                                                 )}
-                                                {updating ? "Updating..." : "Update"}
+                                                {updating ? (updatingLabel || "Updating...") : (updateLabel || "Update")}
                                           </button>
                                     </div>
                               )}
@@ -323,7 +328,11 @@ function SubSection({
    MAIN PAGE
    ═══════════════════════════════════════════════ */
 export default function AnalyticsSettingsPage() {
+      const { t } = useTranslation();
       const qc = useQueryClient();
+
+      // shorthand
+      const T = (key: string) => t(`analyticsSettings.${key}`);
 
       // ── server state ──
       const query = useQuery({
@@ -389,10 +398,10 @@ export default function AnalyticsSettingsPage() {
                   updateAnalyticsConfig(payload),
             onSuccess: (res: any) => {
                   if (res?.success === true || res?.status === true) {
-                        toast.success("Updated!");
+                        toast.success(T("updated"));
                         invalidate();
                   } else {
-                        toast.error(res?.error ?? res?.message ?? "Update failed");
+                        toast.error(res?.error ?? res?.message ?? T("updateFailed"));
                   }
                   setToggleKey(null);
             },
@@ -400,7 +409,7 @@ export default function AnalyticsSettingsPage() {
                   toast.error(
                         err?.response?.data?.error ??
                         err?.response?.data?.message ??
-                        "Update failed"
+                        T("updateFailed")
                   );
                   setToggleKey(null);
             },
@@ -433,55 +442,55 @@ export default function AnalyticsSettingsPage() {
             mutationFn: () => updateAnalyticsConfig(buildPayload({ analytics: { google_analytics: gaLocal } })),
             onSuccess: (res: any) => {
                   if (res?.success || res?.status) {
-                        toast.success("Google Analytics updated!");
+                        toast.success(T("ga.updateSuccess"));
                         invalidate();
-                  } else toast.error(res?.error ?? "Failed");
+                  } else toast.error(res?.error ?? T("updateFailed"));
             },
-            onError: (err: any) => toast.error(err?.response?.data?.error ?? "Failed"),
+            onError: (err: any) => toast.error(err?.response?.data?.error ?? T("updateFailed")),
       });
 
       const gtmMutation = useMutation({
             mutationFn: () => updateAnalyticsConfig(buildPayload({ analytics: { google_tag_manager: gtmLocal } })),
             onSuccess: (res: any) => {
                   if (res?.success || res?.status) {
-                        toast.success("Tag Manager updated!");
+                        toast.success(T("gtm.updateSuccess"));
                         invalidate();
-                  } else toast.error(res?.error ?? "Failed");
+                  } else toast.error(res?.error ?? T("updateFailed"));
             },
-            onError: (err: any) => toast.error(err?.response?.data?.error ?? "Failed"),
+            onError: (err: any) => toast.error(err?.response?.data?.error ?? T("updateFailed")),
       });
 
       const fbMutation = useMutation({
             mutationFn: () => updateAnalyticsConfig(buildPayload({ analytics: { facebook_pixel: fbLocal } })),
             onSuccess: (res: any) => {
                   if (res?.success || res?.status) {
-                        toast.success("Facebook Pixel updated!");
+                        toast.success(T("fb.updateSuccess"));
                         invalidate();
-                  } else toast.error(res?.error ?? "Failed");
+                  } else toast.error(res?.error ?? T("updateFailed"));
             },
-            onError: (err: any) => toast.error(err?.response?.data?.error ?? "Failed"),
+            onError: (err: any) => toast.error(err?.response?.data?.error ?? T("updateFailed")),
       });
 
       const trackingMutation = useMutation({
             mutationFn: () => updateAnalyticsConfig(buildPayload({ tracking: trackingLocal })),
             onSuccess: (res: any) => {
                   if (res?.success || res?.status) {
-                        toast.success("Tracking updated!");
+                        toast.success(T("tracking.updateSuccess"));
                         invalidate();
-                  } else toast.error(res?.error ?? "Failed");
+                  } else toast.error(res?.error ?? T("updateFailed"));
             },
-            onError: (err: any) => toast.error(err?.response?.data?.error ?? "Failed"),
+            onError: (err: any) => toast.error(err?.response?.data?.error ?? T("updateFailed")),
       });
 
       const metaMutation = useMutation({
             mutationFn: () => updateAnalyticsConfig(buildPayload({ meta: metaLocal })),
             onSuccess: (res: any) => {
                   if (res?.success || res?.status) {
-                        toast.success("Site meta updated!");
+                        toast.success(T("meta.updateSuccess"));
                         invalidate();
-                  } else toast.error(res?.error ?? "Failed");
+                  } else toast.error(res?.error ?? T("updateFailed"));
             },
-            onError: (err: any) => toast.error(err?.response?.data?.error ?? "Failed"),
+            onError: (err: any) => toast.error(err?.response?.data?.error ?? T("updateFailed")),
       });
 
       /* ── loading ── */
@@ -504,11 +513,10 @@ export default function AnalyticsSettingsPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                    Analytics & Tracking
+                                    {T("pageTitle")}
                               </h2>
                               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Configure analytics platforms, pixel tracking, and behavior
-                                    monitoring.
+                                    {T("pageSubtitle")}
                               </p>
                         </div>
                         <button
@@ -521,17 +529,17 @@ export default function AnalyticsSettingsPage() {
                                     size={16}
                                     className={query.isFetching ? "animate-spin" : ""}
                               />
-                              Refresh
+                              {T("refresh")}
                         </button>
                   </div>
 
                   {/* ── overview strip ── */}
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         {[
-                              { label: "Google Analytics", on: gaLocal.enabled, icon: <BarChart3 size={18} /> },
-                              { label: "Tag Manager", on: gtmLocal.enabled, icon: <Tag size={18} /> },
-                              { label: "Facebook Pixel", on: fbLocal.enabled, icon: <Facebook size={18} /> },
-                              { label: "Auto Page View", on: trackingLocal.auto_page_view, icon: <Eye size={18} /> },
+                              { label: T("overview.googleAnalytics"), on: gaLocal.enabled, icon: <BarChart3 size={18} /> },
+                              { label: T("overview.tagManager"), on: gtmLocal.enabled, icon: <Tag size={18} /> },
+                              { label: T("overview.facebookPixel"), on: fbLocal.enabled, icon: <Facebook size={18} /> },
+                              { label: T("overview.autoPageView"), on: trackingLocal.auto_page_view, icon: <Eye size={18} /> },
                         ].map((item) => (
                               <div
                                     key={item.label}
@@ -555,7 +563,7 @@ export default function AnalyticsSettingsPage() {
                                                             : "text-gray-400 dark:text-gray-500"
                                                       }`}
                                           >
-                                                {item.on ? "Active" : "Inactive"}
+                                                {item.on ? T("active") : T("inactive")}
                                           </p>
                                     </div>
                               </div>
@@ -567,29 +575,31 @@ export default function AnalyticsSettingsPage() {
          ══════════════════════════ */}
                   <SectionCard
                         icon={<BarChart3 size={20} />}
-                        title="Google Analytics"
-                        subtitle={gaLocal.measurement_id || "Not configured"}
+                        title={T("ga.title")}
+                        subtitle={gaLocal.measurement_id || T("notConfigured")}
                         enabled={gaLocal.enabled}
                         onToggle={toggleGA}
                         toggleLoading={toggleKey === "ga" && instantToggleMutation.isPending}
                         dirty={gaDirty}
                         onUpdate={() => gaMutation.mutate()}
                         updating={gaMutation.isPending}
+                        updateLabel={T("update")}
+                        updatingLabel={T("updating")}
                   >
                         <div className="grid gap-4 sm:grid-cols-2">
                               <SettingInput
-                                    label="Measurement ID"
+                                    label={T("ga.measurementId")}
                                     value={gaLocal.measurement_id}
                                     onChange={(v) => setGaLocal((p) => ({ ...p, measurement_id: v }))}
-                                    placeholder="G-XXXXXXXXXX"
+                                    placeholder={T("ga.measurementIdPlaceholder")}
                                     icon={<BarChart3 size={16} />}
                               />
                         </div>
 
-                        <SubSection title="Configuration">
+                        <SubSection title={T("ga.configuration")}>
                               <ToggleRow
-                                    label="Anonymize IP"
-                                    description="Hide user IP addresses in analytics data"
+                                    label={T("ga.anonymizeIp")}
+                                    description={T("ga.anonymizeIpDesc")}
                                     checked={gaLocal.config.anonymize_ip}
                                     onChange={(v) =>
                                           setGaLocal((p) => ({ ...p, config: { ...p.config, anonymize_ip: v } }))
@@ -597,8 +607,8 @@ export default function AnalyticsSettingsPage() {
                                     icon={<Fingerprint size={16} />}
                               />
                               <ToggleRow
-                                    label="Send Page View"
-                                    description="Automatically send page view events"
+                                    label={T("ga.sendPageView")}
+                                    description={T("ga.sendPageViewDesc")}
                                     checked={gaLocal.config.send_page_view}
                                     onChange={(v) =>
                                           setGaLocal((p) => ({ ...p, config: { ...p.config, send_page_view: v } }))
@@ -606,8 +616,8 @@ export default function AnalyticsSettingsPage() {
                                     icon={<Eye size={16} />}
                               />
                               <ToggleRow
-                                    label="Debug Mode"
-                                    description="Enable debug mode for testing"
+                                    label={T("ga.debugMode")}
+                                    description={T("ga.debugModeDesc")}
                                     checked={gaLocal.config.debug_mode}
                                     onChange={(v) =>
                                           setGaLocal((p) => ({ ...p, config: { ...p.config, debug_mode: v } }))
@@ -622,35 +632,37 @@ export default function AnalyticsSettingsPage() {
          ══════════════════════════ */}
                   <SectionCard
                         icon={<Tag size={20} />}
-                        title="Google Tag Manager"
-                        subtitle={gtmLocal.gtm_id || "Not configured"}
+                        title={T("gtm.title")}
+                        subtitle={gtmLocal.gtm_id || T("notConfigured")}
                         enabled={gtmLocal.enabled}
                         onToggle={toggleGTM}
                         toggleLoading={toggleKey === "gtm" && instantToggleMutation.isPending}
                         dirty={gtmDirty}
                         onUpdate={() => gtmMutation.mutate()}
                         updating={gtmMutation.isPending}
+                        updateLabel={T("update")}
+                        updatingLabel={T("updating")}
                   >
                         <div className="grid gap-4 sm:grid-cols-2">
                               <SettingInput
-                                    label="GTM Container ID"
+                                    label={T("gtm.gtmId")}
                                     value={gtmLocal.gtm_id}
                                     onChange={(v) => setGtmLocal((p) => ({ ...p, gtm_id: v }))}
-                                    placeholder="GTM-XXXXXXX"
+                                    placeholder={T("gtm.gtmIdPlaceholder")}
                                     icon={<Tag size={16} />}
                               />
                               <SettingInput
-                                    label="Auth Token"
+                                    label={T("gtm.authToken")}
                                     value={gtmLocal.auth}
                                     onChange={(v) => setGtmLocal((p) => ({ ...p, auth: v }))}
-                                    placeholder="Optional auth string"
+                                    placeholder={T("gtm.authTokenPlaceholder")}
                                     icon={<Key size={16} />}
                               />
                               <SettingInput
-                                    label="Preview Environment"
+                                    label={T("gtm.previewEnv")}
                                     value={gtmLocal.preview}
                                     onChange={(v) => setGtmLocal((p) => ({ ...p, preview: v }))}
-                                    placeholder="Optional preview string"
+                                    placeholder={T("gtm.previewEnvPlaceholder")}
                                     icon={<Eye size={16} />}
                               />
                         </div>
@@ -661,30 +673,32 @@ export default function AnalyticsSettingsPage() {
          ══════════════════════════ */}
                   <SectionCard
                         icon={<Facebook size={20} />}
-                        title="Facebook Pixel"
-                        subtitle={fbLocal.pixel_id || "Not configured"}
+                        title={T("fb.title")}
+                        subtitle={fbLocal.pixel_id || T("notConfigured")}
                         enabled={fbLocal.enabled}
                         onToggle={toggleFB}
                         toggleLoading={toggleKey === "fb" && instantToggleMutation.isPending}
                         dirty={fbDirty}
                         onUpdate={() => fbMutation.mutate()}
                         updating={fbMutation.isPending}
+                        updateLabel={T("update")}
+                        updatingLabel={T("updating")}
                   >
                         <div className="grid gap-4 sm:grid-cols-2">
                               <SettingInput
-                                    label="Pixel ID"
+                                    label={T("fb.pixelId")}
                                     value={fbLocal.pixel_id}
                                     onChange={(v) => setFbLocal((p) => ({ ...p, pixel_id: v }))}
-                                    placeholder="123456789012345"
+                                    placeholder={T("fb.pixelIdPlaceholder")}
                                     icon={<Facebook size={16} />}
                               />
                         </div>
 
                         {/* Advanced Matching */}
-                        <SubSection title="Advanced Matching">
+                        <SubSection title={T("fb.advancedMatching")}>
                               <ToggleRow
-                                    label="Enable Advanced Matching"
-                                    description="Send customer data for better attribution"
+                                    label={T("fb.enableAdvancedMatching")}
+                                    description={T("fb.enableAdvancedMatchingDesc")}
                                     checked={fbLocal.advanced_matching.enabled}
                                     onChange={(v) =>
                                           setFbLocal((p) => ({
@@ -696,16 +710,16 @@ export default function AnalyticsSettingsPage() {
                               />
                               {(
                                     [
-                                          { key: "email", label: "Email", icon: <Mail size={16} /> },
-                                          { key: "phone", label: "Phone", icon: <Phone size={16} /> },
-                                          { key: "first_name", label: "First Name", icon: <Users size={16} /> },
-                                          { key: "last_name", label: "Last Name", icon: <Users size={16} /> },
-                                          { key: "external_id", label: "External ID", icon: <Fingerprint size={16} /> },
+                                          { key: "email", tKey: "fb.email", icon: <Mail size={16} /> },
+                                          { key: "phone", tKey: "fb.phone", icon: <Phone size={16} /> },
+                                          { key: "first_name", tKey: "fb.firstName", icon: <Users size={16} /> },
+                                          { key: "last_name", tKey: "fb.lastName", icon: <Users size={16} /> },
+                                          { key: "external_id", tKey: "fb.externalId", icon: <Fingerprint size={16} /> },
                                     ] as const
                               ).map((item) => (
                                     <ToggleRow
                                           key={item.key}
-                                          label={item.label}
+                                          label={T(item.tKey)}
                                           checked={fbLocal.advanced_matching[item.key as keyof typeof fbLocal.advanced_matching] as boolean}
                                           onChange={(v) =>
                                                 setFbLocal((p) => ({
@@ -719,22 +733,22 @@ export default function AnalyticsSettingsPage() {
                         </SubSection>
 
                         {/* Track Events */}
-                        <SubSection title="Track Events">
+                        <SubSection title={T("fb.trackEvents")}>
                               {(
                                     [
-                                          { key: "page_view", label: "Page View", icon: <Eye size={16} /> },
-                                          { key: "view_content", label: "View Content", icon: <Globe size={16} /> },
-                                          { key: "add_to_cart", label: "Add to Cart", icon: <ShoppingCart size={16} /> },
-                                          { key: "initiate_checkout", label: "Initiate Checkout", icon: <CreditCard size={16} /> },
-                                          { key: "purchase", label: "Purchase", icon: <CheckCircle2 size={16} /> },
-                                          { key: "search", label: "Search", icon: <Search size={16} /> },
-                                          { key: "lead", label: "Lead", icon: <MousePointerClick size={16} /> },
-                                          { key: "complete_registration", label: "Complete Registration", icon: <UserPlus size={16} /> },
+                                          { key: "page_view", tKey: "fb.pageView", icon: <Eye size={16} /> },
+                                          { key: "view_content", tKey: "fb.viewContent", icon: <Globe size={16} /> },
+                                          { key: "add_to_cart", tKey: "fb.addToCart", icon: <ShoppingCart size={16} /> },
+                                          { key: "initiate_checkout", tKey: "fb.initiateCheckout", icon: <CreditCard size={16} /> },
+                                          { key: "purchase", tKey: "fb.purchase", icon: <CheckCircle2 size={16} /> },
+                                          { key: "search", tKey: "fb.search", icon: <Search size={16} /> },
+                                          { key: "lead", tKey: "fb.lead", icon: <MousePointerClick size={16} /> },
+                                          { key: "complete_registration", tKey: "fb.completeRegistration", icon: <UserPlus size={16} /> },
                                     ] as const
                               ).map((ev) => (
                                     <ToggleRow
                                           key={ev.key}
-                                          label={ev.label}
+                                          label={T(ev.tKey)}
                                           checked={fbLocal.track_events[ev.key as keyof typeof fbLocal.track_events]}
                                           onChange={(v) =>
                                                 setFbLocal((p) => ({
@@ -748,10 +762,10 @@ export default function AnalyticsSettingsPage() {
                         </SubSection>
 
                         {/* Conversion API */}
-                        <SubSection title="Conversion API (CAPI)">
+                        <SubSection title={T("fb.conversionApi")}>
                               <ToggleRow
-                                    label="Enable Conversion API"
-                                    description="Server-side tracking for improved accuracy"
+                                    label={T("fb.enableConversionApi")}
+                                    description={T("fb.enableConversionApiDesc")}
                                     checked={fbLocal.conversion_api.enabled}
                                     onChange={(v) =>
                                           setFbLocal((p) => ({
@@ -763,7 +777,7 @@ export default function AnalyticsSettingsPage() {
                               />
                               <div className="grid gap-4 pt-3 sm:grid-cols-2">
                                     <SettingInput
-                                          label="Access Token"
+                                          label={T("fb.accessToken")}
                                           value={fbLocal.conversion_api.access_token}
                                           onChange={(v) =>
                                                 setFbLocal((p) => ({
@@ -771,12 +785,12 @@ export default function AnalyticsSettingsPage() {
                                                       conversion_api: { ...p.conversion_api, access_token: v },
                                                 }))
                                           }
-                                          placeholder="EAAxxxxxxx..."
+                                          placeholder={T("fb.accessTokenPlaceholder")}
                                           type="password"
                                           icon={<Key size={16} />}
                                     />
                                     <SettingInput
-                                          label="Test Event Code"
+                                          label={T("fb.testEventCode")}
                                           value={fbLocal.conversion_api.test_event_code}
                                           onChange={(v) =>
                                                 setFbLocal((p) => ({
@@ -784,7 +798,7 @@ export default function AnalyticsSettingsPage() {
                                                       conversion_api: { ...p.conversion_api, test_event_code: v },
                                                 }))
                                           }
-                                          placeholder="TEST12345"
+                                          placeholder={T("fb.testEventCodePlaceholder")}
                                           icon={<FlaskConical size={16} />}
                                     />
                               </div>
@@ -796,36 +810,38 @@ export default function AnalyticsSettingsPage() {
          ══════════════════════════ */}
                   <SectionCard
                         icon={<MousePointerClick size={20} />}
-                        title="Tracking Behavior"
-                        subtitle="Control what gets tracked on your site"
+                        title={T("tracking.title")}
+                        subtitle={T("tracking.subtitle")}
                         dirty={trackingDirty}
                         onUpdate={() => trackingMutation.mutate()}
                         updating={trackingMutation.isPending}
+                        updateLabel={T("update")}
+                        updatingLabel={T("updating")}
                   >
                         <ToggleRow
-                              label="Auto Page View"
-                              description="Automatically track page views across all pages"
+                              label={T("tracking.autoPageView")}
+                              description={T("tracking.autoPageViewDesc")}
                               checked={trackingLocal.auto_page_view}
                               onChange={(v) => setTrackingLocal((p) => ({ ...p, auto_page_view: v }))}
                               icon={<Eye size={16} />}
                         />
                         <ToggleRow
-                              label="Track Scroll"
-                              description="Monitor how far users scroll on pages"
+                              label={T("tracking.trackScroll")}
+                              description={T("tracking.trackScrollDesc")}
                               checked={trackingLocal.track_scroll}
                               onChange={(v) => setTrackingLocal((p) => ({ ...p, track_scroll: v }))}
                               icon={<Scroll size={16} />}
                         />
                         <ToggleRow
-                              label="Track Button Clicks"
-                              description="Record all button click interactions"
+                              label={T("tracking.trackButtonClicks")}
+                              description={T("tracking.trackButtonClicksDesc")}
                               checked={trackingLocal.track_button_clicks}
                               onChange={(v) => setTrackingLocal((p) => ({ ...p, track_button_clicks: v }))}
                               icon={<MousePointer size={16} />}
                         />
                         <ToggleRow
-                              label="Track Search"
-                              description="Monitor search queries made by users"
+                              label={T("tracking.trackSearch")}
+                              description={T("tracking.trackSearchDesc")}
                               checked={trackingLocal.track_search}
                               onChange={(v) => setTrackingLocal((p) => ({ ...p, track_search: v }))}
                               icon={<Search size={16} />}
@@ -837,38 +853,40 @@ export default function AnalyticsSettingsPage() {
          ══════════════════════════ */}
                   <SectionCard
                         icon={<Settings2 size={20} />}
-                        title="Site Meta"
-                        subtitle="General site configuration for analytics"
+                        title={T("meta.title")}
+                        subtitle={T("meta.subtitle")}
                         dirty={metaDirty}
                         onUpdate={() => metaMutation.mutate()}
                         updating={metaMutation.isPending}
+                        updateLabel={T("update")}
+                        updatingLabel={T("updating")}
                   >
                         <div className="grid gap-4 sm:grid-cols-3">
                               <SettingInput
-                                    label="Site Name"
+                                    label={T("meta.siteName")}
                                     value={metaLocal.site_name}
                                     onChange={(v) => setMetaLocal((p) => ({ ...p, site_name: v }))}
-                                    placeholder="My Ecommerce"
+                                    placeholder={T("meta.siteNamePlaceholder")}
                                     icon={<Globe size={16} />}
                               />
                               <SettingInput
-                                    label="Currency"
+                                    label={T("meta.currency")}
                                     value={metaLocal.currency}
                                     onChange={(v) => setMetaLocal((p) => ({ ...p, currency: v }))}
-                                    placeholder="BDT"
+                                    placeholder={T("meta.currencyPlaceholder")}
                               />
                               <div>
                                     <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                                          Environment
+                                          {T("meta.environment")}
                                     </label>
                                     <select
                                           value={metaLocal.environment}
                                           onChange={(e) => setMetaLocal((p) => ({ ...p, environment: e.target.value }))}
                                           className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400 dark:focus:bg-gray-800 transition-colors"
                                     >
-                                          <option value="production">Production</option>
-                                          <option value="staging">Staging</option>
-                                          <option value="development">Development</option>
+                                          <option value="production">{T("meta.production")}</option>
+                                          <option value="staging">{T("meta.staging")}</option>
+                                          <option value="development">{T("meta.development")}</option>
                                     </select>
                               </div>
                         </div>

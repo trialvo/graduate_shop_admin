@@ -901,7 +901,8 @@
     "calendar": "Calendar",
     "support": "Support",
     "footerSettings": "Footer Settings",
-    "contactPage": "Contact Page"
+    "contactPage": "Contact Page",
+    "analyticsSettings": "Analytics"
   },
   "orders": {
     "title": "Order Management",
@@ -2602,5 +2603,102 @@
     "warning": "Warning",
     "info": "Info",
     "allSelected": "All selected"
+  },
+  "analyticsSettings": {
+    "pageTitle": "Analytics & Tracking",
+    "pageSubtitle": "Configure analytics platforms, pixel tracking, and behavior monitoring.",
+    "refresh": "Refresh",
+    "updated": "Updated!",
+    "updateFailed": "Update failed",
+    "update": "Update",
+    "updating": "Updating...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "notConfigured": "Not configured",
+    "overview": {
+      "googleAnalytics": "Google Analytics",
+      "tagManager": "Tag Manager",
+      "facebookPixel": "Facebook Pixel",
+      "autoPageView": "Auto Page View"
+    },
+    "ga": {
+      "title": "Google Analytics",
+      "measurementId": "Measurement ID",
+      "measurementIdPlaceholder": "G-XXXXXXXXXX",
+      "configuration": "Configuration",
+      "anonymizeIp": "Anonymize IP",
+      "anonymizeIpDesc": "Hide user IP addresses in analytics data",
+      "sendPageView": "Send Page View",
+      "sendPageViewDesc": "Automatically send page view events",
+      "debugMode": "Debug Mode",
+      "debugModeDesc": "Enable debug mode for testing",
+      "updateSuccess": "Google Analytics updated!"
+    },
+    "gtm": {
+      "title": "Google Tag Manager",
+      "gtmId": "GTM Container ID",
+      "gtmIdPlaceholder": "GTM-XXXXXXX",
+      "authToken": "Auth Token",
+      "authTokenPlaceholder": "Optional auth string",
+      "previewEnv": "Preview Environment",
+      "previewEnvPlaceholder": "Optional preview string",
+      "updateSuccess": "Tag Manager updated!"
+    },
+    "fb": {
+      "title": "Facebook Pixel",
+      "pixelId": "Pixel ID",
+      "pixelIdPlaceholder": "123456789012345",
+      "advancedMatching": "Advanced Matching",
+      "enableAdvancedMatching": "Enable Advanced Matching",
+      "enableAdvancedMatchingDesc": "Send customer data for better attribution",
+      "email": "Email",
+      "phone": "Phone",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "externalId": "External ID",
+      "trackEvents": "Track Events",
+      "pageView": "Page View",
+      "viewContent": "View Content",
+      "addToCart": "Add to Cart",
+      "initiateCheckout": "Initiate Checkout",
+      "purchase": "Purchase",
+      "search": "Search",
+      "lead": "Lead",
+      "completeRegistration": "Complete Registration",
+      "conversionApi": "Conversion API (CAPI)",
+      "enableConversionApi": "Enable Conversion API",
+      "enableConversionApiDesc": "Server-side tracking for improved accuracy",
+      "accessToken": "Access Token",
+      "accessTokenPlaceholder": "EAAxxxxxxx...",
+      "testEventCode": "Test Event Code",
+      "testEventCodePlaceholder": "TEST12345",
+      "updateSuccess": "Facebook Pixel updated!"
+    },
+    "tracking": {
+      "title": "Tracking Behavior",
+      "subtitle": "Control what gets tracked on your site",
+      "autoPageView": "Auto Page View",
+      "autoPageViewDesc": "Automatically track page views across all pages",
+      "trackScroll": "Track Scroll",
+      "trackScrollDesc": "Monitor how far users scroll on pages",
+      "trackButtonClicks": "Track Button Clicks",
+      "trackButtonClicksDesc": "Record all button click interactions",
+      "trackSearch": "Track Search",
+      "trackSearchDesc": "Monitor search queries made by users",
+      "updateSuccess": "Tracking updated!"
+    },
+    "meta": {
+      "title": "Site Meta",
+      "subtitle": "General site configuration for analytics",
+      "siteName": "Site Name",
+      "siteNamePlaceholder": "My Ecommerce",
+      "currency": "Currency",
+      "currencyPlaceholder": "BDT",
+      "environment": "Environment",
+      "production": "Production",
+      "staging": "Staging",
+      "development": "Development",
+      "updateSuccess": "Site meta updated!"
+    }
   }
 }
