@@ -27,6 +27,7 @@ import DeliverySettings from "./pages/BusinessSettings/DeliverySettings";
 import CurrierSettings from "./pages/BusinessSettings/CurrierSettings";
 import CouponCode from "./pages/BusinessSettings/CouponCode";
 import PaymentSettings from "./pages/BusinessSettings/PaymentSettings";
+import AnalyticsSettings from "./pages/BusinessSettings/AnalyticsSettings";
 
 import BannersSettings from "./pages/WebsiteSettings/BannersSettings";
 import BannerVideoSettings from "./pages/WebsiteSettings/BannerVideoSettings";
@@ -127,6 +128,10 @@ export default function App() {
               <Route path="/coupon-code" element={<CouponCode />} />
               <Route path="/payment-settings" element={<PaymentSettings />} />
               <Route
+                path="/analytics-settings"
+                element={<AnalyticsSettings />}
+              />
+              <Route
                 path="/service-settings"
                 element={<BusinessServicePage />}
               />
@@ -140,3 +145,4 @@ export default function App() {
     </Router>
   );
 }
+
