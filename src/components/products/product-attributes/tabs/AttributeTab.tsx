@@ -413,41 +413,67 @@ function VariantModal({
   if (!state.open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[720px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              {t("products.attributes.updateVariant")}
-            </h3>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              {t("products.attributes.variantDesc")}
-            </p>
-          </div>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setState((p) => ({ ...p, open: false }))}
-            ariaLabel="Close"
-            startIcon={<X size={16} />}
-          />
+        {/* ── Header ─────────────────────────────────── */}
+        <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-brand-50 via-white to-brand-50/40 px-6 py-5 dark:border-gray-800 dark:from-brand-900/20 dark:via-gray-900 dark:to-brand-900/10">
+          <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-brand-100/40 dark:bg-brand-500/5" />
+          <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-brand-100/30 dark:bg-brand-500/5" />
+
+          <div className="relative flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25">
+                <Pencil size={18} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {t("products.attributes.updateVariant")}
+                </h3>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {t("products.attributes.variantDesc")}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setState((p) => ({ ...p, open: false }))}
+              className="rounded-lg border border-gray-200 bg-white/80 p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
-        <div className="p-5">
+        {/* ── Body ─────────────────────────────────── */}
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
           {loadingSingle ? (
-            <div className="space-y-3">
-              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
-              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
-              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-20 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                  <div className="h-10 w-full animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
+                </div>
+              ))}
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="space-y-6">
+
+              {/* Section 1: Attribute Assignment */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">1</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Attribute Assignment
+                  </span>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {t("products.attributes.attribute")}
-                  </p>
+                  </label>
                   <Select
                     key={`var-modal-attr-${state.hydrated}-${state.attribute_id}`}
                     options={attributeOptions}
@@ -460,73 +486,125 @@ function VariantModal({
                       }))
                     }
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("products.attributes.variantName")} <span className="text-error-500">*</span>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                    Choose which attribute this variant belongs to
                   </p>
-                  <Input
-                    placeholder="XL / Extra Large"
-                    value={state.name}
-                    onChange={(e) => setState((p) => ({ ...p, name: e.target.value }))}
-                  />
+                </div>
+              </div>
+
+              {/* Section 2: Variant Details */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">2</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Variant Details
+                  </span>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("products.attributes.priority")}
-                  </p>
-                  <Select
-                    key={`var-modal-priority-${state.hydrated}-${state.priority}`}
-                    options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
-                    placeholder="Select priority"
-                    defaultValue={String(state.priority)}
-                    onChange={(v) =>
-                      setState((p) => ({
-                        ...p,
-                        priority: safeNumber(String(v), 1),
-                      }))
-                    }
-                  />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("products.attributes.variantName")}
+                      <span className="text-error-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="e.g. XL, Extra Large"
+                      value={state.name}
+                      onChange={(e) => setState((p) => ({ ...p, name: e.target.value }))}
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      The display name shown to customers
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("products.attributes.priority")}
+                    </label>
+                    <Select
+                      key={`var-modal-priority-${state.hydrated}-${state.priority}`}
+                      options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
+                      placeholder="Select priority"
+                      defaultValue={String(state.priority)}
+                      onChange={(v) =>
+                        setState((p) => ({
+                          ...p,
+                          priority: safeNumber(String(v), 1),
+                        }))
+                      }
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      Higher priority variants appear first
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Visibility */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">3</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Visibility
+                  </span>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
-                  <div className="flex h-11 items-center">
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-800/40">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                      {state.status ? "This variant is available for selection" : "This variant is hidden from the storefront"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                      state.status
+                        ? "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400"
+                        : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+                    )}>
+                      {state.status ? t("common.active") : t("common.inactive")}
+                    </span>
                     <Switch
                       key={`var-st-${state.status}`}
                       label=""
                       defaultChecked={state.status}
                       onChange={(checked) => setState((p) => ({ ...p, status: checked }))}
                     />
-                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                      {state.status ? t("common.active") : t("common.inactive")}
-                    </span>
                   </div>
                 </div>
               </div>
-
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setState((p) => ({ ...p, open: false }))}
-                  disabled={submitting}
-                >
-                  {t("common.cancel")}
-                </Button>
-
-                <Button
-                  onClick={onSubmit}
-                  disabled={submitting || !state.name.trim()}
-                  startIcon={<Pencil size={16} />}
-                >
-                  {submitting ? t("common.saving") : t("common.update")}
-                </Button>
-              </div>
-            </>
+            </div>
           )}
         </div>
+
+        {/* ── Footer ─────────────────────────────────── */}
+        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/50">
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">
+            Editing variant #{state.id ?? ""}
+          </p>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setState((p) => ({ ...p, open: false }))}
+              disabled={submitting}
+            >
+              {t("common.cancel")}
+            </Button>
+
+            <Button
+              onClick={onSubmit}
+              disabled={submitting || !state.name.trim()}
+              startIcon={<Pencil size={16} />}
+            >
+              {submitting ? t("common.saving") : t("common.update")}
+            </Button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
