@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Download, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Download, Layers, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Pagination from "@/components/common/Pagination";
@@ -62,13 +62,13 @@ function parseApiError(err: any, fallback: string) {
 function normalizeAttribute(a: Attribute): AttributeRow {
   const variantsRaw = Array.isArray(a.variants) ? a.variants : [];
   const variants: VariantRow[] = variantsRaw
-    .filter((v: any) => v && typeof v === "object" && typeof v.id === "number")
+    .filter((v: any) => v && typeof v === "object" && (typeof v.id === "number" || typeof v.id === "string"))
     .map((v: any) => ({
-      id: v.id,
-      attribute_id: v.attribute_id,
-      name: v.name,
+      id: typeof v.id === "string" ? parseInt(v.id, 10) : v.id,
+      attribute_id: typeof v.attribute_id === "string" ? parseInt(v.attribute_id, 10) : (v.attribute_id ?? a.id),
+      name: v.name ?? "",
       priority: v.priority ?? 1,
-      status: Boolean(v.status),
+      status: v.status === 1 || v.status === "1" || v.status === true || Boolean(v.status),
       created_at: v.created_at,
       updated_at: v.updated_at,
     }));
@@ -205,6 +205,7 @@ function AttributeModal({
                     {t("products.attributes.priority")}
                   </p>
                   <Select
+                    key={`attr-modal-priority-${state.hydrated}-${state.priority}`}
                     options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
                     placeholder="Select priority"
                     defaultValue={String(state.priority)}
@@ -342,6 +343,7 @@ function VariantModal({
                     {t("products.attributes.attribute")}
                   </p>
                   <Select
+                    key={`var-modal-attr-${state.hydrated}-${state.attribute_id}`}
                     options={attributeOptions}
                     placeholder="Select attribute"
                     defaultValue={String(state.attribute_id)}
@@ -370,6 +372,7 @@ function VariantModal({
                     {t("products.attributes.priority")}
                   </p>
                   <Select
+                    key={`var-modal-priority-${state.hydrated}-${state.priority}`}
                     options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
                     placeholder="Select priority"
                     defaultValue={String(state.priority)}
@@ -454,8 +457,9 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
   const { data, isLoading, isFetching } = useQuery({
     queryKey,
     queryFn: () => getAttributes(params),
-    staleTime: 30_000,
+    staleTime: 15_000,
     retry: 1,
+    refetchOnWindowFocus: true,
   });
 
   const rows: AttributeRow[] = useMemo(
@@ -918,43 +922,93 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                       {/* Variants */}
                       <td className="px-4 py-4">
                         <div className="space-y-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {(row.variants ?? []).map((v) => (
-                              <span
-                                key={v.id}
-                                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                              >
-                                {v.name}
+                          {/* Variant Cards */}
+                          {(row.variants ?? []).length > 0 ? (
+                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" style={{ minWidth: 280 }}>
+                              {(row.variants ?? []).map((v) => {
+                                const prBadge =
+                                  v.priority === 3
+                                    ? { label: "High", cls: "bg-error-50 text-error-600 ring-error-200/60 dark:bg-error-500/10 dark:text-error-400 dark:ring-error-700/40" }
+                                    : v.priority === 2
+                                      ? { label: "Medium", cls: "bg-amber-50 text-amber-600 ring-amber-200/60 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-700/40" }
+                                      : { label: "Normal", cls: "bg-gray-100 text-gray-500 ring-gray-200/60 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700/40" };
 
-                                <button
-                                  type="button"
-                                  className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                                  onClick={() => openEditVariant(v.id)}
-                                  aria-label="Edit variant"
-                                  title="Edit"
-                                >
-                                  <Pencil size={12} />
-                                </button>
+                                return (
+                                  <div
+                                    key={v.id}
+                                    className={cn(
+                                      "group relative flex flex-col rounded-lg border p-2 transition-all duration-200",
+                                      "hover:shadow-md hover:-translate-y-px",
+                                      v.status
+                                        ? "border-gray-200 bg-gradient-to-br from-white to-gray-50/60 dark:border-gray-700 dark:from-gray-800/90 dark:to-gray-800/40"
+                                        : "border-gray-200/50 bg-gray-50/40 opacity-65 dark:border-gray-800/50 dark:bg-gray-900/30",
+                                    )}
+                                  >
+                                    {/* Row 1: status dot + name */}
+                                    <div className="flex items-center gap-1.5">
+                                      <span
+                                        className={cn(
+                                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                                          v.status
+                                            ? "bg-success-500"
+                                            : "bg-gray-400 dark:bg-gray-500",
+                                        )}
+                                      />
+                                      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
+                                        {v.name}
+                                      </span>
+                                    </div>
 
-                                <button
-                                  type="button"
-                                  className="text-error-500 hover:text-error-600"
-                                  onClick={() => {
-                                    const ok = window.confirm(`Delete variant "${v.name}"?`);
-                                    if (!ok) return;
-                                    deleteVarMutation.mutate(v.id);
-                                  }}
-                                  aria-label="Delete variant"
-                                  title="Delete"
-                                >
-                                  ×
-                                </button>
+                                    {/* Row 2: priority badge */}
+                                    <div className="mt-1.5">
+                                      <span
+                                        className={cn(
+                                          "inline-flex items-center rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ring-1",
+                                          prBadge.cls,
+                                        )}
+                                      >
+                                        {prBadge.label}
+                                      </span>
+                                    </div>
+
+                                    {/* Hover actions — top-right corner */}
+                                    <div className="absolute -top-1 -right-1 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white px-1 py-0.5 opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 dark:border-gray-600 dark:bg-gray-800">
+                                      <button
+                                        type="button"
+                                        onClick={() => openEditVariant(v.id)}
+                                        className="rounded p-0.5 text-gray-400 transition-colors hover:text-brand-600 dark:hover:text-brand-400"
+                                        title="Edit"
+                                      >
+                                        <Pencil size={11} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (window.confirm(`Delete variant "${v.name}"?`))
+                                            deleteVarMutation.mutate(v.id);
+                                        }}
+                                        className="rounded p-0.5 text-gray-400 transition-colors hover:text-error-600 dark:hover:text-error-400"
+                                        title="Delete"
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/30">
+                              <Layers size={14} className="text-gray-400 dark:text-gray-500" />
+                              <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                                No variants yet — add one below
                               </span>
-                            ))}
-                          </div>
+                            </div>
+                          )}
 
+                          {/* Add Variant Input */}
                           <div className="flex items-center gap-2">
-                            <div className="w-[220px]">
+                            <div style={{ width: 200 }}>
                               <Input
                                 placeholder="Add variant (e.g. XL)"
                                 value={variantDraftByAttrId[row.id] ?? ""}
@@ -969,15 +1023,16 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                                 }}
                               />
                             </div>
-
                             <Button
                               variant="outline"
-                              size="icon"
+                              size="sm"
                               onClick={() => addVariantInline(row.id)}
                               ariaLabel="Add variant"
                               disabled={createVarMutation.isPending}
-                              startIcon={<Plus size={16} />}
-                            />
+                              startIcon={<Plus size={14} />}
+                            >
+                              Add
+                            </Button>
                           </div>
                         </div>
                       </td>
