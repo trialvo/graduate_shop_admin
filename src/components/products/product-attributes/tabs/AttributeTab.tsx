@@ -157,119 +157,225 @@ function AttributeModal({
   const { t } = useTranslation();
   if (!state.open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[760px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              {state.mode === "create" ? t("products.attributes.createAttribute") : t("products.attributes.updateAttribute")}
-            </h3>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              {t("products.attributes.attributeDesc")}
-            </p>
-          </div>
+  const isCreate = state.mode === "create";
 
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setState((p) => ({ ...p, open: false }))}
-            ariaLabel="Close"
-            startIcon={<X size={16} />}
-          />
+  // Split CSV preview chips
+  const variantChips = state.variantsCsv
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
+
+        {/* ── Header ─────────────────────────────────── */}
+        <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-brand-50 via-white to-brand-50/40 px-6 py-5 dark:border-gray-800 dark:from-brand-900/20 dark:via-gray-900 dark:to-brand-900/10">
+          {/* Decorative circles */}
+          <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-brand-100/40 dark:bg-brand-500/5" />
+          <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-brand-100/30 dark:bg-brand-500/5" />
+
+          <div className="relative flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25">
+                {isCreate ? <Plus size={20} /> : <Pencil size={18} />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {isCreate ? t("products.attributes.createAttribute") : t("products.attributes.updateAttribute")}
+                </h3>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {t("products.attributes.attributeDesc")}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setState((p) => ({ ...p, open: false }))}
+              className="rounded-lg border border-gray-200 bg-white/80 p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
-        <div className="p-5">
+        {/* ── Body ─────────────────────────────────── */}
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
           {state.mode === "edit" && loadingSingle ? (
-            <div className="space-y-3">
-              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
-              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
-              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-20 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                  <div className="h-10 w-full animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
+                </div>
+              ))}
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("products.attributes.attributeName")} <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    placeholder="Weight / Size / Material"
-                    value={state.name}
-                    onChange={(e) => setState((p) => ({ ...p, name: e.target.value }))}
-                  />
+            <div className="space-y-6">
+
+              {/* Section 1: Basic Info */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">1</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Basic Information
+                  </span>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("products.attributes.priority")}
-                  </p>
-                  <Select
-                    key={`attr-modal-priority-${state.hydrated}-${state.priority}`}
-                    options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
-                    placeholder="Select priority"
-                    defaultValue={String(state.priority)}
-                    onChange={(v) =>
-                      setState((p) => ({
-                        ...p,
-                        priority: safeNumber(String(v), 1),
-                      }))
-                    }
-                  />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("products.attributes.attributeName")}
+                      <span className="text-error-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="e.g. Weight, Size, Material"
+                      value={state.name}
+                      onChange={(e) => setState((p) => ({ ...p, name: e.target.value }))}
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      Choose a clear, descriptive name for this attribute
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("products.attributes.priority")}
+                    </label>
+                    <Select
+                      key={`attr-modal-priority-${state.hydrated}-${state.priority}`}
+                      options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
+                      placeholder="Select priority"
+                      defaultValue={String(state.priority)}
+                      onChange={(v) =>
+                        setState((p) => ({
+                          ...p,
+                          priority: safeNumber(String(v), 1),
+                        }))
+                      }
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      Higher priority attributes appear first
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Status */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">2</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Visibility
+                  </span>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
-                  <div className="flex h-11 items-center">
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-800/40">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.status")}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                      {state.status ? "This attribute is visible to customers" : "This attribute is hidden from the storefront"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                      state.status
+                        ? "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400"
+                        : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+                    )}>
+                      {state.status ? t("common.active") : t("common.inactive")}
+                    </span>
                     <Switch
                       key={`attr-modal-st-${state.status}`}
                       label=""
                       defaultChecked={state.status}
                       onChange={(checked) => setState((p) => ({ ...p, status: checked }))}
                     />
-                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                      {state.status ? t("common.active") : t("common.inactive")}
-                    </span>
                   </div>
                 </div>
+              </div>
 
-                {state.mode === "create" ? (
-                  <div className="space-y-2 md:col-span-2">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("products.attributes.variantsOptional")}
-                    </p>
-                    <Input
-                      placeholder="S, M, L, XL"
-                      value={state.variantsCsv}
-                      onChange={(e) => setState((p) => ({ ...p, variantsCsv: e.target.value }))}
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {t("products.attributes.variantsAutoCreate")}
-                    </p>
+              {/* Section 3: Variants (only create) */}
+              {isCreate && (
+                <div>
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">3</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Quick Add Variants
+                    </span>
+                    <span className="rounded-full bg-gray-100 px-1.5 py-px text-[9px] font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                      Optional
+                    </span>
+                    <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
                   </div>
-                ) : null}
-              </div>
 
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setState((p) => ({ ...p, open: false }))}
-                  disabled={submitting}
-                >
-                  {t("common.cancel")}
-                </Button>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t("products.attributes.variantsOptional")}
+                      </label>
+                      <Input
+                        placeholder="S, M, L, XL, XXL"
+                        value={state.variantsCsv}
+                        onChange={(e) => setState((p) => ({ ...p, variantsCsv: e.target.value }))}
+                      />
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                        {t("products.attributes.variantsAutoCreate")}
+                      </p>
+                    </div>
 
-                <Button
-                  onClick={onSubmit}
-                  disabled={submitting || !state.name.trim()}
-                  startIcon={state.mode === "create" ? <Plus size={16} /> : <Pencil size={16} />}
-                >
-                  {submitting ? t("common.saving") : state.mode === "create" ? t("products.attributes.createAttribute") : t("common.update")}
-                </Button>
-              </div>
-            </>
+                    {/* Live preview chips */}
+                    {variantChips.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {variantChips.map((chip, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center rounded-md border border-brand-200 bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:border-brand-800 dark:bg-brand-500/10 dark:text-brand-300"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                        <span className="self-center text-[10px] text-gray-400">
+                          {variantChips.length} variant{variantChips.length !== 1 ? "s" : ""} will be created
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
+
+        {/* ── Footer ─────────────────────────────────── */}
+        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/50">
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">
+            {isCreate ? "Fill in the details to create a new attribute" : `Editing attribute #${state.id ?? ""}`}
+          </p>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setState((p) => ({ ...p, open: false }))}
+              disabled={submitting}
+            >
+              {t("common.cancel")}
+            </Button>
+
+            <Button
+              onClick={onSubmit}
+              disabled={submitting || !state.name.trim()}
+              startIcon={isCreate ? <Plus size={16} /> : <Pencil size={16} />}
+            >
+              {submitting ? t("common.saving") : isCreate ? t("products.attributes.createAttribute") : t("common.update")}
+            </Button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
