@@ -414,6 +414,7 @@ export default function AllOrdersView() {
         paidAmount: Number(o.paid_amount ?? 0),
         shippingCost: Number(o.delivery_charge ?? 0),
         discount: Number(o.discount_total ?? 0),
+        dueAmount: Number(o.due_amount ?? 0),
 
         paymentType: o.payment_type,
         paymentProvider: providerGuess,

@@ -105,6 +105,7 @@ export type OrderRow = {
   paidAmount: number;
   shippingCost: number;
   discount: number;
+  dueAmount?: number;
 
   paymentType: "gateway" | "cod" | "mixed";
   paymentProvider?: string;

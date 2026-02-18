@@ -66,8 +66,11 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
   const shippingCost = Number(order.shippingCost ?? 0);
 
   const amountDue = useMemo(() => {
-    return Math.max(0, subTotal - discount - paid + shippingCost);
-  }, [subTotal, discount, paid, shippingCost]);
+    if (Number.isFinite(Number(order.dueAmount))) {
+      return Math.max(0, Number(order.dueAmount));
+    }
+    return Math.max(0, Number(order.total ?? 0) - paid);
+  }, [order.dueAmount, order.total, paid]);
 
   const totalQty = useMemo(() => {
     return items.reduce((s, x) => s + (Number(x.qty) || 0), 0);
