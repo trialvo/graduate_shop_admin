@@ -21,7 +21,26 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 });
 
 api.interceptors.response.use(
-  (res: AxiosResponse) => res,
+  (res: AxiosResponse) => {
+    const data: any = res?.data;
+    const rawFlag = data?.flag;
+    const hasFlag = rawFlag !== undefined && rawFlag !== null;
+    const flag = Number(rawFlag);
+
+    if (hasFlag && Number.isFinite(flag) && flag !== 200) {
+      const message = data?.error || data?.message || `Request failed (flag: ${flag})`;
+      const error = new Error(message) as Error & {
+        response?: { status?: number; data?: unknown };
+      };
+      error.response = {
+        status: flag,
+        data,
+      };
+      return Promise.reject(error);
+    }
+
+    return res;
+  },
   (err: AxiosError) => {
     const status = err?.response?.status;
     if (status === 401) {
