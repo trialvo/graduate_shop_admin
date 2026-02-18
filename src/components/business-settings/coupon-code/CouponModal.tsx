@@ -14,6 +14,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
+import DatePicker from "@/components/form/date-picker";
 
 import type { CouponScope, DiscountType, Option, ProductLite, CustomerLite } from "./types";
 import {
@@ -60,6 +61,16 @@ function makeRandomCode(): string {
   let out = "";
   for (let i = 0; i < 8; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
   return out;
+}
+
+function addDaysISO(baseIso: string, days: number): string {
+  const base = new Date(`${baseIso}T00:00:00`);
+  if (Number.isNaN(base.getTime())) return baseIso;
+  base.setDate(base.getDate() + days);
+  const y = base.getFullYear();
+  const m = String(base.getMonth() + 1).padStart(2, "0");
+  const d = String(base.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function mapProductScopeToLite(p: any): ProductLite {
@@ -227,6 +238,13 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
   useEffect(() => {
     if (customerScope === "all") setCustomerIds([]);
   }, [customerScope]);
+
+  useEffect(() => {
+    if (!startDate || !expireDate) return;
+    if (startDate > expireDate) {
+      setExpireDate(startDate);
+    }
+  }, [startDate, expireDate]);
 
   const canSave = useMemo(() => {
     if (!title.trim()) return false;
@@ -437,7 +455,7 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+    <div className="fixed inset-0 z-[1000] overflow-y-auto p-2 sm:p-4 md:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
@@ -445,9 +463,9 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
         aria-label="Close overlay"
       />
 
-      <div className="relative w-[95vw] max-w-5xl rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+      <div className="relative mx-auto my-2 flex w-full max-w-5xl flex-col rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+        <div className="shrink-0 flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-gray-800">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {mode === "create" ? "Add New Coupon" : "Edit Coupon"}
@@ -468,7 +486,7 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
         </div>
 
         {/* Body */}
-        <div className="max-h-[800px] overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {/* Main form */}
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -546,15 +564,63 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</p>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <DatePicker
+                  value={startDate}
+                  onChange={(v) => setStartDate(v || todayISO())}
+                  placeholder="Select start date"
+                  showToday
+                  showClear={false}
+                />
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Expire Date</p>
-                <Input type="date" value={expireDate} onChange={(e) => setExpireDate(e.target.value)} />
+                <DatePicker
+                  value={expireDate}
+                  onChange={(v) => setExpireDate(v || startDate || todayISO())}
+                  min={startDate}
+                  placeholder="Select expire date"
+                  showToday
+                  showClear={false}
+                />
                 {startDate && expireDate && startDate > expireDate ? (
                   <p className="text-xs text-error-500">Expire date must be after start date</p>
                 ) : null}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                    onClick={() => {
+                      const base = startDate || todayISO();
+                      setExpireDate(base);
+                    }}
+                  >
+                    Same as start
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                    onClick={() => {
+                      const base = startDate || todayISO();
+                      setExpireDate(addDaysISO(base, 7));
+                    }}
+                  >
+                    +7 days
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                    onClick={() => {
+                      const base = startDate || todayISO();
+                      setExpireDate(addDaysISO(base, 30));
+                    }}
+                  >
+                    +30 days
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -778,7 +844,7 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+        <div className="shrink-0 flex flex-col-reverse gap-3 border-t border-gray-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
