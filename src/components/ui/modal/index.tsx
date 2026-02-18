@@ -103,10 +103,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : "relative w-full rounded-xl bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10";
+    : "relative my-2 sm:my-0 w-full max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-xl bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10";
 
   return (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-6">
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${

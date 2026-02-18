@@ -39,7 +39,7 @@ export default function Modal({
           : "max-w-xl";
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-4">
       {/* Backdrop */}
       <button
         type="button"
@@ -51,9 +51,10 @@ export default function Modal({
       {/* Modal */}
       <div
         className={cn(
-          "relative z-[10000] w-full bg-white shadow-theme-xs dark:bg-gray-900",
+          "relative z-[10000] my-2 sm:my-0 w-full max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] bg-white shadow-theme-xs dark:bg-gray-900",
           "overflow-hidden", // ✅ IMPORTANT: clip header/footer so rounded corners show
           "rounded-xl", // default
+          "flex flex-col",
           sizeClass,
           contentClassName // ✅ e.g. rounded-[6px]
         )}
@@ -82,7 +83,7 @@ export default function Modal({
         </div>
 
         {/* Body */}
-        <div className={cn("max-h-[500px] overflow-y-auto px-5 py-5", bodyClassName)}>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto px-5 py-5", bodyClassName)}>
           {children}
         </div>
 
