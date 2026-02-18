@@ -1,17 +1,33 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
+  HelpCircle,
   Eye,
   Pencil,
   Printer,
   MoreVertical,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
 import type { CourierProviderId, OrderRow } from "./types";
 import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
+import FraudCheckModal from "@/components/ui/modal/FraudCheckModal";
+import { cn } from "@/lib/utils";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
+import { toPublicUrl } from "@/utils/toPublicUrl";
+
+import {
+  ordersKeys,
+  patchOrderPaymentStatus,
+  patchOrderStatus,
+} from "@/api/orders.api";
 
 type Props = { rows: OrderRow[] };
 
@@ -20,11 +36,21 @@ function fraudIcon(level: OrderRow["fraudLevel"]) {
     return <CheckCircle2 size={16} className="text-success-500" />;
   if (level === "medium")
     return <AlertTriangle size={16} className="text-orange-500" />;
+  if (level === "not_found")
+    return <HelpCircle size={16} className="text-gray-400" />;
   return <ShieldAlert size={16} className="text-error-500" />;
+}
+
+function fraudLabel(level: OrderRow["fraudLevel"]) {
+  if (level === "safe") return "Safe";
+  if (level === "medium") return "Medium";
+  if (level === "not_found") return "Not Found";
+  return "Fraud";
 }
 
 const PAYMENT_OPTIONS = [
   { id: "paid", label: "paid" },
+  { id: "partial_paid", label: "Partial Paid" },
   { id: "unpaid", label: "unpaid" },
 ] as const;
 
@@ -34,17 +60,21 @@ const STATUS_OPTIONS = [
   { id: "processing", label: "processing" },
   { id: "packaging", label: "packaging" },
   { id: "shipped", label: "shipped" },
-  { id: "out_of_delivery", label: "out of delivery" },
+  { id: "out_for_delivery", label: "Out For Delivery" },
   { id: "delivered", label: "delivered" },
   { id: "returned", label: "returned" },
   { id: "cancelled", label: "cancelled" },
-  { id: "on_hold", label: "on hold" },
+  { id: "on_hold", label: "On Hold" },
   { id: "trash", label: "trash" },
 ] as const;
 
 export default function OrdersTable({ rows }: Props) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [paymentOverride, setPaymentOverride] = useState<
-    Record<string, "paid" | "unpaid">
+    Record<string, OrderRow["paymentStatus"]>
   >({});
   const [statusOverride, setStatusOverride] = useState<
     Record<string, OrderRow["status"]>
@@ -56,6 +86,8 @@ export default function OrdersTable({ rows }: Props) {
 
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [fraudOpen, setFraudOpen] = useState(false);
+  const [fraudOrder, setFraudOrder] = useState<OrderRow | null>(null);
 
   const mergedRows = useMemo(() => {
     return rows.map((r) => ({
@@ -70,7 +102,16 @@ export default function OrdersTable({ rows }: Props) {
     setViewOpen(true);
   };
 
-  const updateCourier = (orderId: string, providerId: CourierProviderId, memoNo: string) => {
+  const openFraud = (order: OrderRow) => {
+    setFraudOrder(order);
+    setFraudOpen(true);
+  };
+
+  const updateCourier = (
+    orderId: string,
+    providerId: CourierProviderId,
+    memoNo: string
+  ) => {
     setCourierOverride((prev) => ({
       ...prev,
       [orderId]: { providerId, memoNo },
@@ -81,114 +122,198 @@ export default function OrdersTable({ rows }: Props) {
     orderId: string,
     providerId: Exclude<CourierProviderId, "select">
   ) => {
-    // TODO: Replace with real API call
+    // TODO: no endpoint provided yet
     // eslint-disable-next-line no-console
     console.log("Request courier for:", orderId, "provider:", providerId);
-
-    // After success you can update state from API response (tracking no etc.)
   };
+
+  const paymentMutation = useMutation({
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: "unpaid" | "partial_paid" | "paid";
+    }) => patchOrderPaymentStatus(payload.orderId, payload.newStatus),
+    onSuccess: async () => {
+      toast.success(t("orders.paymentStatusUpdated"));
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update payment status";
+      toast.error(msg);
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async (payload: {
+      orderId: number;
+      newStatus: OrderRow["status"];
+    }) => patchOrderStatus(payload.orderId, payload.newStatus),
+    onSuccess: async () => {
+      toast.success(t("orders.orderStatusUpdated"));
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ??
+        err?.response?.data?.message ??
+        "Failed to update order status";
+      toast.error(msg);
+    },
+  });
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-[1200px] w-full border-collapse">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        {/* ✅ Key fix:
+            - table-layout: fixed => columns don't expand and force height
+            - truncate everywhere => single line
+            - fixed widths for "small" columns + flexible "Customer/Order info"
+            - horizontal scroll for many columns
+            - vertical scroll with max height
+        */}
+        <div
+          className={cn("relative overflow-auto", "max-h-[calc(100vh-410px)]")}
+        >
+          <table className="min-w-[1200px] w-full table-fixed border-collapse">
+            <colgroup>
+              <col className="w-[40px]" />
+              <col className="w-[220px]" />
+              <col className="w-[240px]" />
+              <col className="w-[160px]" />
+              <col className="w-[150px]" />
+              <col className="w-[170px]" />
+              <col className="w-[150px]" />
+              <col className="w-[220px]" />
+              <col className="w-[220px]" />
+              <col className="w-[220px]" />
+              <col className="w-[80px]" />
+            </colgroup>
+
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                <th
+                  className={cn(
+                    "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                    "sticky top-0 z-20 bg-white dark:bg-gray-900"
+                  )}
+                >
+                  {/* ✅ user said avoid check thing, keeping header empty */}
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Customer
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Order Info
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Product
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Payment
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Status
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Date Time
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Send Currier
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Order Note
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  Shipping Location
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
+
+                {[
+                  "Customer",
+                  "Order Info",
+                  "Product",
+                  "Payment",
+                  "Status",
+                  "Date Time",
+                  "Send Currier",
+                  "Order Note",
+                  "Shipping Location",
+                ].map((label) => (
+                  <th
+                    key={label}
+                    className={cn(
+                      "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                      "sticky top-0 z-20 bg-white dark:bg-gray-900"
+                    )}
+                  >
+                    {label}
+                  </th>
+                ))}
+
+                <th
+                  className={cn(
+                    "px-4 py-4 text-left text-xs font-semibold text-brand-500",
+                    "sticky top-0 right-0 z-30",
+                    "bg-white dark:bg-gray-900",
+                    "border-l border-gray-200 dark:border-gray-800"
+                  )}
+                >
                   Action
                 </th>
               </tr>
             </thead>
 
             <tbody>
-              {mergedRows.map((r) => (
+              {mergedRows.map((r, i) => (
                 <tr
                   key={r.id}
-                  className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                  className="group border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                 >
+                  {/* ✅ remove checkbox */}
                   <td className="px-4 py-4">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      {i + 1}
+                    </span>
                   </td>
 
-                  {/* Customer */}
+                  {/* Customer (single-line content to prevent height growth) */}
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                        {r.customerImage ? (
-                          <img
-                            src={r.customerImage}
-                            alt={r.customerName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs font-semibold text-gray-500">
-                            IMG
-                          </span>
-                        )}
-                      </div>
+                    {(() => {
+                      const fallback = imageFallbackSvgDataUri(r.customerName);
+                      const imageSrc = r.customerImage ? toPublicUrl(r.customerImage) : fallback;
+                      return (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                            <img
+                              src={imageSrc}
+                              alt={r.customerName}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              onError={(event) => {
+                                const target = event.currentTarget;
+                                if (target.src !== fallback) {
+                                  target.src = fallback;
+                                }
+                              }}
+                            />
+                          </div>
 
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-brand-500">
-                          {r.customerName}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {r.customerPhone}
-                        </p>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-brand-500">
+                              {r.customerName}
+                            </p>
+                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                              {r.customerPhone}
+                            </p>
 
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-white ring-1 ring-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-950 dark:ring-gray-800 dark:text-gray-300">
-                            {fraudIcon(r.fraudLevel)}
-                            Fraud Check
-                          </span>
+                            <div className="mt-1 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openFraud(r)}
+                                className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
+                              >
+                                {fraudIcon(r.fraudLevel)}
+                                <span className="truncate">Fraud: {fraudLabel(r.fraudLevel)}</span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Order Info */}
                   <td className="px-4 py-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {r.id}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {r.orderDateLabel} • {r.orderTimeLabel}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {r.relativeTimeLabel}
-                      </p>
+                    <div className="min-w-0 space-y-1 flex items-center gap-2">
+                      <div>
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                          #{r.id}
+                        </p>
 
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                          {r.orderDateLabel} • {r.orderTimeLabel}
+                        </p>
+
+                        <p className="truncate text-[14px] font-bold text-gray-500 dark:text-gray-400">
+                          {r.relativeTimeLabel}
+                        </p>
+                      </div>
                       <div className="mt-2 flex items-center gap-2">
                         <button
                           type="button"
@@ -203,6 +328,13 @@ export default function OrdersTable({ rows }: Props) {
                           type="button"
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
                           aria-label="Edit"
+                          onClick={() =>
+                            navigate(
+                              `/order-editor?orderId=${encodeURIComponent(
+                                r.id
+                              )}`
+                            )
+                          }
                         >
                           <Pencil size={16} />
                         </button>
@@ -212,15 +344,17 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Product */}
                   <td className="px-4 py-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {r.currencySymbol}
-                        {r.total}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Items: {r.itemsAmount} • Qty: {r.totalItems}
-                      </p>
-                      <p className="text-xs font-semibold text-brand-500">
+                    <div className="min-w-0 space-y-1 flex items-center gap-4">
+                      <div>
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                          {r.currencySymbol}
+                          {r.total}
+                        </p>
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                          Items: {r.itemsAmount} • Qty: {r.totalItems}
+                        </p>
+                      </div>
+                      <p className="truncate text-xs font-semibold text-brand-500">
                         {r.paymentMethod}
                       </p>
                     </div>
@@ -228,90 +362,119 @@ export default function OrdersTable({ rows }: Props) {
 
                   {/* Payment */}
                   <td className="px-4 py-4">
-                    <OrderSelectDropdown
-                      value={r.paymentStatus}
-                      onChange={(v) =>
-                        setPaymentOverride((prev) => ({
-                          ...prev,
-                          [r.id]: v as "paid" | "unpaid",
-                        }))
-                      }
-                      options={PAYMENT_OPTIONS as any}
-                      variant="pill"
-                    />
+                    <div className="min-w-0">
+                      <OrderSelectDropdown
+                        value={r.paymentStatus}
+                        onChange={(v) => {
+                          const next = v as OrderRow["paymentStatus"];
+                          setPaymentOverride((prev) => ({
+                            ...prev,
+                            [r.id]: next,
+                          }));
+                          paymentMutation.mutate({
+                            orderId: Number(r.id),
+                            newStatus: next,
+                          });
+                        }}
+                        options={PAYMENT_OPTIONS as any}
+                        variant="pill"
+                      />
+                    </div>
                   </td>
 
                   {/* Status */}
                   <td className="px-4 py-4">
-                    <OrderSelectDropdown
-                      value={r.status}
-                      onChange={(v) =>
-                        setStatusOverride((prev) => ({
-                          ...prev,
-                          [r.id]: v as OrderRow["status"],
-                        }))
-                      }
-                      options={STATUS_OPTIONS as any}
-                      variant="pill"
-                    />
+                    <div className="min-w-0">
+                      <OrderSelectDropdown
+                        value={r.status}
+                        onChange={(v) => {
+                          const next = v as OrderRow["status"];
+                          setStatusOverride((prev) => ({
+                            ...prev,
+                            [r.id]: next,
+                          }));
+                          statusMutation.mutate({
+                            orderId: Number(r.id),
+                            newStatus: next,
+                          });
+                        }}
+                        options={STATUS_OPTIONS as any}
+                        variant="pill"
+                      />
+                    </div>
                   </td>
 
                   {/* Date Time */}
                   <td className="px-4 py-4">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                       {r.orderDateLabel}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                       {r.orderTimeLabel}
                     </p>
                   </td>
 
                   {/* Send Currier */}
                   <td className="px-4 py-4">
-                    <SendCourierCell
-                      order={r}
-                      courierOverride={courierOverride[r.id]}
-                      onUpdateCourier={updateCourier}
-                      onRequestCourier={requestCourier}
-                    />
+                    <div className="min-w-0">
+                      <SendCourierCell
+                        order={r}
+                        courierOverride={courierOverride[r.id]}
+                        onUpdateCourier={updateCourier}
+                        onRequestCourier={requestCourier}
+                      />
+                    </div>
                   </td>
 
                   {/* Order Note */}
                   <td className="px-4 py-4">
-                    <p className="max-w-[220px] truncate text-sm text-gray-600 dark:text-gray-300">
+                    <p className="truncate text-sm text-gray-600 dark:text-gray-300">
                       {r.orderNote || "—"}
                     </p>
                   </td>
 
                   {/* Shipping Location */}
                   <td className="px-4 py-4">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {r.shippingLocation.split(" ")[0]}
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {r.shippingArea}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {r.shippingLocation.split(" ").slice(1).join(" ")}
+                    <p className="truncate text-sm text-gray-600 dark:text-gray-300">
+                      {r.shippingAddress}
                     </p>
                   </td>
 
-                  {/* Actions */}
-                  <td className="px-4 py-4">
+                  {/* Sticky Action */}
+                  <td
+                    className={cn(
+                      "px-4 py-4",
+                      "sticky right-0 z-10",
+                      "bg-white dark:bg-gray-900",
+                      "border-l border-gray-200 dark:border-gray-800",
+                      "group-hover:bg-gray-50 dark:group-hover:bg-white/[0.03]"
+                    )}
+                  >
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
                         aria-label="Print"
-                        onClick={() => window.print()}
+                        onClick={() => {
+                          const url = `/order-invoice/${encodeURIComponent(
+                            r.id
+                          )}?print=1`;
+                          window.open(url, "_blank", "noopener,noreferrer");
+                        }}
                       >
                         <Printer size={16} />
                       </button>
 
-                      <button
+                      {/* <button
                         type="button"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-white/[0.03]"
                         aria-label="More"
                       >
                         <MoreVertical size={16} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
@@ -336,6 +499,12 @@ export default function OrdersTable({ rows }: Props) {
         open={viewOpen}
         onClose={() => setViewOpen(false)}
         order={selectedOrder}
+      />
+
+      <FraudCheckModal
+        open={fraudOpen}
+        onClose={() => setFraudOpen(false)}
+        order={fraudOrder}
       />
     </>
   );

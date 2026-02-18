@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Download, RefreshCw, Search, Trash2, Wand2 } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
@@ -13,7 +14,7 @@ import type {
   Option,
   ProductAttributeSelection,
   ProductLite,
-  VariantRow,
+  ProductVariantRow,
 } from "../types";
 import { cartesian, makeSkuBase, safeNumber } from "../utils";
 
@@ -34,8 +35,8 @@ type Props = {
   productColorMap: Record<number, number[]>;
   onChangeProductColorMap: (next: Record<number, number[]>) => void;
 
-  variants: VariantRow[];
-  onChangeVariants: (next: VariantRow[]) => void;
+  variants: ProductVariantRow[];
+  onChangeVariants: (next: ProductVariantRow[]) => void;
 };
 
 const PRICE_DEFAULT = 0;
@@ -55,6 +56,7 @@ export default function VariantTab({
   variants,
   onChangeVariants,
 }: Props) {
+  const { t } = useTranslation();
   const productOptions: Option[] = useMemo(
     () => products.map((p) => ({ value: String(p.id), label: `${p.name} (${p.sku})` })),
     [products]
@@ -146,7 +148,7 @@ export default function VariantTab({
 
     if (requiredMissing.length > 0) {
       setError(
-        `Required missing: ${requiredMissing.map((x) => x.name).join(", ")}`
+        `${t("products.attributes.requiredMissing")} ${requiredMissing.map((x) => x.name).join(", ")}`
       );
       return;
     }
@@ -174,7 +176,7 @@ export default function VariantTab({
     const nextIdStart = Math.max(0, ...variants.map((v) => v.id)) + 1;
     let idCounter = nextIdStart;
 
-    const nextVariants: VariantRow[] = [];
+    const nextVariants: ProductVariantRow[] = [];
 
     const ensureOne = combos.length > 0 ? combos : [[]];
 
@@ -232,7 +234,7 @@ export default function VariantTab({
     );
   }, [variants, activeProductId, search]);
 
-  const updateVariant = (id: number, patch: Partial<VariantRow>) => {
+  const updateVariant = (id: number, patch: Partial<ProductVariantRow>) => {
     onChangeVariants(variants.map((v) => (v.id === id ? { ...v, ...patch } : v)));
   };
 
@@ -247,11 +249,11 @@ export default function VariantTab({
   return (
     <div className="space-y-6">
       {/* Product Selector */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           <div className="md:col-span-2 space-y-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Select Product <span className="text-error-500">*</span>
+              {t("products.attributes.selectProduct")} <span className="text-error-500">*</span>
             </p>
             <Select
               options={productOptions}
@@ -267,7 +269,7 @@ export default function VariantTab({
 
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Brand (for product)
+              {t("products.attributes.brandForProduct")}
             </p>
             <Select
               key={`brand-${activeProductId}-${selectedBrandId}`}
@@ -287,7 +289,7 @@ export default function VariantTab({
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Preview variants:
+              {t("products.attributes.previewVariants")}
             </span>
             <span className="inline-flex h-7 items-center rounded-md bg-gray-100 px-2 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {previewCount}
@@ -296,10 +298,10 @@ export default function VariantTab({
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={clearSelections} startIcon={<RefreshCw size={16} />}>
-              Reset Selections
+              {t("products.attributes.resetSelections")}
             </Button>
             <Button onClick={generateVariants} startIcon={<Wand2 size={16} />}>
-              Generate Variants
+              {t("products.attributes.generateVariants")}
             </Button>
           </div>
         </div>
@@ -312,15 +314,15 @@ export default function VariantTab({
       </div>
 
       {/* Color + Attributes selections */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 space-y-6">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 space-y-6">
         {/* Colors */}
         <div>
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Colors (multi-select)
+              {t("products.attributes.colorsMultiSelect")}
             </h3>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Selected: {selectedColors.length}
+              {t("products.attributes.selected")} {selectedColors.length}
             </span>
           </div>
 
@@ -356,7 +358,7 @@ export default function VariantTab({
         {/* Attributes */}
         <div className="space-y-5">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-            Attributes (dynamic)
+            {t("products.attributes.attributesDynamic")}
           </h3>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -371,7 +373,7 @@ export default function VariantTab({
                   <div
                     key={a.id}
                     className={[
-                      "rounded-2xl border p-4",
+                      "rounded-xl border p-4",
                       missing
                         ? "border-error-200 bg-error-50 dark:border-error-900/40 dark:bg-error-500/10"
                         : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900",
@@ -383,28 +385,28 @@ export default function VariantTab({
                           {a.name}{" "}
                           {a.required ? (
                             <span className="ml-2 inline-flex rounded-md bg-error-500/10 px-2 py-0.5 text-xs font-semibold text-error-600 dark:text-error-300">
-                              Required
+                              {t("products.attributes.required")}
                             </span>
                           ) : (
                             <span className="ml-2 inline-flex rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                              Optional
+                              {t("products.attributes.optional")}
                             </span>
                           )}
                         </p>
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          Select values for this product
+                          {t("products.attributes.selectValues")}
                         </p>
                       </div>
 
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Selected: {selected.length}
+                        {t("products.attributes.selected")} {selected.length}
                       </div>
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       {a.values.length === 0 ? (
                         <span className="text-sm text-gray-500 dark:text-gray-400">
-                          No values defined (add values from Attribute tab)
+                          {t("products.attributes.noValuesDefined")}
                         </span>
                       ) : null}
 
@@ -429,22 +431,23 @@ export default function VariantTab({
                     </div>
 
                     <div className="mt-4 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                      <Button
+                        variant="ghost"
+                        size="xs"
                         onClick={() => setSelectedForAttr(a.id, [])}
                       >
-                        Clear
-                      </button>
+                        {t("products.attributes.clear")}
+                      </Button>
 
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                      <Button
+                        variant="ghost"
+                        size="xs"
                         onClick={() => setSelectedForAttr(a.id, a.values)}
                         disabled={a.values.length === 0}
+                        className="text-brand-600 dark:text-brand-400"
                       >
-                        Select All
-                      </button>
+                        {t("products.attributes.selectAll")}
+                      </Button>
                     </div>
                   </div>
                 );
@@ -454,11 +457,11 @@ export default function VariantTab({
       </div>
 
       {/* Variants List */}
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Variant List
+              {t("products.attributes.variantList")}
             </h3>
             <span className="inline-flex h-6 items-center rounded-md bg-gray-100 px-2 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {productVariants.length}
@@ -467,10 +470,8 @@ export default function VariantTab({
 
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
             <div className="relative w-full sm:w-[280px]">
-              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                <Search size={16} className="text-gray-400" />
-              </div>
               <Input
+                startIcon={<Search size={16} className="text-gray-400" />}
                 className="pl-9"
                 placeholder="Search variant (name / sku)"
                 value={search}
@@ -483,7 +484,7 @@ export default function VariantTab({
               startIcon={<Download size={16} />}
               onClick={() => console.log("Export variants")}
             >
-              Export
+              {t("common.export")}
             </Button>
 
             <Button
@@ -492,7 +493,7 @@ export default function VariantTab({
               startIcon={<Trash2 size={16} />}
               disabled={variants.filter((v) => v.productId === activeProductId).length === 0}
             >
-              Clear Product Variants
+              {t("products.attributes.clearProductVariants")}
             </Button>
           </div>
         </div>
@@ -575,14 +576,14 @@ export default function VariantTab({
                   </td>
 
                   <td className="px-4 py-4">
-                    <button
-                      type="button"
-                      className="inline-flex h-9 items-center justify-center rounded-lg border border-error-200 bg-white px-3 text-sm font-semibold text-error-600 shadow-theme-xs hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900 dark:text-error-400 dark:hover:bg-error-500/10"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => removeVariant(v.id)}
+                      startIcon={<Trash2 size={14} />}
                     >
-                      <Trash2 size={16} className="mr-2" />
-                      Delete
-                    </button>
+                      {t("common.delete")}
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -593,8 +594,8 @@ export default function VariantTab({
                     colSpan={7}
                     className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
-                    No variants found for this product. Select attributes and click
-                    <span className="mx-1 font-semibold">Generate Variants</span>.
+                    {t("products.attributes.noVariantsEmpty")}
+                    <span className="mx-1 font-semibold">{t("products.attributes.generateVariants")}</span>.
                   </td>
                 </tr>
               ) : null}

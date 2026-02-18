@@ -1,7 +1,9 @@
 import type React from "react";
+import { ShoppingCart, Trash2, Plus, Save } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { useTranslation } from "react-i18next";
 
 import type { OrderProductLine } from "./types";
 
@@ -51,33 +53,44 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
   totals,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">
-          Product Calculations:
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+            <ShoppingCart size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+              {t("orders.orderEditor.lineItems")}
+            </div>
+            <div className="text-base font-semibold text-gray-900 dark:text-white">
+              {t("orders.orderEditor.productsPricing")}
+            </div>
+          </div>
         </div>
 
-        <Button onClick={onAddLine} size="sm" variant="outline">
-          Add product
+        <Button onClick={onAddLine} size="sm" variant="outline" startIcon={<Plus size={14} />}>
+          {t("orders.orderEditor.addProduct")}
         </Button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
         <table className="min-w-[980px] w-full border-separate border-spacing-0">
           <thead>
-            <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              <th className="pb-3">SN</th>
-              <th className="pb-3">ID</th>
-              <th className="pb-3">Product</th>
-              <th className="pb-3">Color</th>
-              <th className="pb-3">Size</th>
-              <th className="pb-3">Discount</th>
-              <th className="pb-3">Unit price</th>
-              <th className="pb-3">Quantity</th>
-              <th className="pb-3">Tax</th>
-              <th className="pb-3 text-right">Total</th>
-              <th className="pb-3 text-right">Delete</th>
+            <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+              <th className="px-4 py-3">{t("orders.orderEditor.sn")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.id")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.product")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.color")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.size")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.discount")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.unitPrice")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.quantity")}</th>
+              <th className="px-4 py-3">{t("orders.orderEditor.tax")}</th>
+              <th className="px-4 py-3 text-right">{t("orders.orderEditor.total")}</th>
+              <th className="px-4 py-3 text-right">{t("orders.orderEditor.action")}</th>
             </tr>
           </thead>
 
@@ -91,39 +104,19 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
               return (
                 <tr
                   key={p.id}
-                  className="border-t border-gray-200 text-sm dark:border-gray-800"
+                  className="border-t border-gray-100 text-sm transition-colors hover:bg-gray-50/70 dark:border-gray-800 dark:hover:bg-gray-800/30"
                 >
-                  <td className="py-4 pr-3 align-top text-gray-500 dark:text-gray-400">
+                  <td className="px-4 py-4 align-top text-gray-400 dark:text-gray-500">
                     {String(idx + 1).padStart(2, "0")}
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
-                    <div className="flex flex-col gap-2">
-                      <div className="w-[82px] rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
-                        <div className="h-10 w-full rounded-md bg-gray-900/5 dark:bg-white/5">
-                          <div className="flex h-full items-center justify-center gap-[1px] px-1">
-                            {Array.from({ length: 22 }).map((_, i) => (
-                              <span
-                                key={i}
-                                className={`h-7 ${i % 4 === 0 ? "w-[2px]" : "w-[1px]"} bg-gray-900 dark:bg-white`}
-                                style={{ opacity: i % 6 === 0 ? 0.6 : 0.95 }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-center text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                          {p.sku}
-                        </div>
-                      </div>
-                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                        {p.serialNo}
-                      </div>
-                    </div>
+                  <td className="px-4 py-4 align-top text-gray-600 dark:text-gray-300">
+                    {p.id}
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
+                  <td className="px-4 py-4 align-top">
                     <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-800">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
                         {p.imageUrl ? (
                           <img
                             src={p.imageUrl}
@@ -136,14 +129,14 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {p.name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
                           SKU: {p.sku}
                         </div>
                       </div>
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
+                  <td className="px-4 py-4 align-top">
                     <div className="w-[120px]">
                       <Select
                         options={[
@@ -154,12 +147,12 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                         ]}
                         defaultValue={p.color}
                         onChange={(v) => onChangeLine(p.id, { color: v })}
-                        className="bg-white dark:bg-gray-900"
+                        className="bg-white dark:bg-gray-800/50"
                       />
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
+                  <td className="px-4 py-4 align-top">
                     <div className="w-[92px]">
                       <Select
                         options={[
@@ -173,12 +166,12 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                         ]}
                         defaultValue={p.size}
                         onChange={(v) => onChangeLine(p.id, { size: v })}
-                        className="bg-white dark:bg-gray-900"
+                        className="bg-white dark:bg-gray-800/50"
                       />
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
+                  <td className="px-4 py-4 align-top">
                     <div className="w-[110px]">
                       <Input
                         type="number"
@@ -188,18 +181,18 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                             discount: Number(e.target.value),
                           })
                         }
-                        className="bg-white dark:bg-gray-900"
+                        className="bg-white dark:bg-gray-800/50"
                       />
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
+                  <td className="px-4 py-4 align-top">
                     <div className="min-w-[120px] font-semibold text-gray-900 dark:text-white">
-                      {formatBDT(p.unitPrice)}৳
+                      {formatBDT(p.unitPrice)} BDT
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
+                  <td className="px-4 py-4 align-top">
                     <div className="w-[90px]">
                       <Input
                         type="number"
@@ -209,33 +202,31 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                             quantity: Math.max(1, Number(e.target.value)),
                           })
                         }
-                        className="bg-white dark:bg-gray-900"
+                        className="bg-white dark:bg-gray-800/50"
                       />
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top">
-                    <div className="min-w-[90px] text-gray-900 dark:text-white">
+                  <td className="px-4 py-4 align-top">
+                    <div className="min-w-[90px] text-gray-600 dark:text-gray-300">
                       {p.taxPercent.toFixed(2)}%
                     </div>
                   </td>
 
-                  <td className="py-4 pr-3 align-top text-right">
-                    <div className="min-w-[120px] font-extrabold text-gray-900 dark:text-white">
-                      {formatBDT(lineTotal)}৳
+                  <td className="px-4 py-4 align-top text-right">
+                    <div className="min-w-[120px] font-bold text-gray-900 dark:text-white">
+                      {formatBDT(lineTotal)} BDT
                     </div>
                   </td>
 
-                  <td className="py-4 align-top text-right">
-                    <button
-                      type="button"
+                  <td className="px-4 py-4 align-top text-right">
+                    <Button
+                      variant="danger"
+                      size="icon"
                       onClick={() => onDeleteLine(p.id)}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-red-600 transition hover:bg-red-50 dark:border-gray-800 dark:text-red-400 dark:hover:bg-red-500/10"
-                      aria-label="Delete line item"
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
+                      ariaLabel="Delete line item"
+                      startIcon={<Trash2 size={15} />}
+                    />
                   </td>
                 </tr>
               );
@@ -245,19 +236,20 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left: editable totals */}
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm">
-            <div className="font-semibold text-gray-900 dark:text-white">
-              Product Total:
+            <div className="font-semibold text-gray-700 dark:text-gray-200">
+              {t("orders.orderEditor.productTotal")}:
             </div>
-            <div className="font-extrabold text-gray-900 dark:text-white">
-              {formatBDT(totals.subTotal + totals.taxTotal)}৳
+            <div className="font-bold text-gray-900 dark:text-white">
+              {formatBDT(totals.subTotal + totals.taxTotal)} BDT
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-4 text-sm">
-            <div className="font-semibold text-gray-900 dark:text-white">
-              Delivery Charge:
+            <div className="font-semibold text-gray-700 dark:text-gray-200">
+              {t("orders.orderEditor.deliveryCharge")}:
             </div>
             <div className="flex items-center gap-3">
               <div className="w-[120px]">
@@ -267,18 +259,18 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                   onChange={(e) =>
                     onChangeTotals({ deliveryCharge: Number(e.target.value) })
                   }
-                  className="bg-white dark:bg-gray-900"
+                  className="bg-white dark:bg-gray-800/50"
                 />
               </div>
-              <div className="min-w-[80px] text-right font-extrabold text-gray-900 dark:text-white">
-                {formatBDT(deliveryCharge)}৳
+              <div className="min-w-[80px] text-right font-bold text-gray-900 dark:text-white">
+                {formatBDT(deliveryCharge)} BDT
               </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-4 text-sm">
-            <div className="font-semibold text-gray-900 dark:text-white">
-              Special Discount:
+            <div className="font-semibold text-gray-700 dark:text-gray-200">
+              {t("orders.orderEditor.specialDiscount")}:
             </div>
             <div className="flex items-center gap-3">
               <div className="w-[120px]">
@@ -288,18 +280,18 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                   onChange={(e) =>
                     onChangeTotals({ specialDiscount: Number(e.target.value) })
                   }
-                  className="bg-white dark:bg-gray-900"
+                  className="bg-white dark:bg-gray-800/50"
                 />
               </div>
-              <div className="min-w-[80px] text-right font-extrabold text-gray-900 dark:text-white">
-                {formatBDT(specialDiscount)}৳
+              <div className="min-w-[80px] text-right font-bold text-gray-900 dark:text-white">
+                {formatBDT(specialDiscount)} BDT
               </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-4 text-sm">
-            <div className="font-semibold text-gray-900 dark:text-white">
-              Advance Payment:
+            <div className="font-semibold text-gray-700 dark:text-gray-200">
+              {t("orders.orderEditor.advancePayment")}:
             </div>
             <div className="flex items-center gap-3">
               <div className="w-[120px]">
@@ -309,49 +301,60 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                   onChange={(e) =>
                     onChangeTotals({ advancePayment: Number(e.target.value) })
                   }
-                  className="bg-white dark:bg-gray-900"
+                  className="bg-white dark:bg-gray-800/50"
                 />
               </div>
-              <div className="min-w-[80px] text-right font-extrabold text-gray-900 dark:text-white">
-                {formatBDT(advancePayment)}৳
+              <div className="min-w-[80px] text-right font-bold text-gray-900 dark:text-white">
+                {formatBDT(advancePayment)} BDT
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="text-gray-500 dark:text-gray-400">Items</div>
-            <div className="text-right font-semibold text-gray-900 dark:text-white">
-              {totals.itemCount}
+        {/* Right: summary */}
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-800/40">
+          <div className="space-y-0 divide-y divide-gray-200/60 dark:divide-gray-700/60">
+            <div className="flex items-center justify-between py-2.5 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">{t("orders.orderEditor.items")}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {totals.itemCount}
+              </span>
             </div>
 
-            <div className="text-gray-500 dark:text-gray-400">Sub Total</div>
-            <div className="text-right font-semibold text-gray-900 dark:text-white">
-              {formatBDT(totals.subTotal)}৳
+            <div className="flex items-center justify-between py-2.5 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">{t("orders.orderEditor.subTotal")}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {formatBDT(totals.subTotal)} BDT
+              </span>
             </div>
 
-            <div className="text-gray-500 dark:text-gray-400">Tax</div>
-            <div className="text-right font-semibold text-gray-900 dark:text-white">
-              {formatBDT(totals.taxTotal)}৳
+            <div className="flex items-center justify-between py-2.5 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">{t("orders.orderEditor.tax")}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {formatBDT(totals.taxTotal)} BDT
+              </span>
             </div>
 
-            <div className="text-gray-500 dark:text-gray-400">Grand Total</div>
-            <div className="text-right font-extrabold text-gray-900 dark:text-white">
-              {formatBDT(totals.grandTotal)}৳
+            <div className="flex items-center justify-between py-2.5 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">{t("orders.orderEditor.grandTotal")}</span>
+              <span className="font-bold text-gray-900 dark:text-white">
+                {formatBDT(totals.grandTotal)} BDT
+              </span>
             </div>
 
-            <div className="text-gray-500 dark:text-gray-400">
-              Payable (After discount & advance)
-            </div>
-            <div className="text-right text-lg font-extrabold text-brand-600 dark:text-brand-400">
-              {formatBDT(totals.payable)}৳
+            <div className="flex items-center justify-between pt-3 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.payable")}
+              </span>
+              <span className="text-lg font-extrabold text-brand-600 dark:text-brand-400">
+                {formatBDT(totals.payable)} BDT
+              </span>
             </div>
           </div>
 
           <div className="mt-5 flex justify-end">
-            <Button onClick={onSubmit} size="md" variant="primary">
-              Update
+            <Button onClick={onSubmit} size="md" variant="primary" startIcon={<Save size={16} />}>
+              {t("common.update")}
             </Button>
           </div>
         </div>

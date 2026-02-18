@@ -10,7 +10,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "09:45 AM",
     cartTotal: "$125.50",
     status: "pending",
-    tourPreference: "Cox’s Bazar - 2 Days",
+    locationLabel: "Cox's Bazar - 2 Days",
   },
   {
     id: "GO-1002",
@@ -21,7 +21,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "10:15 AM",
     cartTotal: "$89.99",
     status: "pending",
-    tourPreference: "Sylhet - Tea Garden",
+    locationLabel: "Sylhet - Tea Garden",
   },
   {
     id: "GO-1003",
@@ -32,7 +32,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "08:30 PM",
     cartTotal: "$210.00",
     status: "pending",
-    tourPreference: "Bandarban - Hill Trek",
+    locationLabel: "Bandarban - Hill Trek",
   },
   {
     id: "GO-1004",
@@ -43,7 +43,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "05:00 PM",
     cartTotal: "$45.20",
     status: "pending",
-    tourPreference: "Sundarban - Boat Tour",
+    locationLabel: "Sundarban - Boat Tour",
   },
   {
     id: "GO-1005",
@@ -54,7 +54,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "11:20 AM",
     cartTotal: "$350.75",
     status: "complete",
-    tourPreference: "Saint Martin - Island",
+    locationLabel: "Saint Martin - Island",
   },
   {
     id: "GO-1006",
@@ -65,7 +65,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "02:15 PM",
     cartTotal: "$78.00",
     status: "complete",
-    tourPreference: "Rangamati - Lake View",
+    locationLabel: "Rangamati - Lake View",
   },
   {
     id: "GO-1007",
@@ -76,7 +76,7 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "09:00 AM",
     cartTotal: "$199.50",
     status: "cancelled",
-    tourPreference: "Kuakata - Sunset",
+    locationLabel: "Kuakata - Sunset",
   },
   {
     id: "GO-1008",
@@ -87,6 +87,6 @@ export const demoGuestOrders: GuestOrder[] = [
     timeLabel: "04:30 PM",
     cartTotal: "$55.40",
     status: "pending",
-    tourPreference: "Dhaka City - Day Tour",
+    locationLabel: "Dhaka City - Day Tour",
   },
 ];

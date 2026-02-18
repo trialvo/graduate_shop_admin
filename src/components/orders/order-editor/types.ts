@@ -1,21 +1,23 @@
+// src/components/orders/order-editor/types.ts
+
 export type OrderStatus =
   | "new"
   | "approved"
   | "processing"
   | "packaging"
   | "shipped"
-  | "out_of_delivery"
+  | "out_for_delivery"
   | "delivered"
   | "returned"
   | "cancelled"
   | "on_hold"
   | "trash";
 
-export type PaymentStatus = "paid" | "unpaid" | "partial";
+export type PaymentStatus = "paid" | "unpaid" | "partial_paid";
 
 export type DeliveryType = "inside_dhaka" | "out_of_dhaka";
 
-export type PaymentMethod = "cod" | "bkash" | "nagad" | "card";
+export type PaymentMethod = "gateway" | "cod" | "mixed";
 
 export interface OrderProductLine {
   id: string;
@@ -25,7 +27,7 @@ export interface OrderProductLine {
   imageUrl?: string;
   color: string;
   size: string;
-  discount: number; // amount in currency
+  discount: number;
   unitPrice: number;
   quantity: number;
   taxPercent: number;
@@ -34,7 +36,7 @@ export interface OrderProductLine {
 export interface OrderEditorData {
   orderId: string;
   orderNumber: string;
-  orderDate: string; // ISO string
+  orderDate: string;
   customerIp?: string;
 
   billingName: string;
@@ -64,7 +66,7 @@ export interface OrderEditorData {
     method: string;
     consignmentId: string;
     trackingUrl?: string;
-    lastUpdatedAt?: string; // ISO
+    lastUpdatedAt?: string;
   };
 
   customerInfo: {
@@ -77,7 +79,7 @@ export interface OrderEditorData {
   customerHistory: {
     orderId: string;
     shipping: string;
-    orderDate: string; // ISO
+    orderDate: string;
     totalAmount: number;
     timeAgo: string;
     orderStatus: OrderStatus;

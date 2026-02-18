@@ -1,19 +1,69 @@
+// src/components/orders/all-orders/OrderFiltersBar.tsx
+
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import type { OrderStatus } from "./types";
+import { cn } from "@/lib/utils";
 
 type Props = {
   status: OrderStatus;
   setStatus: (s: OrderStatus) => void;
   counts: Record<OrderStatus, number>;
   statusOptions: { id: OrderStatus; label: string }[];
-  sortBy: "date" | "total";
-  setSortBy: (v: "date" | "total") => void;
-  orderType: "all" | "cod" | "paid";
-  setOrderType: (v: "all" | "cod" | "paid") => void;
+
   search: string;
   setSearch: (v: string) => void;
+
+  orderType: "all" | "regular";
+  setOrderType: (v: "all" | "regular") => void;
+
+  paymentStatus: "all" | "unpaid" | "partial_paid" | "paid";
+  setPaymentStatus: (v: "all" | "unpaid" | "partial_paid" | "paid") => void;
+
+  paymentType: "all" | "gateway" | "cod" | "mixed";
+  setPaymentType: (v: "all" | "gateway" | "cod" | "mixed") => void;
+
+  paymentProvider:
+  | "all"
+  | "sslcommerz"
+  | "bkash"
+  | "nagad"
+  | "shurjopay"
+  | "rocket";
+  setPaymentProvider: (
+    v: "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket"
+  ) => void;
+
+  fraud: "all" | "0" | "1";
+  setFraud: (v: "all" | "0" | "1") => void;
+
+  minTotal: string;
+  setMinTotal: (v: string) => void;
+
+  maxTotal: string;
+  setMaxTotal: (v: string) => void;
+
+  dateFrom: string;
+  setDateFrom: (v: string) => void;
+
+  dateTo: string;
+  setDateTo: (v: string) => void;
+
+  limit: number;
+  setLimit: (v: number) => void;
+
   onClear: () => void;
+
+  uiOptions: {
+    orderType: readonly { id: string; label: string }[];
+    paymentStatus: readonly { id: string; label: string }[];
+    paymentType: readonly { id: string; label: string }[];
+    paymentProvider: readonly { id: string; label: string }[];
+    fraud: readonly { id: string; label: string }[];
+  };
+
+  loading?: boolean;
 };
 
 function statusPillClasses(active: boolean) {
@@ -21,22 +71,48 @@ function statusPillClasses(active: boolean) {
   return "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-800 dark:hover:bg-white/[0.03]";
 }
 
+const selectCls = cn(
+  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none",
+  "focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+);
+
+const dateCls = cn(
+  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none",
+  "focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+);
+
 export default function OrderFiltersBar({
   status,
   setStatus,
   counts,
   statusOptions,
-  sortBy,
-  setSortBy,
-  orderType,
-  setOrderType,
+
   search,
   setSearch,
+
+  paymentStatus,
+  setPaymentStatus,
+
+  paymentProvider,
+  setPaymentProvider,
+
+  fraud,
+  setFraud,
+
+  dateFrom,
+  setDateFrom,
+
+  dateTo,
+  setDateTo,
+
   onClear,
+  uiOptions,
+  loading,
 }: Props) {
+  const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      {/* Status strip */}
+    <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+      {/* Status strip (compact) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
         {statusOptions.map((opt) => {
           const active = status === opt.id;
@@ -45,9 +121,10 @@ export default function OrderFiltersBar({
               key={opt.id}
               type="button"
               onClick={() => setStatus(opt.id)}
-              className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${statusPillClasses(
-                active
-              )}`}
+              className={cn(
+                "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                statusPillClasses(active)
+              )}
             >
               {opt.label}{" "}
               <span className={active ? "text-white/90" : "text-gray-400"}>
@@ -58,52 +135,90 @@ export default function OrderFiltersBar({
         })}
       </div>
 
-      {/* Controls */}
-      <div className="mt-4 grid grid-cols-12 gap-3">
+      {/* ✅ 2-line compact controls */}
+      <div className="mt-3 grid grid-cols-12 gap-2">
+        {/* Line 1 */}
         <div className="col-span-12 md:col-span-2">
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            value={paymentStatus}
+            onChange={(e) => setPaymentStatus(e.target.value as any)}
+            className={selectCls}
           >
-            <option value="date">by: Date</option>
-            <option value="total">by: Total</option>
+            {uiOptions.paymentStatus.map((x) => (
+              <option key={x.id} value={x.id}>
+                {t("orders.filters.payPrefix")}: {x.label}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="col-span-12 md:col-span-2">
           <select
-            value={orderType}
-            onChange={(e) => setOrderType(e.target.value as any)}
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+            value={paymentProvider}
+            onChange={(e) => setPaymentProvider(e.target.value as any)}
+            className={selectCls}
           >
-            <option value="all">Order Type</option>
-            <option value="cod">COD</option>
-            <option value="paid">Paid</option>
+            {uiOptions.paymentProvider.map((x) => (
+              <option key={x.id} value={x.id}>
+                {t("orders.filters.providerPrefix")}: {x.label}
+              </option>
+            ))}
           </select>
         </div>
 
-        <div className="col-span-12 md:col-span-6">
-          <div className="flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-950">
+        <div className="col-span-12 md:col-span-2">
+          <select
+            value={fraud}
+            onChange={(e) => setFraud(e.target.value as any)}
+            className={selectCls}
+          >
+            {uiOptions.fraud.map((x) => (
+              <option key={x.id} value={x.id}>
+                {t("orders.filters.fraudPrefix")}: {x.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-12 md:col-span-5">
+          <div className="flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-950">
             <Search size={18} className="text-gray-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search"
+              placeholder={t("orders.filters.searchPlaceholder")}
               className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
             />
           </div>
         </div>
-
-        <div className="col-span-12 md:col-span-2 flex md:justify-end">
+        <div className="col-span-12 md:col-span-1 flex md:justify-end">
           <Button
             variant="outline"
             onClick={onClear}
-            className="h-11 w-full md:w-auto"
+            className="h-10 w-full md:w-auto"
+            disabled={loading}
           >
-            Clear
+            {loading ? t("orders.filters.loading") : t("orders.filters.clear")}
           </Button>
         </div>
+        {/* Line 2 */}
+        {/* <div className="col-span-6 md:col-span-3">
+          <input
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            type="date"
+            className={dateCls}
+          />
+        </div>
+
+        <div className="col-span-6 md:col-span-3">
+          <input
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            type="date"
+            className={dateCls}
+          />
+        </div> */}
       </div>
     </div>
   );

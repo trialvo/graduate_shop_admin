@@ -1,6 +1,9 @@
-import type React from "react";
-import Badge from "@/components/ui/badge/Badge";
+// src/components/orders/order-editor/OrderEditorHeader.tsx
 
+import type React from "react";
+import { Package, Calendar, CreditCard, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import Badge from "@/components/ui/badge/Badge";
 import type { OrderStatus, PaymentStatus } from "./types";
 
 interface OrderEditorHeaderProps {
@@ -36,7 +39,7 @@ const paymentToBadgeColor = (
   switch (status) {
     case "paid":
       return "success";
-    case "partial":
+    case "partial_paid":
       return "warning";
     default:
       return "error";
@@ -52,86 +55,66 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
   statusLabel,
   customerIp,
 }) => {
+  const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Order Status:
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex flex-wrap items-start justify-between gap-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+              <Package size={16} />
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Editor
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              ORDER #{orderNumber}
-            </h1>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>{paymentLabel}</span>
-            {customerIp ? (
-              <>
-                <span className="text-gray-300 dark:text-gray-700">•</span>
-                <span>Customer IP: {customerIp}</span>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-start gap-3 lg:justify-end">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Order Date:{" "}
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {orderDateLabel}
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+              {t("orders.orderEditor.title")}
             </span>
           </div>
 
-          <Badge
-            variant="light"
-            size="md"
-            color={paymentToBadgeColor(paymentStatus)}
-          >
-            {paymentStatus.toUpperCase()}
-          </Badge>
+          <div className="flex flex-wrap items-end gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Order #{orderNumber}
+            </h1>
+            <span className="mb-0.5 text-sm text-gray-500 dark:text-gray-400">
+              {paymentLabel}
+            </span>
+          </div>
 
-          <Badge
-            variant="light"
-            size="md"
-            color={statusToBadgeColor(orderStatus)}
-          >
-            {statusLabel}
-          </Badge>
+          {customerIp ? (
+            <div className="flex items-center gap-2">
+              <Shield size={13} className="text-gray-400" />
+              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                IP: {customerIp}
+              </span>
+            </div>
+          ) : null}
         </div>
-      </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="w-full max-w-[260px] rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-          <div className="h-12 w-full rounded-lg bg-gray-900/5 dark:bg-white/5">
-            <div className="flex h-full w-full items-center justify-center gap-1">
-              {Array.from({ length: 44 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-8 ${i % 3 === 0 ? "w-[2px]" : "w-[1px]"} bg-gray-900 dark:bg-white`}
-                  style={{ opacity: i % 7 === 0 ? 0.6 : 0.95 }}
-                />
-              ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-800/50">
+            <Calendar size={14} className="text-gray-400" />
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500">
+                {t("orders.orderEditor.orderDate")}
+              </div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {orderDateLabel}
+              </div>
             </div>
           </div>
-          <div className="mt-2 text-center text-[11px] font-medium text-gray-500 dark:text-gray-400">
-            {orderNumber}
-          </div>
-        </div>
 
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          Tip: Update billing/shipping + product line items and click{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            Update
-          </span>{" "}
-          to save.
+          <div className="flex items-center gap-2">
+            <CreditCard size={14} className="text-gray-400" />
+            <Badge
+              variant="light"
+              size="md"
+              color={paymentToBadgeColor(paymentStatus)}
+            >
+              {paymentStatus.toUpperCase()}
+            </Badge>
+          </div>
+
+          <Badge variant="light" size="md" color={statusToBadgeColor(orderStatus)}>
+            {statusLabel}
+          </Badge>
         </div>
       </div>
     </div>

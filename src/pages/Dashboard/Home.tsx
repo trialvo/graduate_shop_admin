@@ -7,67 +7,59 @@ import TopViewProductsCard from "@/components/dashboard/TopViewProductsCard";
 import TopSellingDistrictCard from "@/components/dashboard/TopSellingDistrictCard";
 import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard";
 import StockAlertProductsCard from "@/components/dashboard/StockAlertProductsCard";
-
-// ✅ adjust this import to your real data file if different
-import { stockAlertProducts } from "./dashboardSection5Data";
+import { useAppBranding } from "@/context/AppBrandingContext";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
-  const stockAlertItems = stockAlertProducts.map((p: any) => ({
-    id: String(p.id),
-    name: p.title ?? p.name ?? "Unnamed",
-    stockQty: Number(p.stock ?? p.stockQty ?? 0),
-    sku: p.sku ? String(p.sku) : undefined,
-  }));
+  const { branding } = useAppBranding();
+  const appName = branding.appShortName ?? branding.appName;
+  const { t } = useTranslation();
 
   return (
     <>
       <PageMeta
-        title="React.js Ecommerce Dashboard | Trialvo - React.js Admin Dashboard Template"
-        description="This is React.js Ecommerce Dashboard page for Trialvo - React.js Tailwind CSS Admin Dashboard Template"
+        title={t("dashboard.pageTitle", { appName })}
+        description={t("dashboard.pageDescription", { appName })}
       />
 
-      {/* Section 1 */}
-      <QuickAccess />
+      <div className="space-y-6">
+        {/* Quick Access Shortcuts */}
+        <QuickAccess />
 
-      {/* Section 2 */}
-      <DashboardMetrics />
+        {/* Metrics Overview */}
+        <DashboardMetrics />
 
-      {/* Section 3 */}
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-7">
-          <StatisticsChart />
+        {/* Statistics Chart + Order Statuses */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-8 flex">
+            <StatisticsChart />
+          </div>
+
+          <div className="col-span-12 xl:col-span-4 flex">
+            <OrderStatusGrid />
+          </div>
         </div>
 
-        <div className="col-span-12 xl:col-span-5">
-          <OrderStatusGrid />
-        </div>
-      </div>
+        {/* Top Viewed + Top Selling Districts */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-6 flex">
+            <TopViewProductsCard />
+          </div>
 
-      {/* Section 4 */}
-      <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-6 flex">
-          <TopViewProductsCard />
-        </div>
-
-        <div className="col-span-12 xl:col-span-6 flex">
-          <TopSellingDistrictCard />
-        </div>
-      </div>
-
-      {/* Section 5 */}
-      <div className="mt-6 grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-6 flex">
-          <TopSellingProductsCard />
+          <div className="col-span-12 xl:col-span-6 flex">
+            <TopSellingDistrictCard />
+          </div>
         </div>
 
-        <div className="col-span-12 xl:col-span-6 flex">
-          <StockAlertProductsCard
-            items={stockAlertItems}
-            onApplyStock={(payload) => {
-              // ✅ send to server + store history here
-              console.log("Stock update request:", payload);
-            }}
-          />
+        {/* Top Selling Products + Stock Alerts */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 xl:col-span-6 flex">
+            <TopSellingProductsCard />
+          </div>
+
+          <div className="col-span-12 xl:col-span-6 flex">
+            <StockAlertProductsCard />
+          </div>
         </div>
       </div>
     </>

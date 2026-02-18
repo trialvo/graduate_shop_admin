@@ -2,13 +2,24 @@
 
 import React from "react";
 import { RefreshCcw } from "lucide-react";
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 import type { GuestOrder, GuestOrderStatus, SortBy } from "./types";
-import { demoGuestOrders } from "./data";
 
 import GuestOrdersHeader from "./GuestOrdersHeader";
 import GuestOrdersToolbar from "./GuestOrdersToolbar";
 import GuestOrdersTable from "./GuestOrdersTable";
+import Pagination from "@/components/common/Pagination";
+
+import {
+  deleteGuestOrder,
+  getGuestOrders,
+  guestOrdersKeys,
+  type GuestOrdersListParams,
+  type GuestOrderListItem,
+} from "@/api/guest-orders.api";
 
 const statusTabs: Array<{ label: string; value: "all" | GuestOrderStatus }> = [
   { label: "Total", value: "all" },
@@ -20,98 +31,130 @@ const statusTabs: Array<{ label: string; value: "all" | GuestOrderStatus }> = [
 const sortOptions: Array<{ label: string; value: SortBy }> = [
   { label: "by: Date", value: "date_desc" },
   { label: "by: Date (Oldest)", value: "date_asc" },
-  { label: "by: Total (High)", value: "total_desc" },
-  { label: "by: Total (Low)", value: "total_asc" },
 ];
 
-const formatBanglaTime = () => {
-  const d = new Date();
-  const opts: Intl.DateTimeFormatOptions = {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  return d.toLocaleString(undefined, opts);
+function refreshedLabel(d: Date) {
+  const month = d.toLocaleString(undefined, { month: "long" });
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return `${month} ${day}, ${year} at ${time}`;
+}
+
+const formatTime = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 };
 
-const normalize = (v: string) => v.trim().toLowerCase();
-
-const matchesSearch = (order: GuestOrder, q: string) => {
-  if (!q) return true;
-  const query = normalize(q);
-  return (
-    normalize(order.customerName).includes(query) ||
-    normalize(order.email).includes(query) ||
-    normalize(order.phone).includes(query) ||
-    normalize(order.tourPreference).includes(query) ||
-    normalize(order.id).includes(query)
-  );
+const formatAmount = (n: number) => {
+  const v = Number(n ?? 0);
+  if (!Number.isFinite(v)) return "0 BDT";
+  return `${v.toLocaleString("en-US")} BDT`;
 };
 
-const sortOrders = (orders: GuestOrder[], sortBy: SortBy) => {
-  const copy = [...orders];
-
-  const toNumber = (s: string) => {
-    const n = Number(s.replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) ? n : 0;
+const toRow = (o: GuestOrderListItem): GuestOrder => {
+  const name = o.name?.trim() || "Guest";
+  const location = [o.city, o.full_address].filter(Boolean).join(", ") || "-";
+  return {
+    id: o.id,
+    orderId: o.order_id,
+    customerName: name,
+    email: o.email || "-",
+    phone: o.phone || "-",
+    createdAt: new Date(o.created_at),
+    timeLabel: formatTime(o.created_at),
+    cartTotal: formatAmount(o.grand_total),
+    status: o.status,
+    locationLabel: location,
+    paymentStatus: o.payment_status,
+    paymentType: o.payment_type,
+    isDeleted: Boolean(o.deleted_at),
   };
-
-  switch (sortBy) {
-    case "date_desc":
-      copy.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      break;
-    case "date_asc":
-      copy.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-      break;
-    case "total_desc":
-      copy.sort((a, b) => toNumber(b.cartTotal) - toNumber(a.cartTotal));
-      break;
-    case "total_asc":
-      copy.sort((a, b) => toNumber(a.cartTotal) - toNumber(b.cartTotal));
-      break;
-    default:
-      break;
-  }
-
-  return copy;
 };
 
 const GuestOrdersPage: React.FC = () => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+
   const [activeTab, setActiveTab] = React.useState<"all" | GuestOrderStatus>("all");
   const [sortBy, setSortBy] = React.useState<SortBy>("date_desc");
   const [search, setSearch] = React.useState<string>("");
-  const [refreshedAt, setRefreshedAt] = React.useState<string>(formatBanglaTime());
-
-  const onRefresh = () => setRefreshedAt(formatBanglaTime());
+  const [page, setPage] = React.useState(1);
+  const pageSize = 20;
+  const [refreshedAt, setRefreshedAt] = React.useState<Date>(new Date());
 
   const onClear = () => {
     setActiveTab("all");
     setSortBy("date_desc");
     setSearch("");
+    setPage(1);
   };
 
+  const baseParams = React.useMemo<GuestOrdersListParams | undefined>(() => {
+    const sortOrder: GuestOrdersListParams["sort_order"] =
+      sortBy === "date_asc" ? "asc" : "desc";
+    const trimmed = search.trim();
+    const hasBase = Boolean(trimmed) || sortBy !== "date_desc";
+
+    if (!hasBase) return undefined;
+
+    return {
+      search: trimmed ? trimmed : undefined,
+      sort_order: sortOrder,
+    };
+  }, [search, sortBy]);
+
+  const listParams = React.useMemo<GuestOrdersListParams | undefined>(() => {
+    if (!baseParams && page === 1 && activeTab === "all") return undefined;
+
+    return {
+      ...(baseParams ?? {}),
+      status: activeTab === "all" ? undefined : activeTab,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    };
+  }, [baseParams, activeTab, page, pageSize]);
+
+  const queryParams: GuestOrdersListParams = listParams ?? {};
+
+  const listQuery = useQuery({
+    queryKey: guestOrdersKeys.list(queryParams),
+    queryFn: () => getGuestOrders(queryParams),
+    placeholderData: keepPreviousData,
+    retry: 1,
+  });
+
+  const allCountQuery = useQuery({
+    queryKey: guestOrdersKeys.list({ ...(baseParams ?? {}), limit: 1, offset: 0 }),
+    queryFn: () => getGuestOrders({ ...(baseParams ?? {}), limit: 1, offset: 0 }),
+    retry: 1,
+    staleTime: 30_000,
+  });
+
+  const countsQueries = useQueries({
+    queries: (["pending", "complete", "cancelled"] as GuestOrderStatus[]).map((s) => ({
+      queryKey: guestOrdersKeys.list({ ...(baseParams ?? {}), status: s, limit: 1, offset: 0 }),
+      queryFn: () => getGuestOrders({ ...(baseParams ?? {}), status: s, limit: 1, offset: 0 }),
+      retry: 1,
+      staleTime: 30_000,
+    })),
+  });
+
   const counts = React.useMemo(() => {
-    const all = demoGuestOrders.length;
-    const pending = demoGuestOrders.filter((o: GuestOrder) => o.status === "pending").length;
-    const complete = demoGuestOrders.filter((o: GuestOrder) => o.status === "complete").length;
-    const cancelled = demoGuestOrders.filter((o: GuestOrder) => o.status === "cancelled").length;
+    const pending = countsQueries[0]?.data?.total ?? 0;
+    const complete = countsQueries[1]?.data?.total ?? 0;
+    const cancelled = countsQueries[2]?.data?.total ?? 0;
+    const all = allCountQuery.data?.total ?? pending + complete + cancelled;
     return { all, pending, complete, cancelled };
-  }, []);
+  }, [countsQueries, allCountQuery.data?.total]);
 
-  const filtered = React.useMemo(() => {
-    let list: GuestOrder[] = [...demoGuestOrders];
+  const rows = React.useMemo(() => {
+    const list = listQuery.data?.guest_orders ?? [];
+    return list.map(toRow);
+  }, [listQuery.data]);
 
-    if (activeTab !== "all") {
-      list = list.filter((o: GuestOrder) => o.status === activeTab);
-    }
-
-    list = list.filter((o: GuestOrder) => matchesSearch(o, search));
-    list = sortOrders(list, sortBy);
-
-    return list;
-  }, [activeTab, search, sortBy]);
+  const totalItems = listQuery.data?.total ?? 0;
 
   const tabBadges: Record<"all" | GuestOrderStatus, number> = {
     all: counts.all,
@@ -120,52 +163,90 @@ const GuestOrdersPage: React.FC = () => {
     cancelled: counts.cancelled,
   };
 
+  const refreshedAtText = React.useMemo(() => refreshedLabel(refreshedAt), [refreshedAt]);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteGuestOrder(id),
+    onSuccess: () => {
+      toast.success(t("guestOrders.guestOrderDeleted"));
+      qc.invalidateQueries({ queryKey: guestOrdersKeys.all }).catch(() => undefined);
+    },
+    onError: (err: any) => {
+      const msg = err?.message ?? t("guestOrders.failedDeleteGuest");
+      toast.error(msg);
+    },
+  });
+
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full bg-background text-foreground">
-      <div className="w-full px-4 py-6 md:px-8">
-        {/* Header */}
-        <div className="rounded-2xl border border-border bg-gradient-to-b from-background to-background/60 p-4 md:p-6 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <GuestOrdersHeader
-              title="Guest Orders"
-              tabs={statusTabs}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              badgeCounts={tabBadges}
-            />
+    <div className="space-y-4">
+      {/* Title + Tabs + Refresh */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <GuestOrdersHeader
+          title={t("guestOrders.title")}
+          tabs={statusTabs}
+          activeTab={activeTab}
+          onTabChange={(v) => {
+            setActiveTab(v);
+            setPage(1);
+          }}
+          badgeCounts={tabBadges}
+        />
 
-            <div className="flex items-center justify-between gap-3 lg:justify-end">
-              <button
-                onClick={onRefresh}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                Data Refreshed <RefreshCcw className="h-4 w-4" />
-              </button>
-
-              <div className="rounded-lg border border-border bg-background/30 px-3 py-2 text-xs md:text-sm text-foreground">
-                {refreshedAt}
-              </div>
-            </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="hidden sm:inline">{t("guestOrders.dataRefreshed")}</span>
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+              onClick={() => {
+                qc.invalidateQueries({ queryKey: guestOrdersKeys.all }).catch(() => undefined);
+                setRefreshedAt(new Date());
+              }}
+              aria-label="Refresh"
+              title="Refresh"
+            >
+              <RefreshCcw size={16} />
+            </button>
           </div>
 
-          {/* Toolbar */}
-          <div className="mt-5">
-            <GuestOrdersToolbar
-              sortOptions={sortOptions}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              search={search}
-              onSearchChange={setSearch}
-              onClear={onClear}
-            />
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+            {refreshedAtText}
           </div>
-        </div>
-
-        {/* Table */}
-        <div className="mt-5">
-          <GuestOrdersTable orders={filtered} />
         </div>
       </div>
+
+      {/* Filters */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <GuestOrdersToolbar
+          sortOptions={sortOptions}
+          sortBy={sortBy}
+          onSortChange={(v) => {
+            setSortBy(v);
+            setPage(1);
+          }}
+          search={search}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          onClear={onClear}
+        />
+      </div>
+
+      {/* Table */}
+      <GuestOrdersTable
+        orders={rows}
+        onDelete={(id) => deleteMutation.mutate(id)}
+        deletingId={deleteMutation.isPending ? deleteMutation.variables : null}
+      />
+
+      <Pagination
+        totalItems={totalItems}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        className="shadow-none"
+      />
     </div>
   );
 };

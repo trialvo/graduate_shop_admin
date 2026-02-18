@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Modal } from "../ui/modal";
 import PaginationFooter from "./PaginationFooter";
 import { StockAlertProductRow } from "../../pages/Dashboard/dashboardSection5Data";
@@ -14,6 +15,7 @@ interface Props {
 const PAGE_SIZE = 10;
 
 const StockAlertProductsModal = ({ open, onClose, rows, setRows }: Props) => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -47,16 +49,16 @@ const StockAlertProductsModal = ({ open, onClose, rows, setRows }: Props) => {
     >
       <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Stock Alert Products
+          {t("dashboard.stockAlertModal.title")}
         </h3>
       </div>
 
       <div className="max-h-[calc(700px-72px)] overflow-y-auto px-6 py-4">
         <div className="grid grid-cols-12 rounded-lg bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 dark:bg-white/[0.04] dark:text-gray-200">
-          <div className="col-span-2">Image</div>
-          <div className="col-span-6">Name</div>
-          <div className="col-span-2 text-center">Price</div>
-          <div className="col-span-2 text-right">Stock</div>
+          <div className="col-span-2">{t("dashboard.stockAlertModal.image")}</div>
+          <div className="col-span-6">{t("dashboard.stockAlertModal.name")}</div>
+          <div className="col-span-2 text-center">{t("dashboard.stockAlertModal.price")}</div>
+          <div className="col-span-2 text-right">{t("dashboard.stockAlertModal.stock")}</div>
         </div>
 
         <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -78,7 +80,7 @@ const StockAlertProductsModal = ({ open, onClose, rows, setRows }: Props) => {
                   {p.title}
                 </p>
                 <p className="text-xs text-gray-400">
-                  Order: {p.id} • SKU: {p.sku}
+                  {t("dashboard.stockAlertModal.order")}: {p.id} • {t("dashboard.stockAlertModal.sku")}: {p.sku}
                 </p>
               </div>
 

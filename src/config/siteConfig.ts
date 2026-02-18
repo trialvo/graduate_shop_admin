@@ -15,6 +15,7 @@ export type SiteConfig = {
   authLogoUrl?: string;
 
   faviconUrl: string;
+  faviconDarkUrl?: string;
   appleTouchIconUrl?: string;
   defaultOgImageUrl?: string;
 
@@ -42,13 +43,17 @@ export const siteConfig: SiteConfig = {
 
   // public/images/logo/logo.svg
   // public/images/logo/logo-dark.svg
-  logoLightUrl: "/images/logo/logo.svg",
-  logoDarkUrl: "/images/logo/logo-dark.svg",
-  logoIconUrl: "/images/logo/logo-icon.svg",
-  authLogoUrl: "/images/logo/auth-logo.svg",
+  // ✅ Light theme → dark logo (better contrast on white)
+  logoLightUrl: "/images/logo/my_dark_logo.svg",
+  // ✅ Dark theme → light logo (better contrast on dark)
+  logoDarkUrl: "/images/logo/my_light_logo.svg",
+  logoIconUrl: "/images/logo/my_dark_logo.svg",
+  authLogoUrl: "/images/logo/my_dark_logo.svg",
 
   // public/favicon.png
-  faviconUrl: "/favicon.png",
+  faviconUrl: "/favicon.ico",
+  // Optional dark-theme favicon (e.g. white icon on dark bg).
+  faviconDarkUrl: "/favicon-dark.ico",
 
   // appleTouchIconUrl: "/apple-touch-icon.png",
   // defaultOgImageUrl: "/og-image.png",

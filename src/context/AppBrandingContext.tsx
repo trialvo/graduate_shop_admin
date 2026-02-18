@@ -19,6 +19,7 @@ export type AppBranding = Pick<
   | "logoIconUrl"
   | "authLogoUrl"
   | "faviconUrl"
+  | "faviconDarkUrl"
   | "appleTouchIconUrl"
   | "defaultOgImageUrl"
   | "titleSeparator"
@@ -60,6 +61,7 @@ const getDefaultBranding = (): AppBranding => ({
   logoIconUrl: siteConfig.logoIconUrl,
   authLogoUrl: siteConfig.authLogoUrl,
   faviconUrl: siteConfig.faviconUrl,
+  faviconDarkUrl: siteConfig.faviconDarkUrl,
   appleTouchIconUrl: siteConfig.appleTouchIconUrl,
   defaultOgImageUrl: siteConfig.defaultOgImageUrl,
   titleSeparator: siteConfig.titleSeparator,

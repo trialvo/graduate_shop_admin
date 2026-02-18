@@ -1,13 +1,18 @@
+// src/components/products/all-products/AllProductsTable.tsx
 "use client";
 
 import React from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type { Product } from "./types";
-import StatusToggle from "./StatusToggle";
 
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
+import { cn } from "@/lib/utils";
+import StatusToggle from "@/components/ui/button/StatusToggle";
+import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
 type Props = {
   products: Product[];
@@ -17,59 +22,94 @@ type Props = {
   onDelete: (productId: string) => void;
 };
 
-const formatCategoryPath = (p: Product) => {
+const formatMoney = (n: number) => `${Number(n ?? 0).toFixed(2)}`;
+
+function CategoryBadges({ p }: { p: Product }) {
   const { category, subCategory, childCategory } = p.categoryPath;
-  return [category, subCategory, childCategory].filter(Boolean).join(" > ");
-};
 
-const formatMoney = (n: number) => {
-  // keep simple; replace later with currency util
-  return `$ ${n.toFixed(2)}`;
-};
-
-const AllProductsTable: React.FC<Props> = ({
-  products,
-  onStockPlus,
-  onToggleStatus,
-  onEdit,
-  onDelete,
-}) => {
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-      <div className="w-full overflow-x-auto">
-        <Table className="min-w-[1200px]">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200">
+        {category}
+      </span>
+
+      {subCategory ? (
+        <span className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200">
+          {subCategory}
+        </span>
+      ) : null}
+
+      {childCategory ? (
+        <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200">
+          {childCategory}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+const stickyActionHeaderClass = cn(
+  "sticky right-0 z-30",
+  "bg-gray-50 dark:bg-gray-950",
+  "border-l border-gray-200 dark:border-gray-800",
+  "w-[1%] whitespace-nowrap",
+  // ✅ subtle shadow so it feels floating
+  "shadow-[-10px_0_22px_-18px_rgba(0,0,0,0.35)] dark:shadow-[-10px_0_22px_-18px_rgba(0,0,0,0.75)]",
+);
+
+const stickyActionCellClass = cn(
+  "sticky right-0 z-20",
+  "bg-white dark:bg-gray-900",
+  "group-hover:bg-gray-50 dark:group-hover:bg-white/[0.04]",
+  "border-l border-gray-200 dark:border-gray-800",
+  "w-[1%] whitespace-nowrap",
+);
+
+const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStatus, onEdit, onDelete }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
+        <Table className="min-w-[1100px] border-collapse">
           <TableHeader>
-            <TableRow className="bg-gray-50 dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-950">
-              <TableCell isHeader className="w-[70px] text-gray-600 dark:text-gray-300">
-                Sl
+            <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-950">
+              <TableCell isHeader className="w-[70px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.sl")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[320px] text-gray-600 dark:text-gray-300">
-                Product name
+              <TableCell isHeader className="min-w-[320px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.product")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[170px] text-gray-600 dark:text-gray-300">
-                Product position
+              <TableCell isHeader className="min-w-[170px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.position")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[300px] text-gray-600 dark:text-gray-300">
-                Category
+              <TableCell isHeader className="min-w-[360px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.category")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[200px] text-gray-600 dark:text-gray-300">
-                Quantity available
+              <TableCell isHeader className="min-w-[220px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.stock")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[240px] text-gray-600 dark:text-gray-300">
-                Price
+              <TableCell isHeader className="min-w-[240px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.price")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[140px] text-gray-600 dark:text-gray-300">
-                Status
+              <TableCell isHeader className="min-w-[140px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
+                {t("products.table.status")}
               </TableCell>
 
-              <TableCell isHeader className="min-w-[140px] text-gray-600 dark:text-gray-300">
-                Action
+              {/* ✅ Sticky Action header (right) */}
+              <TableCell
+                isHeader
+                className={cn(
+                  stickyActionHeaderClass,
+                  "min-w-[132px] px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-brand-500",
+                )}
+              >
+                {t("products.table.action")}
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -77,110 +117,112 @@ const AllProductsTable: React.FC<Props> = ({
           <TableBody>
             {products.map((p, idx) => {
               const lowStock = p.stockQty <= 10;
+              const fallback = imageFallbackSvgDataUri(p.name);
+              const imageSrc = p.imageUrl ? toPublicUrl(p.imageUrl) : fallback;
 
               return (
                 <TableRow
                   key={p.id}
-                  className="hover:bg-gray-50 dark:hover:bg-white/[0.04] border-gray-200 dark:border-gray-800"
+                  className="group border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.04]"
                 >
-                  <TableCell className="text-gray-600 dark:text-gray-300">{idx + 1}</TableCell>
+                  <TableCell className="px-4 py-4 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {idx + 1}
+                  </TableCell>
 
-                  {/* Product name (image + name + sku) */}
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center">
-                        {p.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={p.imageUrl}
-                            alt={p.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-7 w-7 rounded-full bg-brand-500/20" />
-                        )}
+                  <TableCell className="px-4 py-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageSrc}
+                          alt={p.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          onError={(event) => {
+                            const target = event.currentTarget;
+                            if (target.src !== fallback) {
+                              target.src = fallback;
+                            }
+                          }}
+                        />
                       </div>
 
                       <div className="min-w-0">
-                        <div className="font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[240px]">
+                        <div className="max-w-[280px] truncate font-semibold text-gray-900 dark:text-white">
                           {p.name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {p.sku}
-                        </div>
+                        <div className="truncate text-xs text-gray-500 dark:text-gray-400">{p.sku}</div>
                       </div>
                     </div>
                   </TableCell>
 
-                  {/* position number */}
-                  <TableCell className="text-gray-700 dark:text-gray-200">
+                  <TableCell className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                     #{p.positionNumber}
                   </TableCell>
 
-                  {/* category path */}
-                  <TableCell className="text-gray-600 dark:text-gray-300">
-                    {formatCategoryPath(p)}
+                  <TableCell className="px-4 py-4">
+                    <CategoryBadges p={p} />
                   </TableCell>
 
-                  {/* quantity + plus */}
-                  <TableCell>
+                  {/* ✅ Stock: total stock + variants */}
+                  <TableCell className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <span
-                        className={[
-                          "font-semibold",
-                          lowStock ? "text-red-600" : "text-gray-900 dark:text-gray-100",
-                        ].join(" ")}
-                      >
-                        {p.stockQty}
-                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span
+                          className={cn(
+                            "text-sm font-semibold",
+                            lowStock ? "text-error-500" : "text-gray-900 dark:text-white",
+                          )}
+                        >
+                          {t("products.table.totalLabel", { count: p.stockQty })}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{t("products.table.variantsLabel", { count: p.variantCount })}</span>
+                      </div>
 
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onStockPlus(p.id)}
-                        className="h-7 w-7 rounded-full"
+                        className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06]"
+                        ariaLabel="Update stock"
                       >
                         <Plus className="h-4 w-4 text-brand-600" />
                       </Button>
 
-                      {lowStock && (
-                        <span className="text-xs text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-300 px-2 py-1 rounded-full border border-red-100 dark:border-red-500/20">
-                          Low
+                      {lowStock ? (
+                        <span className="rounded-full border border-error-100 bg-error-50 px-2 py-1 text-xs font-semibold text-error-500 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
+                          {t("products.table.low")}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                   </TableCell>
 
-                  {/* price */}
-                  <TableCell>
+                  <TableCell className="px-4 py-4">
                     <div className="leading-tight">
-                      <div className="text-gray-900 dark:text-gray-100 font-semibold">
+                      <div className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
                         {formatMoney(p.price)}
                       </div>
 
-                      <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2">
-                        <span>Discount: {p.discount ?? 0}%</span>
-                        <span>Sale: {formatMoney(p.salePrice ?? p.price)}</span>
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span>{t("products.table.discount", { value: p.discount ?? 0 })}</span>
+                        <span>{t("products.table.sale", { value: formatMoney(p.salePrice ?? p.price) })}</span>
                       </div>
                     </div>
                   </TableCell>
 
-                  {/* status toggle */}
-                  <TableCell>
-                    <StatusToggle
-                      value={p.status}
-                      onChange={(next) => onToggleStatus(p.id, next)}
-                    />
+                  <TableCell className="px-4 py-4">
+                    <StatusToggle value={p.status} onChange={(next) => onToggleStatus(p.id, next)} />
                   </TableCell>
 
-                  {/* action */}
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  {/* ✅ Sticky Action cell (right) */}
+                  <TableCell className={cn(stickyActionCellClass, "px-4 py-4")}>
+                    <div className="inline-flex items-center justify-end gap-2">
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => onEdit(p.id)}
                         className="h-10 w-10"
+                        ariaLabel="Edit product"
                       >
                         <Pencil className="h-4 w-4 text-brand-600" />
                       </Button>
@@ -189,7 +231,8 @@ const AllProductsTable: React.FC<Props> = ({
                         variant="outline"
                         size="icon"
                         onClick={() => onDelete(p.id)}
-                        className="h-10 w-10 border-red-300 text-red-600 hover:text-red-600"
+                        className="h-10 w-10 border-error-200 text-error-500 hover:text-error-600 dark:border-error-500/30"
+                        ariaLabel="Delete product"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -199,34 +242,15 @@ const AllProductsTable: React.FC<Props> = ({
               );
             })}
 
-            {products.length === 0 && (
+            {products.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell className="py-10 text-center text-gray-500 dark:text-gray-400">
-                  No products found.
+                <TableCell colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  {t("products.table.noProducts")}
                 </TableCell>
               </TableRow>
-            )}
+            ) : null}
           </TableBody>
         </Table>
-      </div>
-
-      {/* Pagination (UI only) */}
-      <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-800">
-        <button className="h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400">
-          ‹
-        </button>
-
-        <button className="h-9 w-9 rounded-lg bg-brand-500 text-white font-semibold">1</button>
-        <button className="h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300">
-          2
-        </button>
-        <button className="h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300">
-          3
-        </button>
-
-        <button className="h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400">
-          ›
-        </button>
       </div>
     </div>
   );

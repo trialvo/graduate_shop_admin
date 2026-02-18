@@ -2,10 +2,13 @@
 
 import React from "react";
 import { Search } from "lucide-react";
-import type { SortBy } from "./types";
+import { useTranslation } from "react-i18next";
 
+import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
+
+import type { SortBy } from "./types";
 
 type Props = {
   sortOptions: Array<{ label: string; value: SortBy }>;
@@ -26,44 +29,38 @@ const GuestOrdersToolbar: React.FC<Props> = ({
   onSearchChange,
   onClear,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       {/* Sort */}
-      <div className="w-full md:w-[220px]">
-        <select
-          value={sortBy}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            onSortChange(e.target.value as SortBy)
-          }
-          className="h-11 w-full rounded-xl border border-border bg-background/30 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-500/30"
-        >
-          {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-background text-foreground">
-              {opt.label}
-            </option>
-          ))}
-        </select>
+      <div className="w-full md:w-[240px]">
+        <Select
+          options={sortOptions.map((o) => ({ value: o.value, label: o.label }))}
+          placeholder={t("guestOrders.sortPlaceholder")}
+          defaultValue={sortBy}
+          onChange={(v) => onSortChange(v as SortBy)}
+        />
       </div>
 
       {/* Search + Clear */}
       <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <div className="relative w-full sm:w-[280px]">
+        <div className="relative w-full sm:w-[320px]">
           <Input
+            startIcon={<Search size={16} className="text-gray-400" />}
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
-            placeholder="Search"
-            className="h-11 rounded-xl border border-border bg-background/30 pr-10"
+            placeholder={t("guestOrders.searchPlaceholder")}
+            className="pl-9"
           />
-          <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         </div>
 
         <Button
           type="button"
           variant="outline"
           onClick={onClear}
-          className="h-11 rounded-xl border-brand-500/40 text-brand-500 hover:text-brand-500 dark:bg-transparent"
+          className="h-11 rounded-lg font-semibold"
         >
-          Clear
+          {t("guestOrders.clear")}
         </Button>
       </div>
     </div>

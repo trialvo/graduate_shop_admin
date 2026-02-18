@@ -1,0 +1,73 @@
+// src/components/ui/modals/ConfirmDeleteModal.tsx
+"use client";
+
+import React from "react";
+import { AlertTriangle, X } from "lucide-react";
+import Button from "@/components/ui/button/Button";
+import { cn } from "@/lib/utils";
+
+type Props = {
+  open: boolean;
+  title?: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  loading?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+};
+
+export default function ConfirmDeleteModal({
+  open,
+  title = "Delete item?",
+  description = "This action cannot be undone.",
+  confirmText = "Delete",
+  cancelText = "Cancel",
+  loading = false,
+  onConfirm,
+  onClose,
+}: Props) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-[520px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400">
+              <AlertTriangle size={18} />
+            </span>
+            <div>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">{title}</p>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-5">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={onClose} disabled={loading}>
+              {cancelText}
+            </Button>
+            <Button
+              onClick={onConfirm}
+              disabled={loading}
+              className={cn("bg-error-600 hover:bg-error-700")}
+            >
+              {loading ? "Deleting..." : confirmText}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

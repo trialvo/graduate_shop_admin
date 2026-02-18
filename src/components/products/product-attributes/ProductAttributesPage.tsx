@@ -1,134 +1,66 @@
-import { useMemo, useState } from "react";
+// src/components/products/product-attributes/ProductAttributesPage.tsx
+"use client";
+
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 import BrandTab from "./tabs/BrandTab";
 import ColorTab from "./tabs/ColorTab";
 import AttributeTab from "./tabs/AttributeTab";
-import VariantTab from "./tabs/VariantTab";
 
-import type {
-  AttributeDefinition,
-  BrandRow,
-  ColorRow,
-  ProductAttributeSelection,
-  ProductLite,
-  VariantRow,
-} from "./types";
-
-import {
-  INITIAL_ATTRIBUTES,
-  INITIAL_BRANDS,
-  INITIAL_COLORS,
-  INITIAL_PRODUCTS,
-  INITIAL_VARIANTS,
-} from "./mockData";
-
-const TABS = ["brand", "color", "attribute", "variant"] as const;
+const TABS = ["brand", "color", "attribute"] as const;
 type TabType = (typeof TABS)[number];
 
 export default function ProductAttributesPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>("brand");
 
-  const [brands, setBrands] = useState<BrandRow[]>(INITIAL_BRANDS);
-  const [colors, setColors] = useState<ColorRow[]>(INITIAL_COLORS);
-  const [attributes, setAttributes] =
-    useState<AttributeDefinition[]>(INITIAL_ATTRIBUTES);
+  const tabsHeader = (
+    <div className="flex w-full gap-1 overflow-x-auto rounded-lg border border-gray-200 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      {TABS.map((tab) => {
+        const label =
+          tab === "brand"
+            ? t("products.attributes.brands")
+            : tab === "color"
+              ? t("products.attributes.colors")
+              : t("products.attributes.attributeVariant");
 
-  const [products] = useState<ProductLite[]>(INITIAL_PRODUCTS);
+        const active = activeTab === tab;
 
-  // productId -> { attributeId -> selected values[] }
-  const [productAttributeMap, setProductAttributeMap] = useState<
-    Record<number, ProductAttributeSelection>
-  >({});
-
-  // productId -> brandId
-  const [productBrandMap, setProductBrandMap] = useState<Record<number, number>>(
-    {}
-  );
-
-  // productId -> colorIds[]
-  const [productColorMap, setProductColorMap] = useState<
-    Record<number, number[]>
-  >({});
-
-  const [variants, setVariants] = useState<VariantRow[]>(INITIAL_VARIANTS);
-
-  const activeAttributes = useMemo(
-    () => attributes.filter((a) => a.status),
-    [attributes]
+        return (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              "flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm",
+              active
+                ? "bg-brand-500 text-white"
+                : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Product Attributes
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage brand, color, attributes and product variants dynamically
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="inline-flex w-full max-w-4xl overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        {TABS.map((tab) => {
-          const label =
-            tab === "brand"
-              ? "Product Brand"
-              : tab === "color"
-              ? "Product Color"
-              : tab === "attribute"
-              ? "Attribute / Size"
-              : "Variant";
-
-          const active = activeTab === tab;
-
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={[
-                "flex-1 px-4 py-3 text-sm font-semibold transition",
-                active
-                  ? "bg-brand-500 text-white"
-                  : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.03]",
-              ].join(" ")}
-            >
-              {label}
-            </button>
-          );
-        })}
+      <div className="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+            {t("products.attributes.title")}
+          </h1>
+        </div>
       </div>
 
       {/* Content */}
-      {activeTab === "brand" && (
-        <BrandTab brands={brands} onChange={setBrands} />
-      )}
-
-      {activeTab === "color" && (
-        <ColorTab colors={colors} onChange={setColors} />
-      )}
-
-      {activeTab === "attribute" && (
-        <AttributeTab attributes={attributes} onChange={setAttributes} />
-      )}
-
-      {activeTab === "variant" && (
-        <VariantTab
-          products={products}
-          brands={brands}
-          colors={colors}
-          attributeDefs={activeAttributes}
-          productAttributeMap={productAttributeMap}
-          onChangeProductAttributeMap={setProductAttributeMap}
-          productBrandMap={productBrandMap}
-          onChangeProductBrandMap={setProductBrandMap}
-          productColorMap={productColorMap}
-          onChangeProductColorMap={setProductColorMap}
-          variants={variants}
-          onChangeVariants={setVariants}
-        />
-      )}
+      {activeTab === "brand" ? <BrandTab tabsHeader={tabsHeader} /> : null}
+      {activeTab === "color" ? <ColorTab tabsHeader={tabsHeader} /> : null}
+      {activeTab === "attribute" ? <AttributeTab tabsHeader={tabsHeader} /> : null}
     </div>
   );
 }

@@ -1,14 +1,13 @@
+// src/components/orders/order-editor/OrderFormCard.tsx
+
 import type React from "react";
+import { ClipboardList, Save } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { useTranslation } from "react-i18next";
 
-import type {
-  DeliveryType,
-  OrderStatus,
-  PaymentMethod,
-  PaymentStatus,
-} from "./types";
+import type { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from "./types";
 
 interface OrderFormValues {
   billingName: string;
@@ -27,200 +26,214 @@ interface OrderFormValues {
 
 interface OrderFormCardProps {
   values: OrderFormValues;
-  onChange: <K extends keyof OrderFormValues>(
-    key: K,
-    value: OrderFormValues[K],
-  ) => void;
+  onChange: <K extends keyof OrderFormValues>(key: K, value: OrderFormValues[K]) => void;
   onSubmit: () => void;
 }
 
-const OrderFormCard: React.FC<OrderFormCardProps> = ({
-  values,
-  onChange,
-  onSubmit,
-}) => {
+const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmit }) => {
+  const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-theme-xs backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="space-y-4">
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <ClipboardList size={18} />
+          </div>
           <div>
-            <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-              Billing Name
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+              {t("orders.orderEditor.orderDetails")}
+            </div>
+            <div className="text-base font-semibold text-gray-900 dark:text-white">
+              {t("orders.orderEditor.customerAndStatus")}
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          {t("orders.orderEditor.updateFieldsDesc")}
+        </p>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left column */}
+        <div className="space-y-5">
+          <div>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+              {t("orders.orderEditor.billingName")}
             </div>
             <Input
               value={values.billingName}
               onChange={(e) => onChange("billingName", e.target.value)}
-              placeholder="Billing name"
-              className="bg-white dark:bg-gray-900"
+              placeholder={t("orders.orderEditor.billingNamePlaceholder")}
+              className="bg-white dark:bg-gray-800/50"
             />
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-              Order Status
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+              {t("orders.orderEditor.orderStatus")}
             </div>
             <Select
               options={[
-                { value: "new", label: "New" },
-                { value: "approved", label: "Approved" },
-                { value: "processing", label: "Processing" },
-                { value: "packaging", label: "Packaging" },
-                { value: "shipped", label: "Shipped" },
-                { value: "out_of_delivery", label: "Out of delivery" },
-                { value: "delivered", label: "Delivered" },
-                { value: "returned", label: "Returned" },
-                { value: "cancelled", label: "Cancelled" },
-                { value: "on_hold", label: "On hold" },
-                { value: "trash", label: "Trash" },
+                { value: "new", label: t("orders.status.new") },
+                { value: "approved", label: t("orders.status.approved") },
+                { value: "processing", label: t("orders.status.processing") },
+                { value: "packaging", label: t("orders.status.packaging") },
+                { value: "shipped", label: t("orders.status.shipped") },
+                { value: "out_for_delivery", label: t("orders.status.outForDelivery") },
+                { value: "delivered", label: t("orders.status.delivered") },
+                { value: "returned", label: t("orders.status.returned") },
+                { value: "cancelled", label: t("orders.status.cancelled") },
+                { value: "on_hold", label: t("orders.status.onHold") },
+                { value: "trash", label: t("orders.status.trash") },
               ]}
               defaultValue={values.orderStatus}
               onChange={(v) => onChange("orderStatus", v as OrderStatus)}
-              className="bg-white dark:bg-gray-900"
+              className="bg-white dark:bg-gray-800/50"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Payment Status
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.paymentStatus")}
               </div>
               <Select
                 options={[
-                  { value: "paid", label: "Paid" },
-                  { value: "partial", label: "Partial" },
-                  { value: "unpaid", label: "Unpaid" },
+                  { value: "paid", label: t("orders.paymentStatus.paid") },
+                  { value: "partial_paid", label: t("orders.paymentStatus.partialPaid") },
+                  { value: "unpaid", label: t("orders.paymentStatus.unpaid") },
                 ]}
                 defaultValue={values.paymentStatus}
                 onChange={(v) => onChange("paymentStatus", v as PaymentStatus)}
-                className="bg-white dark:bg-gray-900"
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Delivery Type
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.deliveryType")}
               </div>
               <Select
                 options={[
-                  { value: "inside_dhaka", label: "Inside Dhaka" },
-                  { value: "out_of_dhaka", label: "Out of Dhaka" },
+                  { value: "inside_dhaka", label: t("orders.delivery.insideDhaka") },
+                  { value: "out_of_dhaka", label: t("orders.delivery.outOfDhaka") },
                 ]}
                 defaultValue={values.deliveryType}
                 onChange={(v) => onChange("deliveryType", v as DeliveryType)}
-                className="bg-white dark:bg-gray-900"
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-              Email
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+              {t("orders.orderEditor.email")}
             </div>
             <Input
               type="email"
               value={values.email}
               onChange={(e) => onChange("email", e.target.value)}
-              placeholder="Email"
-              className="bg-white dark:bg-gray-900"
+              placeholder={t("orders.orderEditor.email")}
+              className="bg-white dark:bg-gray-800/50"
             />
           </div>
         </div>
 
-        <div className="space-y-4">
+        {/* Right column */}
+        <div className="space-y-5">
           <div>
-            <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-              Shipping Address
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+              {t("orders.orderEditor.shippingAddress")}
             </div>
             <Input
               value={values.shippingAddress}
               onChange={(e) => onChange("shippingAddress", e.target.value)}
-              placeholder="Shipping address"
-              className="bg-white dark:bg-gray-900"
+              placeholder={t("orders.orderEditor.shippingAddressPlaceholder")}
+              className="bg-white dark:bg-gray-800/50"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Phone
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.phone")}
               </div>
               <Input
                 value={values.phone}
                 onChange={(e) => onChange("phone", e.target.value)}
-                placeholder="Phone"
-                className="bg-white dark:bg-gray-900"
+                placeholder={t("orders.orderEditor.phone")}
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Alt phone
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.altPhone")}
               </div>
               <Input
                 value={values.altPhone}
                 onChange={(e) => onChange("altPhone", e.target.value)}
-                placeholder="Alternative phone"
-                className="bg-white dark:bg-gray-900"
+                placeholder={t("orders.orderEditor.altPhonePlaceholder")}
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                City
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.city")}
               </div>
               <Input
                 value={values.city}
                 onChange={(e) => onChange("city", e.target.value)}
-                placeholder="City"
-                className="bg-white dark:bg-gray-900"
+                placeholder={t("orders.orderEditor.city")}
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Postal Code
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.postalCode")}
               </div>
               <Input
                 value={values.postalCode}
                 onChange={(e) => onChange("postalCode", e.target.value)}
-                placeholder="Postal code"
-                className="bg-white dark:bg-gray-900"
+                placeholder={t("orders.orderEditor.postalCodePlaceholder")}
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Payment method
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.paymentType")}
               </div>
               <Select
                 options={[
-                  { value: "cod", label: "COD" },
-                  { value: "bkash", label: "bKash" },
-                  { value: "nagad", label: "Nagad" },
-                  { value: "card", label: "Card" },
+                  { value: "gateway", label: t("orders.paymentMethod.gateway") },
+                  { value: "cod", label: t("orders.paymentMethod.cod") },
+                  { value: "mixed", label: t("orders.paymentMethod.mixed") },
                 ]}
                 defaultValue={values.paymentMethod}
                 onChange={(v) => onChange("paymentMethod", v as PaymentMethod)}
-                className="bg-white dark:bg-gray-900"
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
             <div>
-              <div className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Note
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.note")}
               </div>
               <Input
                 value={values.note}
                 onChange={(e) => onChange("note", e.target.value)}
-                placeholder="Add note"
-                className="bg-white dark:bg-gray-900"
+                placeholder={t("orders.orderEditor.addNote")}
+                className="bg-white dark:bg-gray-800/50"
               />
             </div>
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button onClick={onSubmit} size="md" variant="primary">
-              Update
+            <Button onClick={onSubmit} size="md" variant="primary" startIcon={<Save size={16} />}>
+              {t("orders.orderEditor.updateOrder")}
             </Button>
           </div>
         </div>

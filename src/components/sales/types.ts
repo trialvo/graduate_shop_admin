@@ -1,47 +1,93 @@
-export type ProductVariant = {
-  id: string;
-  name: string; // e.g. "Regular", "Combo", "500g"
+export type SaleSubCategory = {
+  id: number;
+  name: string;
+  img_path: string | null;
+  child_categories?: SaleChildCategory[];
 };
 
-export type ProductSize = {
-  id: string;
-  name: string; // e.g. "S", "M", "L"
+export type SaleChildCategory = {
+  id: number;
+  sub_category_id: number;
+  name: string;
+  img_path: string | null;
 };
 
-export type SaleProduct = {
-  id: string;
-  title: string;
+export type SaleProductImage = {
+  id: number;
+  path: string;
+};
+
+export type SaleProductVariation = {
+  id: number;
   sku: string;
-  category: string;
+  buying_price?: number;
+  selling_price?: number;
+  discount?: number;
+  stock?: number;
+  // legacy/demo fields (if any)
+  name?: string;
+};
+
+/**
+ * SaleProduct is used by both:
+ * - New Sale (API-driven product list)
+ * - Some legacy/demo UIs that use seed data
+ *
+ * So this type is intentionally flexible (optional legacy keys).
+ */
+export type SaleProduct = {
+  id: number | string;
+
+  // API fields
+  name?: string;
+  slug?: string;
+  main_category_id?: number;
+  sub_category_id?: number;
+  child_category_id?: number;
+  images?: SaleProductImage[];
+  variations?: SaleProductVariation[];
+
+  // Legacy/demo fields
+  title?: string;
+  sku?: string;
+  image?: string;
+  price?: number;
+  category?: string;
   subCategory?: string;
   childCategory?: string;
-  price: number;
-  image: string;
-  variants?: ProductVariant[];
-  sizes?: ProductSize[];
-};
 
-export type CustomerAddress = {
-  label: string; // e.g. "Home", "Office"
-  addressLine: string;
-  phone?: string;
-};
-
-export type Customer = {
-  id: string;
-  name: string;
-  phone: string;
-  addresses: CustomerAddress[];
+  variants?: { id: string; name: string }[];
+  sizes?: { id: string; name: string }[];
 };
 
 export type CartItem = {
-  key: string; // unique per product+variant+size
-  productId: string;
+  key: string; // unique per productVariation
+  productId: number | string;
+  /** API required for manual-order endpoints */
+  productVariationId?: number;
+
   title: string;
   sku: string;
   image: string;
   unitPrice: number;
   qty: number;
+
+  // legacy fields (optional)
   variant?: string;
   size?: string;
+  colorName?: string;
+  variantName?: string;
+};
+
+export type CustomerAddress = {
+  label: string;
+  addressLine: string;
+  phone: string;
+};
+
+export type Customer = {
+  id: number | string;
+  name: string;
+  phone: string;
+  addresses: CustomerAddress[];
 };

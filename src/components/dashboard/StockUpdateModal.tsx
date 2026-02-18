@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 
@@ -46,12 +47,12 @@ type Props = {
   minStockAfterUpdate?: number;
 };
 
-const REASONS = [
-  { label: "Purchase / Stock In", value: "purchase" },
-  { label: "Sale / Stock Out", value: "sale" },
-  { label: "Return", value: "return" },
-  { label: "Damage / Lost", value: "damage" },
-  { label: "Adjustment", value: "adjustment" },
+const REASON_KEYS = [
+  { labelKey: "dashboard.stockUpdateModal.reasonPurchase", value: "purchase" },
+  { labelKey: "dashboard.stockUpdateModal.reasonSale", value: "sale" },
+  { labelKey: "dashboard.stockUpdateModal.reasonReturn", value: "return" },
+  { labelKey: "dashboard.stockUpdateModal.reasonDamage", value: "damage" },
+  { labelKey: "dashboard.stockUpdateModal.reasonAdjustment", value: "adjustment" },
 ];
 
 const StockUpdateModal: React.FC<Props> = ({
@@ -61,9 +62,10 @@ const StockUpdateModal: React.FC<Props> = ({
   onApply,
   minStockAfterUpdate = 0,
 }) => {
+  const { t } = useTranslation();
   const [type, setType] = React.useState<StockActionType>("increase");
   const [qty, setQty] = React.useState<number>(1);
-  const [reason, setReason] = React.useState<string>(REASONS[0].value);
+  const [reason, setReason] = React.useState<string>(REASON_KEYS[0].value);
   const [note, setNote] = React.useState<string>("");
 
   React.useEffect(() => {
@@ -71,7 +73,7 @@ const StockUpdateModal: React.FC<Props> = ({
     // reset per open to avoid stale values
     setType("increase");
     setQty(1);
-    setReason(REASONS[0].value);
+    setReason(REASON_KEYS[0].value);
     setNote("");
   }, [open]);
 
@@ -123,15 +125,15 @@ const StockUpdateModal: React.FC<Props> = ({
       />
 
       {/* modal */}
-      <div className="relative w-[94%] max-w-xl rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
+      <div className="relative w-[94%] max-w-xl rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-                Update Stock
+                {t("dashboard.stockUpdateModal.title")}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {product.name} • Current:{" "}
+                {product.name} • {t("dashboard.stockUpdateModal.current")}:{" "}
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
                   {current}
                 </span>
@@ -145,7 +147,7 @@ const StockUpdateModal: React.FC<Props> = ({
               onClick={onClose}
               className="rounded-xl"
             >
-              Close
+              {t("dashboard.stockUpdateModal.close")}
             </Button>
           </div>
         </div>
@@ -154,7 +156,7 @@ const StockUpdateModal: React.FC<Props> = ({
           {/* type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-              Action
+              {t("dashboard.stockUpdateModal.action")}
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -167,7 +169,7 @@ const StockUpdateModal: React.FC<Props> = ({
                     : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
                 ].join(" ")}
               >
-                Increase
+                {t("dashboard.stockUpdateModal.increase")}
               </button>
               <button
                 type="button"
@@ -179,7 +181,7 @@ const StockUpdateModal: React.FC<Props> = ({
                     : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
                 ].join(" ")}
               >
-                Decrease
+                {t("dashboard.stockUpdateModal.decrease")}
               </button>
               <button
                 type="button"
@@ -191,7 +193,7 @@ const StockUpdateModal: React.FC<Props> = ({
                     : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200",
                 ].join(" ")}
               >
-                Set
+                {t("dashboard.stockUpdateModal.set")}
               </button>
             </div>
           </div>
@@ -199,7 +201,7 @@ const StockUpdateModal: React.FC<Props> = ({
           {/* qty */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-              {type === "set" ? "New Stock Qty" : "Qty"}
+              {type === "set" ? t("dashboard.stockUpdateModal.newStockQty") : t("dashboard.stockUpdateModal.qty")}
             </label>
             <Input
               value={String(qty)}
@@ -213,7 +215,7 @@ const StockUpdateModal: React.FC<Props> = ({
             />
 
             <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              Preview:{" "}
+              {t("dashboard.stockUpdateModal.preview")}:{" "}
               <span
                 className={[
                   "font-semibold",
@@ -224,7 +226,7 @@ const StockUpdateModal: React.FC<Props> = ({
               </span>
               {violatesMin && (
                 <span className="ml-2 text-xs text-red-600 dark:text-red-300">
-                  (Must be ≥ {minStockAfterUpdate})
+                  ({t("dashboard.stockUpdateModal.mustBeMin", { min: minStockAfterUpdate })})
                 </span>
               )}
             </div>
@@ -233,16 +235,16 @@ const StockUpdateModal: React.FC<Props> = ({
           {/* reason */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-              Reason
+              {t("dashboard.stockUpdateModal.reason")}
             </label>
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 text-sm text-gray-900 dark:text-gray-100"
             >
-              {REASONS.map((r) => (
+              {REASON_KEYS.map((r) => (
                 <option key={r.value} value={r.value}>
-                  {r.label}
+                  {t(r.labelKey)}
                 </option>
               ))}
             </select>
@@ -251,20 +253,20 @@ const StockUpdateModal: React.FC<Props> = ({
           {/* note */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-              Note (optional)
+              {t("dashboard.stockUpdateModal.noteOptional")}
             </label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className="min-h-[96px] w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-              placeholder="Add details for audit/history..."
+              placeholder={t("dashboard.stockUpdateModal.notePlaceholder")}
             />
           </div>
         </div>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-end gap-2">
           <Button variant="outline" type="button" onClick={onClose} className="rounded-xl">
-            Cancel
+            {t("dashboard.stockUpdateModal.cancel")}
           </Button>
           <Button
             variant="primary"
@@ -273,7 +275,7 @@ const StockUpdateModal: React.FC<Props> = ({
             disabled={!canApply}
             className="rounded-xl bg-brand-500 hover:bg-brand-600"
           >
-            Apply Update
+            {t("dashboard.stockUpdateModal.applyUpdate")}
           </Button>
         </div>
       </div>

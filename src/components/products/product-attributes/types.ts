@@ -1,53 +1,98 @@
-export type Priority = "Low" | "Normal" | "Medium" | "High";
+// src/components/products/product-attributes/types.ts
+
+export type PriorityValue = 1 | 2 | 3 | 4;
 
 export type Option = {
   value: string;
   label: string;
 };
 
-export interface BrandRow {
+export type BrandRow = {
   id: number;
   name: string;
+  img_path: string | null;
   status: boolean;
-  priority: Priority;
-}
+  priority: PriorityValue;
+  created_at: string;
+  updated_at: string;
+};
 
-export interface ColorRow {
+export type ColorRow = {
   id: number;
   name: string;
   hex: string; // #RRGGBB
   status: boolean;
-  priority: Priority;
-}
+  priority: PriorityValue;
+  created_at?: string;
+  updated_at?: string;
+};
 
 export type AttributeType = "text" | "size" | "material" | "custom";
 
-export interface AttributeDefinition {
+export type AttributeDefinition = {
   id: number;
-  name: string; // e.g. Size, Material, Weight
+  name: string;
   type: AttributeType;
   required: boolean;
   status: boolean;
-  priority: Priority;
-  values: string[]; // e.g. ["S","M","L"]
-}
+  priority: "Low" | "Normal" | "Medium" | "High";
+  values: string[];
+};
 
-export interface ProductLite {
+export type ProductLite = {
   id: number;
   name: string;
   sku: string;
-}
+};
 
 export type ProductAttributeSelection = Record<number, string[]>;
-// key: attributeDefinitionId, value: selected values for this product
 
+export function safeNumber(input: string, fallback: number): number {
+  const n = Number(input);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export function makeSkuBase(base: string): string {
+  return base.trim().toUpperCase().replace(/\s+/g, "-");
+}
+
+export function cartesian<T>(arrays: T[][]): T[][] {
+  if (arrays.length === 0) return [[]];
+  return arrays.reduce<T[][]>(
+    (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
+    [[]]
+  );
+}
+
+/** Variant (value) */
 export interface VariantRow {
   id: number;
+  attribute_id: number;
+  name: string;
+  priority: number;
+  status: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProductVariantRow {
+  id: number;
   productId: number;
-  name: string; // generated label e.g. "Color: Red / Size: M"
+  name: string;
   sku: string;
   price: number;
   stock: number;
   active: boolean;
-  attributes: Record<string, string>; // e.g. { Brand: "Nike", Color: "Red", Size: "M" }
+  attributes: Record<string, string>;
+}
+
+/** Attribute */
+export interface AttributeRow {
+  id: number;
+  name: string;
+  priority: number;
+  status: boolean;
+  created_at?: string;
+  updated_at?: string;
+  variants: VariantRow[];
 }
