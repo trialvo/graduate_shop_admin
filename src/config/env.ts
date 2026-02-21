@@ -16,14 +16,15 @@
 
 
 //this is thhe main
-export const API_ORIGIN = "https://api.graduatefashionbd.com";
-export const PUBLIC_ORIGIN = "https://api.graduatefashionbd.com";
+// export const API_ORIGIN = "https://api.graduatefashionbd.com";
+// export const PUBLIC_ORIGIN = "https://api.graduatefashionbd.com";
 
 
-// export const API_ORIGIN =
-//   "https://graduatefashion-api-641431966702.asia-southeast1.run.app";
-// export const PUBLIC_ORIGIN =
-//   "https://graduatefashion-api-641431966702.asia-southeast1.run.app";
+ export const API_ORIGIN =
+  "https://graduatefashion-api-641431966702.asia-south1.run.app";
+  
+export const PUBLIC_ORIGIN =
+  "https://graduatefashion-api-641431966702.asia-south1.run.app";
 
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api/v1";
 
