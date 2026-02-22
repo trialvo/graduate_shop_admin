@@ -298,6 +298,16 @@ export default function AllOrdersView() {
     retry: 1,
   });
 
+  // Separate unfiltered query just for global summary (not affected by any filters)
+  const summaryQuery = useQuery({
+    queryKey: ordersKeys.list({ limit: 1, offset: 0 }),
+    queryFn: () => getAdminOrders({ limit: 1, offset: 0 }),
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+    retry: 1,
+    staleTime: 10_000,
+  });
+
   const countQueries = useQueries({
     queries: STATUS_OPTIONS.filter((x) => x.id !== "all").map((opt) => ({
       queryKey: ordersKeys.list({
@@ -481,19 +491,11 @@ export default function AllOrdersView() {
 
           <div className="mt-2 flex flex-wrap gap-5 text-sm">
             {([
-              { label: t("orders.total"), value: counts.all },
-              {
-                label: t("orders.pending"),
-                value:
-                  counts.new +
-                  counts.approved +
-                  counts.processing +
-                  counts.packaging +
-                  counts.shipped +
-                  counts.out_for_delivery,
-              },
-              { label: t("orders.complete"), value: counts.delivered },
-              { label: t("orders.cancelled"), value: counts.cancelled },
+              { label: t("orders.total"), value: summaryQuery.data?.summary?.total ?? counts.all },
+              { label: t("orders.newOrders", "New"), value: summaryQuery.data?.summary?.new ?? counts.new },
+              { label: t("orders.complete"), value: summaryQuery.data?.summary?.delivered ?? counts.delivered },
+              { label: t("orders.cancelled"), value: summaryQuery.data?.summary?.cancelled ?? counts.cancelled },
+              { label: t("orders.others", "Others"), value: summaryQuery.data?.summary?.others ?? 0 },
             ] as const).map((x) => (
               <span key={x.label} className="text-gray-500 dark:text-gray-400">
                 <span className="text-brand-500 font-semibold">{x.label}</span>{" "}
