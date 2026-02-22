@@ -2,8 +2,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import Select from "@/components/form/Select";
-import Button from "@/components/ui/button/Button";
+
 import { cn } from "@/lib/utils";
 
 type PageItem = number | "ellipsis";
@@ -86,55 +85,57 @@ export default function Pagination({
   return (
     <div
       className={cn(
-        "rounded-xl border border-gray-200/80 bg-white px-3 py-2.5 shadow-sm",
+        "rounded-lg border border-gray-200 bg-white px-3 py-1.5",
         "dark:border-gray-800 dark:bg-gray-900",
         className
       )}
     >
-      {/* Row — always flex-wrap so it never overflows */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Left: Summary text */}
-        <p className="text-[11px] text-gray-500 dark:text-gray-400">
-          <span className="font-semibold text-gray-700 dark:text-gray-200">
+        <p className="text-[11px] text-gray-400 dark:text-gray-500">
+          <span className="font-semibold text-gray-600 dark:text-gray-300">
             {start}–{end}
           </span>{" "}
           {t("pagination.of")}{" "}
-          <span className="font-semibold text-gray-700 dark:text-gray-200">
+          <span className="font-semibold text-gray-600 dark:text-gray-300">
             {totalItems}
           </span>
         </p>
 
         {/* Right: Controls */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1">
           {/* Page size select */}
           {onPageSizeChange ? (
-            <div className="w-[110px]">
-              <Select
-                key={`pageSize-${pageSize}`}
-                options={pageSizeSelectOptions}
-                placeholder="Size"
-                defaultValue={String(pageSize)}
-                onChange={(v) => {
-                  const next = Number(v);
-                  if (!Number.isFinite(next) || next <= 0) return;
-                  onPageSizeChange(next);
-                }}
-              />
-            </div>
+            <select
+              value={String(pageSize)}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (!Number.isFinite(next) || next <= 0) return;
+                onPageSizeChange(next);
+              }}
+              className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-600 outline-none transition focus:border-brand-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+            >
+              {pageSizeSelectOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           ) : null}
 
           {/* Prev button */}
-          <Button
-            variant="outline"
-            size="xs"
+          <button
+            type="button"
             onClick={() => go(safePage - 1)}
             disabled={safePage <= 1}
-            startIcon={<ChevronLeft size={14} />}
-            ariaLabel={t("pagination.previousPage")}
-          />
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            aria-label={t("pagination.previousPage")}
+          >
+            <ChevronLeft size={14} />
+          </button>
 
           {/* Page pills — desktop */}
-          <div className="hidden items-center gap-1 sm:flex">
+          <div className="hidden items-center gap-0.5 sm:flex">
             {items.map((it, idx) => {
               if (it === "ellipsis") {
                 return (
@@ -142,41 +143,46 @@ export default function Pagination({
                     key={`el-${idx}`}
                     className="inline-flex h-7 w-7 items-center justify-center text-gray-400 dark:text-gray-500"
                   >
-                    <MoreHorizontal size={14} />
+                    <MoreHorizontal size={12} />
                   </span>
                 );
               }
 
               const active = it === safePage;
               return (
-                <Button
+                <button
                   key={it}
-                  variant={active ? "primary" : "outline"}
-                  size="xs"
+                  type="button"
                   onClick={() => go(it)}
-                  className="min-w-[28px] px-1.5"
-                  ariaLabel={t("pagination.page", { page: it })}
+                  className={cn(
+                    "inline-flex h-7 min-w-[28px] items-center justify-center rounded-md px-1.5 text-[12px] font-semibold tabular-nums transition",
+                    active
+                      ? "border border-brand-500 bg-brand-500 text-white"
+                      : "border border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-800"
+                  )}
+                  aria-label={t("pagination.page", { page: it })}
                 >
                   {it}
-                </Button>
+                </button>
               );
             })}
           </div>
 
           {/* Compact mobile indicator */}
-          <span className="inline-flex h-7 items-center rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:hidden">
+          <span className="inline-flex h-7 items-center rounded-md bg-gray-100 px-2 text-[11px] font-semibold tabular-nums text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:hidden">
             {safePage}/{totalPages}
           </span>
 
           {/* Next button */}
-          <Button
-            variant="outline"
-            size="xs"
+          <button
+            type="button"
             onClick={() => go(safePage + 1)}
             disabled={safePage >= totalPages}
-            startIcon={<ChevronRight size={14} />}
-            ariaLabel={t("pagination.nextPage")}
-          />
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            aria-label={t("pagination.nextPage")}
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
       </div>
     </div>

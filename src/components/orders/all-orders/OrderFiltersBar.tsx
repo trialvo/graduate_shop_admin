@@ -117,17 +117,19 @@ export default function OrderFiltersBar({
                 type="button"
                 onClick={() => setStatus(opt.id)}
                 className={cn(
-                  "whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all",
+                  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-[13px] font-semibold transition-all",
                   active
-                    ? "bg-brand-500 text-white shadow-sm"
-                    : "text-gray-500 hover:bg-white hover:text-gray-800 hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                    ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                    : "border-transparent text-gray-500 hover:border-gray-200 hover:bg-white hover:text-gray-900 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
                 )}
               >
                 {opt.label}
                 <span
                   className={cn(
-                    "ml-1 tabular-nums text-[11px]",
-                    active ? "text-white/70" : "text-gray-400 dark:text-gray-500"
+                    "inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums leading-none",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-200/70 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
                   )}
                 >
                   {counts[opt.id] ?? 0}
@@ -146,7 +148,7 @@ export default function OrderFiltersBar({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("orders.filters.searchPlaceholder")}
+            placeholder={`Search in ${statusOptions.find((o) => o.id === status)?.label ?? "All"} orders...`}
             className={cn(
               "h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[13px] text-gray-700 outline-none transition",
               "placeholder:text-gray-400",
