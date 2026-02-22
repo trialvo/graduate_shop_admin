@@ -1,16 +1,17 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router-dom";
 
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
-import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
 
-import { useAuth } from "../../context/AuthProvider";
 import { api } from "@/api/client";
+import { useAuth } from "../../context/AuthProvider";
 
 type LoginResponse = {
   accessToken: string;
@@ -72,14 +73,15 @@ export default function SignInForm() {
         return;
       }
 
-      // ✅ persist based on "Keep me logged in"
       setSession(res.data.accessToken, res.data.admin, {
         persist: isChecked,
         notify: true,
       });
       navigate("/dashboard", { replace: true });
-    } catch (err: any) {
-      const msg = err?.response?.data?.error || t("auth.loginFailed");
+    } catch (err: unknown) {
+      const msg = isAxiosError<LoginErrorResponse>(err)
+        ? err.response?.data?.error || t("auth.loginFailed")
+        : t("auth.loginFailed");
       toast.error(msg);
     } finally {
       setIsSubmitting(false);
@@ -110,7 +112,7 @@ export default function SignInForm() {
                   <Input
                     placeholder="info@gmail.com"
                     value={email}
-                    onChange={(e: any) => setEmail(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                     type="email"
                     name="email"
                     autoComplete="email"
@@ -127,7 +129,7 @@ export default function SignInForm() {
                       type={showPassword ? "text" : "password"}
                       placeholder={t("auth.passwordPlaceholder")}
                       value={password}
-                      onChange={(e: any) => setPassword(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                       name="password"
                       autoComplete="current-password"
                     />

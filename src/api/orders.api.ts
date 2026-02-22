@@ -208,6 +208,8 @@ export type DispatchCourierResponse = {
   courier: string;
   tracking_number: string;
   response?: any;
+  flag?: number;
+  error?: string;
 };
 
 export type ManualDispatchRequest = {
@@ -226,6 +228,8 @@ export type ManualDispatchResponse = {
   reference_id?: string;
   memo?: string;
   weight?: number;
+  flag?: number;
+  error?: string;
 };
 
 function cleanParams(params: Record<string, any>) {
@@ -293,7 +297,7 @@ export async function patchOrderStatus(
       new_status: newStatus,
     });
     const data: any = res.data;
-    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
       const message =
         data?.error || data?.message || "Failed to update order status";
       throw new Error(message);
@@ -314,7 +318,12 @@ export async function dispatchOrderCourier(
       `/admin/order/dispatch/${orderId}`,
       payload
     );
-    return res.data;
+    const data: any = res.data;
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
+      const message = data?.error || data?.message || "Failed to dispatch courier";
+      throw new Error(message);
+    }
+    return data;
   } catch (err: any) {
     throw new Error(getErrMessage(err, "Failed to dispatch courier"));
   }
@@ -330,7 +339,13 @@ export async function manualDispatchOrder(
       `/admin/order/manualDispatchOrder/${orderId}`,
       payload
     );
-    return res.data;
+    const data: any = res.data;
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
+      const message =
+        data?.error || data?.message || "Failed to manual dispatch courier";
+      throw new Error(message);
+    }
+    return data;
   } catch (err: any) {
     throw new Error(getErrMessage(err, "Failed to manual dispatch courier"));
   }

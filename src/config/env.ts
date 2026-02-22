@@ -1,9 +1,12 @@
 // export const API_ORIGIN =
 //   import.meta.env.VITE_API_ORIGIN || "https://shop-api.shoplinkbd.com";
-//   export const PUBLIC_ORIGIN = import.meta.env.VITE_PUBLIC_ORIGIN || "https://shop-api.shoplinkbd.com";
+// export const PUBLIC_ORIGIN = import.meta.env.VITE_PUBLIC_ORIGIN || "https://shop-api.shoplinkbd.com";
 
 // export const API_ORIGIN = "https://ht08m271-7000.inc1.devtunnels.ms";
 // export const PUBLIC_ORIGIN = "https://ht08m271-7000.inc1.devtunnels.ms";
+
+// export const API_ORIGIN = "http://localhost:7000";
+// export const PUBLIC_ORIGIN = "http://localhost:7000";
 
 // export const API_ORIGIN = "https://shop-api.trialvo.com";
 // export const PUBLIC_ORIGIN = "https://shop-api.trialvo.com";
@@ -11,16 +14,14 @@
 // export const API_ORIGIN = "https://shop-api.shoplinkbd.com";
 // export const PUBLIC_ORIGIN = "https://shop-api.shoplinkbd.com";
 
+// this is the main
+// export const API_ORIGIN = "https://api.graduatefashionbd.com";
+// export const PUBLIC_ORIGIN = "https://api.graduatefashionbd.com";
 
-//this is thhe main
-export const API_ORIGIN = "https://api.graduatefashionbd.com";
-export const PUBLIC_ORIGIN = "https://api.graduatefashionbd.com";
+const DEFAULT_API_ORIGIN = "https://graduatefashion-api-641431966702.asia-south1.run.app";
 
-
-// export const API_ORIGIN =
-//   "https://graduatefashion-api-641431966702.asia-southeast1.run.app";
-// export const PUBLIC_ORIGIN =
-//   "https://graduatefashion-api-641431966702.asia-southeast1.run.app";
+export const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || DEFAULT_API_ORIGIN;
+export const PUBLIC_ORIGIN = import.meta.env.VITE_ASSET_ORIGIN || API_ORIGIN;
 
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api/v1";
 
