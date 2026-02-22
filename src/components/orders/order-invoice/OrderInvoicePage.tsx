@@ -132,34 +132,34 @@ export default function OrderInvoicePage() {
     return { orderNo, payMethod, payStatus, ordStatus, dueDate };
   }, [order]);
 
-  // useEffect(() => {
-  //   if (!autoPrint) return;
-  //   if (!orderQuery.isSuccess) return;
-  //   if (printedRef.current) return;
-  //   printedRef.current = true;
+  useEffect(() => {
+    if (!autoPrint) return;
+    if (!orderQuery.isSuccess) return;
+    if (printedRef.current) return;
+    printedRef.current = true;
 
-  //   const t = window.setTimeout(() => {
-  //     try {
-  //       window.print();
-  //     } catch {
-  //       // ignore
-  //     }
-  //   }, 250);
+    const t = window.setTimeout(() => {
+      try {
+        window.print();
+      } catch {
+        // ignore
+      }
+    }, 250);
 
-  //   const onAfterPrint = () => {
-  //     try {
-  //       window.close();
-  //     } catch {
-  //       // ignore
-  //     }
-  //   };
+    const onAfterPrint = () => {
+      try {
+        window.close();
+      } catch {
+        // ignore
+      }
+    };
 
-  //   window.addEventListener("afterprint", onAfterPrint);
-  //   return () => {
-  //     window.clearTimeout(t);
-  //     window.removeEventListener("afterprint", onAfterPrint);
-  //   };
-  // }, [autoPrint, orderQuery.isSuccess]);
+    window.addEventListener("afterprint", onAfterPrint);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("afterprint", onAfterPrint);
+    };
+  }, [autoPrint, orderQuery.isSuccess]);
 
   useEffect(() => {
     if (orderQuery.isError) {
@@ -509,6 +509,12 @@ export default function OrderInvoicePage() {
           <p className="font-semibold text-gray-900 dark:text-white">{t("orders.invoice.thankYou")}</p>
           <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
             {t("orders.invoice.generatedOn", { date: new Date().toLocaleString() })}
+          </p>
+          <p className="mt-2 text-[9px] text-gray-400 dark:text-gray-500">
+            Develop by{" "}
+            <a href="https://trialvo.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-300">
+              trialvo.com
+            </a>
           </p>
         </div>
       </div>
