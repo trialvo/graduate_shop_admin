@@ -199,7 +199,7 @@ export default function OrdersTable({ rows }: Props) {
             - vertical scroll with max height
         */}
         <div
-          className={cn("relative overflow-auto", "max-h-[calc(100vh-350px)]")}
+          className={cn("relative overflow-auto", "min-h-[500px] max-h-[calc(100vh-350px)]")}
         >
           <table className="min-w-[1200px] w-full table-fixed border-collapse">
             <colgroup>
