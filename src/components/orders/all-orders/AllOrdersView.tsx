@@ -480,46 +480,54 @@ export default function AllOrdersView() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Title bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-2">
+      {/* ─── Header ─── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        {/* Left: title + metric pills */}
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {t("orders.title")}
-          </h1>
-
-          <div className="mt-2 flex flex-wrap gap-5 text-sm">
+          <div className="flex flex-wrap items-center gap-2.5">
             {([
-              { label: t("orders.total"), value: summaryQuery.data?.summary?.total ?? counts.all },
-              { label: t("orders.newOrders", "New"), value: summaryQuery.data?.summary?.new ?? counts.new },
-              { label: t("orders.complete"), value: summaryQuery.data?.summary?.delivered ?? counts.delivered },
-              { label: t("orders.cancelled"), value: summaryQuery.data?.summary?.cancelled ?? counts.cancelled },
-              { label: t("orders.others", "Others"), value: summaryQuery.data?.summary?.others ?? 0 },
+              { label: t("orders.total"), value: summaryQuery.data?.summary?.total ?? counts.all, dot: "bg-gray-800 dark:bg-gray-300", valueColor: "text-gray-900 dark:text-white" },
+              { label: t("orders.newOrders", "New"), value: summaryQuery.data?.summary?.new ?? counts.new, dot: "bg-brand-500", valueColor: "text-brand-600 dark:text-brand-400" },
+              { label: t("orders.complete"), value: summaryQuery.data?.summary?.delivered ?? counts.delivered, dot: "bg-success-500", valueColor: "text-success-600 dark:text-success-400" },
+              { label: t("orders.cancelled"), value: summaryQuery.data?.summary?.cancelled ?? counts.cancelled, dot: "bg-error-500", valueColor: "text-error-600 dark:text-error-400" },
+              { label: t("orders.others", "Others"), value: summaryQuery.data?.summary?.others ?? 0, dot: "bg-gray-300 dark:bg-gray-600", valueColor: "text-gray-500 dark:text-gray-400" },
             ] as const).map((x) => (
-              <span key={x.label} className="text-gray-500 dark:text-gray-400">
-                <span className="text-brand-500 font-semibold">{x.label}</span>{" "}
-                <span className="text-gray-900 dark:text-white">({x.value})</span>
-              </span>
+              <div
+                key={x.label}
+                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 transition-shadow hover:shadow-sm dark:border-gray-800 dark:bg-gray-900"
+              >
+                <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${x.dot}`} />
+                <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500">{x.label}</span>
+                <span className={`text-[15px] font-bold tabular-nums leading-none ${x.valueColor}`}>{x.value}</span>
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 sm:justify-end">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span className="hidden sm:inline">{t("orders.dataRefreshed")}</span>
-            <button
-              type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-              onClick={onRefresh}
-              aria-label="Refresh"
-            >
-              <RefreshCw size={16} />
-            </button>
+        {/* Right: refresh + live indicator */}
+        <div className="flex items-center gap-2 self-start rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-success-500" />
+            </span>
+            <span className="hidden text-[11px] font-medium text-gray-500 dark:text-gray-400 sm:inline">
+              Live
+            </span>
           </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+          <span className="hidden text-[11px] text-gray-400 dark:text-gray-500 sm:inline">
             {refreshedAt}
-          </div>
+          </span>
+          <button
+            type="button"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/[0.06] dark:hover:text-gray-200"
+            onClick={onRefresh}
+            aria-label="Refresh"
+          >
+            <RefreshCw size={13} />
+          </button>
         </div>
       </div>
 

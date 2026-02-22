@@ -1,6 +1,7 @@
 // src/components/orders/all-orders/OrderFiltersBar.tsx
 
-import { Search } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import type { OrderStatus } from "./types";
@@ -66,19 +67,10 @@ type Props = {
   loading?: boolean;
 };
 
-function statusPillClasses(active: boolean) {
-  if (active) return "bg-brand-500 text-white border-brand-500";
-  return "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-800 dark:hover:bg-white/[0.03]";
-}
-
 const selectCls = cn(
-  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none",
-  "focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-);
-
-const dateCls = cn(
-  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none",
-  "focus:border-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+  "h-9 w-full rounded-lg border border-gray-200 bg-white px-3 text-[13px] text-gray-600 outline-none transition",
+  "focus:border-brand-400 focus:ring-2 focus:ring-brand-500/10",
+  "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-brand-500/20"
 );
 
 export default function OrderFiltersBar({
@@ -110,116 +102,128 @@ export default function OrderFiltersBar({
   loading,
 }: Props) {
   const { t } = useTranslation();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-      {/* Status strip (compact) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
-        {statusOptions.map((opt) => {
-          const active = status === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setStatus(opt.id)}
-              className={cn(
-                "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-                statusPillClasses(active)
-              )}
-            >
-              {opt.label}{" "}
-              <span className={active ? "text-white/90" : "text-gray-400"}>
-                ({counts[opt.id] ?? 0})
-              </span>
-            </button>
-          );
-        })}
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      {/* ─── Status tabs ─── */}
+      <div className="border-b border-gray-200 bg-gray-50/60 px-4 py-2.5 dark:border-gray-800 dark:bg-gray-900/60">
+        <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
+          {statusOptions.map((opt) => {
+            const active = status === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setStatus(opt.id)}
+                className={cn(
+                  "whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all",
+                  active
+                    ? "bg-brand-500 text-white shadow-sm"
+                    : "text-gray-500 hover:bg-white hover:text-gray-800 hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                )}
+              >
+                {opt.label}
+                <span
+                  className={cn(
+                    "ml-1 tabular-nums text-[11px]",
+                    active ? "text-white/70" : "text-gray-400 dark:text-gray-500"
+                  )}
+                >
+                  {counts[opt.id] ?? 0}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ✅ 2-line compact controls */}
-      <div className="mt-3 grid grid-cols-12 gap-2">
-        {/* Line 1 */}
-        <div className="col-span-12 md:col-span-2">
-          <select
-            value={paymentStatus}
-            onChange={(e) => setPaymentStatus(e.target.value as any)}
-            className={selectCls}
-          >
-            {uiOptions.paymentStatus.map((x) => (
-              <option key={x.id} value={x.id}>
-                {t("orders.filters.payPrefix")}: {x.label}
-              </option>
-            ))}
-          </select>
+      {/* ─── Search + Controls row ─── */}
+      <div className="flex items-center gap-2 px-4 py-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("orders.filters.searchPlaceholder")}
+            className={cn(
+              "h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[13px] text-gray-700 outline-none transition",
+              "placeholder:text-gray-400",
+              "focus:border-brand-400 focus:ring-2 focus:ring-brand-500/10",
+              "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-brand-500/20"
+            )}
+          />
         </div>
 
-        <div className="col-span-12 md:col-span-2">
-          <select
-            value={paymentProvider}
-            onChange={(e) => setPaymentProvider(e.target.value as any)}
-            className={selectCls}
-          >
-            {uiOptions.paymentProvider.map((x) => (
-              <option key={x.id} value={x.id}>
-                {t("orders.filters.providerPrefix")}: {x.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Filter toggle */}
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className={cn(
+            "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition",
+            filtersOpen
+              ? "border-brand-200 bg-brand-50 text-brand-600 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
+              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          )}
+        >
+          <SlidersHorizontal size={14} />
+          <span className="hidden sm:inline">Filters</span>
+        </button>
 
-        <div className="col-span-12 md:col-span-2">
-          <select
-            value={fraud}
-            onChange={(e) => setFraud(e.target.value as any)}
-            className={selectCls}
-          >
-            {uiOptions.fraud.map((x) => (
-              <option key={x.id} value={x.id}>
-                {t("orders.filters.fraudPrefix")}: {x.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Clear */}
+        <Button
+          variant="outline"
+          onClick={onClear}
+          className="h-9 px-3 text-[13px]"
+          disabled={loading}
+        >
+          {loading ? t("orders.filters.loading") : t("orders.filters.clear")}
+        </Button>
+      </div>
 
-        <div className="col-span-12 md:col-span-5">
-          <div className="flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-950">
-            <Search size={18} className="text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("orders.filters.searchPlaceholder")}
-              className="w-full bg-transparent text-sm text-gray-700 outline-none dark:text-gray-200"
-            />
+      {/* ─── Collapsible advanced filters ─── */}
+      {filtersOpen && (
+        <div className="border-t border-gray-200 bg-gray-50/40 px-4 py-3 dark:border-gray-800 dark:bg-gray-900/40">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            <select
+              value={paymentStatus}
+              onChange={(e) => setPaymentStatus(e.target.value as any)}
+              className={selectCls}
+            >
+              {uiOptions.paymentStatus.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {t("orders.filters.payPrefix")}: {x.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={paymentProvider}
+              onChange={(e) => setPaymentProvider(e.target.value as any)}
+              className={selectCls}
+            >
+              {uiOptions.paymentProvider.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {t("orders.filters.providerPrefix")}: {x.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={fraud}
+              onChange={(e) => setFraud(e.target.value as any)}
+              className={selectCls}
+            >
+              {uiOptions.fraud.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {t("orders.filters.fraudPrefix")}: {x.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        <div className="col-span-12 md:col-span-1 flex md:justify-end">
-          <Button
-            variant="outline"
-            onClick={onClear}
-            className="h-10 w-full md:w-auto"
-            disabled={loading}
-          >
-            {loading ? t("orders.filters.loading") : t("orders.filters.clear")}
-          </Button>
-        </div>
-        {/* Line 2 */}
-        {/* <div className="col-span-6 md:col-span-3">
-          <input
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            type="date"
-            className={dateCls}
-          />
-        </div>
-
-        <div className="col-span-6 md:col-span-3">
-          <input
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            type="date"
-            className={dateCls}
-          />
-        </div> */}
-      </div>
+      )}
     </div>
   );
 }
