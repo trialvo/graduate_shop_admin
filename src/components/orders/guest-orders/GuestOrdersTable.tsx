@@ -1,14 +1,23 @@
 "use client";
 
 import React from "react";
-import { Copy, Trash2, Mail, Phone, CalendarDays, Clock, MapPin } from "lucide-react";
+import {
+  Copy,
+  Trash2,
+  Mail,
+  Phone,
+  CalendarDays,
+  Clock,
+  MapPin,
+  CircleDot,
+  ShoppingCart,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { GuestOrder } from "./types";
 
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
-import Badge from "@/components/ui/badge/Badge";
 
 const initials = (name: string) => {
   const parts = name.trim().split(" ").filter(Boolean);
@@ -24,10 +33,50 @@ const formatDate = (d: Date) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-function statusUi(status: GuestOrder["status"]) {
-  if (status === "pending") return { label: "Pending", color: "warning" as const };
-  if (status === "complete") return { label: "Complete", color: "success" as const };
-  return { label: "Cancelled", color: "error" as const };
+/* ── Status config with distinct colors ── */
+function statusConfig(status: GuestOrder["status"]) {
+  if (status === "pending")
+    return {
+      label: "Pending",
+      dotClass: "bg-amber-400",
+      bgClass: "bg-amber-50 dark:bg-amber-500/10",
+      textClass: "text-amber-600 dark:text-amber-400",
+      borderClass: "border-amber-200 dark:border-amber-500/20",
+      accentClass: "border-l-amber-400",
+    };
+  if (status === "complete")
+    return {
+      label: "Complete",
+      dotClass: "bg-emerald-500",
+      bgClass: "bg-emerald-50 dark:bg-emerald-500/10",
+      textClass: "text-emerald-600 dark:text-emerald-400",
+      borderClass: "border-emerald-200 dark:border-emerald-500/20",
+      accentClass: "border-l-emerald-500",
+    };
+  return {
+    label: "Cancelled",
+    dotClass: "bg-rose-500",
+    bgClass: "bg-rose-50 dark:bg-rose-500/10",
+    textClass: "text-rose-600 dark:text-rose-400",
+    borderClass: "border-rose-200 dark:border-rose-500/20",
+    accentClass: "border-l-rose-500",
+  };
+}
+
+/* ── Avatar background color based on name hash ── */
+function avatarColor(name: string) {
+  const colors = [
+    "bg-brand-500",
+    "bg-indigo-500",
+    "bg-violet-500",
+    "bg-cyan-500",
+    "bg-teal-500",
+    "bg-fuchsia-500",
+    "bg-sky-500",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
 }
 
 type Props = {
@@ -47,90 +96,94 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
   };
 
   return (
-    <div className="w-full max-w-full min-w-0 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-      {/*  Mobile / Small screens: Card list */}
+    <div className="w-full max-w-full min-w-0 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden shadow-sm">
+      {/* ═══════════════════ Mobile / Small screens: Card list ═══════════════════ */}
       <div className="block md:hidden">
         {orders.length === 0 ? (
-          <div className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-            {t("guestOrders.noGuestOrders")}
+          <div className="px-4 py-16 text-center">
+            <ShoppingCart className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
+            <p className="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t("guestOrders.noGuestOrders")}
+            </p>
           </div>
         ) : (
-          <div className="p-4 space-y-3">
+          <div className="p-3 space-y-3">
             {orders.map((o) => {
-              const s = statusUi(o.status);
+              const s = statusConfig(o.status);
 
               return (
                 <div
                   key={o.id}
-                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+                  className={`rounded-xl border ${s.borderClass} bg-white dark:bg-gray-900 overflow-hidden shadow-sm border-l-4 ${s.accentClass}`}
                 >
-                  {/* Top row */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white font-semibold shrink-0">
-                        {initials(o.customerName)}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                          {o.customerName}
+                  <div className="p-4">
+                    {/* Top row: avatar + name + status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`flex h-11 w-11 items-center justify-center rounded-full ${avatarColor(o.customerName)} text-white text-sm font-bold shrink-0 shadow-sm`}
+                        >
+                          {initials(o.customerName)}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{o.id}</div>
-                      </div>
-                    </div>
 
-                    <Badge
-                      variant="light"
-                      color={s.color}
-                      className="px-3 py-1 text-xs font-semibold shrink-0"
-                    >
-                      {s.label}
-                    </Badge>
-                  </div>
-
-                  {/* Details */}
-                  <div className="mt-4 space-y-3">
-                    {/* Email */}
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Mail className="h-4 w-4 text-gray-400 shrink-0" />
-                        <span className="truncate text-sm text-gray-700 dark:text-gray-200">
-                          {o.email}
-                        </span>
+                        <div className="min-w-0">
+                          <div className="text-base font-semibold text-gray-900 dark:text-white">
+                            {o.customerName}
+                          </div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                            {o.id.substring(0, 12)}…
+                          </div>
+                        </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        ariaLabel="Copy email"
-                        onClick={() => onCopy(o.email)}
-                        className="h-9 w-9 shrink-0"
+
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${s.bgClass} ${s.textClass} shrink-0`}
                       >
-                        <Copy size={16} />
-                      </Button>
+                        <span className={`h-2 w-2 rounded-full ${s.dotClass}`} />
+                        {s.label}
+                      </span>
                     </div>
 
-                    {/* Phone */}
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Phone className="h-4 w-4 text-gray-400 shrink-0" />
-                        <span className="text-sm text-gray-700 dark:text-gray-200">{o.phone}</span>
+                    {/* Contact info */}
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2.5 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <span className="truncate text-sm text-gray-700 dark:text-gray-200">
+                            {o.email}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onCopy(o.email)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition shrink-0"
+                          aria-label="Copy email"
+                        >
+                          <Copy size={14} />
+                        </button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        ariaLabel="Copy phone"
-                        onClick={() => onCopy(o.phone)}
-                        className="h-9 w-9 shrink-0"
-                      >
-                        <Copy size={16} />
-                      </Button>
+
+                      <div className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2.5 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-700 dark:text-gray-200">{o.phone}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onCopy(o.phone)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition shrink-0"
+                          aria-label="Copy phone"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Date + Time + Total */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <CalendarDays className="h-4 w-4" />
+                    {/* Date / Time / Total grid */}
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 uppercase font-medium tracking-wider">
+                          <CalendarDays className="h-3 w-3" />
                           Date
                         </div>
                         <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
@@ -138,9 +191,9 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <Clock className="h-4 w-4" />
+                      <div className="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 uppercase font-medium tracking-wider">
+                          <Clock className="h-3 w-3" />
                           Time
                         </div>
                         <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
@@ -148,36 +201,35 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                         </div>
                       </div>
 
-                      <div className="col-span-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{t("guestOrders.table.cartTotal")}</div>
-                        <div className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                      <div className="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/50">
+                        <div className="text-[11px] text-gray-400 dark:text-gray-500 uppercase font-medium tracking-wider">
+                          Total
+                        </div>
+                        <div className="mt-1 text-sm font-bold text-gray-900 dark:text-white">
                           {o.cartTotal}
                         </div>
                       </div>
                     </div>
 
                     {/* Location */}
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <MapPin className="h-4 w-4" />
-                        Location
-                      </div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="mt-2 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2.5 dark:bg-gray-800/50">
+                      <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
                         {o.locationLabel}
-                      </div>
+                      </span>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex justify-end">
+                    {/* Delete */}
+                    <div className="mt-3 flex justify-end">
                       <Button
                         variant="outline"
                         size="icon"
                         ariaLabel="Delete order"
                         onClick={() => onDelete?.(o.id)}
-                        className="h-10 w-10 text-error-500 hover:text-error-600"
+                        className="h-9 w-9 text-error-500 hover:text-error-600 hover:border-error-300 dark:hover:border-error-500/40"
                         disabled={Boolean(deletingId && deletingId === o.id)}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </Button>
                     </div>
                   </div>
@@ -188,63 +240,81 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
         )}
       </div>
 
-      {/*  Desktop / md+ screens: FULL table but container-safe */}
+      {/* ═══════════════════ Desktop / md+ screens: Table ═══════════════════ */}
       <div className="hidden md:block w-full max-w-full min-w-0">
         <div className="w-full max-w-full overflow-x-auto">
           <Table className="w-full table-fixed border-collapse">
             <TableHeader>
-              <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-950">
-                <TableCell isHeader className="w-[64px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  {t("guestOrders.table.sn")}
+              <TableRow className="bg-gray-50/80 dark:bg-gray-950/50 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-950/50">
+                <TableCell
+                  isHeader
+                  className="w-[52px] px-4 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  #
                 </TableCell>
 
-                <TableCell isHeader className="w-[240px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
+                <TableCell
+                  isHeader
+                  className="w-[230px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
                   {t("guestOrders.table.name")}
                 </TableCell>
 
-                {/*  hide email on md, show on lg+ */}
                 <TableCell
                   isHeader
-                  className="hidden lg:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                  className="w-[110px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  {t("guestOrders.table.status")}
+                </TableCell>
+
+                {/* Email: hide on md, show on lg+ */}
+                <TableCell
+                  isHeader
+                  className="hidden lg:table-cell w-[250px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
                 >
                   {t("guestOrders.table.email")}
                 </TableCell>
 
-                <TableCell isHeader className="w-[190px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
+                <TableCell
+                  isHeader
+                  className="w-[170px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
                   {t("guestOrders.table.phone")}
                 </TableCell>
 
-                <TableCell isHeader className="w-[120px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
+                <TableCell
+                  isHeader
+                  className="w-[110px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
                   {t("guestOrders.table.date")}
                 </TableCell>
 
-                {/*  hide time on md, show on lg+ */}
+                {/* Time: hide on md, show on lg+ */}
                 <TableCell
                   isHeader
-                  className="hidden lg:table-cell w-[120px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                  className="hidden lg:table-cell w-[100px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
                 >
                   {t("guestOrders.table.time")}
                 </TableCell>
 
-                <TableCell isHeader className="w-[140px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
+                <TableCell
+                  isHeader
+                  className="w-[130px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
                   {t("guestOrders.table.total")}
                 </TableCell>
 
-                {/*  hide tour on md/lg, show on xl+ */}
+                {/* Location: hide on md/lg, show on xl+ */}
                 <TableCell
                   isHeader
-                  className="hidden xl:table-cell w-[260px] px-4 py-4 text-left text-xs font-semibold text-brand-500"
+                  className="hidden xl:table-cell w-[240px] px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
                 >
                   {t("guestOrders.table.location")}
                 </TableCell>
 
-                <TableCell isHeader className="w-[130px] px-4 py-4 text-left text-xs font-semibold text-brand-500">
-                  {t("guestOrders.table.status")}
-                </TableCell>
-
                 <TableCell
                   isHeader
-                  className="sticky right-0 z-20 w-[90px] bg-gray-50 px-4 py-4 text-right text-xs font-semibold text-brand-500 dark:bg-gray-950"
+                  className="sticky right-0 z-20 w-[70px] bg-gray-50/80 px-4 py-3.5 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-950/50 dark:text-gray-400"
                 >
                   {t("guestOrders.table.action")}
                 </TableCell>
@@ -253,107 +323,132 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
 
             <TableBody>
               {orders.map((o, idx) => {
-                const s = statusUi(o.status);
+                const s = statusConfig(o.status);
 
                 return (
                   <TableRow
                     key={o.id}
-                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                    className={`border-b border-gray-100 dark:border-gray-800/60 transition-colors hover:bg-brand-50/30 dark:hover:bg-brand-500/[0.04] ${idx % 2 === 1 ? "bg-gray-50/40 dark:bg-white/[0.015]" : ""
+                      }`}
                   >
-                    <TableCell className="px-4 py-4 text-sm text-gray-700 dark:text-gray-200">
-                      {idx + 1}
+                    {/* SN */}
+                    <TableCell className="px-4 py-3.5 text-center">
+                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
+                        {idx + 1}
+                      </span>
                     </TableCell>
 
-                    <TableCell className="px-4 py-4">
+                    {/* Customer Name — 1st data column */}
+                    <TableCell className="px-4 py-3.5">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-white font-semibold shrink-0">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-full ${avatarColor(o.customerName)} text-white text-xs font-bold shrink-0 shadow-sm`}
+                        >
                           {initials(o.customerName)}
                         </div>
                         <div className="min-w-0 leading-tight">
-                          <div className="font-semibold text-gray-900 dark:text-white truncate">
+                          <div className="font-semibold text-sm text-gray-900 dark:text-white">
                             {o.customerName}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <div className="text-[11px] text-gray-400 dark:text-gray-500 truncate font-mono">
                             {o.id}
                           </div>
                         </div>
                       </div>
                     </TableCell>
 
+                    {/* ★ Status — 2nd data column */}
+                    <TableCell className="px-4 py-3.5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${s.bgClass} ${s.textClass}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${s.dotClass}`} />
+                        {s.label}
+                      </span>
+                    </TableCell>
+
                     {/* Email (lg+) */}
-                    <TableCell className="hidden lg:table-cell px-4 py-4">
+                    <TableCell className="hidden lg:table-cell px-4 py-3.5">
                       <div className="flex items-center justify-between gap-2 min-w-0">
-                        <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
-                          {o.email}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          ariaLabel="Copy email"
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                            {o.email}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
                           onClick={() => onCopy(o.email)}
-                          className="h-9 w-9 shrink-0"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-200 bg-brand-50 text-brand-500 hover:bg-brand-100 hover:text-brand-600 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400 dark:hover:bg-brand-500/20 transition shrink-0"
+                          aria-label="Copy email"
                         >
-                          <Copy size={16} />
-                        </Button>
+                          <Copy size={13} />
+                        </button>
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-4 py-4">
+                    {/* Phone */}
+                    <TableCell className="px-4 py-3.5">
                       <div className="flex items-center justify-between gap-2 min-w-0">
-                        <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
-                          {o.phone}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          ariaLabel="Copy phone"
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                            {o.phone}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
                           onClick={() => onCopy(o.phone)}
-                          className="h-9 w-9 shrink-0"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-200 bg-brand-50 text-brand-500 hover:bg-brand-100 hover:text-brand-600 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400 dark:hover:bg-brand-500/20 transition shrink-0"
+                          aria-label="Copy phone"
                         >
-                          <Copy size={16} />
-                        </Button>
+                          <Copy size={13} />
+                        </button>
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-4 py-4 text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
-                      {formatDate(o.createdAt)}
+                    {/* Date */}
+                    <TableCell className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="text-sm text-gray-700 dark:text-gray-200">
+                        {formatDate(o.createdAt)}
+                      </span>
                     </TableCell>
 
                     {/* Time (lg+) */}
-                    <TableCell className="hidden lg:table-cell px-4 py-4 text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
-                      {o.timeLabel}
+                    <TableCell className="hidden lg:table-cell px-4 py-3.5 whitespace-nowrap">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {o.timeLabel}
+                      </span>
                     </TableCell>
 
-                    <TableCell className="px-4 py-4 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                      {o.cartTotal}
+                    {/* Cart Total */}
+                    <TableCell className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {o.cartTotal}
+                      </span>
                     </TableCell>
 
                     {/* Location (xl+) */}
-                    <TableCell className="hidden xl:table-cell px-4 py-4 text-sm text-gray-700 dark:text-gray-200 truncate">
-                      {o.locationLabel}
+                    <TableCell className="hidden xl:table-cell px-4 py-3.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                        <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                          {o.locationLabel}
+                        </span>
+                      </div>
                     </TableCell>
 
-                    <TableCell className="px-4 py-4">
-                      <Badge
-                        variant="light"
-                        color={s.color}
-                        className="px-3 py-1 text-xs font-semibold whitespace-nowrap"
-                      >
-                        {s.label}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell className="sticky right-0 z-10 bg-white px-4 py-4 text-right dark:bg-gray-900">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        ariaLabel="Delete order"
+                    {/* Action (sticky) */}
+                    <TableCell className="sticky right-0 z-10 bg-white px-4 py-3.5 text-center dark:bg-gray-900">
+                      <button
+                        type="button"
                         onClick={() => onDelete?.(o.id)}
-                        className="h-9 w-9 text-error-500 hover:text-error-600"
                         disabled={Boolean(deletingId && deletingId === o.id)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-error-200 bg-error-50 text-error-500 hover:bg-error-100 hover:text-error-600 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-400 dark:hover:bg-error-500/20 transition disabled:opacity-40"
+                        aria-label="Delete order"
                       >
-                        <Trash2 size={16} />
-                      </Button>
+                        <Trash2 size={15} />
+                      </button>
                     </TableCell>
                   </TableRow>
                 );
@@ -363,10 +458,13 @@ const GuestOrdersTable: React.FC<Props> = ({ orders, onDelete, deletingId }) => 
                 <TableRow className="hover:bg-transparent">
                   <TableCell
                     colSpan={10}
-                    className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400"
+                    className="px-4 py-16 text-center"
                     isHeader={false}
                   >
-                    No guest orders found.
+                    <ShoppingCart className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
+                    <p className="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                      No guest orders found.
+                    </p>
                   </TableCell>
                 </TableRow>
               )}

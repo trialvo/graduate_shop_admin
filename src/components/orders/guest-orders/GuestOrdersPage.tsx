@@ -12,6 +12,7 @@ import GuestOrdersHeader from "./GuestOrdersHeader";
 import GuestOrdersToolbar from "./GuestOrdersToolbar";
 import GuestOrdersTable from "./GuestOrdersTable";
 import Pagination from "@/components/common/Pagination";
+import ConfirmDeleteModal from "@/components/ui/modal/ConfirmDeleteModal";
 
 import {
   deleteGuestOrder,
@@ -83,6 +84,7 @@ const GuestOrdersPage: React.FC = () => {
   const [page, setPage] = React.useState(1);
   const pageSize = 20;
   const [refreshedAt, setRefreshedAt] = React.useState<Date>(new Date());
+  const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
 
   const onClear = () => {
     setActiveTab("all");
@@ -236,8 +238,22 @@ const GuestOrdersPage: React.FC = () => {
       {/* Table */}
       <GuestOrdersTable
         orders={rows}
-        onDelete={(id) => deleteMutation.mutate(id)}
+        onDelete={(id) => setDeleteTarget(id)}
         deletingId={deleteMutation.isPending ? deleteMutation.variables : null}
+      />
+
+      {/* Delete confirmation modal */}
+      <ConfirmDeleteModal
+        open={deleteTarget !== null}
+        title={t("guestOrders.deleteConfirmTitle", "Delete Guest Order?")}
+        description={t("guestOrders.deleteConfirmDesc", "This action cannot be undone. The guest order will be permanently removed.")}
+        confirmText={t("guestOrders.deleteConfirmBtn", "Yes, Delete")}
+        cancelText={t("guestOrders.deleteCancel", "Cancel")}
+        loading={deleteMutation.isPending}
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget, { onSettled: () => setDeleteTarget(null) });
+        }}
+        onClose={() => setDeleteTarget(null)}
       />
 
       <Pagination
