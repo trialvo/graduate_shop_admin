@@ -9,6 +9,7 @@ import { useAppBranding } from "@/context/AppBrandingContext";
 import { getAdminOrderById, ordersKeys, type ApiOrder } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import { cn } from "@/lib/utils";
+import { amountToWords } from "@/utils/numberToWords";
 
 function useSearchParams() {
   const { search } = useLocation();
@@ -420,7 +421,7 @@ export default function OrderInvoicePage() {
               <div className="rounded-[10px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <p className="text-[12px] font-semibold text-gray-900 dark:text-white">{t("orders.invoice.totalInWords")}</p>
                 <p className="mt-1.5 text-[12px] text-gray-600 dark:text-gray-300">
-                  {formatBDT(totals.total)} {t("orders.invoice.only")}
+                  {amountToWords(totals.total)}
                 </p>
               </div>
             </div>
