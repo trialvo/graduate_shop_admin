@@ -68,6 +68,16 @@ const STATUS_OPTIONS = [
   { id: "trash", label: "trash" },
 ] as const;
 
+function getErrorMessage(err: unknown, fallback: string) {
+  const anyErr = err as any;
+  return (
+    anyErr?.response?.data?.error ??
+    anyErr?.response?.data?.message ??
+    anyErr?.message ??
+    fallback
+  );
+}
+
 export default function OrdersTable({ rows }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -138,11 +148,7 @@ export default function OrdersTable({ rows }: Props) {
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
     onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error ??
-        err?.response?.data?.message ??
-        "Failed to update payment status";
-      toast.error(msg);
+      toast.error(getErrorMessage(err, "Failed to update payment status"));
     },
   });
 
@@ -150,18 +156,35 @@ export default function OrdersTable({ rows }: Props) {
     mutationFn: async (payload: {
       orderId: number;
       newStatus: OrderRow["status"];
+      previousStatus: OrderRow["status"];
     }) => patchOrderStatus(payload.orderId, payload.newStatus),
-    onSuccess: async () => {
+    onMutate: (payload) => {
+      const key = String(payload.orderId);
+      setStatusOverride((prev) => ({
+        ...prev,
+        [key]: payload.newStatus,
+      }));
+      return { key, previousStatus: payload.previousStatus };
+    },
+    onSuccess: async (_data, variables) => {
+      const key = String(variables.orderId);
+      setStatusOverride((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
       toast.success(t("orders.orderStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error ??
-        err?.response?.data?.message ??
-        "Failed to update order status";
-      toast.error(msg);
+    onError: (err, _variables, context) => {
+      if (context?.key) {
+        setStatusOverride((prev) => ({
+          ...prev,
+          [context.key]: context.previousStatus,
+        }));
+      }
+      toast.error(getErrorMessage(err, "Failed to update order status"));
     },
   });
 
@@ -389,13 +412,10 @@ export default function OrdersTable({ rows }: Props) {
                         value={r.status}
                         onChange={(v) => {
                           const next = v as OrderRow["status"];
-                          setStatusOverride((prev) => ({
-                            ...prev,
-                            [r.id]: next,
-                          }));
                           statusMutation.mutate({
                             orderId: Number(r.id),
                             newStatus: next,
+                            previousStatus: r.status,
                           });
                         }}
                         options={STATUS_OPTIONS as any}

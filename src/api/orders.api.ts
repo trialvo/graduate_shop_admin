@@ -297,7 +297,7 @@ export async function patchOrderStatus(
       new_status: newStatus,
     });
     const data: any = res.data;
-    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
       const message =
         data?.error || data?.message || "Failed to update order status";
       throw new Error(message);
@@ -319,7 +319,7 @@ export async function dispatchOrderCourier(
       payload
     );
     const data: any = res.data;
-    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
       const message = data?.error || data?.message || "Failed to dispatch courier";
       throw new Error(message);
     }
@@ -340,7 +340,7 @@ export async function manualDispatchOrder(
       payload
     );
     const data: any = res.data;
-    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) >= 400) {
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
       const message =
         data?.error || data?.message || "Failed to manual dispatch courier";
       throw new Error(message);
