@@ -105,8 +105,10 @@ export default function OrderInvoicePage() {
     return items.map((it, idx) => {
       const name = (it.product_name ?? "").trim() || "—";
       const qty = safeNumber(it.quantity);
-      const unit = safeNumber(it.final_unit_price ?? it.selling_price);
-      const total = safeNumber(it.line_total ?? unit * qty);
+      const originalPrice = safeNumber(it.selling_price);
+      const finalPrice = safeNumber(it.final_unit_price ?? it.selling_price);
+      const discountAmount = originalPrice - finalPrice;
+      const total = safeNumber(it.line_total ?? finalPrice * qty);
       const img = it.product_image ? toPublicUrl(it.product_image) : null;
 
       const variant = (it.variant_name ?? "").trim();
@@ -117,7 +119,7 @@ export default function OrderInvoicePage() {
         .filter(Boolean)
         .reduce((acc, s) => (acc ? `${acc} • ${s}` : s), "");
 
-      return { sl: idx + 1, id: it.id, name, qty, unit, total, img, meta };
+      return { sl: idx + 1, id: it.id, name, qty, originalPrice, discountAmount, total, img, meta };
     });
   }, [order]);
 
@@ -337,17 +339,18 @@ export default function OrderInvoicePage() {
               <thead>
                 <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-950 dark:text-gray-300">
                   <th className="px-3 py-2.5 w-[46px]">#</th>
-                  <th className="px-3 py-2.5">{t("orders.invoice.thItem")}</th>
-                  <th className="px-3 py-2.5 w-[70px]">{t("orders.invoice.thQty")}</th>
-                  <th className="px-3 py-2.5 w-[120px]">{t("orders.invoice.thUnit")}</th>
-                  <th className="px-3 py-2.5 w-[130px] text-right">{t("orders.invoice.thTotal")}</th>
+                  <th className="px-3 py-2.5">Item</th>
+                  <th className="px-3 py-2.5 w-[60px] text-center">Qty</th>
+                  <th className="px-3 py-2.5 w-[110px]">Original</th>
+                  <th className="px-3 py-2.5 w-[110px]">Discount</th>
+                  <th className="px-3 py-2.5 w-[110px] text-right">Total</th>
                 </tr>
               </thead>
 
               <tbody>
                 {orderQuery.isLoading || orderQuery.isFetching ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-[12px] text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="px-3 py-8 text-center text-[12px] text-gray-500 dark:text-gray-400">
                       {t("orders.invoice.loading")}
                     </td>
                   </tr>
@@ -381,12 +384,16 @@ export default function OrderInvoicePage() {
                         </div>
                       </td>
 
-                      <td className="px-3 py-2.5 text-[12px] font-semibold text-gray-700 dark:text-gray-200">
+                      <td className="px-3 py-2.5 text-center text-[12px] font-semibold text-gray-700 dark:text-gray-200">
                         {p.qty}
                       </td>
 
                       <td className="px-3 py-2.5 text-[12px] text-gray-700 dark:text-gray-200">
-                        {formatBDT(p.unit)}
+                        {formatBDT(p.originalPrice)}
+                      </td>
+
+                      <td className="px-3 py-2.5 text-[12px] text-red-500 dark:text-red-400">
+                        {p.discountAmount > 0 ? `−${formatBDT(p.discountAmount)}` : formatBDT(0)}
                       </td>
 
                       <td className="px-3 py-2.5 text-right text-[12px] font-semibold text-gray-900 dark:text-white">
@@ -396,7 +403,7 @@ export default function OrderInvoicePage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-[12px] text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="px-3 py-8 text-center text-[12px] text-gray-500 dark:text-gray-400">
                       {t("orders.invoice.noItems")}
                     </td>
                   </tr>
