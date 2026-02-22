@@ -132,34 +132,34 @@ export default function OrderInvoicePage() {
     return { orderNo, payMethod, payStatus, ordStatus, dueDate };
   }, [order]);
 
-  useEffect(() => {
-    if (!autoPrint) return;
-    if (!orderQuery.isSuccess) return;
-    if (printedRef.current) return;
-    printedRef.current = true;
+  // useEffect(() => {
+  //   if (!autoPrint) return;
+  //   if (!orderQuery.isSuccess) return;
+  //   if (printedRef.current) return;
+  //   printedRef.current = true;
 
-    const t = window.setTimeout(() => {
-      try {
-        window.print();
-      } catch {
-        // ignore
-      }
-    }, 250);
+  //   const t = window.setTimeout(() => {
+  //     try {
+  //       window.print();
+  //     } catch {
+  //       // ignore
+  //     }
+  //   }, 250);
 
-    const onAfterPrint = () => {
-      try {
-        window.close();
-      } catch {
-        // ignore
-      }
-    };
+  //   const onAfterPrint = () => {
+  //     try {
+  //       window.close();
+  //     } catch {
+  //       // ignore
+  //     }
+  //   };
 
-    window.addEventListener("afterprint", onAfterPrint);
-    return () => {
-      window.clearTimeout(t);
-      window.removeEventListener("afterprint", onAfterPrint);
-    };
-  }, [autoPrint, orderQuery.isSuccess]);
+  //   window.addEventListener("afterprint", onAfterPrint);
+  //   return () => {
+  //     window.clearTimeout(t);
+  //     window.removeEventListener("afterprint", onAfterPrint);
+  //   };
+  // }, [autoPrint, orderQuery.isSuccess]);
 
   useEffect(() => {
     if (orderQuery.isError) {
@@ -435,7 +435,9 @@ export default function OrderInvoicePage() {
 
                   <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
                     <span>{t("orders.invoice.discount")}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{formatBDT(totals.discount)}</span>
+                    <span className={`font-semibold ${totals.discount > 0 ? "text-red-500 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>
+                      {totals.discount > 0 ? `−${formatBDT(totals.discount)}` : formatBDT(0)}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
