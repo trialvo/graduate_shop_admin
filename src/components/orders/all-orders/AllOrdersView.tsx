@@ -293,7 +293,7 @@ export default function AllOrdersView() {
     queryKey: ordersKeys.list(listParams),
     queryFn: () => getAdminOrders(listParams),
     placeholderData: keepPreviousData,
-    refetchInterval: 5000,
+    refetchInterval: 30_000,
     refetchIntervalInBackground: true,
     retry: 1,
   });
@@ -302,29 +302,28 @@ export default function AllOrdersView() {
   const summaryQuery = useQuery({
     queryKey: ordersKeys.list({ limit: 1, offset: 0 }),
     queryFn: () => getAdminOrders({ limit: 1, offset: 0 }),
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
     refetchIntervalInBackground: true,
     retry: 1,
-    staleTime: 10_000,
+    staleTime: 30_000,
   });
 
+  // Global counts per status — NOT affected by any filters
   const countQueries = useQueries({
     queries: STATUS_OPTIONS.filter((x) => x.id !== "all").map((opt) => ({
       queryKey: ordersKeys.list({
-        ...listParams,
         order_status: opt.id,
         limit: 1,
         offset: 0,
       }),
       queryFn: () =>
         getAdminOrders({
-          ...listParams,
           order_status: opt.id,
           limit: 1,
           offset: 0,
         }),
       enabled: true,
-      refetchInterval: 5000,
+      refetchInterval: 30_000,
       refetchIntervalInBackground: true,
       retry: 1,
       staleTime: 30_000,
@@ -333,7 +332,7 @@ export default function AllOrdersView() {
 
   const counts = useMemo(() => {
     const base: Record<OrderStatus, number> = {
-      all: ordersQuery.data?.pagination?.total ?? 0,
+      all: summaryQuery.data?.summary?.total ?? summaryQuery.data?.pagination?.total ?? 0,
 
       new: 0,
       approved: 0,
@@ -355,7 +354,7 @@ export default function AllOrdersView() {
     });
 
     return base;
-  }, [ordersQuery.data?.pagination?.total, countQueries]);
+  }, [summaryQuery.data, countQueries]);
 
   const rows: OrderRow[] = useMemo(() => {
     const data = ordersQuery.data?.data ?? [];
