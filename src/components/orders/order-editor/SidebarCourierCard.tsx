@@ -57,33 +57,34 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
       ];
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5 dark:border-gray-800 dark:bg-gray-900">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
-            <Truck size={18} />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+            <Truck size={16} />
           </div>
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
               {t("orders.orderEditor.courier")}
             </div>
-            <div className="text-base font-semibold text-gray-900 dark:text-white">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">
               {t("orders.orderEditor.shipmentHandling")}
             </div>
           </div>
         </div>
 
         {providers?.length ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
               {t("orders.orderEditor.providers")}: {providers.length}
             </span>
             {anyAutoAvailable ? (
-              <span className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                 {t("orders.orderEditor.autoAvailable")}
               </span>
             ) : (
-              <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                 {t("orders.orderEditor.manualOnly")}
               </span>
             )}
@@ -91,28 +92,31 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
         ) : null}
       </div>
 
-      <div className="mt-5 space-y-4">
+      {/* Method select + send */}
+      <div className="mt-4 space-y-3">
         <div>
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
             {t("orders.orderEditor.selectMethod")}
           </div>
-          <Select
-            options={options}
-            defaultValue={method}
-            onChange={(v) => onChange({ method: v })}
-            className="bg-white dark:bg-gray-800/50"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <Select
+                options={options}
+                defaultValue={method}
+                onChange={(v) => onChange({ method: v })}
+                className="bg-white dark:bg-gray-800/50"
+              />
+            </div>
+            <Button onClick={onSend} size="sm" variant="primary">
+              {t("orders.orderEditor.sendToCourier")}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex justify-end">
-          <Button onClick={onSend} size="sm" variant="primary">
-            {t("orders.orderEditor.sendToCourier")}
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* Consignment + Tracking — stacked */}
+        <div className="space-y-3">
           <div>
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
               {t("orders.orderEditor.consignmentId")}
             </div>
             <Input
@@ -124,10 +128,10 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
           </div>
 
           <div>
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
               {t("orders.orderEditor.trackingLink")}
             </div>
-            <div className="flex h-11 w-full items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-200">
+            <div className="flex h-10 w-full items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-200">
               {trackingUrl ? (
                 <a
                   href={trackingUrl}
@@ -144,12 +148,13 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
           <Button
             onClick={onComplete}
             size="sm"
             variant="success"
-            startIcon={<CheckCircle size={14} />}
+            startIcon={<CheckCircle size={13} />}
           >
             {t("orders.orderEditor.complete")}
           </Button>
@@ -157,14 +162,14 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
             onClick={onDownloadInvoice}
             size="sm"
             variant="primary"
-            startIcon={<FileText size={14} />}
+            startIcon={<FileText size={13} />}
           >
             {t("orders.orderEditor.courierInvoice")}
           </Button>
         </div>
 
         {lastUpdatedAtLabel ? (
-          <div className="text-xs text-gray-400 dark:text-gray-500">
+          <div className="text-[10px] text-gray-400 dark:text-gray-500">
             {t("orders.orderEditor.updated")} {lastUpdatedAtLabel}
           </div>
         ) : null}

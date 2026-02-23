@@ -33,7 +33,7 @@ interface OrderFormCardProps {
 const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmit }) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
@@ -53,7 +53,7 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6">
         {/* Left column */}
         <div className="space-y-5">
           <div>

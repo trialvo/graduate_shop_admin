@@ -53,27 +53,29 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5 dark:border-gray-800 dark:bg-gray-900">
+      {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
-          <Clock size={18} />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
+          <Clock size={16} />
         </div>
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+        <div className="min-w-0">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
             {t("orders.orderEditor.history")}
           </div>
-          <div className="text-base font-semibold text-gray-900 dark:text-white">
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">
             {t("orders.orderEditor.customerTimeline")}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
+      {/* Data rows */}
+      <div className="mt-3.5 space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map(({ label, value, bold }) => (
-          <div key={label} className="flex items-center justify-between py-2.5 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">{label}</span>
+          <div key={label} className="flex items-center justify-between gap-3 py-2 text-xs sm:text-sm">
+            <span className="shrink-0 text-gray-500 dark:text-gray-400">{label}</span>
             <span
-              className={`text-right ${bold ? "font-extrabold" : "font-semibold"} text-gray-900 dark:text-white`}
+              className={`truncate text-right ${bold ? "font-extrabold" : "font-semibold"} text-gray-900 dark:text-white`}
             >
               {value}
             </span>
@@ -82,23 +84,16 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
       </div>
 
       {/* Notes */}
-      <div className="mt-3 flex items-start gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800/50">
-        <MessageSquare size={14} className="mt-0.5 shrink-0 text-gray-400" />
-        <div className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-          {additionalNotes || t("orders.orderEditor.noNotes")}
+      {additionalNotes ? (
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-gray-100 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
+          <MessageSquare size={13} className="mt-0.5 shrink-0 text-gray-400" />
+          <div className="text-[11px] leading-relaxed text-gray-600 dark:text-gray-300">
+            {additionalNotes}
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      <div className="mt-4">
-        <Button
-          onClick={onDownloadInvoice}
-          size="sm"
-          variant="primary"
-          startIcon={<Download size={14} />}
-        >
-          {t("orders.orderEditor.downloadInvoice")}
-        </Button>
-      </div>
+
     </div>
   );
 };

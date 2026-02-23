@@ -390,7 +390,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
   }, [deliveryQuery.data]);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
@@ -474,8 +474,8 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                     type="button"
                     onClick={() => onChangeTotals({ deliveryCharge: opt.customer_charge })}
                     className={`group relative flex items-center gap-3.5 rounded-xl border-2 px-4 py-3 text-left transition-all duration-200 ${isSelected
-                        ? "border-brand-500 bg-gradient-to-r from-brand-50 to-white shadow-sm ring-1 ring-brand-200 dark:border-brand-400 dark:from-brand-500/10 dark:to-gray-900 dark:ring-brand-500/30"
-                        : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600"
+                      ? "border-brand-500 bg-gradient-to-r from-brand-50 to-white shadow-sm ring-1 ring-brand-200 dark:border-brand-400 dark:from-brand-500/10 dark:to-gray-900 dark:ring-brand-500/30"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600"
                       }`}
                   >
                     {/* Selected checkmark */}
@@ -488,8 +488,8 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                     {/* Icon / Image */}
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isSelected
-                          ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400"
-                          : "bg-gray-100 text-gray-400 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-500"
+                        ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400"
+                        : "bg-gray-100 text-gray-400 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-500"
                         }`}
                     >
                       {imgSrc ? (
@@ -511,8 +511,8 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                       <div className="flex items-center gap-2 mt-0.5">
                         <span
                           className={`inline-block rounded-full px-2 py-px text-[10px] font-medium ${isSelected
-                              ? "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300"
-                              : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                            ? "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300"
+                            : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
                             }`}
                         >
                           {deliveryTypeLabel(opt.type)}
@@ -528,8 +528,8 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                     {/* Price */}
                     <div
                       className={`shrink-0 text-base font-bold ${isSelected
-                          ? "text-brand-600 dark:text-brand-400"
-                          : "text-gray-800 dark:text-gray-200"
+                        ? "text-brand-600 dark:text-brand-400"
+                        : "text-gray-800 dark:text-gray-200"
                         }`}
                     >
                       ৳{formatBDT(opt.customer_charge)}

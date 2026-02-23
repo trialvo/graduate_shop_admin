@@ -60,52 +60,36 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex flex-wrap items-start justify-between gap-6">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-              <Package size={16} />
-            </div>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-              {t("orders.orderEditor.title")}
-            </span>
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:px-5 dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {/* Order icon + title */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+            <Package size={15} />
           </div>
-
-          <div className="flex flex-wrap items-end gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <div className="min-w-0">
+            <h1 className="text-base font-bold tracking-tight text-gray-900 sm:text-lg dark:text-white">
               Order #{orderNumber}
             </h1>
-            <span className="mb-0.5 text-sm text-gray-500 dark:text-gray-400">
-              {paymentLabel}
-            </span>
           </div>
-
-          {customerIp ? (
-            <div className="flex items-center gap-2">
-              <Shield size={13} className="text-gray-400" />
-              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                IP: {customerIp}
-              </span>
-            </div>
-          ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-800/50">
-            <Calendar size={14} className="text-gray-400" />
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500">
-                {t("orders.orderEditor.orderDate")}
-              </div>
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                {orderDateLabel}
-              </div>
-            </div>
-          </div>
+        {/* Separator dot */}
+        <div className="hidden h-4 w-px bg-gray-200 sm:block dark:bg-gray-700" />
 
-          <div className="flex items-center gap-2">
-            <CreditCard size={14} className="text-gray-400" />
+        {/* Date chip */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <Calendar size={12} className="text-gray-400" />
+          <span className="font-medium">{orderDateLabel}</span>
+        </div>
+
+        {/* Separator dot */}
+        <div className="hidden h-4 w-px bg-gray-200 sm:block dark:bg-gray-700" />
+
+        {/* Payment + Status badges */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <CreditCard size={12} className="text-gray-400" />
             <Badge
               variant="light"
               size="md"
@@ -114,20 +98,41 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
               {paymentStatus.toUpperCase()}
             </Badge>
           </div>
-
           <Badge variant="light" size="md" color={statusToBadgeColor(orderStatus)}>
             {statusLabel}
           </Badge>
-
-          <Button
-            size="sm"
-            variant="outline"
-            startIcon={<FileDown size={14} />}
-            onClick={() => window.open(`/order-invoice/${orderId}`, "_blank")}
-          >
-            {t("orders.orderEditor.downloadInvoice", "Invoice")}
-          </Button>
         </div>
+
+        {/* IP badge (if exists) */}
+        {customerIp ? (
+          <>
+            <div className="hidden h-4 w-px bg-gray-200 sm:block dark:bg-gray-700" />
+            <div className="flex items-center gap-1.5">
+              <Shield size={11} className="text-gray-400" />
+              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                {customerIp}
+              </span>
+            </div>
+          </>
+        ) : null}
+
+        {/* Payment label */}
+        <span className="hidden text-[11px] text-gray-400 sm:inline dark:text-gray-500">
+          {paymentLabel}
+        </span>
+
+        {/* Spacer */}
+        <div className="ml-auto" />
+
+        {/* Invoice button */}
+        <Button
+          size="sm"
+          variant="outline"
+          startIcon={<FileDown size={13} />}
+          onClick={() => window.open(`/order-invoice/${orderId}`, "_blank")}
+        >
+          Preview Invoice
+        </Button>
       </div>
     </div>
   );
