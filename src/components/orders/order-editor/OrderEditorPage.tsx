@@ -357,24 +357,9 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     });
   };
 
-  const handleAddLine = () => {
+  const handleAddLine = (newLine: OrderProductLine) => {
     setData((prev) => {
       if (!prev) return prev;
-      const nextIndex = prev.products.length + 1;
-      const id = `line-${Date.now()}`;
-      const newLine: OrderProductLine = {
-        id,
-        sku: `#NEW${nextIndex}`,
-        serialNo: "New product serial",
-        name: "New Product",
-        imageUrl: "",
-        color: "Black",
-        size: "M",
-        discount: 0,
-        unitPrice: 0,
-        quantity: 1,
-        taxPercent: 0,
-      };
       return { ...prev, products: [newLine, ...prev.products] };
     });
   };

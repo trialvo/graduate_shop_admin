@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ShoppingCart, Trash2, Plus, Save, AlertCircle, Loader2, Truck, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/ui/button/Button";
@@ -13,12 +13,13 @@ import { getColors } from "@/api/colors.api";
 import { getDeliveryCharges, type DeliveryChargeEntity } from "@/api/delivery-charges.api";
 import { deliveryTypeLabel } from "@/components/business-settings/delivery/types";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+import AddProductModal from "./AddProductModal";
 
 interface ProductCalculationsCardProps {
   products: OrderProductLine[];
   onChangeLine: (id: string, patch: Partial<OrderProductLine>) => void;
   onDeleteLine: (id: string) => void;
-  onAddLine: () => void;
+  onAddLine: (line: OrderProductLine) => void;
 
   deliveryCharge: number;
   specialDiscount: number;
@@ -389,6 +390,8 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
     return deliveryQuery.data?.data ?? [];
   }, [deliveryQuery.data]);
 
+  const [showAddModal, setShowAddModal] = useState(false);
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -406,7 +409,7 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
           </div>
         </div>
 
-        <Button onClick={onAddLine} size="sm" variant="outline" startIcon={<Plus size={14} />}>
+        <Button onClick={() => setShowAddModal(true)} size="sm" variant="outline" startIcon={<Plus size={14} />}>
           {t("orders.orderEditor.addProduct")}
         </Button>
       </div>
@@ -608,6 +611,16 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Add Product Modal */}
+      <AddProductModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={(line) => {
+          onAddLine(line);
+          setShowAddModal(false);
+        }}
+      />
     </div>
   );
 };
