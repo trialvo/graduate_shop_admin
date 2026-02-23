@@ -21,8 +21,11 @@ export type ProductEntity = {
   name: string;
   slug: string;
   main_category_id: number;
+  main_category_name?: string | null;
   sub_category_id: number;
+  sub_category_name?: string | null;
   child_category_id: number;
+  child_category_name?: string | null;
   brand_id: number;
 
   status: boolean;

@@ -58,6 +58,10 @@ export function toUiProduct(entity: ProductEntity, lookups: LookupMaps): Product
   // backend discount looks like "amount", so sale = selling - discount
   const salePrice = Math.max(0, price - Math.max(0, discount));
 
+  const mainName = String(entity.main_category_name ?? "").trim();
+  const subName = String(entity.sub_category_name ?? "").trim();
+  const childName = String(entity.child_category_name ?? "").trim();
+
   return {
     id: String(entity.id),
     name: entity.name,
@@ -65,9 +69,18 @@ export function toUiProduct(entity: ProductEntity, lookups: LookupMaps): Product
 
     positionNumber: entity.id,
     categoryPath: {
-      category: lookups.mainNameById.get(entity.main_category_id) ?? `#${entity.main_category_id}`,
-      subCategory: lookups.subNameById.get(entity.sub_category_id) ?? undefined,
-      childCategory: lookups.childNameById.get(entity.child_category_id) ?? undefined,
+      category:
+        mainName ||
+        lookups.mainNameById.get(entity.main_category_id) ||
+        `#${entity.main_category_id}`,
+      subCategory:
+        subName ||
+        lookups.subNameById.get(entity.sub_category_id) ||
+        undefined,
+      childCategory:
+        childName ||
+        lookups.childNameById.get(entity.child_category_id) ||
+        undefined,
     },
 
     stockQty,
