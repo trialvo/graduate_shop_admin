@@ -19,7 +19,9 @@ import {
   ordersKeys,
   patchOrderPaymentStatus,
   patchOrderStatus,
+  updateOrderItems,
   type ApiOrder,
+  type UpdateOrderItemsPayload,
 } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import Button from "@/components/ui/button/Button";
@@ -69,10 +71,14 @@ const timeAgoLabel = (iso: string) => {
   return `${days}d ago`;
 };
 
-const calcLineTotals = (p: OrderProductLine): { base: number; tax: number } => {
-  const base = Math.max(0, p.unitPrice - p.discount) * p.quantity;
-  const tax = (base * p.taxPercent) / 100;
-  return { base, tax };
+const calcLineTotals = (
+  p: OrderProductLine,
+): { original: number; discountAmt: number; net: number; tax: number } => {
+  const original = p.unitPrice * p.quantity;
+  const discountAmt = p.discount * p.quantity;
+  const net = Math.max(0, original - discountAmt);
+  const tax = (net * p.taxPercent) / 100;
+  return { original, discountAmt, net, tax };
 };
 
 function paymentLabelFromOrder(o: ApiOrder) {
@@ -98,6 +104,13 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     unitPrice: Number(it.selling_price ?? 0),
     quantity: Number(it.quantity ?? 1),
     taxPercent: 0,
+    // API reference IDs
+    productId: it.product_id,
+    productSkuId: it.product_sku_id,
+    colorId: it.color_id,
+    variantId: it.variant_id,
+    attributeId: it.attribute_id,
+    colorHex: it.color_hex,
   }));
 
   const firstCourier = (o.couriers ?? [])[0];
@@ -218,6 +231,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     if (!data) {
       return {
         itemCount: 0,
+        originalTotal: 0,
+        productDiscount: 0,
         subTotal: 0,
         taxTotal: 0,
         grandTotal: 0,
@@ -226,11 +241,14 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     }
 
     const lineTotals = data.products.map(calcLineTotals);
-    const subTotal = lineTotals.reduce((sum, t) => sum + t.base, 0);
-    const taxTotal = lineTotals.reduce((sum, t) => sum + t.tax, 0);
-    const items = data.products.reduce((sum, p) => sum + p.quantity, 0);
+    const originalTotal = lineTotals.reduce((s, t) => s + t.original, 0);
+    const productDiscount = lineTotals.reduce((s, t) => s + t.discountAmt, 0);
+    const subTotal = lineTotals.reduce((s, t) => s + t.net, 0);
+    const taxTotal = lineTotals.reduce((s, t) => s + t.tax, 0);
+    const items = data.products.reduce((s, p) => s + p.quantity, 0);
 
-    const grandTotal = subTotal + taxTotal + (Number(data.deliveryCharge) || 0);
+    const grandTotal =
+      subTotal + taxTotal + (Number(data.deliveryCharge) || 0);
     const payable =
       grandTotal -
       (Number(data.specialDiscount) || 0) -
@@ -238,6 +256,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
     return {
       itemCount: items,
+      originalTotal,
+      productDiscount,
       subTotal,
       taxTotal,
       grandTotal,
@@ -384,8 +404,44 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     });
   };
 
-  const handleSubmitProducts = () => {
-    toast(t("orders.orderEditor.noProductsApi"));
+  const itemsMutation = useMutation({
+    mutationFn: (payload: { orderId: number; data: UpdateOrderItemsPayload }) =>
+      updateOrderItems(payload.orderId, payload.data),
+    onSuccess: async () => {
+      toast.success(t("orders.orderEditor.orderUpdated"));
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message ?? t("orders.orderEditor.failedOrderStatus"));
+    },
+  });
+
+  const handleSubmitProducts = async () => {
+    if (!data || !orderId) return;
+
+    const items = data.products
+      .filter((p) => p.productSkuId)
+      .map((p) => ({
+        order_item_id: Number(p.id),
+        product_sku_id: p.productSkuId!,
+        quantity: p.quantity,
+        discount: p.discount,
+      }));
+
+    if (!items.length) {
+      toast(t("orders.orderEditor.noProductsApi"));
+      return;
+    }
+
+    await itemsMutation.mutateAsync({
+      orderId,
+      data: {
+        items,
+        delivery_charge: data.deliveryCharge,
+        discount_total: data.specialDiscount,
+      },
+    });
   };
 
   const handleCourierChange = (patch: {
@@ -534,6 +590,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       <div className="mt-6 space-y-6">
         <OrderEditorHeader
           orderNumber={data.orderNumber}
+          orderId={data.orderId}
           orderStatus={data.orderStatus}
           paymentStatus={data.paymentStatus}
           orderDateLabel={formatDateLabel(data.orderDate)}
@@ -574,6 +631,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
               onChangeTotals={handleChangeTotals}
               totals={{
                 itemCount: totals.itemCount,
+                originalTotal: totals.originalTotal,
+                productDiscount: totals.productDiscount,
                 subTotal: totals.subTotal,
                 taxTotal: totals.taxTotal,
                 grandTotal: totals.grandTotal,

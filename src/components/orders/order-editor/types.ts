@@ -31,6 +31,14 @@ export interface OrderProductLine {
   unitPrice: number;
   quantity: number;
   taxPercent: number;
+
+  // API reference IDs for dynamic color/size selection
+  productId?: number;
+  productSkuId?: number;
+  colorId?: number | null;
+  variantId?: number | null;
+  attributeId?: number | null;
+  colorHex?: string | null;
 }
 
 export interface OrderEditorData {

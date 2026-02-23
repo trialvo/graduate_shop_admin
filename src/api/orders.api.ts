@@ -276,7 +276,7 @@ export async function getAdminOrderById(orderId: number) {
 
 export async function patchOrderPaymentStatus(
   orderId: number,
-  newPaymentStatus: "unpaid" | "partial_paid" | "paid"
+  newPaymentStatus: "unpaid" | "partial_paid" | "paid",
 ) {
   try {
     const res = await api.patch(`/admin/order/paymentstatus/${orderId}`, {
@@ -290,7 +290,7 @@ export async function patchOrderPaymentStatus(
 
 export async function patchOrderStatus(
   orderId: number,
-  newStatus: ApiOrder["order_status"]
+  newStatus: ApiOrder["order_status"],
 ) {
   try {
     const res = await api.patch(`/admin/order/status/${orderId}`, {
@@ -311,16 +311,17 @@ export async function patchOrderStatus(
 /** Auto dispatch via API: POST /admin/order/dispatch/:id */
 export async function dispatchOrderCourier(
   orderId: number,
-  payload: DispatchCourierRequest
+  payload: DispatchCourierRequest,
 ) {
   try {
     const res = await api.post<DispatchCourierResponse>(
       `/admin/order/dispatch/${orderId}`,
-      payload
+      payload,
     );
     const data: any = res.data;
     if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
-      const message = data?.error || data?.message || "Failed to dispatch courier";
+      const message =
+        data?.error || data?.message || "Failed to dispatch courier";
       throw new Error(message);
     }
     return data;
@@ -332,12 +333,12 @@ export async function dispatchOrderCourier(
 /** Manual dispatch via API: POST /admin/order/manualDispatchOrder/:id */
 export async function manualDispatchOrder(
   orderId: number,
-  payload: ManualDispatchRequest
+  payload: ManualDispatchRequest,
 ) {
   try {
     const res = await api.post<ManualDispatchResponse>(
       `/admin/order/manualDispatchOrder/${orderId}`,
-      payload
+      payload,
     );
     const data: any = res.data;
     if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
@@ -348,5 +349,37 @@ export async function manualDispatchOrder(
     return data;
   } catch (err: any) {
     throw new Error(getErrMessage(err, "Failed to manual dispatch courier"));
+  }
+}
+
+/** Update order items: PATCH /admin/order/items/:id */
+export type UpdateOrderItemPayload = {
+  order_item_id: number;
+  product_sku_id: number;
+  quantity: number;
+  discount?: number;
+};
+
+export type UpdateOrderItemsPayload = {
+  items: UpdateOrderItemPayload[];
+  delivery_charge?: number;
+  discount_total?: number;
+};
+
+export async function updateOrderItems(
+  orderId: number,
+  payload: UpdateOrderItemsPayload,
+) {
+  try {
+    const res = await api.patch(`/admin/order/items/${orderId}`, payload);
+    const data: any = res.data;
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
+      const message =
+        data?.error || data?.message || "Failed to update order items";
+      throw new Error(message);
+    }
+    return data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to update order items"));
   }
 }

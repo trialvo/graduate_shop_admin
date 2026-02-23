@@ -1,13 +1,15 @@
 // src/components/orders/order-editor/OrderEditorHeader.tsx
 
 import type React from "react";
-import { Package, Calendar, CreditCard, Shield } from "lucide-react";
+import { Package, Calendar, CreditCard, Shield, FileDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
 import type { OrderStatus, PaymentStatus } from "./types";
 
 interface OrderEditorHeaderProps {
   orderNumber: string;
+  orderId: string;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   orderDateLabel: string;
@@ -48,6 +50,7 @@ const paymentToBadgeColor = (
 
 const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
   orderNumber,
+  orderId,
   orderStatus,
   paymentStatus,
   orderDateLabel,
@@ -115,6 +118,15 @@ const OrderEditorHeader: React.FC<OrderEditorHeaderProps> = ({
           <Badge variant="light" size="md" color={statusToBadgeColor(orderStatus)}>
             {statusLabel}
           </Badge>
+
+          <Button
+            size="sm"
+            variant="outline"
+            startIcon={<FileDown size={14} />}
+            onClick={() => window.open(`/order-invoice/${orderId}`, "_blank")}
+          >
+            {t("orders.orderEditor.downloadInvoice", "Invoice")}
+          </Button>
         </div>
       </div>
     </div>
