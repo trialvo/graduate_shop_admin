@@ -343,25 +343,27 @@ const SearchStep: React.FC<SearchStepProps> = ({
           <p className="text-sm">No products found</p>
         </div>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {products.map((p) => {
             const img =
               p.images?.[0]?.path ?? p.product_images?.[0]?.path ?? null;
             const imgSrc = img ? toPublicUrl(img) : null;
-            const priceRange =
-              p.variations?.length > 0
-                ? `৳${formatBDT(Math.min(...p.variations.map((v) => v.selling_price)))} – ৳${formatBDT(Math.max(...p.variations.map((v) => v.selling_price)))}`
-                : "";
+
+            const prices = (p.variations ?? []).map((v) => v.selling_price);
+            const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+            const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+            const totalStock = (p.variations ?? []).reduce((s, v) => s + (v.stock ?? 0), 0);
+            const variationCount = p.variations?.length ?? 0;
 
             return (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => onSelect(p.id)}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                className="group flex w-full items-start gap-3.5 rounded-xl border border-transparent px-3 py-3 text-left transition-all hover:border-gray-200 hover:bg-gray-50/80 hover:shadow-sm dark:hover:border-gray-700 dark:hover:bg-gray-800/50"
               >
                 {/* Thumbnail */}
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
                   {imgSrc ? (
                     <img
                       src={imgSrc}
@@ -369,7 +371,7 @@ const SearchStep: React.FC<SearchStepProps> = ({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <Package size={18} className="text-gray-400" />
+                    <Package size={22} className="text-gray-300 dark:text-gray-600" />
                   )}
                 </div>
 
@@ -378,25 +380,63 @@ const SearchStep: React.FC<SearchStepProps> = ({
                   <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                     {p.name}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+
+                  {/* Category pills */}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     {p.main_category_name && (
-                      <span className="rounded bg-gray-100 px-1.5 py-px font-medium dark:bg-gray-800">
+                      <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
                         {p.main_category_name}
                       </span>
                     )}
-                    <span>
-                      {p.variations?.length ?? 0} variation
-                      {(p.variations?.length ?? 0) !== 1 ? "s" : ""}
+                    {p.sub_category_name && (
+                      <span className="rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                        {p.sub_category_name}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Meta row */}
+                  <div className="mt-1.5 flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <span className={`inline-block h-1.5 w-1.5 rounded-full ${totalStock > 0 ? "bg-emerald-500" : "bg-red-400"}`} />
+                      {totalStock > 0 ? `${totalStock} in stock` : "Out of stock"}
                     </span>
+                    <span>
+                      {variationCount} variant{variationCount !== 1 ? "s" : ""}
+                    </span>
+                    {p.slug && (
+                      <span className="hidden truncate text-gray-400 sm:inline dark:text-gray-500">
+                        #{p.id}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Price */}
-                {priceRange && (
-                  <div className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    {priceRange}
+                {/* Price column */}
+                <div className="shrink-0 text-right">
+                  {prices.length > 0 && (
+                    <>
+                      <div className="text-sm font-bold text-gray-900 dark:text-white">
+                        ৳{formatBDT(minPrice)}
+                      </div>
+                      {maxPrice !== minPrice && (
+                        <div className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
+                          – ৳{formatBDT(maxPrice)}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="mt-1">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${totalStock > 10
+                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                        : totalStock > 0
+                          ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+                          : "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400"
+                      }`}>
+                      {totalStock > 10 ? "In Stock" : totalStock > 0 ? "Low Stock" : "Out"}
+                    </span>
                   </div>
-                )}
+                </div>
               </button>
             );
           })}
