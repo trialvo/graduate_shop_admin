@@ -24,6 +24,7 @@ function pickApiErrorMessage(err: unknown): string {
 
 function toFormData(values: {
   name: string;
+  name_bd?: string;
   priority: number;
   status: boolean;
   featured: boolean;
@@ -34,6 +35,7 @@ function toFormData(values: {
   const fd = new FormData();
   if (values.category_img) fd.append("category_img", values.category_img);
   fd.append("name", values.name);
+  if (values.name_bd?.trim()) fd.append("name_bd", values.name_bd.trim());
   fd.append("priority", String(values.priority));
   fd.append("status", String(values.status));
   fd.append("featured", String(values.featured));
@@ -52,7 +54,10 @@ function toFormData(values: {
  *  ========================= */
 
 export async function getMainCategories(params?: MainListParams) {
-  const res = await api.get<ListResponse<MainCategory>>("/categories/mainCategories", { params });
+  const res = await api.get<ListResponse<MainCategory>>(
+    "/categories/mainCategories",
+    { params },
+  );
   return res.data;
 }
 
@@ -68,20 +73,31 @@ export async function deleteMainCategory(id: number) {
 
 export async function createMainCategory(values: CategoryFormValues) {
   try {
-    const res = await api.post<MainCategory>("/categories/mainCategory", toFormData(values), {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.post<MainCategory>(
+      "/categories/mainCategory",
+      toFormData(values),
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return res.data;
   } catch (e) {
     throw new Error(pickApiErrorMessage(e));
   }
 }
 
-export async function updateMainCategory(id: number, values: CategoryFormValues) {
+export async function updateMainCategory(
+  id: number,
+  values: CategoryFormValues,
+) {
   try {
-    const res = await api.put<MainCategory>(`/categories/mainCategory/${id}`, toFormData(values), {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.put<MainCategory>(
+      `/categories/mainCategory/${id}`,
+      toFormData(values),
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return res.data;
   } catch (e) {
     throw new Error(pickApiErrorMessage(e));
@@ -93,7 +109,10 @@ export async function updateMainCategory(id: number, values: CategoryFormValues)
  *  ========================= */
 
 export async function getSubCategories(params?: SubListParams) {
-  const res = await api.get<ListResponse<SubCategory>>("/categories/subCategories", { params });
+  const res = await api.get<ListResponse<SubCategory>>(
+    "/categories/subCategories",
+    { params },
+  );
   return res.data;
 }
 
@@ -109,20 +128,31 @@ export async function deleteSubCategory(id: number) {
 
 export async function createSubCategory(values: SubCategoryFormValues) {
   try {
-    const res = await api.post<SubCategory>("/categories/subCategory", toFormData(values), {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.post<SubCategory>(
+      "/categories/subCategory",
+      toFormData(values),
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return res.data;
   } catch (e) {
     throw new Error(pickApiErrorMessage(e));
   }
 }
 
-export async function updateSubCategory(id: number, values: SubCategoryFormValues) {
+export async function updateSubCategory(
+  id: number,
+  values: SubCategoryFormValues,
+) {
   try {
-    const res = await api.put<SubCategory>(`/categories/subCategory/${id}`, toFormData(values), {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.put<SubCategory>(
+      `/categories/subCategory/${id}`,
+      toFormData(values),
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return res.data;
   } catch (e) {
     throw new Error(pickApiErrorMessage(e));
@@ -134,7 +164,10 @@ export async function updateSubCategory(id: number, values: SubCategoryFormValue
  *  ========================= */
 
 export async function getChildCategories(params?: ChildListParams) {
-  const res = await api.get<ListResponse<ChildCategory>>("/categories/childCategories", { params });
+  const res = await api.get<ListResponse<ChildCategory>>(
+    "/categories/childCategories",
+    { params },
+  );
   return res.data;
 }
 
@@ -150,20 +183,31 @@ export async function deleteChildCategory(id: number) {
 
 export async function createChildCategory(values: ChildCategoryFormValues) {
   try {
-    const res = await api.post<ChildCategory>("/categories/childCategory", toFormData(values), {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.post<ChildCategory>(
+      "/categories/childCategory",
+      toFormData(values),
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return res.data;
   } catch (e) {
     throw new Error(pickApiErrorMessage(e));
   }
 }
 
-export async function updateChildCategory(id: number, values: ChildCategoryFormValues) {
+export async function updateChildCategory(
+  id: number,
+  values: ChildCategoryFormValues,
+) {
   try {
-    const res = await api.put<ChildCategory>(`/categories/childCategory/${id}`, toFormData(values), {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.put<ChildCategory>(
+      `/categories/childCategory/${id}`,
+      toFormData(values),
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return res.data;
   } catch (e) {
     throw new Error(pickApiErrorMessage(e));

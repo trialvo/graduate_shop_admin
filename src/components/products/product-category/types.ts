@@ -18,6 +18,7 @@ export type BaseListParams = PaginationParams & {
 export type MainCategory = {
   id: number;
   name: string;
+  name_bd?: string | null;
   img_path: string | null;
   status: boolean;
   featured: boolean;
@@ -31,6 +32,7 @@ export type SubCategory = {
   id: number;
   main_category_id: number;
   name: string;
+  name_bd?: string | null;
   img_path: string | null;
   status: boolean;
   featured: boolean;
@@ -44,6 +46,7 @@ export type ChildCategory = {
   id: number;
   sub_category_id: number;
   name: string;
+  name_bd?: string | null;
   img_path: string | null;
   status: boolean;
   featured: boolean;
@@ -69,6 +72,7 @@ export type ChildListParams = BaseListParams & {
 
 export type CategoryFormValues = {
   name: string;
+  name_bd?: string;
   priority: number;
   status: boolean;
   featured: boolean;

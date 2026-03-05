@@ -88,6 +88,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
 
   // Basic
   const [productName, setProductName] = useState("");
+  const [productNameBd, setProductNameBd] = useState("");
   const [productSlug, setProductSlug] = useState("");
   const [slugLocked, setSlugLocked] = useState(false);
 
@@ -198,6 +199,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
     if (!initialProduct) return;
 
     setProductName(initialProduct.name ?? "");
+    setProductNameBd((initialProduct as any).name_bd ?? "");
     setProductSlug(initialProduct.slug ?? "");
     setSlugLocked(true);
 
@@ -307,6 +309,7 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
     const payloadBase = {
       product_images: newImages.map((x) => x.file),
       name: productName.trim(),
+      name_bd: productNameBd.trim() || undefined,
       slug: productSlug.trim(),
       main_category_id: categoryId,
       sub_category_id: subCategoryId,
@@ -374,6 +377,17 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
               {t("products.createProduct.productNameLabel")} <span className="text-error-500">*</span>
             </p>
             <Input value={productName} onChange={(e) => setProductName(String(e.target.value))} placeholder={t("products.createProduct.enterProductName")} />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              বাংলা নাম <span className="text-gray-400 text-xs">(ঐচ্ছিক)</span>
+            </p>
+            <Input
+              value={productNameBd}
+              onChange={(e) => setProductNameBd(String(e.target.value))}
+              placeholder="পণ্যের বাংলা নাম লিখুন"
+            />
           </div>
 
           <div className="space-y-2">

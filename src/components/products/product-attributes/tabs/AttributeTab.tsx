@@ -67,6 +67,7 @@ function normalizeAttribute(a: Attribute): AttributeRow {
       id: typeof v.id === "string" ? parseInt(v.id, 10) : v.id,
       attribute_id: typeof v.attribute_id === "string" ? parseInt(v.attribute_id, 10) : (v.attribute_id ?? a.id),
       name: v.name ?? "",
+      name_bd: v.name_bd ?? null,
       priority: v.priority ?? 1,
       status: v.status === 1 || v.status === "1" || v.status === true || Boolean(v.status),
       created_at: v.created_at,
@@ -76,6 +77,7 @@ function normalizeAttribute(a: Attribute): AttributeRow {
   return {
     id: a.id,
     name: a.name,
+    name_bd: a.name_bd ?? null,
     priority: a.priority ?? 1,
     status: Boolean(a.status),
     created_at: a.created_at,
@@ -134,6 +136,7 @@ type AttributeModalState = {
   hydrated: boolean;
 
   name: string;
+  name_bd: string;
   status: boolean;
   priority: number;
 
@@ -166,7 +169,7 @@ function AttributeModal({
     .filter(Boolean);
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
         {/* ── Header ─────────────────────────────────── */}
@@ -241,8 +244,21 @@ function AttributeModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("products.attributes.priority")}
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      বাংলা নাম <span className="text-gray-400 text-xs">(ঐচ্ছিক)</span>
+                    </label>
+                    <Input
+                      placeholder="যেমন: বিভাগ, আকার, মাল"
+                      value={state.name_bd}
+                      onChange={(e) => setState((p) => ({ ...p, name_bd: e.target.value }))}
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      গ্রাহকদের জন্য বাংলা নাম
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("common.priority")}
                     </label>
                     <Select
                       key={`attr-modal-priority-${state.hydrated}-${state.priority}`}
@@ -390,6 +406,7 @@ type VariantModalState = {
 
   attribute_id: number;
   name: string;
+  name_bd: string;
   status: boolean;
   priority: number;
 };
@@ -413,7 +430,7 @@ function VariantModal({
   if (!state.open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
         {/* ── Header ─────────────────────────────────── */}
@@ -519,8 +536,21 @@ function VariantModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("products.attributes.priority")}
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      বাংলা নাম <span className="text-gray-400 text-xs">(ঐচ্ছিক)</span>
+                    </label>
+                    <Input
+                      placeholder="যেমন: এক্স্ট্রা লার্জ"
+                      value={state.name_bd}
+                      onChange={(e) => setState((p) => ({ ...p, name_bd: e.target.value }))}
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      গ্রাহকদের জন্য বাংলা নাম
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("common.priority")}
                     </label>
                     <Select
                       key={`var-modal-priority-${state.hydrated}-${state.priority}`}
@@ -665,6 +695,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     mode: "create",
     hydrated: true,
     name: "",
+    name_bd: "",
     status: true,
     priority: 1,
     variantsCsv: "",
@@ -675,6 +706,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     hydrated: true,
     attribute_id: 0,
     name: "",
+    name_bd: "",
     status: true,
     priority: 1,
   });
@@ -699,6 +731,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         ...p,
         id: singleAttr.id,
         name: singleAttr.name ?? "",
+        name_bd: singleAttr.name_bd ?? "",
         status: Boolean(singleAttr.status),
         priority: singleAttr.priority ?? 1,
         hydrated: true,
@@ -725,6 +758,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         id: singleVar.id,
         attribute_id: singleVar.attribute_id,
         name: singleVar.name ?? "",
+        name_bd: singleVar.name_bd ?? "",
         status: Boolean(singleVar.status),
         priority: singleVar.priority ?? 1,
         hydrated: true,
@@ -767,6 +801,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         mode: "create",
         hydrated: true,
         name: "",
+        name_bd: "",
         status: true,
         priority: 1,
         variantsCsv: "",
@@ -849,6 +884,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       mode: "create",
       hydrated: true,
       name: "",
+      name_bd: "",
       status: true,
       priority: 1,
       variantsCsv: "",
@@ -862,6 +898,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       id,
       hydrated: false,
       name: "",
+      name_bd: "",
       status: true,
       priority: 1,
       variantsCsv: "",
@@ -875,6 +912,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     if (attrModal.mode === "create") {
       createAttrMutation.mutate({
         name: trimmed,
+        name_bd: attrModal.name_bd.trim() || undefined,
         status: attrModal.status,
         priority: attrModal.priority,
       });
@@ -886,6 +924,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       id: attrModal.id,
       payload: {
         name: trimmed,
+        name_bd: attrModal.name_bd.trim() || undefined,
         status: attrModal.status,
         priority: attrModal.priority,
       },
@@ -901,6 +940,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       payload: {
         attribute_id: variantModal.attribute_id,
         name: trimmed,
+        name_bd: variantModal.name_bd.trim() || undefined,
         status: variantModal.status,
         priority: variantModal.priority,
       },
@@ -942,6 +982,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       hydrated: false,
       attribute_id: 0,
       name: "",
+      name_bd: "",
       status: true,
       priority: 1,
     });
@@ -1097,6 +1138,9 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
                             {row.name}
                           </p>
+                          {row.name_bd && (
+                            <p className="text-xs text-brand-500 dark:text-brand-400">{row.name_bd}</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {row.variants?.length ?? 0} {t("products.attributes.variants")}
                           </p>
@@ -1138,9 +1182,16 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                                             : "bg-gray-400 dark:bg-gray-500",
                                         )}
                                       />
-                                      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
-                                        {v.name}
-                                      </span>
+                                      <div className="min-w-0 flex-1">
+                                        <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
+                                          {v.name}
+                                        </span>
+                                        {v.name_bd && (
+                                          <span className="block truncate text-[10px] text-brand-500 dark:text-brand-400">
+                                            {v.name_bd}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
 
                                     {/* Row 2: priority badge */}

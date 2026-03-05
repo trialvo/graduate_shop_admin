@@ -151,6 +151,9 @@ const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStat
                         <div className="max-w-[280px] truncate font-semibold text-gray-900 dark:text-white">
                           {p.name}
                         </div>
+                        {p.name_bd && (
+                          <div className="max-w-[280px] truncate text-xs text-brand-500 dark:text-brand-400">{p.name_bd}</div>
+                        )}
                         <div className="truncate text-xs text-gray-500 dark:text-gray-400">{p.sku}</div>
                       </div>
                     </div>

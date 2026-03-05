@@ -168,6 +168,9 @@ function MainHierarchy({
                       <td className="p-3">
                         <div className="flex flex-col">
                           <span className="font-semibold">{m.name}</span>
+                          {m.name_bd && (
+                            <span className="text-xs text-brand-500 dark:text-brand-400">{m.name_bd}</span>
+                          )}
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {subList.length} sub category{subList.length === 1 ? "" : "ies"}
                           </span>
@@ -252,6 +255,9 @@ function MainHierarchy({
                                             <td className="p-3">
                                               <div className="flex flex-col">
                                                 <span className="font-semibold">{s.name}</span>
+                                                {s.name_bd && (
+                                                  <span className="text-xs text-brand-500 dark:text-brand-400">{s.name_bd}</span>
+                                                )}
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                   main #{s.main_category_id} • {childList.length} child
                                                 </span>
@@ -318,6 +324,9 @@ function MainHierarchy({
                                                               <td className="p-3">
                                                                 <div className="flex flex-col">
                                                                   <span className="font-semibold">{c.name}</span>
+                                                                  {c.name_bd && (
+                                                                    <span className="text-xs text-brand-500 dark:text-brand-400">{c.name_bd}</span>
+                                                                  )}
                                                                   <span className="text-xs text-gray-500 dark:text-gray-400">
                                                                     sub #{c.sub_category_id}
                                                                   </span>
@@ -455,6 +464,9 @@ function SubHierarchy({
                       <td className="p-3">
                         <div className="flex flex-col">
                           <span className="font-semibold">{s.name}</span>
+                          {s.name_bd && (
+                            <span className="text-xs text-brand-500 dark:text-brand-400">{s.name_bd}</span>
+                          )}
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             main #{s.main_category_id} • {childList.length} child
                           </span>
@@ -528,6 +540,9 @@ function SubHierarchy({
                                         <td className="p-3">
                                           <div className="flex flex-col">
                                             <span className="font-semibold">{c.name}</span>
+                                            {c.name_bd && (
+                                              <span className="text-xs text-brand-500 dark:text-brand-400">{c.name_bd}</span>
+                                            )}
                                             <span className="text-xs text-gray-500 dark:text-gray-400">
                                               sub #{c.sub_category_id}
                                             </span>
@@ -662,6 +677,9 @@ export default function CategoriesTable({ tab, rows, loading, isRefreshing, onEd
                   <td className="p-3">
                     <div className="flex flex-col">
                       <span className="font-semibold">{r.name}</span>
+                      {r.name_bd && (
+                        <span className="text-xs text-brand-500 dark:text-brand-400">{r.name_bd}</span>
+                      )}
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {r.updated_at ? `Updated: ${new Date(r.updated_at).toLocaleString()}` : ""}
                       </span>

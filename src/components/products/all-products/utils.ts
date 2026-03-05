@@ -10,7 +10,10 @@ type LookupMaps = {
 };
 
 export function sumStock(variations: { stock: number }[]): number {
-  return (variations ?? []).reduce((s, v) => s + Math.max(0, Number(v.stock ?? 0)), 0);
+  return (variations ?? []).reduce(
+    (s, v) => s + Math.max(0, Number(v.stock ?? 0)),
+    0,
+  );
 }
 
 export function minSelling(variations: { selling_price: number }[]): number {
@@ -47,7 +50,10 @@ export function resolveAssetUrl(path?: string): string | undefined {
   }
 }
 
-export function toUiProduct(entity: ProductEntity, lookups: LookupMaps): Product {
+export function toUiProduct(
+  entity: ProductEntity,
+  lookups: LookupMaps,
+): Product {
   const variations = entity.variations ?? [];
   const stockQty = sumStock(variations);
   const variantCount = variations.length;
@@ -65,6 +71,7 @@ export function toUiProduct(entity: ProductEntity, lookups: LookupMaps): Product
   return {
     id: String(entity.id),
     name: entity.name,
+    name_bd: entity.name_bd ?? null,
     imageUrl: resolveAssetUrl(entity.images?.[0]?.path), // ✅ 0 index image
 
     positionNumber: entity.id,
@@ -74,9 +81,7 @@ export function toUiProduct(entity: ProductEntity, lookups: LookupMaps): Product
         lookups.mainNameById.get(entity.main_category_id) ||
         `#${entity.main_category_id}`,
       subCategory:
-        subName ||
-        lookups.subNameById.get(entity.sub_category_id) ||
-        undefined,
+        subName || lookups.subNameById.get(entity.sub_category_id) || undefined,
       childCategory:
         childName ||
         lookups.childNameById.get(entity.child_category_id) ||

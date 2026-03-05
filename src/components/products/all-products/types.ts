@@ -10,6 +10,7 @@ export type CategoryPath = {
 export type Product = {
   id: string;
   name: string;
+  name_bd?: string | null;
   imageUrl?: string;
 
   positionNumber: number;

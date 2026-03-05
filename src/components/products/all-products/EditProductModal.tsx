@@ -364,6 +364,7 @@ export default function EditProductModal({
   // Form state
   // ----------------------------
   const [name, setName] = React.useState("");
+  const [nameBd, setNameBd] = React.useState("");
   const [slug, setSlug] = React.useState("");
 
   const [mainCategoryId, setMainCategoryId] = React.useState<number>(0);
@@ -423,6 +424,7 @@ export default function EditProductModal({
     if (!p) return;
 
     setName(String(p.name ?? ""));
+    setNameBd(String((p as any).name_bd ?? ""));
     setSlug(String(p.slug ?? ""));
 
     setMainCategoryId(pickNestedId(p, "main_category_id", "main_category"));
@@ -614,6 +616,7 @@ export default function EditProductModal({
       const productRes = await updateProduct(productId, {
         product_images: newImages.map((i) => i.file),
         name,
+        name_bd: nameBd.trim() || undefined,
         slug,
 
         main_category_id: normalizeId(mainCategoryId),
@@ -916,6 +919,17 @@ export default function EditProductModal({
                     {t("products.editProduct.nameLabel")} <span className="text-error-500">*</span>
                   </label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("products.editProduct.productNamePh")} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    বাংলা নাম <span className="text-gray-400 text-xs">(ঐচ্ছিক)</span>
+                  </label>
+                  <Input
+                    value={nameBd}
+                    onChange={(e) => setNameBd(e.target.value)}
+                    placeholder="পণ্যের বাংলা নাম লিখুন"
+                  />
                 </div>
 
                 <div className="space-y-1.5">

@@ -41,6 +41,7 @@ type Props = {
 
 const defaultValues: CategoryFormValues = {
   name: "",
+  name_bd: "",
   priority: 1,
   status: true,
   featured: true,
@@ -142,6 +143,7 @@ export default function CreateEditCategoryModal({
     setValues(() => {
       const base = {
         name: d.name ?? "",
+        name_bd: d.name_bd ?? "",
         priority: Number(d.priority ?? 1),
         status: Boolean(d.status),
         featured: Boolean(d.featured),
@@ -221,6 +223,19 @@ export default function CreateEditCategoryModal({
                     onChange={(e) => setValues((p: any) => ({ ...p, name: e.target.value }))}
                     className={inputClass}
                     placeholder={t("products.categories.categoryNamePlaceholder")}
+                    disabled={isBusy}
+                  />
+                </div>
+
+                <div className="md:col-span-12">
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    বাংলা নাম <span className="text-gray-400">(ঐচ্ছিক)</span>
+                  </label>
+                  <input
+                    value={values.name_bd ?? ""}
+                    onChange={(e) => setValues((p: any) => ({ ...p, name_bd: e.target.value }))}
+                    className={inputClass}
+                    placeholder="বাংলা নাম লিখুন"
                     disabled={isBusy}
                   />
                 </div>

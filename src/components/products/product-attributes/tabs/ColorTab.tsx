@@ -60,6 +60,7 @@ function toRow(c: Color): ColorRow {
   return {
     id: c.id,
     name: c.name,
+    name_bd: c.name_bd ?? null,
     hex: c.hex,
     priority: (c.priority ?? 1) as PriorityValue,
     status: Boolean(c.status),
@@ -118,6 +119,7 @@ type ColorModalState = {
   hydrated: boolean;
 
   name: string;
+  name_bd: string;
   hex: string;
   priority: PriorityValue;
   status: boolean;
@@ -142,7 +144,7 @@ function ColorModal({
   const isCreate = state.mode === "create";
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
         {/* ── Header ─────────────────────────────────── */}
@@ -212,6 +214,20 @@ function ColorModal({
                     />
                     <p className="text-[10px] text-gray-400 dark:text-gray-500">
                       The display name shown to customers
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      বাংলা নাম <span className="text-gray-400 text-xs">(ঐচ্ছিক)</span>
+                    </label>
+                    <Input
+                      placeholder="যেমন: ক্রিমসন লাল"
+                      value={state.name_bd}
+                      onChange={(e) => setState((p) => ({ ...p, name_bd: e.target.value }))}
+                    />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      গ্রাহকদের জন্য বাংলা নাম
                     </p>
                   </div>
 
@@ -403,6 +419,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
     id: undefined,
     hydrated: true,
     name: "",
+    name_bd: "",
     hex: "#111827",
     priority: 2,
     status: true,
@@ -431,6 +448,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         ...p,
         id: singleColor.id,
         name: singleColor.name ?? "",
+        name_bd: singleColor.name_bd ?? "",
         hex: singleColor.hex ?? "#111827",
         priority: (singleColor.priority ?? 1) as PriorityValue,
         status: Boolean(singleColor.status),
@@ -449,6 +467,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         mode: "create",
         hydrated: true,
         name: "",
+        name_bd: "",
         hex: "#111827",
         priority: 2,
         status: true,
@@ -499,6 +518,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
       mode: "create",
       hydrated: true,
       name: "",
+      name_bd: "",
       hex: "#111827",
       priority: 2,
       status: true,
@@ -512,6 +532,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
       id,
       hydrated: false,
       name: "",
+      name_bd: "",
       hex: "#111827",
       priority: 2,
       status: true,
@@ -524,6 +545,7 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
     const payload = {
       name: trimmed,
+      name_bd: modal.name_bd.trim() || undefined,
       hex: modal.hex.trim(),
       status: modal.status,
       priority: modal.priority,
@@ -681,7 +703,12 @@ export default function ColorTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                         {row.id}
                       </td>
                       <td className="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                        {row.name}
+                        <div className="flex flex-col">
+                          <span>{row.name}</span>
+                          {row.name_bd && (
+                            <span className="text-xs font-normal text-brand-500 dark:text-brand-400">{row.name_bd}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                         {row.hex}

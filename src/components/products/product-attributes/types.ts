@@ -20,6 +20,7 @@ export type BrandRow = {
 export type ColorRow = {
   id: number;
   name: string;
+  name_bd?: string | null;
   hex: string; // #RRGGBB
   status: boolean;
   priority: PriorityValue;
@@ -60,7 +61,7 @@ export function cartesian<T>(arrays: T[][]): T[][] {
   if (arrays.length === 0) return [[]];
   return arrays.reduce<T[][]>(
     (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
-    [[]]
+    [[]],
   );
 }
 
@@ -69,6 +70,7 @@ export interface VariantRow {
   id: number;
   attribute_id: number;
   name: string;
+  name_bd?: string | null;
   priority: number;
   status: boolean;
   created_at?: string;
@@ -90,6 +92,7 @@ export interface ProductVariantRow {
 export interface AttributeRow {
   id: number;
   name: string;
+  name_bd?: string | null;
   priority: number;
   status: boolean;
   created_at?: string;

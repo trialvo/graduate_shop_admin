@@ -6,6 +6,7 @@ export type Variant = {
   id: number;
   attribute_id: number;
   name: string;
+  name_bd?: string | null;
   priority: number;
   status: boolean;
   created_at?: string;
@@ -32,6 +33,7 @@ export type VariantsListResponse = {
 export type CreateVariantPayload = {
   attribute_id: number;
   name: string;
+  name_bd?: string;
   status?: boolean;
   priority?: number;
 };
@@ -39,11 +41,14 @@ export type CreateVariantPayload = {
 export type UpdateVariantPayload = {
   attribute_id?: number;
   name?: string;
+  name_bd?: string;
   status?: boolean;
   priority?: number;
 };
 
-export async function getVariants(params: VariantsListParams): Promise<VariantsListResponse> {
+export async function getVariants(
+  params: VariantsListParams,
+): Promise<VariantsListResponse> {
   const res = await api.get("/variants", { params });
   return res.data;
 }
@@ -53,12 +58,17 @@ export async function getVariant(id: number): Promise<Variant> {
   return res.data;
 }
 
-export async function createVariant(payload: CreateVariantPayload): Promise<Variant> {
+export async function createVariant(
+  payload: CreateVariantPayload,
+): Promise<Variant> {
   const res = await api.post("/variant", payload);
   return res.data;
 }
 
-export async function updateVariant(id: number, payload: UpdateVariantPayload): Promise<{ success: true }> {
+export async function updateVariant(
+  id: number,
+  payload: UpdateVariantPayload,
+): Promise<{ success: true }> {
   const res = await api.put(`/variant/${id}`, payload);
   return res.data;
 }

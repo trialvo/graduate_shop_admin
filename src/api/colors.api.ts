@@ -5,6 +5,7 @@ import { api } from "./client";
 export type Color = {
   id: number;
   name: string;
+  name_bd?: string | null;
   hex: string;
   priority: number;
   status: boolean;
@@ -27,12 +28,15 @@ export type ColorListResponse = {
 
 export type CreateColorPayload = {
   name: string;
+  name_bd?: string;
   hex: string;
   status?: boolean;
   priority?: number;
 };
 
-export async function getColors(params?: ColorListParams): Promise<ColorListResponse> {
+export async function getColors(
+  params?: ColorListParams,
+): Promise<ColorListResponse> {
   const res = await api.get("/colors", { params });
   return res.data as ColorListResponse;
 }
@@ -47,7 +51,10 @@ export async function createColor(payload: CreateColorPayload): Promise<Color> {
   return res.data as Color;
 }
 
-export async function updateColor(id: number, payload: CreateColorPayload): Promise<Color> {
+export async function updateColor(
+  id: number,
+  payload: CreateColorPayload,
+): Promise<Color> {
   const res = await api.put(`/color/${id}`, payload);
   return res.data as Color;
 }

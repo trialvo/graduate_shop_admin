@@ -19,6 +19,7 @@ export type ProductVariation = {
 export type ProductEntity = {
   id: number;
   name: string;
+  name_bd?: string | null;
   slug: string;
   main_category_id: number;
   main_category_name?: string | null;
@@ -213,6 +214,7 @@ export type ProductVariationPayload = {
 export type CreateProductPayload = {
   product_images: File[];
   name: string;
+  name_bd?: string;
   slug: string;
 
   main_category_id: number;
@@ -265,6 +267,7 @@ function buildProductFormData(
   });
 
   appendIfDefined(fd, "name", payload.name);
+  appendIfDefined(fd, "name_bd", payload.name_bd);
   appendIfDefined(fd, "slug", payload.slug);
 
   appendIfDefined(fd, "main_category_id", payload.main_category_id);
