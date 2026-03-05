@@ -10,7 +10,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 import Select from "@/components/form/Select";
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 import {

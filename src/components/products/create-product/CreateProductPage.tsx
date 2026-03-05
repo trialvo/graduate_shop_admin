@@ -37,6 +37,7 @@ import Section from "./create-product-form/Section";
 import BasicSection from "./create-product-form/BasicSection";
 import VariationsSection from "./create-product-form/VariationsSection";
 import SeoSection from "./create-product-form/SeoSection";
+import PageHeader from "@/components/ui/layout/PageHeader";
 type Option = { value: string; label: string };
 type SkuMode = "auto" | "manual";
 const SKU_MAX_LENGTH = 21;
@@ -180,23 +181,20 @@ function getSuccessProductId(res: unknown): number | null {
 
 /* ----------------------------- UI Components ----------------------------- */
 
-function PageHeader() {
+function CreateProductPageHeader() {
   const { t } = useTranslation();
+  const badge = (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400">
+      <Package className="h-3 w-3" />
+      {t("products.createProduct.newProduct")}
+    </span>
+  );
   return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          {t("products.createProduct.createProductTitle")}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("products.createProduct.createProductSubtitle")}
-        </p>
-      </div>
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400">
-        <Package className="h-3 w-3" />
-        {t("products.createProduct.newProduct")}
-      </span>
-    </div>
+    <PageHeader
+      title={t("products.createProduct.createProductTitle")}
+      subtitle={t("products.createProduct.createProductSubtitle")}
+      badge={badge}
+    />
   );
 }
 
@@ -851,7 +849,7 @@ export default function CreateProductPage() {
     <div className="space-y-6">
       <FloatingErrorBanner message={validationError} visible={errorBannerVisible} onDismiss={() => setErrorBannerVisible(false)} />
 
-      <PageHeader />
+      <CreateProductPageHeader />
 
       <BasicSection
         productName={productName}

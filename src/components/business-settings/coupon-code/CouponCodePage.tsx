@@ -12,7 +12,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";

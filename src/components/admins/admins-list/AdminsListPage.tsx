@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";

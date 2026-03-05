@@ -3,9 +3,12 @@
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
-import { cn } from "@/lib/utils";
+import Tabs from "@/components/ui/tabs/Tabs";
+import SectionCard from "@/components/ui/layout/SectionCard";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 import { useTranslation } from "react-i18next";
 import {
   createChildCategory,
@@ -38,16 +41,17 @@ import CreateEditCategoryModal, { type EditModalState } from "./CreateEditCatego
 import CategoryFiltersBar from "./CategoryFiltersBar";
 import CategoriesTable from "./CategoriesTable";
 
-const TABS: { id: CategoryEntity; labelKey: string; hintKey: string }[] = [
-  { id: "main", labelKey: "products.categories.mainCategories", hintKey: "products.categories.mainHint" },
-  { id: "sub", labelKey: "products.categories.subCategories", hintKey: "products.categories.subHint" },
-  { id: "child", labelKey: "products.categories.childCategories", hintKey: "products.categories.childHint" },
+const TABS: { id: CategoryEntity; labelKey: string }[] = [
+  { id: "main", labelKey: "products.categories.mainCategories" },
+  { id: "sub", labelKey: "products.categories.subCategories" },
+  { id: "child", labelKey: "products.categories.childCategories" },
 ];
 
 function getApiErrorFromResponse(res: any) {
   if (typeof res?.error === "string" && res.error.trim()) return res.error.trim();
   if (typeof res?.message === "string" && res.message.trim()) return res.message.trim();
-  if (Number.isFinite(Number(res?.flag)) && Number(res.flag) >= 400) return "products.categories.somethingWentWrong";
+  if (Number.isFinite(Number(res?.flag)) && Number(res.flag) >= 400)
+    return "products.categories.somethingWentWrong";
   return null;
 }
 
@@ -57,7 +61,7 @@ export default function ProductCategoryPage() {
 
   const [tab, setTab] = useState<CategoryEntity>("main");
 
-  // common filters
+  // filters
   const [name, setName] = useState("");
   const [status, setStatus] = useState<boolean | "all">("all");
   const [featured, setFeatured] = useState<boolean | "all">("all");
@@ -70,10 +74,7 @@ export default function ProductCategoryPage() {
   const [subCategoryId, setSubCategoryId] = useState<number | "all">("all");
 
   const baseParams = useMemo(() => {
-    const p: Record<string, any> = {
-      limit,
-      offset,
-    };
+    const p: Record<string, any> = { limit, offset };
     if (name.trim()) p.name = name.trim();
     if (status !== "all") p.status = status;
     if (featured !== "all") p.featured = featured;
@@ -100,7 +101,7 @@ export default function ProductCategoryPage() {
   const subQ = useSubCategories(subParams);
   const childQ = useChildCategories(childParams);
 
-  // options
+  // options for parent selects
   const mainOptionsQ = useMainCategoryOptions();
   const subOptionsQ = useSubCategoryOptions(
     tab === "child" && mainCategoryId !== "all" ? mainCategoryId : undefined,
@@ -117,19 +118,33 @@ export default function ProductCategoryPage() {
     id: null,
   });
 
+  // Confirm delete modal state
+  const [deleteState, setDeleteState] = useState<{
+    open: boolean;
+    entity: CategoryEntity;
+    id: number;
+  } | null>(null);
+
   const currentQuery = tab === "main" ? mainQ : tab === "sub" ? subQ : childQ;
+  const total = currentQuery.data?.total ?? 0;
+  const isLoading = currentQuery.isLoading;
+  const isRefreshing = currentQuery.isFetching && !currentQuery.isLoading;
+  const rows = currentQuery.data?.data ?? [];
 
   const openCreate = () => setEditState({ open: true, entity: tab, mode: "create", id: null });
   const openEdit = (entity: CategoryEntity, id: number) =>
     setEditState({ open: true, entity, mode: "edit", id });
 
-  const onDelete = (entity: CategoryEntity, id: number) => {
-    const ok = window.confirm(t("products.categories.confirmDelete"));
-    if (!ok) return;
+  const onDelete = (entity: CategoryEntity, id: number) =>
+    setDeleteState({ open: true, entity, id });
 
+  const confirmDelete = async () => {
+    if (!deleteState) return;
+    const { entity, id } = deleteState;
     if (entity === "main") delMain.mutate(id);
     if (entity === "sub") delSub.mutate(id);
     if (entity === "child") delChild.mutate(id);
+    setDeleteState(null);
   };
 
   const invalidateAll = async () => {
@@ -144,18 +159,15 @@ export default function ProductCategoryPage() {
   ) => {
     try {
       let res: any;
-
       if (entity === "main") {
         if (mode === "create") res = await createMainCategory(values);
         else res = await updateMainCategory(id as number, values);
       }
-
       if (entity === "sub") {
         const v = values as SubCategoryFormValues;
         if (mode === "create") res = await createSubCategory(v);
         else res = await updateSubCategory(id as number, v);
       }
-
       if (entity === "child") {
         const v = values as ChildCategoryFormValues;
         if (mode === "create") res = await createChildCategory(v);
@@ -163,12 +175,13 @@ export default function ProductCategoryPage() {
       }
 
       const apiError = getApiErrorFromResponse(res);
-      if (apiError) {
-        toast.error(apiError);
-        return;
-      }
+      if (apiError) { toast.error(apiError); return; }
 
-      toast.success(mode === "create" ? t("products.categories.categoryCreated") : t("products.categories.categoryUpdated"));
+      toast.success(
+        mode === "create"
+          ? t("products.categories.categoryCreated")
+          : t("products.categories.categoryUpdated"),
+      );
       await invalidateAll();
       setEditState((s) => ({ ...s, open: false }));
     } catch (e: any) {
@@ -177,80 +190,59 @@ export default function ProductCategoryPage() {
     }
   };
 
-  const total = currentQuery.data?.total ?? 0;
-  const isLoading = currentQuery.isLoading;
-  const isRefreshing = currentQuery.isFetching && !currentQuery.isLoading;
-  const rows = currentQuery.data?.data ?? [];
+  // Tabs for the reusable Tabs component
+  const tabItems = TABS.map((tb) => ({
+    id: tb.id,
+    label: t(tb.labelKey),
+    count: tab === tb.id ? total : undefined,
+  }));
+
+  const createLabel =
+    tab === "main"
+      ? t("products.categories.createMain")
+      : tab === "sub"
+        ? t("products.categories.createSub")
+        : t("products.categories.createChild");
 
   return (
-    <div className="w-full">
-      {/* Combined header + tabs + filters */}
-      <div className="mb-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        {/* Top bar: title + tabs + create */}
-        <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800 md:flex-row md:items-center md:gap-4">
-          <h1 className="shrink-0 text-base font-bold text-gray-900 dark:text-white">
-            {t("products.categories.title")}
-          </h1>
-
-          {/* Tabs */}
-          <div className="flex flex-1 flex-wrap gap-1.5">
-            {TABS.map((tabItem) => {
-              const active = tab === tabItem.id;
-              return (
-                <button
-                  key={tabItem.id}
-                  type="button"
-                  onClick={() => { setTab(tabItem.id); setOffset(0); }}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
-                    active
-                      ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
-                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-white/[0.03]",
-                  )}
-                >
-                  {t(tabItem.labelKey)}
-                  {active && total > 0 && (
-                    <span className="rounded-full bg-brand-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
-                      {total}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Create button */}
-          <Button variant="primary" size="sm" onClick={openCreate}>
-            {tab === "main" ? t("products.categories.createMain") : tab === "sub" ? t("products.categories.createSub") : t("products.categories.createChild")}
+    <div className="w-full space-y-4">
+      {/* Header card: title + tabs + create */}
+      <SectionCard
+        noPadding
+        title={t("products.categories.title")}
+        headerActions={
+          <Button variant="primary" size="sm" startIcon={<Plus size={14} />} onClick={openCreate}>
+            {createLabel}
           </Button>
+        }
+      >
+        {/* Tab row */}
+        <div className="border-b border-gray-100 px-4 py-2.5 dark:border-gray-800">
+          <Tabs
+            tabs={tabItems}
+            active={tab}
+            onChange={(id) => { setTab(id); setOffset(0); }}
+          />
         </div>
 
         {/* Filters + pagination */}
         <CategoryFiltersBar
           tab={tab}
-          name={name}
-          setName={setName}
-          status={status}
-          setStatus={setStatus}
-          featured={featured}
-          setFeatured={setFeatured}
-          priority={priority}
-          setPriority={setPriority}
-          limit={limit}
-          setLimit={setLimit}
-          offset={offset}
-          setOffset={setOffset}
+          name={name} setName={setName}
+          status={status} setStatus={setStatus}
+          featured={featured} setFeatured={setFeatured}
+          priority={priority} setPriority={setPriority}
+          limit={limit} setLimit={setLimit}
+          offset={offset} setOffset={setOffset}
           total={total}
-          mainCategoryId={mainCategoryId}
-          setMainCategoryId={setMainCategoryId}
-          subCategoryId={subCategoryId}
-          setSubCategoryId={setSubCategoryId}
+          mainCategoryId={mainCategoryId} setMainCategoryId={setMainCategoryId}
+          subCategoryId={subCategoryId} setSubCategoryId={setSubCategoryId}
           mainOptions={mainOptionsQ.data?.data ?? []}
           subOptions={subOptionsQ.data?.data ?? []}
           loadingMainOptions={mainOptionsQ.isLoading}
           loadingSubOptions={subOptionsQ.isLoading}
         />
-      </div>
+      </SectionCard>
 
       {/* Table */}
       <CategoriesTable
@@ -269,6 +261,16 @@ export default function ProductCategoryPage() {
         onSubmit={handleSubmitCreateUpdate}
         mainOptions={mainOptionsQ.data?.data ?? []}
         subOptions={subOptionsQ.data?.data ?? []}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        open={!!deleteState?.open}
+        onClose={() => setDeleteState(null)}
+        onConfirm={confirmDelete}
+        loading={delMain.isPending || delSub.isPending || delChild.isPending}
+        title={t("products.categories.confirmDeleteTitle")}
+        message={t("products.categories.confirmDeleteMsg")}
       />
     </div>
   );

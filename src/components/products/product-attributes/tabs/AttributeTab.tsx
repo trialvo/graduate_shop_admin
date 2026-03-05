@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Download, Layers, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";

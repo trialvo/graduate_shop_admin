@@ -10,7 +10,9 @@ import { useTranslation } from "react-i18next";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
-import Pagination from "@/components/common/Pagination";
+import Pagination from "@/components/ui/pagination/Pagination";
+import SectionCard from "@/components/ui/layout/SectionCard";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
 import AllProductsTable from "./AllProductsTable";
 import type { Product, ProductListFilters } from "./types";
@@ -21,7 +23,6 @@ import { getChildCategories, getMainCategories, getSubCategories } from "@/api/c
 
 import EditProductModal from "./EditProductModal";
 import StockVariantsModal from "./StockVariantsModal";
-import DeleteProductConfirmModal from "./DeleteProductConfirmModal";
 
 type Option = { value: string; label: string };
 
@@ -251,8 +252,8 @@ const AllProductsPage: React.FC = () => {
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* Toolbar */}
-      <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
-        <div className="flex flex-col gap-3">
+      <SectionCard noPadding className="overflow-visible">
+        <div className="flex flex-col gap-3 p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Search */}
             <div className="flex w-full lg:w-[420px] min-w-0">
@@ -359,7 +360,7 @@ const AllProductsPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </SectionCard>
 
       {/* Table */}
       <div className="w-full min-w-0">
@@ -374,17 +375,12 @@ const AllProductsPage: React.FC = () => {
 
       {/* Pagination */}
       <Pagination
-        totalItems={total}
-        page={currentPage}
-        pageSize={limit}
-        onPageChange={(nextPage) =>
-          setFilters((p) => ({ ...p, offset: Math.max(0, (nextPage - 1) * p.limit) }))
+        total={total}
+        limit={limit}
+        offset={offset}
+        onPageChange={(nextOffset) =>
+          setFilters((p) => ({ ...p, offset: nextOffset }))
         }
-        onPageSizeChange={(nextPageSize) =>
-          setFilters((p) => ({ ...p, limit: nextPageSize, offset: 0 }))
-        }
-        pageSizeOptions={[10, 20, 50, 100]}
-        className="shadow-none"
       />
 
       {/* ✅ Stock modal (variations) */}
@@ -408,10 +404,8 @@ const AllProductsPage: React.FC = () => {
       />
 
       {/* Delete */}
-      <DeleteProductConfirmModal
+      <ConfirmModal
         open={deleteOpen}
-        productName={deleteName}
-        loading={deleteMutation.isPending}
         onClose={() => {
           if (deleteMutation.isPending) return;
           setDeleteOpen(false);
@@ -421,6 +415,9 @@ const AllProductsPage: React.FC = () => {
           if (!deleteId) return;
           deleteMutation.mutate(deleteId);
         }}
+        loading={deleteMutation.isPending}
+        title={t("products.deleteProduct")}
+        message={deleteName ? `"${deleteName}"` : undefined}
       />
     </div>
   );

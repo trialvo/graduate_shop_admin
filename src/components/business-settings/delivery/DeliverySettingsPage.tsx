@@ -12,7 +12,7 @@ import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 
 import AddCourierModal from "./AddCourierModal";
 import { cn } from "@/lib/utils";

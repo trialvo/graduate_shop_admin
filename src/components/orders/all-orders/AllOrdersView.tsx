@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 
 import type { OrderRow, OrderStatus, OrderItemRow, FraudCheckSummary, FraudLevel } from "./types";
 import {

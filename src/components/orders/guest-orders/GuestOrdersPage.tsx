@@ -11,7 +11,7 @@ import type { GuestOrder, GuestOrderStatus, SortBy } from "./types";
 import GuestOrdersHeader from "./GuestOrdersHeader";
 import GuestOrdersToolbar from "./GuestOrdersToolbar";
 import GuestOrdersTable from "./GuestOrdersTable";
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 import ConfirmDeleteModal from "@/components/ui/modal/ConfirmDeleteModal";
 
 import {

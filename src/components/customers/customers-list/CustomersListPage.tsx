@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import Pagination from "@/components/common/Pagination";
+import { Pagination, Tabs } from "@/components/ui";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Badge from "@/components/ui/badge/Badge";
@@ -348,35 +348,11 @@ export default function CustomersListPage() {
       {/* Tabs + Filters */}
       <div className="rounded-[6px] border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 custom-scrollbar lg:w-auto">
-            {TABS.map((t) => {
-              const active = activeTab === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setActiveTab(t.key)}
-                  className={cn(
-                    "inline-flex items-center gap-2 whitespace-nowrap rounded-[6px] px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm",
-                    active
-                      ? "bg-brand-500 text-white shadow-theme-xs"
-                      : "bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
-                  )}
-                >
-                  <span>{t.label}</span>
-                  <span
-                    className={cn(
-                      active
-                        ? "text-white/90"
-                        : "text-gray-500 dark:text-gray-400",
-                    )}
-                  >
-                    ({counts[t.key] ?? 0})
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <Tabs
+            tabs={TABS.map((t) => ({ id: t.key, label: t.label, count: counts[t.key] }))}
+            active={activeTab}
+            onChange={setActiveTab}
+          />
 
           <div className="w-full lg:max-w-sm">
             <div className="relative">

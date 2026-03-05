@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Layers, Package, Pencil, Star, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronRight, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Button from "@/components/ui/button/Button";
-import { toPublicUrl } from "@/config/env";
+import { StatusBadge, PriorityBadge, FeaturedBadge } from "@/components/ui/badge/Badges";
+import ImageThumb from "@/components/ui/images/ImageThumb";
+import ActionMenu from "@/components/ui/dropdown/ActionMenu";
+import { SkeletonRows } from "@/components/ui/feedback/Skeleton";
+import SectionCard from "@/components/ui/layout/SectionCard";
 import type { CategoryEntity, MainCategory, SubCategory, ChildCategory } from "./types";
 import { useTranslation } from "react-i18next";
 
@@ -17,48 +20,7 @@ type Props = {
   onDelete: (entity: CategoryEntity, id: number) => void;
 };
 
-/* ──────────────────────────── helpers ──────────────────────────── */
-
-function priorityConfig(p: number) {
-  if (p >= 3) return { label: "High", cls: "bg-red-50 text-red-700 ring-red-200/60 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-700/40" };
-  if (p === 2) return { label: "Normal", cls: "bg-amber-50 text-amber-700 ring-amber-200/60 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-700/40" };
-  return { label: "Low", cls: "bg-gray-100 text-gray-500 ring-gray-200/60 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700/40" };
-}
-
-function PriorityBadge({ priority }: { priority: number }) {
-  const { label, cls } = priorityConfig(priority);
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset", cls)}>
-      {label}
-    </span>
-  );
-}
-
-function StatusBadge({ active }: { active: boolean }) {
-  return active ? (
-    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-200/60 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-700/40">
-      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-      Active
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500 ring-1 ring-inset ring-gray-200/60 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700/40">
-      <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-      Inactive
-    </span>
-  );
-}
-
-function FeaturedBadge({ featured }: { featured: boolean }) {
-  return featured ? (
-    <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-200/60 dark:bg-brand-500/10 dark:text-brand-400 dark:ring-brand-700/40">
-      <Star size={10} className="fill-current" /> Yes
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-400 ring-1 ring-inset ring-gray-200/60 dark:bg-gray-800 dark:text-gray-500 dark:ring-gray-700/40">
-      No
-    </span>
-  );
-}
+/* ─── component-specific helpers (NOT duplicated elsewhere) ─── */
 
 function StockBadge({ stock }: { stock?: number }) {
   if (stock == null) return <span className="text-xs text-gray-400">—</span>;
@@ -77,34 +39,6 @@ function StockBadge({ stock }: { stock?: number }) {
   );
 }
 
-function ImageThumb({ src, alt }: { src?: string | null; alt: string }) {
-  const full = src ? toPublicUrl(src) : "";
-  if (!full)
-    return (
-      <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
-        <Layers size={14} className="text-gray-400" />
-      </div>
-    );
-  return (
-    <div className="h-9 w-9 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={full} alt={alt} className="h-full w-full object-cover" />
-    </div>
-  );
-}
-
-function SkeletonRow({ cols }: { cols: number }) {
-  return (
-    <tr className="border-b border-gray-100 dark:border-gray-800">
-      {Array.from({ length: cols }).map((_, i) => (
-        <td key={i} className="p-3">
-          <div className="h-4 w-full animate-pulse rounded bg-gray-100 dark:bg-white/10" />
-        </td>
-      ))}
-    </tr>
-  );
-}
-
 function ExpandBtn({ open, onClick }: { open: boolean; onClick: () => void }) {
   return (
     <button
@@ -115,29 +49,6 @@ function ExpandBtn({ open, onClick }: { open: boolean; onClick: () => void }) {
     >
       {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
     </button>
-  );
-}
-
-function ActionBtns({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  return (
-    <div className="flex items-center justify-end gap-1.5">
-      <button
-        type="button"
-        onClick={onEdit}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500 dark:hover:text-brand-400"
-        title="Edit"
-      >
-        <Pencil size={14} />
-      </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-red-300 hover:text-red-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-red-700 dark:hover:text-red-400"
-        title="Delete"
-      >
-        <Trash2 size={14} />
-      </button>
-    </div>
   );
 }
 
@@ -171,15 +82,11 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
   const cols = 9;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          {t("products.categories.mainHierarchy")}
-        </h2>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-          Expand a row to see sub-categories and child categories
-        </p>
-      </div>
+    <SectionCard
+      title={t("products.categories.mainHierarchy")}
+      description="Expand a row to see sub-categories and child categories"
+      noPadding
+    >
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
@@ -198,7 +105,7 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
           </thead>
 
           <tbody>
-            {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={cols} />)}
+            {loading && <SkeletonRows cols={cols} rows={6} />}
 
             {!loading && mains.length === 0 && (
               <tr>
@@ -233,7 +140,7 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
                       <td className="px-4 py-3"><FeaturedBadge featured={m.featured} /></td>
                       <td className="px-4 py-3"><PriorityBadge priority={m.priority} /></td>
                       <td className="px-4 py-3">
-                        <ActionBtns onEdit={() => onEdit("main", m.id)} onDelete={() => onDelete("main", m.id)} />
+                        <ActionMenu onEdit={() => onEdit("main", m.id)} onDelete={() => onDelete("main", m.id)} />
                       </td>
                     </tr>
 
@@ -290,7 +197,7 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
                                             <td className="px-4 py-2.5"><FeaturedBadge featured={s.featured} /></td>
                                             <td className="px-4 py-2.5"><PriorityBadge priority={s.priority} /></td>
                                             <td className="px-4 py-2.5">
-                                              <ActionBtns onEdit={() => onEdit("sub", s.id)} onDelete={() => onDelete("sub", s.id)} />
+                                              <ActionMenu onEdit={() => onEdit("sub", s.id)} onDelete={() => onDelete("sub", s.id)} />
                                             </td>
                                           </tr>
 
@@ -304,7 +211,6 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
                                                   </div>
                                                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                                     {childList.map((c) => {
-                                                      const cfg = priorityConfig(c.priority);
                                                       return (
                                                         <div
                                                           key={c.id}
@@ -315,13 +221,12 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
                                                             <p className="truncate text-xs font-semibold text-gray-900 dark:text-white">{c.name}</p>
                                                             {c.name_bd && <p className="truncate text-[10px] text-brand-500 dark:text-brand-400">{c.name_bd}</p>}
                                                             <div className="mt-1 flex items-center gap-1">
-                                                              <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 ring-inset", cfg.cls)}>{cfg.label}</span>
+                                                              <PriorityBadge priority={c.priority} />
                                                               {(c as any).total_stock != null && <StockBadge stock={(c as any).total_stock} />}
                                                             </div>
                                                           </div>
                                                           <div className="flex flex-col gap-1 opacity-0 transition group-hover:opacity-100">
-                                                            <button onClick={() => onEdit("child", c.id)} className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-brand-600 dark:border-gray-700" title="Edit"><Pencil size={11} /></button>
-                                                            <button onClick={() => onDelete("child", c.id)} className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-red-500 dark:border-gray-700" title="Delete"><Trash2 size={11} /></button>
+                                                            <ActionMenu onEdit={() => onEdit("child", c.id)} onDelete={() => onDelete("child", c.id)} />
                                                           </div>
                                                         </div>
                                                       );
@@ -348,7 +253,7 @@ function MainHierarchy({ rows, loading, onEdit, onDelete }: Pick<Props, "rows" |
           </tbody>
         </table>
       </div>
-    </div>
+    </SectionCard>
   );
 }
 
@@ -362,19 +267,19 @@ function SubHierarchy({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<Pr
   const cols = 9;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.categories.subNested")}</h2>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Expand to see child categories</p>
-        </div>
-        {isRefreshing && (
-          <div className="flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
+    <SectionCard
+      title={t("products.categories.subNested")}
+      description="Expand to see child categories"
+      noPadding
+      badge={
+        isRefreshing ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
             {t("products.categories.refreshing")}
-          </div>
-        )}
-      </div>
+          </span>
+        ) : undefined
+      }
+    >
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
@@ -394,7 +299,7 @@ function SubHierarchy({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<Pr
           </thead>
 
           <tbody>
-            {(loading || (isRefreshing && subs.length === 0)) && Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={cols + 1} />)}
+            {(loading || (isRefreshing && subs.length === 0)) && <SkeletonRows cols={cols + 1} rows={6} />}
 
             {!loading && subs.length === 0 && (
               <tr>
@@ -428,7 +333,7 @@ function SubHierarchy({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<Pr
                     <td className="px-4 py-3"><FeaturedBadge featured={s.featured} /></td>
                     <td className="px-4 py-3"><PriorityBadge priority={s.priority} /></td>
                     <td className="px-4 py-3">
-                      <ActionBtns onEdit={() => onEdit("sub", s.id)} onDelete={() => onDelete("sub", s.id)} />
+                      <ActionMenu onEdit={() => onEdit("sub", s.id)} onDelete={() => onDelete("sub", s.id)} />
                     </td>
                   </tr>
 
@@ -447,7 +352,6 @@ function SubHierarchy({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<Pr
                           ) : (
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                               {childList.map((c) => {
-                                const cfg = priorityConfig(c.priority);
                                 return (
                                   <div key={c.id} className="group flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white p-2.5 transition hover:border-brand-300 hover:shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-700">
                                     <ImageThumb src={c.img_path} alt={c.name} />
@@ -455,13 +359,12 @@ function SubHierarchy({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<Pr
                                       <p className="truncate text-xs font-semibold text-gray-900 dark:text-white">{c.name}</p>
                                       {c.name_bd && <p className="truncate text-[10px] text-brand-500 dark:text-brand-400">{c.name_bd}</p>}
                                       <div className="mt-1 flex items-center gap-1.5">
-                                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 ring-inset", cfg.cls)}>{cfg.label}</span>
+                                        <PriorityBadge priority={c.priority} />
                                         <StockBadge stock={(c as any).total_stock} />
                                       </div>
                                     </div>
                                     <div className="flex flex-col gap-1 opacity-0 transition group-hover:opacity-100">
-                                      <button onClick={() => onEdit("child", c.id)} className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-brand-600 dark:border-gray-700" title="Edit"><Pencil size={11} /></button>
-                                      <button onClick={() => onDelete("child", c.id)} className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-red-500 dark:border-gray-700" title="Delete"><Trash2 size={11} /></button>
+                                      <ActionMenu onEdit={() => onEdit("child", c.id)} onDelete={() => onDelete("child", c.id)} />
                                     </div>
                                   </div>
                                 );
@@ -478,7 +381,7 @@ function SubHierarchy({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<Pr
           </tbody>
         </table>
       </div>
-    </div>
+    </SectionCard>
   );
 }
 
@@ -490,19 +393,19 @@ function ChildFlatTable({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<
   const cols = 8;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.categories.childFlat")}</h2>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Flat list of child categories with stock</p>
-        </div>
-        {isRefreshing && (
-          <div className="flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
+    <SectionCard
+      title={t("products.categories.childFlat")}
+      description="Flat list of child categories with stock"
+      noPadding
+      badge={
+        isRefreshing ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
             {t("products.categories.refreshing")}
-          </div>
-        )}
-      </div>
+          </span>
+        ) : undefined
+      }
+    >
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
@@ -521,7 +424,7 @@ function ChildFlatTable({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<
           </thead>
 
           <tbody>
-            {(loading || (isRefreshing && rows.length === 0)) && Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={cols + 1} />)}
+            {(loading || (isRefreshing && rows.length === 0)) && <SkeletonRows cols={cols + 1} rows={6} />}
 
             {!loading && rows.length === 0 && (
               <tr>
@@ -548,14 +451,14 @@ function ChildFlatTable({ rows, loading, isRefreshing, onEdit, onDelete }: Pick<
                 <td className="px-4 py-3"><FeaturedBadge featured={r.featured} /></td>
                 <td className="px-4 py-3"><PriorityBadge priority={r.priority} /></td>
                 <td className="px-4 py-3">
-                  <ActionBtns onEdit={() => onEdit("child", r.id)} onDelete={() => onDelete("child", r.id)} />
+                  <ActionMenu onEdit={() => onEdit("child", r.id)} onDelete={() => onDelete("child", r.id)} />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+    </SectionCard>
   );
 }
 

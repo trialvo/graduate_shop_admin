@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
-import Pagination from "@/components/common/Pagination";
+import { Pagination } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 import {
