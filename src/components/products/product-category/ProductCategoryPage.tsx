@@ -184,78 +184,73 @@ export default function ProductCategoryPage() {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t("products.categories.title")}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("products.categories.description")}
-          </p>
-        </div>
+      {/* Combined header + tabs + filters */}
+      <div className="mb-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        {/* Top bar: title + tabs + create */}
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800 md:flex-row md:items-center md:gap-4">
+          <h1 className="shrink-0 text-base font-bold text-gray-900 dark:text-white">
+            {t("products.categories.title")}
+          </h1>
 
-        {/* Tabs + create */}
-        <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex w-full flex-wrap gap-2">
+          {/* Tabs */}
+          <div className="flex flex-1 flex-wrap gap-1.5">
             {TABS.map((tabItem) => {
               const active = tab === tabItem.id;
               return (
                 <button
                   key={tabItem.id}
                   type="button"
-                  onClick={() => {
-                    setTab(tabItem.id);
-                    setOffset(0);
-                  }}
+                  onClick={() => { setTab(tabItem.id); setOffset(0); }}
                   className={cn(
-                    "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-semibold transition",
+                    "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
                     active
-                      ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-200"
-                      : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/[0.03]",
+                      ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
+                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-white/[0.03]",
                   )}
                 >
                   {t(tabItem.labelKey)}
+                  {active && total > 0 && (
+                    <span className="rounded-full bg-brand-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+                      {total}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
 
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <div className="text-xs text-gray-500 dark:text-gray-400 md:mr-2">
-              {t(TABS.find((x) => x.id === tab)?.hintKey ?? "")}
-            </div>
-
-            <Button variant="primary" onClick={openCreate}>
-              {tab === "main" ? t("products.categories.createMain") : tab === "sub" ? t("products.categories.createSub") : t("products.categories.createChild")}
-            </Button>
-          </div>
+          {/* Create button */}
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            {tab === "main" ? t("products.categories.createMain") : tab === "sub" ? t("products.categories.createSub") : t("products.categories.createChild")}
+          </Button>
         </div>
-      </div>
 
-      {/* Filters */}
-      <CategoryFiltersBar
-        tab={tab}
-        name={name}
-        setName={setName}
-        status={status}
-        setStatus={setStatus}
-        featured={featured}
-        setFeatured={setFeatured}
-        priority={priority}
-        setPriority={setPriority}
-        limit={limit}
-        setLimit={setLimit}
-        offset={offset}
-        setOffset={setOffset}
-        total={total}
-        mainCategoryId={mainCategoryId}
-        setMainCategoryId={setMainCategoryId}
-        subCategoryId={subCategoryId}
-        setSubCategoryId={setSubCategoryId}
-        mainOptions={mainOptionsQ.data?.data ?? []}
-        subOptions={subOptionsQ.data?.data ?? []}
-        loadingMainOptions={mainOptionsQ.isLoading}
-        loadingSubOptions={subOptionsQ.isLoading}
-      />
+        {/* Filters + pagination */}
+        <CategoryFiltersBar
+          tab={tab}
+          name={name}
+          setName={setName}
+          status={status}
+          setStatus={setStatus}
+          featured={featured}
+          setFeatured={setFeatured}
+          priority={priority}
+          setPriority={setPriority}
+          limit={limit}
+          setLimit={setLimit}
+          offset={offset}
+          setOffset={setOffset}
+          total={total}
+          mainCategoryId={mainCategoryId}
+          setMainCategoryId={setMainCategoryId}
+          subCategoryId={subCategoryId}
+          setSubCategoryId={setSubCategoryId}
+          mainOptions={mainOptionsQ.data?.data ?? []}
+          subOptions={subOptionsQ.data?.data ?? []}
+          loadingMainOptions={mainOptionsQ.isLoading}
+          loadingSubOptions={subOptionsQ.isLoading}
+        />
+      </div>
 
       {/* Table */}
       <CategoriesTable

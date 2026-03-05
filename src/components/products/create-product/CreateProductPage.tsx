@@ -404,6 +404,7 @@ export default function CreateProductPage() {
   const { t } = useTranslation();
   // -------------------- Form State --------------------
   const [productName, setProductName] = useState("");
+  const [productNameBd, setProductNameBd] = useState("");
   const [productSlug, setProductSlug] = useState("");
 
   const [mainCategoryId, setMainCategoryId] = useState<number>(0);
@@ -795,6 +796,7 @@ export default function CreateProductPage() {
     createMutation.mutate({
       product_images: images.map((i) => i.file),
       name: productName.trim(),
+      name_bd: productNameBd.trim() || undefined,
       slug: productSlug.trim(),
       main_category_id: mainCategoryId,
       sub_category_id: subCategoryId,
@@ -854,6 +856,8 @@ export default function CreateProductPage() {
       <BasicSection
         productName={productName}
         setProductName={setProductName}
+        productNameBd={productNameBd}
+        setProductNameBd={setProductNameBd}
         productSlug={productSlug}
         mainCategoryId={mainCategoryId}
         setMainCategoryId={setMainCategoryId}

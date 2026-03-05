@@ -2,10 +2,11 @@
 
 import React, { useMemo } from "react";
 import Select, { type Option } from "@/components/form/Select";
-import Button from "@/components/ui/button/Button";
+import Input from "@/components/form/input/InputField";
 import { cn } from "@/lib/utils";
 import type { CategoryEntity, MainCategory, SubCategory } from "./types";
 import { useTranslation } from "react-i18next";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 type Props = {
   tab: CategoryEntity;
@@ -42,6 +43,19 @@ type Props = {
   loadingSubOptions: boolean;
 };
 
+function buildPageNumbers(currentPage: number, totalPages: number): (number | "...")[] {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [];
+  pages.push(1);
+  if (currentPage > 4) pages.push("...");
+  for (let i = Math.max(2, currentPage - 2); i <= Math.min(totalPages - 1, currentPage + 2); i++) {
+    pages.push(i);
+  }
+  if (currentPage < totalPages - 3) pages.push("...");
+  pages.push(totalPages);
+  return pages;
+}
+
 export default function CategoryFiltersBar({
   tab,
   name,
@@ -67,10 +81,16 @@ export default function CategoryFiltersBar({
   loadingSubOptions,
 }: Props) {
   const { t } = useTranslation();
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const currentPage = Math.floor(offset / limit) + 1;
   const pageFrom = total === 0 ? 0 : offset + 1;
   const pageTo = Math.min(offset + limit, total);
 
-  const priorityOptions = useMemo(() => [1, 2, 3, 4, 5], []);
+  const pageNumbers = useMemo(
+    () => buildPageNumbers(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
 
   const statusSelectOptions: Option[] = [
     { label: t("common.all"), value: "all" },
@@ -86,11 +106,13 @@ export default function CategoryFiltersBar({
 
   const prioritySelectOptions: Option[] = [
     { label: t("common.all"), value: "all" },
-    ...priorityOptions.map((p) => ({ label: String(p), value: String(p) })),
+    { label: "Low (1)", value: "1" },
+    { label: "Normal (2)", value: "2" },
+    { label: "High (3)", value: "3" },
   ];
 
   const limitSelectOptions: Option[] = [5, 10, 20, 50].map((n) => ({
-    label: String(n),
+    label: `${n} / page`,
     value: String(n),
   }));
 
@@ -105,138 +127,149 @@ export default function CategoryFiltersBar({
   ];
 
   return (
-    <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-        {/* Search */}
-        <div className="md:col-span-4">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t("products.categories.searchName")}</label>
-          <input
+    <div>
+      {/* Single filter row */}
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
+        {/* Search — wider */}
+        <div className="min-w-[160px] flex-[2]">
+          <Input
             value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setOffset(0);
-            }}
+            onChange={(e) => { setName(e.target.value); setOffset(0); }}
             placeholder={t("products.categories.searchPlaceholder")}
-            className={cn(
-              "h-11 w-full rounded-lg border bg-white px-3 text-sm text-gray-900 outline-none",
-              "border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20",
-              "dark:border-gray-800 dark:bg-gray-900 dark:text-white",
-            )}
+            startIcon={<Search size={14} />}
           />
         </div>
 
-        {tab === "sub" ? (
-          <div className="md:col-span-3">
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("products.categories.mainCategory")}
-            </label>
+        {/* Parent filter (sub or child tab) */}
+        {tab === "sub" && (
+          <div className="min-w-[140px] flex-[2]">
             <Select
               value={mainCategoryId === "all" ? "all" : String(mainCategoryId)}
               options={mainSelectOptions}
-              onChange={(v) => {
-                setMainCategoryId(v === "all" ? "all" : Number(v));
-                setOffset(0);
-              }}
+              onChange={(v) => { setMainCategoryId(v === "all" ? "all" : Number(v)); setOffset(0); }}
             />
           </div>
-        ) : null}
-
-        {tab === "child" ? (
-          <div className="md:col-span-3">
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("products.categories.subCategory")}
-            </label>
+        )}
+        {tab === "child" && (
+          <div className="min-w-[140px] flex-[2]">
             <Select
               value={subCategoryId === "all" ? "all" : String(subCategoryId)}
               options={subSelectOptions}
-              onChange={(v) => {
-                setSubCategoryId(v === "all" ? "all" : Number(v));
-                setOffset(0);
-              }}
+              onChange={(v) => { setSubCategoryId(v === "all" ? "all" : Number(v)); setOffset(0); }}
             />
           </div>
-        ) : null}
+        )}
 
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t("common.status")}
-          </label>
+        {/* Status */}
+        <div className="min-w-[110px] flex-1">
           <Select
             value={status === "all" ? "all" : status ? "true" : "false"}
             options={statusSelectOptions}
-            onChange={(v) => {
-              setStatus(v === "all" ? "all" : v === "true");
-              setOffset(0);
-            }}
+            onChange={(v) => { setStatus(v === "all" ? "all" : v === "true"); setOffset(0); }}
           />
         </div>
 
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t("products.categories.featured")}
-          </label>
+        {/* Featured */}
+        <div className="min-w-[110px] flex-1">
           <Select
             value={featured === "all" ? "all" : featured ? "true" : "false"}
             options={featuredSelectOptions}
-            onChange={(v) => {
-              setFeatured(v === "all" ? "all" : v === "true");
-              setOffset(0);
-            }}
+            onChange={(v) => { setFeatured(v === "all" ? "all" : v === "true"); setOffset(0); }}
           />
         </div>
 
-        <div className="md:col-span-1">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t("products.categories.priority")}
-          </label>
+        {/* Priority */}
+        <div className="min-w-[100px] flex-1">
           <Select
             value={priority === "all" ? "all" : String(priority)}
             options={prioritySelectOptions}
-            onChange={(v) => {
-              setPriority(v === "all" ? "all" : Number(v));
-              setOffset(0);
-            }}
+            onChange={(v) => { setPriority(v === "all" ? "all" : Number(v)); setOffset(0); }}
           />
         </div>
 
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t("products.categories.perPage")}
-          </label>
+        {/* Per page */}
+        <div className="min-w-[100px] flex-1">
           <Select
             value={String(limit)}
             options={limitSelectOptions}
-            onChange={(v) => {
-              setLimit(Number(v));
-              setOffset(0);
-            }}
+            onChange={(v) => { setLimit(Number(v)); setOffset(0); }}
           />
         </div>
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-300 md:flex-row md:items-center md:justify-between">
-        <div>
-          {t("products.categories.showing")} <span className="font-semibold text-gray-900 dark:text-white">{pageFrom}</span>{" "}
-          - <span className="font-semibold text-gray-900 dark:text-white">{pageTo}</span> {t("products.categories.of")}{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{total}</span>
-        </div>
+      {/* Pagination bar */}
+      <div className="flex flex-col items-center justify-between gap-2 border-t border-gray-100 px-3 py-2 dark:border-gray-800 sm:flex-row">
+        {/* Info */}
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {total === 0 ? "No results" : (
+            <>
+              Showing{" "}
+              <span className="font-semibold text-gray-700 dark:text-gray-200">{pageFrom}–{pageTo}</span>
+              {" "}of{" "}
+              <span className="font-semibold text-gray-700 dark:text-gray-200">{total}</span>
+            </>
+          )}
+        </p>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setOffset(Math.max(0, offset - limit))}
-            disabled={offset === 0}
-          >
-            {t("products.categories.prev")}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setOffset(offset + limit)}
-            disabled={offset + limit >= total}
-          >
-            {t("products.categories.next")}
-          </Button>
-        </div>
+        {/* Page numbers */}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            {/* Prev */}
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setOffset(Math.max(0, offset - limit))}
+              className={cn(
+                "inline-flex h-7 w-7 items-center justify-center rounded-lg border text-xs transition",
+                currentPage === 1
+                  ? "cursor-not-allowed border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-700"
+                  : "border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:text-brand-400",
+              )}
+              aria-label="Previous"
+            >
+              <ChevronLeft size={14} />
+            </button>
+
+            {/* Page numbers */}
+            {pageNumbers.map((p, i) =>
+              p === "..." ? (
+                <span key={`dots-${i}`} className="flex h-7 w-7 items-center justify-center text-xs text-gray-400 dark:text-gray-600">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setOffset((p - 1) * limit)}
+                  className={cn(
+                    "inline-flex h-7 w-7 items-center justify-center rounded-lg border text-xs font-medium transition",
+                    p === currentPage
+                      ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                      : "border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:text-brand-400",
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+            {/* Next */}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setOffset(offset + limit)}
+              className={cn(
+                "inline-flex h-7 w-7 items-center justify-center rounded-lg border text-xs transition",
+                currentPage === totalPages
+                  ? "cursor-not-allowed border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-700"
+                  : "border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:text-brand-400",
+              )}
+              aria-label="Next"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

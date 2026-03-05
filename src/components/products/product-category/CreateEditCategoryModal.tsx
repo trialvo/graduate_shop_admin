@@ -183,7 +183,7 @@ export default function CreateEditCategoryModal({
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {mode === "edit" ? "Loaded via TanStack Query" : "Create with multipart/form-data"}
+              {entity === "main" ? "Main category" : entity === "sub" ? "Sub category" : "Child category"} — {mode === "create" ? "New entry" : `ID #${id}`}
             </p>
           </div>
 
@@ -272,20 +272,30 @@ export default function CreateEditCategoryModal({
                   </div>
                 )}
 
-                <div className="md:col-span-4">
-                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                <div className="md:col-span-12">
+                  <label className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-300">
                     {t("products.categories.priority")}
                   </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={String(values.priority)}
-                    onChange={(e) =>
-                      setValues((p: any) => ({ ...p, priority: Number(e.target.value || 1) }))
-                    }
-                    className={inputClass}
-                    disabled={isBusy}
-                  />
+                  <div className="flex gap-2">
+                    {[
+                      { value: 1, label: "Low", cls: "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300", activeCls: "border-gray-400 bg-gray-100 text-gray-800 ring-2 ring-gray-300 dark:border-gray-500 dark:bg-gray-700 dark:text-white dark:ring-gray-600" },
+                      { value: 2, label: "Normal", cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400", activeCls: "border-amber-400 bg-amber-100 text-amber-800 ring-2 ring-amber-300 dark:border-amber-500 dark:bg-amber-900/40 dark:text-amber-300 dark:ring-amber-700" },
+                      { value: 3, label: "High", cls: "border-red-200 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400", activeCls: "border-red-400 bg-red-100 text-red-800 ring-2 ring-red-300 dark:border-red-500 dark:bg-red-900/40 dark:text-red-300 dark:ring-red-700" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => setValues((p: any) => ({ ...p, priority: opt.value }))}
+                        className={cn(
+                          "flex-1 rounded-xl border py-2 text-xs font-semibold transition focus:outline-none",
+                          values.priority === opt.value ? opt.activeCls : opt.cls
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="md:col-span-4">

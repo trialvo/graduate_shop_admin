@@ -17,6 +17,8 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 function BasicSection({
   productName,
   setProductName,
+  productNameBd,
+  setProductNameBd,
   productSlug,
   mainCategoryId,
   setMainCategoryId,
@@ -37,6 +39,8 @@ function BasicSection({
 }: {
   productName: string;
   setProductName: (v: string) => void;
+  productNameBd: string;
+  setProductNameBd: (v: string) => void;
   productSlug: string;
 
   mainCategoryId: number;
@@ -70,6 +74,18 @@ function BasicSection({
             value={productName}
             onChange={(e) => setProductName(String(e.target.value))}
             placeholder={t("products.createProduct.enterProductName")}
+          />
+        </div>
+
+        <div>
+          <FieldLabel>
+            বাংলা নাম{" "}
+            <span className="ml-1 text-[10px] font-normal normal-case tracking-normal text-gray-400">(ঐচ্ছিক)</span>
+          </FieldLabel>
+          <Input
+            value={productNameBd}
+            onChange={(e) => setProductNameBd(String(e.target.value))}
+            placeholder="পণ্যের বাংলা নাম লিখুন"
           />
         </div>
 
