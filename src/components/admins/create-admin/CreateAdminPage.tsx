@@ -18,6 +18,9 @@ import Select, { type Option } from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import ActiveInactiveSwitch from "@/components/ui/toggles/ActiveInactiveSwitch";
+import PageHeader from "@/components/ui/layout/PageHeader";
+import SectionCard from "@/components/ui/layout/SectionCard";
+import FieldGroup from "@/components/ui/layout/FieldGroup";
 import { cn } from "@/lib/utils";
 
 import { AdminRole, CreateAdminForm } from "../types";
@@ -89,9 +92,9 @@ export default function CreateAdminPage() {
     return roles
       .filter((r) => normalizeRoleLabel(r.name) !== "Super Admin")
       .map((r) => {
-      const label = normalizeRoleLabel(r.name);
-      return { value: label, label };
-    });
+        const label = normalizeRoleLabel(r.name);
+        return { value: label, label };
+      });
   }, [roles]);
 
   useEffect(() => {
@@ -243,326 +246,288 @@ export default function CreateAdminPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Admin</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Create new admin account by role with secure password.
-          </p>
-        </div>
-
-        <Button variant="outline" onClick={() => navigate("/admins-list")}>
-          Back to Admins
-        </Button>
-      </div>
+      <PageHeader
+        title="Create Admin"
+        subtitle="Create new admin account by role with secure password."
+        actions={<Button variant="outline" onClick={() => navigate("/admins-list")}>Back to Admins</Button>}
+      />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* LEFT */}
         <div className="lg:col-span-8 space-y-5">
           {/* Profile */}
-          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Admin image & basic contact info.</p>
-            </div>
+          <SectionCard
+            title="Profile"
+            description="Admin image & basic contact info."
+            icon={<User2 className="h-5 w-5" />}
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Admin Image */}
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Image</p>
 
-            <div className="p-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* Admin Image */}
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Image</p>
+                  {form.avatarPreviewUrl ? (
+                    <button
+                      type="button"
+                      onClick={removeAvatar}
+                      className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                    >
+                      <X size={14} />
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
 
-                    {form.avatarPreviewUrl ? (
-                      <button
-                        type="button"
-                        onClick={removeAvatar}
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                      >
-                        <X size={14} />
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div
-                    className={cn(
-                      "mt-2 grid grid-cols-1 gap-4 rounded-xl border bg-gray-50 p-4 dark:bg-gray-800/40",
-                      isDragging ? "border-brand-500" : "border-gray-200 dark:border-gray-800",
-                    )}
-                    onDragEnter={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDragging(true);
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDragging(true);
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDragging(false);
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDragging(false);
-                      const f = e.dataTransfer.files?.[0] ?? null;
-                      if (f) setAvatarFile(f);
-                    }}
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-16 w-16 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                          {form.avatarPreviewUrl ? (
-                            <img
-                              src={form.avatarPreviewUrl}
-                              alt="Admin avatar"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-                              {avatarLetter}
-                            </div>
-                          )}
-
-                          <div className="absolute bottom-1 right-1 rounded-xl border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                            <Camera size={14} />
+                <div
+                  className={cn(
+                    "mt-2 grid grid-cols-1 gap-4 rounded-xl border bg-gray-50 p-4 dark:bg-gray-800/40",
+                    isDragging ? "border-brand-500" : "border-gray-200 dark:border-gray-800",
+                  )}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragging(true);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragging(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragging(false);
+                    const f = e.dataTransfer.files?.[0] ?? null;
+                    if (f) setAvatarFile(f);
+                  }}
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-16 w-16 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                        {form.avatarPreviewUrl ? (
+                          <img
+                            src={form.avatarPreviewUrl}
+                            alt="Admin avatar"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            {avatarLetter}
                           </div>
-                        </div>
+                        )}
 
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {form.avatarPreviewUrl ? "Image selected" : "Upload an avatar"}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Drag & drop or choose a file. Max 3MB.
-                          </p>
+                        <div className="absolute bottom-1 right-1 rounded-xl border border-gray-200 bg-white p-1 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                          <Camera size={14} />
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                        <Button
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="gap-2"
-                          disabled={submitState === "saving"}
-                        >
-                          <UploadCloud size={16} />
-                          {form.avatarPreviewUrl ? "Replace" : "Upload"}
-                        </Button>
-
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0] ?? null;
-                            if (f) setAvatarFile(f);
-                            e.currentTarget.value = "";
-                          }}
-                        />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {form.avatarPreviewUrl ? "Image selected" : "Upload an avatar"}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          Drag & drop or choose a file. Max 3MB.
+                        </p>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Recommended: 1:1 square image (PNG/JPG/WebP).
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {form.avatarFile ? `Selected: ${form.avatarFile.name}` : "No file selected"}
-                      </p>
+                    <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                        disabled={submitState === "saving"}
+                      >
+                        <UploadCloud size={16} />
+                        {form.avatarPreviewUrl ? "Replace" : "Upload"}
+                      </Button>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          if (f) setAvatarFile(f);
+                          e.currentTarget.value = "";
+                        }}
+                      />
                     </div>
                   </div>
-                </div>
 
-                {/* name */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Name <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    startIcon={<User2 size={16} />}
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: String(e.target.value) })}
-                    placeholder="Admin name"
-                    error={Boolean(errors.nameErr)}
-                    hint={errors.nameErr || ""}
-                  />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Recommended: 1:1 square image (PNG/JPG/WebP).
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {form.avatarFile ? `Selected: ${form.avatarFile.name}` : "No file selected"}
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                {/* email */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    startIcon={<Mail size={16} />}
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: String(e.target.value) })}
-                    placeholder="admin@email.com"
-                    error={Boolean(errors.emailErr)}
-                    hint={errors.emailErr || ""}
-                  />
-                </div>
+              {/* name */}
+              <FieldGroup label="Name" required>
+                <Input
+                  startIcon={<User2 size={16} />}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: String(e.target.value) })}
+                  placeholder="Admin name"
+                  error={Boolean(errors.nameErr)}
+                  hint={errors.nameErr || ""}
+                />
+              </FieldGroup>
 
-                {/* phone */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Phone <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    startIcon={<Phone size={16} />}
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: String(e.target.value) })}
-                    placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
-                    error={Boolean(errors.phoneErr)}
-                    hint={errors.phoneErr || ""}
-                  />
-                </div>
+              {/* email */}
+              <FieldGroup label="Email" required>
+                <Input
+                  startIcon={<Mail size={16} />}
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: String(e.target.value) })}
+                  placeholder="admin@email.com"
+                  error={Boolean(errors.emailErr)}
+                  hint={errors.emailErr || ""}
+                />
+              </FieldGroup>
 
-                {/* address */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Address</p>
-                  <Input
-                    startIcon={<MapPin size={16} />}
-                    value={form.address}
-                    onChange={(e) => setForm({ ...form, address: String(e.target.value) })}
-                    placeholder="Dhaka, Bangladesh"
-                  />
-                </div>
+              {/* phone */}
+              <FieldGroup label="Phone" required>
+                <Input
+                  startIcon={<Phone size={16} />}
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: String(e.target.value) })}
+                  placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
+                  error={Boolean(errors.phoneErr)}
+                  hint={errors.phoneErr || ""}
+                />
+              </FieldGroup>
 
-                {/* join date */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Date</p>
-                  <DatePicker
-                    value={form.joinDate}
-                    onChange={(v) => setForm({ ...form, joinDate: v })}
-                    placeholder="Joining Date"
-                    className="rounded-xl"
-                    disabled={submitState === "saving"}
-                    showToday
-                    showClear
-                  />
-                </div>
+              {/* address */}
+              <FieldGroup label="Address">
+                <Input
+                  startIcon={<MapPin size={16} />}
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: String(e.target.value) })}
+                  placeholder="Dhaka, Bangladesh"
+                />
+              </FieldGroup>
 
-                {/* note */}
-                <div className="space-y-2 md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Note</p>
+              {/* join date */}
+              <FieldGroup label="Joining Date">
+                <DatePicker
+                  value={form.joinDate}
+                  onChange={(v) => setForm({ ...form, joinDate: v })}
+                  placeholder="Joining Date"
+                  className="rounded-xl"
+                  disabled={submitState === "saving"}
+                  showToday
+                  showClear
+                />
+              </FieldGroup>
+
+              {/* note */}
+              <div className="md:col-span-2">
+                <FieldGroup label="Note">
                   <Input
                     value={form.note}
                     onChange={(e) => setForm({ ...form, note: String(e.target.value) })}
                     placeholder="Write note (optional)"
                   />
-                </div>
+                </FieldGroup>
               </div>
             </div>
-          </div>
+          </SectionCard>
 
           {/* Access */}
-          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Access</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Choose admin role and account status.
-              </p>
+          <SectionCard
+            title="Access"
+            description="Choose admin role and account status."
+            icon={<ShieldCheck className="h-5 w-5" />}
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+              <FieldGroup label="Role" required>
+                <Select
+                  options={roleOptions}
+                  placeholder="Select role"
+                  value={form.role}
+                  onChange={(v) => setForm({ ...form, role: v as AdminRole })}
+                  isLoading={rolesQuery.isLoading}
+                  disabled={rolesQuery.isLoading || rolesQuery.isError || submitState === "saving"}
+                  className="rounded-xl"
+                />
+                {errors.roleErr ? <p className="text-xs text-error-500">{errors.roleErr}</p> : null}
+                {rolesQuery.isError ? <p className="text-xs text-error-500">Failed to load roles.</p> : null}
+              </FieldGroup>
+
+              <FieldGroup label="Status">
+                <ActiveInactiveSwitch
+                  className="max-w-full"
+                  value={isActive}
+                  onChange={(next) => setForm({ ...form, status: next ? "ACTIVE" : "INACTIVE" })}
+                  disabled={submitState === "saving"}
+                />
+              </FieldGroup>
             </div>
 
-            <div className="p-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Role <span className="text-error-500">*</span>
+            <div className="my-4 h-px w-full bg-gray-200 dark:bg-gray-800" />
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FieldGroup label="Password" required>
+                <Input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: String(e.target.value) })}
+                  placeholder="Minimum 6 characters"
+                  error={Boolean(errors.passErr)}
+                  hint={errors.passErr || ""}
+                  className="rounded-xl"
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Confirm Password" required>
+                <Input
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(e) => setForm({ ...form, confirmPassword: String(e.target.value) })}
+                  placeholder="Re-enter password"
+                  error={Boolean(errors.confirmErr)}
+                  hint={errors.confirmErr || ""}
+                  className="rounded-xl"
+                />
+              </FieldGroup>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                  <ShieldCheck size={18} />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Status Preview</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    ACTIVE admins can login. INACTIVE admins cannot.
                   </p>
 
-                  <Select
-                    options={roleOptions}
-                    placeholder="Select role"
-                    value={form.role}
-                    onChange={(v) => setForm({ ...form, role: v as AdminRole })}
-                    isLoading={rolesQuery.isLoading}
-                    disabled={rolesQuery.isLoading || rolesQuery.isError || submitState === "saving"}
-                    className="rounded-xl"
-                  />
-
-                  {errors.roleErr ? <p className="text-xs text-error-500">{errors.roleErr}</p> : null}
-                  {rolesQuery.isError ? <p className="text-xs text-error-500">Failed to load roles.</p> : null}
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
-
-                  <ActiveInactiveSwitch
-                    className="max-w-full"
-                    value={isActive}
-                    onChange={(next) => setForm({ ...form, status: next ? "ACTIVE" : "INACTIVE" })}
-                    disabled={submitState === "saving"}
-                  />
-                </div>
-              </div>
-
-              <div className="my-4 h-px w-full bg-gray-200 dark:bg-gray-800" />
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: String(e.target.value) })}
-                    placeholder="Minimum 6 characters"
-                    error={Boolean(errors.passErr)}
-                    hint={errors.passErr || ""}
-                    className="rounded-xl"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Confirm Password <span className="text-error-500">*</span>
-                  </p>
-                  <Input
-                    type="password"
-                    value={form.confirmPassword}
-                    onChange={(e) => setForm({ ...form, confirmPassword: String(e.target.value) })}
-                    placeholder="Re-enter password"
-                    error={Boolean(errors.confirmErr)}
-                    hint={errors.confirmErr || ""}
-                    className="rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                    <ShieldCheck size={18} />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Status Preview</p>
-                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      ACTIVE admins can login. INACTIVE admins cannot.
-                    </p>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Badge variant="solid" color={statusColor} size="sm">
-                        {isActive ? "ACTIVE" : "INACTIVE"}
-                      </Badge>
-                      <Badge variant="solid" color="primary" size="sm">
-                        {form.role || "-"}
-                      </Badge>
-                    </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Badge variant="solid" color={statusColor} size="sm">
+                      {isActive ? "ACTIVE" : "INACTIVE"}
+                    </Badge>
+                    <Badge variant="solid" color="primary" size="sm">
+                      {form.role || "-"}
+                    </Badge>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </SectionCard>
 
           {/* Actions */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -589,69 +554,59 @@ export default function CreateAdminPage() {
 
         {/* RIGHT preview */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Live Preview</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                How this admin will appear in the list.
-              </p>
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                  {form.avatarPreviewUrl ? (
-                    <img src={form.avatarPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      {avatarLetter}
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                    {form.name || "-"}
-                  </p>
-                  <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Mail size={14} />
-                    <span className="truncate">{form.email || "-"}</span>
-                  </p>
-                  <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Phone size={14} />
-                    <span className="truncate">{form.phone || "-"}</span>
-                  </p>
-                  <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <MapPin size={14} />
-                    <span className="truncate">{form.address || "-"}</span>
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge variant="solid" color={statusColor} size="sm">
-                      {isActive ? "ACTIVE" : "INACTIVE"}
-                    </Badge>
-                    <Badge variant="solid" color="primary" size="sm">
-                      {form.role || "-"}
-                    </Badge>
+          <SectionCard title="Live Preview" description="How this admin will appear in the list.">
+            <div className="flex items-start gap-4">
+              <div className="relative h-14 w-14 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                {form.avatarPreviewUrl ? (
+                  <img src={form.avatarPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    {avatarLetter}
                   </div>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                  {form.name || "-"}
+                </p>
+                <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <Mail size={14} />
+                  <span className="truncate">{form.email || "-"}</span>
+                </p>
+                <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <Phone size={14} />
+                  <span className="truncate">{form.phone || "-"}</span>
+                </p>
+                <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <MapPin size={14} />
+                  <span className="truncate">{form.address || "-"}</span>
+                </p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="solid" color={statusColor} size="sm">
+                    {isActive ? "ACTIVE" : "INACTIVE"}
+                  </Badge>
+                  <Badge variant="solid" color="primary" size="sm">
+                    {form.role || "-"}
+                  </Badge>
                 </div>
               </div>
-
-              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
-                <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
-                <p className="line-clamp-3">{form.note || "-"}</p>
-              </div>
             </div>
-          </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Tips</p>
-            <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+              <p className="font-semibold text-gray-900 dark:text-white mb-1">Note</p>
+              <p className="line-clamp-3">{form.note || "-"}</p>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Tips">
+            <ul className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>- Assign roles carefully to avoid permission risks.</li>
               <li>- Use strong passwords (6+ chars recommended).</li>
               <li>- Keep INACTIVE for suspended admins.</li>
             </ul>
-          </div>
+          </SectionCard>
         </div>
       </div>
     </div>

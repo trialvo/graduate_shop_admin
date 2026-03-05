@@ -2,18 +2,11 @@ import { useMemo } from "react";
 import Section from "./Section";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import FieldGroup from "@/components/ui/layout/FieldGroup";
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type Option = { value: string; label: string };
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-      {children}
-    </p>
-  );
-}
 
 function SeoSection({
   seo,
@@ -58,8 +51,7 @@ function SeoSection({
       icon={<Globe className="h-5 w-5" />}
     >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div>
-          <FieldLabel>{t("products.createProduct.metaTitle")}</FieldLabel>
+        <FieldGroup label={t("products.createProduct.metaTitle")}>
           <Input
             value={seo.meta_title}
             onChange={(e) =>
@@ -70,10 +62,9 @@ function SeoSection({
             }
             placeholder={t("products.createProduct.metaTitlePlaceholder")}
           />
-        </div>
+        </FieldGroup>
 
-        <div>
-          <FieldLabel>{t("products.createProduct.canonicalUrl")}</FieldLabel>
+        <FieldGroup label={t("products.createProduct.canonicalUrl")}>
           <Input
             value={seo.canonical_url}
             onChange={(e) =>
@@ -84,41 +75,42 @@ function SeoSection({
             }
             placeholder="https://example.com/product"
           />
+        </FieldGroup>
+
+        <div className="lg:col-span-2">
+          <FieldGroup
+            label={t("products.createProduct.metaDescription")}
+            hint={t("products.createProduct.metaDescHint")}
+          >
+            <Input
+              value={seo.meta_description}
+              onChange={(e) =>
+                setSeo((p) => ({
+                  ...p,
+                  meta_description: String(e.target.value),
+                }))
+              }
+              placeholder={t("products.createProduct.metaDescPlaceholder")}
+            />
+          </FieldGroup>
         </div>
 
         <div className="lg:col-span-2">
-          <FieldLabel>{t("products.createProduct.metaDescription")}</FieldLabel>
-          <Input
-            value={seo.meta_description}
-            onChange={(e) =>
-              setSeo((p) => ({
-                ...p,
-                meta_description: String(e.target.value),
-              }))
-            }
-            placeholder={t("products.createProduct.metaDescPlaceholder")}
-          />
-          <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-            {t("products.createProduct.metaDescHint")}
-          </p>
+          <FieldGroup label={t("products.createProduct.metaKeywords")}>
+            <Input
+              value={seo.meta_keywords}
+              onChange={(e) =>
+                setSeo((p) => ({
+                  ...p,
+                  meta_keywords: String(e.target.value),
+                }))
+              }
+              placeholder={t("products.createProduct.metaKeywordsPlaceholder")}
+            />
+          </FieldGroup>
         </div>
 
-        <div className="lg:col-span-2">
-          <FieldLabel>{t("products.createProduct.metaKeywords")}</FieldLabel>
-          <Input
-            value={seo.meta_keywords}
-            onChange={(e) =>
-              setSeo((p) => ({
-                ...p,
-                meta_keywords: String(e.target.value),
-              }))
-            }
-            placeholder={t("products.createProduct.metaKeywordsPlaceholder")}
-          />
-        </div>
-
-        <div>
-          <FieldLabel>{t("products.createProduct.ogTitle")}</FieldLabel>
+        <FieldGroup label={t("products.createProduct.ogTitle")}>
           <Input
             value={seo.og_title}
             onChange={(e) =>
@@ -129,10 +121,9 @@ function SeoSection({
             }
             placeholder={t("products.createProduct.ogTitlePlaceholder")}
           />
-        </div>
+        </FieldGroup>
 
-        <div>
-          <FieldLabel>{t("products.createProduct.robots")}</FieldLabel>
+        <FieldGroup label={t("products.createProduct.robots")}>
           <Select
             options={robotsOptions}
             placeholder={t("products.createProduct.robotsPlaceholder")}
@@ -141,20 +132,21 @@ function SeoSection({
               setSeo((p) => ({ ...p, robots: String(v) }))
             }
           />
-        </div>
+        </FieldGroup>
 
         <div className="lg:col-span-2">
-          <FieldLabel>{t("products.createProduct.ogDescription")}</FieldLabel>
-          <Input
-            value={seo.og_description}
-            onChange={(e) =>
-              setSeo((p) => ({
-                ...p,
-                og_description: String(e.target.value),
-              }))
-            }
-            placeholder={t("products.createProduct.ogDescPlaceholder")}
-          />
+          <FieldGroup label={t("products.createProduct.ogDescription")}>
+            <Input
+              value={seo.og_description}
+              onChange={(e) =>
+                setSeo((p) => ({
+                  ...p,
+                  og_description: String(e.target.value),
+                }))
+              }
+              placeholder={t("products.createProduct.ogDescPlaceholder")}
+            />
+          </FieldGroup>
         </div>
       </div>
     </Section>

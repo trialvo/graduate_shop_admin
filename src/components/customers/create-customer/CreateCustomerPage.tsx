@@ -24,6 +24,8 @@ import DatePicker from "@/components/form/date-picker";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import StatusToggle from "@/components/ui/button/StatusToggle";
+import SectionCard from "@/components/ui/layout/SectionCard";
+import FieldGroup from "@/components/ui/layout/FieldGroup";
 import CustomerImageCropperModal from "@/components/customers/create-customer/CustomerImageCropperModal";
 import { cn } from "@/lib/utils";
 
@@ -96,14 +98,14 @@ export default function CreateCustomerPage() {
     const emailErr = !form.email.trim()
       ? "Email is required."
       : !isValidEmail(form.email)
-      ? "Invalid email format."
-      : "";
+        ? "Invalid email format."
+        : "";
 
     const passErr = !form.password.trim()
       ? "Password is required."
       : form.password.length < 8
-      ? "Password must be at least 8 characters."
-      : "";
+        ? "Password must be at least 8 characters."
+        : "";
 
     const firstErr = !form.first_name.trim() ? "First name is required." : "";
     const lastErr = !form.last_name.trim() ? "Last name is required." : "";
@@ -111,8 +113,8 @@ export default function CreateCustomerPage() {
     const phoneErr = !form.phone.trim()
       ? "Phone is required."
       : !isValidPhone(form.phone)
-      ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
-      : "";
+        ? "Use 01xxxxxxxxx or +8801xxxxxxxxx format."
+        : "";
 
     return {
       email: emailErr,
@@ -240,17 +242,11 @@ export default function CreateCustomerPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* LEFT: FORM */}
         <div className="space-y-6 lg:col-span-8">
-          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Profile
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Basic identity & contact information.
-              </p>
-            </div>
-
-            <div className="space-y-6 p-5">
+          <SectionCard
+            title="Profile"
+            description="Basic identity & contact information."
+            icon={<User2 className="h-5 w-5" />}
+          >
               {/* Profile Image + Upload + Status (RESPONSIVE GRID) */}
               <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
@@ -377,125 +373,90 @@ export default function CreateCustomerPage() {
               {/* Fields */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {/* Email */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email <span className="text-error-500">*</span>
-                  </p>
-                  <div className="relative">
-                    <Input
-                      startIcon={<Mail size={16} />}
-                      className="pl-9"
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          email: String(e.target.value),
-                        }))
-                      }
-                      placeholder="example@gmail.com"
-                    />
-                  </div>
-                  {errors.email ? (
-                    <p className="text-xs text-error-500">{errors.email}</p>
-                  ) : null}
-                </div>
+                <FieldGroup label="Email" required>
+                  <Input
+                    startIcon={<Mail size={16} />}
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        email: String(e.target.value),
+                      }))
+                    }
+                    placeholder="example@gmail.com"
+                    error={Boolean(errors.email)}
+                    hint={errors.email || ""}
+                  />
+                </FieldGroup>
 
                 {/* Password */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password <span className="text-error-500">*</span>
-                  </p>
-                  <div className="relative">
-                    <Input
-                      startIcon={<Lock size={16} />}
-                      className="pl-9"
-                      value={form.password}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          password: String(e.target.value),
-                        }))
-                      }
-                      placeholder="minimum 8 characters"
-                      type="password"
-                    />
-                  </div>
-                  {errors.pass ? (
-                    <p className="text-xs text-error-500">{errors.pass}</p>
-                  ) : null}
-                </div>
+                <FieldGroup label="Password" required>
+                  <Input
+                    startIcon={<Lock size={16} />}
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        password: String(e.target.value),
+                      }))
+                    }
+                    placeholder="minimum 8 characters"
+                    type="password"
+                    error={Boolean(errors.pass)}
+                    hint={errors.pass || ""}
+                  />
+                </FieldGroup>
 
                 {/* First Name */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    First Name <span className="text-error-500">*</span>
-                  </p>
-                  <div className="relative">
-                    <Input
-                      startIcon={<User2 size={16} />}
-                      className="pl-9"
-                      value={form.first_name}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          first_name: String(e.target.value),
-                        }))
-                      }
-                      placeholder="First name"
-                    />
-                  </div>
-                  {errors.first ? (
-                    <p className="text-xs text-error-500">{errors.first}</p>
-                  ) : null}
-                </div>
+                <FieldGroup label="First Name" required>
+                  <Input
+                    startIcon={<User2 size={16} />}
+                    value={form.first_name}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        first_name: String(e.target.value),
+                      }))
+                    }
+                    placeholder="First name"
+                    error={Boolean(errors.first)}
+                    hint={errors.first || ""}
+                  />
+                </FieldGroup>
 
                 {/* Last Name */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Last Name <span className="text-error-500">*</span>
-                  </p>
-                  <div className="relative">
-                    <Input
-                      startIcon={<User2 size={16} />}
-                      className="pl-9"
-                      value={form.last_name}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          last_name: String(e.target.value),
-                        }))
-                      }
-                      placeholder="Last name"
-                    />
-                  </div>
-                  {errors.last ? (
-                    <p className="text-xs text-error-500">{errors.last}</p>
-                  ) : null}
-                </div>
+                <FieldGroup label="Last Name" required>
+                  <Input
+                    startIcon={<User2 size={16} />}
+                    value={form.last_name}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        last_name: String(e.target.value),
+                      }))
+                    }
+                    placeholder="Last name"
+                    error={Boolean(errors.last)}
+                    hint={errors.last || ""}
+                  />
+                </FieldGroup>
 
                 {/* Phone */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Phone <span className="text-error-500">*</span>
-                  </p>
-                  <div className="relative">
-                    <Input
-                      startIcon={<Phone size={16} />}
-                      className="pl-9"
-                      value={form.phone}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          phone: String(e.target.value),
-                        }))
-                      }
-                      placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
-                    />
-                  </div>
-                  {errors.phone ? (
-                    <p className="text-xs text-error-500">{errors.phone}</p>
-                  ) : null}
-                </div>
+                <FieldGroup label="Phone" required>
+                  <Input
+                    startIcon={<Phone size={16} />}
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        phone: String(e.target.value),
+                      }))
+                    }
+                    placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
+                    error={Boolean(errors.phone)}
+                    hint={errors.phone || ""}
+                  />
+                </FieldGroup>
 
                 {/* DOB (Optional) with DatePicker */}
                 <div className="space-y-2">
@@ -548,7 +509,7 @@ export default function CreateCustomerPage() {
                   />
                 </div>
               </div>
-            </div>
+            </SectionCard>
           </div>
 
           {/* Actions (responsive) */}
@@ -574,17 +535,7 @@ export default function CreateCustomerPage() {
 
         {/* RIGHT: Preview Card */}
         <div className="space-y-6 lg:col-span-4">
-          <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Live Preview
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                This is how it will look in list.
-              </p>
-            </div>
-
-            <div className="p-5">
+          <SectionCard title="Live Preview" description="This is how it will look in list.">
               <div className="flex items-start gap-4">
                 <div className="h-14 w-14 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
                   {previewUrl ? (
@@ -658,21 +609,15 @@ export default function CreateCustomerPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+          </SectionCard>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Tips
-            </p>
-            <ul className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
+          <SectionCard title="Tips">
+            <ul className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <li>• Phone supports BD format: 01xxxxxxxxx or +8801xxxxxxxxx</li>
               <li>• DOB is optional (you can skip it).</li>
-              <li>
-                • Image is uploaded as user_profile file (square recommended).
-              </li>
+              <li>• Image is uploaded as user_profile file (square recommended).</li>
             </ul>
-          </div>
+          </SectionCard>
         </div>
       </div>
 
@@ -689,6 +634,6 @@ export default function CreateCustomerPage() {
           closeCropper();
         }}
       />
-    </div>
+    </div >
   );
 }
