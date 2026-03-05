@@ -247,270 +247,269 @@ export default function CreateCustomerPage() {
             description="Basic identity & contact information."
             icon={<User2 className="h-5 w-5" />}
           >
-              {/* Profile Image + Upload + Status (RESPONSIVE GRID) */}
-              <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-                  {/* Preview */}
-                  <div className="md:col-span-4 lg:col-span-3">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Profile Photo
-                    </p>
+            {/* Profile Image + Upload + Status (RESPONSIVE GRID) */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+                {/* Preview */}
+                <div className="md:col-span-4 lg:col-span-3">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Profile Photo
+                  </p>
 
-                    <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="aspect-square w-full">
-                        {previewUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={previewUrl}
-                            alt="profile"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xl font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                              {avatarLetter}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Best ratio: 1:1 (square)
-                    </p>
-                  </div>
-
-                  {/* Upload */}
-                  <div className="md:col-span-8 lg:col-span-6">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Upload Image{" "}
-                      <span className="text-xs text-gray-400">
-                        (user_profile)
-                      </span>
-                    </p>
-
-                    <div className="mt-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                            <ImageIcon size={18} />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                              {form.user_profile?.name ?? "No file selected"}
-                            </p>
-                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                              <code className="font-mono">user_profile</code> in
-                              form-data
-                            </p>
+                  <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="aspect-square w-full">
+                      {previewUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={previewUrl}
+                          alt="profile"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xl font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                            {avatarLetter}
                           </div>
                         </div>
+                      )}
+                    </div>
+                  </div>
 
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                          />
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Best ratio: 1:1 (square)
+                  </p>
+                </div>
 
-                          {form.user_profile ? (
-                            <Button
-                              variant="outline"
-                              onClick={removeFile}
-                              className="w-full sm:w-auto"
-                              startIcon={<X size={16} />}
-                            >
-                              Remove
-                            </Button>
-                          ) : null}
+                {/* Upload */}
+                <div className="md:col-span-8 lg:col-span-6">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Upload Image{" "}
+                    <span className="text-xs text-gray-400">
+                      (user_profile)
+                    </span>
+                  </p>
 
+                  <div className="mt-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                          <ImageIcon size={18} />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                            {form.user_profile?.name ?? "No file selected"}
+                          </p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                            <code className="font-mono">user_profile</code> in
+                            form-data
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+
+                        {form.user_profile ? (
                           <Button
                             variant="outline"
-                            onClick={pickFile}
+                            onClick={removeFile}
                             className="w-full sm:w-auto"
-                            startIcon={<UploadCloud size={16} />}
+                            startIcon={<X size={16} />}
                           >
-                            Choose File
+                            Remove
                           </Button>
-                        </div>
+                        ) : null}
+
+                        <Button
+                          variant="outline"
+                          onClick={pickFile}
+                          className="w-full sm:w-auto"
+                          startIcon={<UploadCloud size={16} />}
+                        >
+                          Choose File
+                        </Button>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="md:col-span-12 lg:col-span-3">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Status
-                    </p>
-
-                    <div className="mt-2 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {form.is_active === "active" ? "Active" : "Inactive"}
-                        </p>
-                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Toggle customer access
-                        </p>
-                      </div>
-
-                      <StatusToggle
-                        value={form.is_active}
-                        onChange={(v) =>
-                          setForm((p) => ({
-                            ...p,
-                            is_active: v as CreateCustomerForm["is_active"],
-                          }))
-                        }
-                      />
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Fields */}
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                {/* Email */}
-                <FieldGroup label="Email" required>
-                  <Input
-                    startIcon={<Mail size={16} />}
-                    value={form.email}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        email: String(e.target.value),
-                      }))
-                    }
-                    placeholder="example@gmail.com"
-                    error={Boolean(errors.email)}
-                    hint={errors.email || ""}
-                  />
-                </FieldGroup>
-
-                {/* Password */}
-                <FieldGroup label="Password" required>
-                  <Input
-                    startIcon={<Lock size={16} />}
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        password: String(e.target.value),
-                      }))
-                    }
-                    placeholder="minimum 8 characters"
-                    type="password"
-                    error={Boolean(errors.pass)}
-                    hint={errors.pass || ""}
-                  />
-                </FieldGroup>
-
-                {/* First Name */}
-                <FieldGroup label="First Name" required>
-                  <Input
-                    startIcon={<User2 size={16} />}
-                    value={form.first_name}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        first_name: String(e.target.value),
-                      }))
-                    }
-                    placeholder="First name"
-                    error={Boolean(errors.first)}
-                    hint={errors.first || ""}
-                  />
-                </FieldGroup>
-
-                {/* Last Name */}
-                <FieldGroup label="Last Name" required>
-                  <Input
-                    startIcon={<User2 size={16} />}
-                    value={form.last_name}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        last_name: String(e.target.value),
-                      }))
-                    }
-                    placeholder="Last name"
-                    error={Boolean(errors.last)}
-                    hint={errors.last || ""}
-                  />
-                </FieldGroup>
-
-                {/* Phone */}
-                <FieldGroup label="Phone" required>
-                  <Input
-                    startIcon={<Phone size={16} />}
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        phone: String(e.target.value),
-                      }))
-                    }
-                    placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
-                    error={Boolean(errors.phone)}
-                    hint={errors.phone || ""}
-                  />
-                </FieldGroup>
-
-                {/* DOB (Optional) with DatePicker */}
-                <div className="space-y-2">
+                {/* Status */}
+                <div className="md:col-span-12 lg:col-span-3">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Date of Birth{" "}
-                    <span className="text-xs text-gray-400">(optional)</span>
+                    Status
                   </p>
 
-                  <div className="relative">
-                    <DatePicker
-                      value={form.dob}
+                  <div className="mt-2 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {form.is_active === "active" ? "Active" : "Inactive"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        Toggle customer access
+                      </p>
+                    </div>
+
+                    <StatusToggle
+                      value={form.is_active}
                       onChange={(v) =>
                         setForm((p) => ({
                           ...p,
-                          dob: String(v ?? ""),
+                          is_active: v as CreateCustomerForm["is_active"],
                         }))
                       }
-                      placeholder="Select date"
-                      showClear={true}
-                      showToday={true}
-                      yearRange={{
-                        from: new Date().getFullYear() - 80,
-                        to: new Date().getFullYear(),
-                      }}
                     />
                   </div>
-
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    If your DatePicker returns a date string, it will save as
-                    YYYY-MM-DD.
-                  </p>
                 </div>
+              </div>
+            </div>
 
-                {/* Gender */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Gender
-                  </p>
-                  <Select
-                    key={`gender-${form.gender}`}
-                    options={GENDER_OPTIONS}
-                    placeholder="Select gender"
-                    defaultValue={form.gender}
+            {/* Fields */}
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {/* Email */}
+              <FieldGroup label="Email" required>
+                <Input
+                  startIcon={<Mail size={16} />}
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      email: String(e.target.value),
+                    }))
+                  }
+                  placeholder="example@gmail.com"
+                  error={Boolean(errors.email)}
+                  hint={errors.email || ""}
+                />
+              </FieldGroup>
+
+              {/* Password */}
+              <FieldGroup label="Password" required>
+                <Input
+                  startIcon={<Lock size={16} />}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      password: String(e.target.value),
+                    }))
+                  }
+                  placeholder="minimum 8 characters"
+                  type="password"
+                  error={Boolean(errors.pass)}
+                  hint={errors.pass || ""}
+                />
+              </FieldGroup>
+
+              {/* First Name */}
+              <FieldGroup label="First Name" required>
+                <Input
+                  startIcon={<User2 size={16} />}
+                  value={form.first_name}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      first_name: String(e.target.value),
+                    }))
+                  }
+                  placeholder="First name"
+                  error={Boolean(errors.first)}
+                  hint={errors.first || ""}
+                />
+              </FieldGroup>
+
+              {/* Last Name */}
+              <FieldGroup label="Last Name" required>
+                <Input
+                  startIcon={<User2 size={16} />}
+                  value={form.last_name}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      last_name: String(e.target.value),
+                    }))
+                  }
+                  placeholder="Last name"
+                  error={Boolean(errors.last)}
+                  hint={errors.last || ""}
+                />
+              </FieldGroup>
+
+              {/* Phone */}
+              <FieldGroup label="Phone" required>
+                <Input
+                  startIcon={<Phone size={16} />}
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      phone: String(e.target.value),
+                    }))
+                  }
+                  placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
+                  error={Boolean(errors.phone)}
+                  hint={errors.phone || ""}
+                />
+              </FieldGroup>
+
+              {/* DOB (Optional) with DatePicker */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Date of Birth{" "}
+                  <span className="text-xs text-gray-400">(optional)</span>
+                </p>
+
+                <div className="relative">
+                  <DatePicker
+                    value={form.dob}
                     onChange={(v) =>
                       setForm((p) => ({
                         ...p,
-                        gender: v as CreateCustomerForm["gender"],
+                        dob: String(v ?? ""),
                       }))
                     }
+                    placeholder="Select date"
+                    showClear={true}
+                    showToday={true}
+                    yearRange={{
+                      from: new Date().getFullYear() - 80,
+                      to: new Date().getFullYear(),
+                    }}
                   />
                 </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  If your DatePicker returns a date string, it will save as
+                  YYYY-MM-DD.
+                </p>
               </div>
-            </SectionCard>
-          </div>
+
+              {/* Gender */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Gender
+                </p>
+                <Select
+                  key={`gender-${form.gender}`}
+                  options={GENDER_OPTIONS}
+                  placeholder="Select gender"
+                  defaultValue={form.gender}
+                  onChange={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      gender: v as CreateCustomerForm["gender"],
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </SectionCard>
 
           {/* Actions (responsive) */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -536,79 +535,79 @@ export default function CreateCustomerPage() {
         {/* RIGHT: Preview Card */}
         <div className="space-y-6 lg:col-span-4">
           <SectionCard title="Live Preview" description="This is how it will look in list.">
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
-                  {previewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={previewUrl}
-                      alt="preview"
-                      className="h-full w-full object-cover"
-                    />
+            <div className="flex items-start gap-4">
+              <div className="h-14 w-14 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+                {previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={previewUrl}
+                    alt="preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-base font-semibold text-gray-700 dark:text-gray-200">
+                    {avatarLetter}
+                  </div>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                  {fullName || "—"}
+                </p>
+
+                <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <Mail size={14} />
+                  <span className="truncate">{form.email || "—"}</span>
+                </p>
+
+                <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <Phone size={14} />
+                  <span className="truncate">{form.phone || "—"}</span>
+                </p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant="solid"
+                    color={form.is_active === "active" ? "success" : "dark"}
+                    size="sm"
+                  >
+                    {form.is_active}
+                  </Badge>
+
+                  <Badge variant="solid" color="info" size="sm">
+                    {form.gender}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                "mt-5 rounded-xl border p-4",
+                canSubmit
+                  ? "border-success-200 bg-success-50 dark:border-success-900/40 dark:bg-success-500/10"
+                  : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10"
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                  {canSubmit ? (
+                    <BadgeCheck size={18} />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-base font-semibold text-gray-700 dark:text-gray-200">
-                      {avatarLetter}
-                    </div>
+                    <ShieldAlert size={18} />
                   )}
                 </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                    {fullName || "—"}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {canSubmit ? "Ready to create" : "Fix required fields"}
                   </p>
-
-                  <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Mail size={14} />
-                    <span className="truncate">{form.email || "—"}</span>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {requiredLabel}
                   </p>
-
-                  <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Phone size={14} />
-                    <span className="truncate">{form.phone || "—"}</span>
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant="solid"
-                      color={form.is_active === "active" ? "success" : "dark"}
-                      size="sm"
-                    >
-                      {form.is_active}
-                    </Badge>
-
-                    <Badge variant="solid" color="info" size="sm">
-                      {form.gender}
-                    </Badge>
-                  </div>
                 </div>
               </div>
-
-              <div
-                className={cn(
-                  "mt-5 rounded-xl border p-4",
-                  canSubmit
-                    ? "border-success-200 bg-success-50 dark:border-success-900/40 dark:bg-success-500/10"
-                    : "border-warning-200 bg-warning-50 dark:border-warning-900/40 dark:bg-warning-500/10"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                    {canSubmit ? (
-                      <BadgeCheck size={18} />
-                    ) : (
-                      <ShieldAlert size={18} />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {canSubmit ? "Ready to create" : "Fix required fields"}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {requiredLabel}
-                    </p>
-                  </div>
-                </div>
-              </div>
+            </div>
           </SectionCard>
 
           <SectionCard title="Tips">
@@ -634,6 +633,6 @@ export default function CreateCustomerPage() {
           closeCropper();
         }}
       />
-    </div >
+    </div>
   );
 }
