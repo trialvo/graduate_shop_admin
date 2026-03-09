@@ -1,45 +1,46 @@
 // src/components/business-settings/analytics-settings/AnalyticsSettingsPage.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+      Activity,
       BarChart3,
-      Tag,
-      Facebook,
-      RefreshCw,
-      Globe,
-      MousePointerClick,
-      Eye,
-      ShoppingCart,
-      CreditCard,
-      Search,
-      UserPlus,
-      Users,
-      Mail,
-      Phone,
-      Fingerprint,
-      Key,
-      FlaskConical,
-      Settings2,
-      Loader2,
       CheckCircle2,
       ChevronDown,
       ChevronUp,
-      Activity,
-      Scroll,
+      CreditCard,
+      Eye,
+      Facebook,
+      Fingerprint,
+      FlaskConical,
+      Globe,
+      Key,
+      Loader2,
+      Mail,
+      Monitor,
       MousePointer,
+      MousePointerClick,
+      Phone,
+      RefreshCw,
       Save,
+      Scroll,
+      Search,
+      Settings2,
+      ShoppingCart,
+      Tag,
+      UserPlus,
+      Users,
 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
-import Switch from "@/components/form/switch/Switch";
 import {
       getAnalyticsConfig,
       updateAnalyticsConfig,
       type AnalyticsConfigResponse,
 } from "@/api/analytics-config.api";
+import Switch from "@/components/form/switch/Switch";
 
 type ConfigData = AnalyticsConfigResponse["data"];
 
@@ -62,6 +63,10 @@ const DEFAULT_CONFIG: ConfigData = {
                   gtm_id: "",
                   auth: "",
                   preview: "",
+            },
+            microsoft_clarity: {
+                  enabled: false,
+                  project_id: "",
             },
             facebook_pixel: {
                   enabled: false,
@@ -106,8 +111,8 @@ function StatusDot({ on }: { on: boolean }) {
       return (
             <span
                   className={`inline-block h-2.5 w-2.5 rounded-full ${on
-                              ? "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,.5)]"
-                              : "bg-gray-300 dark:bg-gray-600"
+                        ? "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,.5)]"
+                        : "bg-gray-300 dark:bg-gray-600"
                         }`}
             />
       );
@@ -347,6 +352,7 @@ export default function AnalyticsSettingsPage() {
       const [gaLocal, setGaLocal] = useState(deepClone(DEFAULT_CONFIG.analytics.google_analytics));
       const [gtmLocal, setGtmLocal] = useState(deepClone(DEFAULT_CONFIG.analytics.google_tag_manager));
       const [fbLocal, setFbLocal] = useState(deepClone(DEFAULT_CONFIG.analytics.facebook_pixel));
+      const [clarityLocal, setClarityLocal] = useState(deepClone(DEFAULT_CONFIG.analytics.microsoft_clarity));
       const [trackingLocal, setTrackingLocal] = useState(deepClone(DEFAULT_CONFIG.tracking));
       const [metaLocal, setMetaLocal] = useState(deepClone(DEFAULT_CONFIG.meta));
 
@@ -357,6 +363,7 @@ export default function AnalyticsSettingsPage() {
                   setGaLocal(deepClone(d.analytics.google_analytics));
                   setGtmLocal(deepClone(d.analytics.google_tag_manager));
                   setFbLocal(deepClone(d.analytics.facebook_pixel));
+                  setClarityLocal(deepClone(d.analytics.microsoft_clarity ?? DEFAULT_CONFIG.analytics.microsoft_clarity));
                   setTrackingLocal(deepClone(d.tracking));
                   setMetaLocal(deepClone(d.meta));
             }
@@ -366,6 +373,7 @@ export default function AnalyticsSettingsPage() {
       const gaDirty = useMemo(() => !deepEqual(gaLocal, serverData.analytics.google_analytics), [gaLocal, serverData]);
       const gtmDirty = useMemo(() => !deepEqual(gtmLocal, serverData.analytics.google_tag_manager), [gtmLocal, serverData]);
       const fbDirty = useMemo(() => !deepEqual(fbLocal, serverData.analytics.facebook_pixel), [fbLocal, serverData]);
+      const clarityDirty = useMemo(() => !deepEqual(clarityLocal, serverData.analytics.microsoft_clarity ?? DEFAULT_CONFIG.analytics.microsoft_clarity), [clarityLocal, serverData]);
       const trackingDirty = useMemo(() => !deepEqual(trackingLocal, serverData.tracking), [trackingLocal, serverData]);
       const metaDirty = useMemo(() => !deepEqual(metaLocal, serverData.meta), [metaLocal, serverData]);
 
@@ -381,6 +389,7 @@ export default function AnalyticsSettingsPage() {
                               google_analytics: overrides.analytics?.google_analytics ?? serverData.analytics.google_analytics,
                               google_tag_manager: overrides.analytics?.google_tag_manager ?? serverData.analytics.google_tag_manager,
                               facebook_pixel: overrides.analytics?.facebook_pixel ?? serverData.analytics.facebook_pixel,
+                              microsoft_clarity: overrides.analytics?.microsoft_clarity ?? (serverData.analytics.microsoft_clarity ?? DEFAULT_CONFIG.analytics.microsoft_clarity),
                         },
                         tracking: overrides.tracking ?? serverData.tracking,
                         meta: overrides.meta ?? serverData.meta,
@@ -437,6 +446,13 @@ export default function AnalyticsSettingsPage() {
             instantToggleMutation.mutate(buildPayload({ analytics: { facebook_pixel: updated } }));
       };
 
+      const toggleClarity = (v: boolean) => {
+            setToggleKey("clarity");
+            const updated = { ...(deepClone(serverData.analytics.microsoft_clarity) ?? DEFAULT_CONFIG.analytics.microsoft_clarity), enabled: v };
+            setClarityLocal((prev) => ({ ...prev, enabled: v }));
+            instantToggleMutation.mutate(buildPayload({ analytics: { microsoft_clarity: updated } }));
+      };
+
       // ── per-section update mutations ──
       const gaMutation = useMutation({
             mutationFn: () => updateAnalyticsConfig(buildPayload({ analytics: { google_analytics: gaLocal } })),
@@ -465,6 +481,17 @@ export default function AnalyticsSettingsPage() {
             onSuccess: (res: any) => {
                   if (res?.success || res?.status) {
                         toast.success(T("fb.updateSuccess"));
+                        invalidate();
+                  } else toast.error(res?.error ?? T("updateFailed"));
+            },
+            onError: (err: any) => toast.error(err?.response?.data?.error ?? T("updateFailed")),
+      });
+
+      const clarityMutation = useMutation({
+            mutationFn: () => updateAnalyticsConfig(buildPayload({ analytics: { microsoft_clarity: clarityLocal } })),
+            onSuccess: (res: any) => {
+                  if (res?.success || res?.status) {
+                        toast.success("Clarity settings updated.");
                         invalidate();
                   } else toast.error(res?.error ?? T("updateFailed"));
             },
@@ -539,7 +566,7 @@ export default function AnalyticsSettingsPage() {
                               { label: T("overview.googleAnalytics"), on: gaLocal.enabled, icon: <BarChart3 size={18} /> },
                               { label: T("overview.tagManager"), on: gtmLocal.enabled, icon: <Tag size={18} /> },
                               { label: T("overview.facebookPixel"), on: fbLocal.enabled, icon: <Facebook size={18} /> },
-                              { label: T("overview.autoPageView"), on: trackingLocal.auto_page_view, icon: <Eye size={18} /> },
+                              { label: "Microsoft Clarity", on: clarityLocal.enabled, icon: <Monitor size={18} /> },
                         ].map((item) => (
                               <div
                                     key={item.label}
@@ -547,8 +574,8 @@ export default function AnalyticsSettingsPage() {
                               >
                                     <div
                                           className={`flex h-9 w-9 items-center justify-center rounded-lg ${item.on
-                                                      ? "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400"
-                                                      : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                                                ? "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400"
+                                                : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
                                                 }`}
                                     >
                                           {item.icon}
@@ -559,8 +586,8 @@ export default function AnalyticsSettingsPage() {
                                           </p>
                                           <p
                                                 className={`text-sm font-semibold ${item.on
-                                                            ? "text-green-600 dark:text-green-400"
-                                                            : "text-gray-400 dark:text-gray-500"
+                                                      ? "text-green-600 dark:text-green-400"
+                                                      : "text-gray-400 dark:text-gray-500"
                                                       }`}
                                           >
                                                 {item.on ? T("active") : T("inactive")}
@@ -803,6 +830,37 @@ export default function AnalyticsSettingsPage() {
                                     />
                               </div>
                         </SubSection>
+                  </SectionCard>
+
+                  {/* ══════════════════════════
+         MICROSOFT CLARITY
+         ══════════════════════════ */}
+                  <SectionCard
+                        icon={<Monitor size={20} />}
+                        title="Microsoft Clarity"
+                        subtitle={clarityLocal.project_id || T("notConfigured")}
+                        enabled={clarityLocal.enabled}
+                        onToggle={toggleClarity}
+                        toggleLoading={toggleKey === "clarity" && instantToggleMutation.isPending}
+                        dirty={clarityDirty}
+                        onUpdate={() => clarityMutation.mutate()}
+                        updating={clarityMutation.isPending}
+                        updateLabel={T("update")}
+                        updatingLabel={T("updating")}
+                  >
+                        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+                              Microsoft Clarity is a free behavioural analytics tool that records session replays and heatmaps.
+                              Your Project ID can be found in the Clarity dashboard under Settings → Overview.
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                              <SettingInput
+                                    label="Project ID"
+                                    value={clarityLocal.project_id}
+                                    onChange={(v) => setClarityLocal((p) => ({ ...p, project_id: v }))}
+                                    placeholder="e.g. abcde12345"
+                                    icon={<Monitor size={16} />}
+                              />
+                        </div>
                   </SectionCard>
 
                   {/* ══════════════════════════

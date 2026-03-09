@@ -59,6 +59,10 @@ export type AnalyticsConfigResponse = {
         enabled: boolean;
         preview: string;
       };
+      microsoft_clarity: {
+        enabled: boolean;
+        project_id: string;
+      };
     };
   };
 };
