@@ -69,6 +69,7 @@ export type UserAuditLog = {
   user_email: string;
   first_name: string | null;
   last_name: string | null;
+  user_img_path: string | null;
   action_display_name: string;
 };
 

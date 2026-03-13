@@ -1,12 +1,25 @@
 import { useState, useMemo } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Calendar, X } from "lucide-react";
 import { useUserAuditLogs, useUserActionKeys } from "@/hooks/useAuditLogs";
 import type { UserAuditLogParams } from "@/api/audit.api";
 import Input from "@/components/form/input/InputField";
 import PageMeta from "@/components/common/PageMeta";
+import DatePicker from "@/components/form/date-picker";
+import { toPublicUrl } from "@/utils/toPublicUrl";
 
-/** Side-by-side diff showing old vs new values */
-function ValuesDiff({ old_values, new_values }: {
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
+
+function initials(first: string | null | undefined, last: string | null | undefined): string {
+  const f = first?.trim()?.[0] ?? "";
+  const l = last?.trim()?.[0] ?? "";
+  return (f + l).toUpperCase() || "?";
+}
+
+/** Side-by-side diff / detail view showing new values or old→new diff */
+function ValuesDiff({
+  old_values,
+  new_values,
+}: {
   old_values: Record<string, unknown> | null;
   new_values: Record<string, unknown> | null;
 }) {
@@ -17,9 +30,28 @@ function ValuesDiff({ old_values, new_values }: {
     new Set([...Object.keys(old_values ?? {}), ...Object.keys(new_values ?? {})])
   );
 
+  // Collapsed summary
   if (!expanded) {
+    // If only new_values (e.g. PLACE_ORDER snapshot), show first key=value
+    if (!old_values && new_values) {
+      const firstKey = allKeys[0];
+      const summary = firstKey
+        ? `${firstKey}: ${String(new_values[firstKey])}${allKeys.length > 1 ? ` +${allKeys.length - 1} more` : ""}`
+        : `${allKeys.length} field${allKeys.length !== 1 ? "s" : ""}`;
+      return (
+        <button
+          onClick={() => setExpanded(true)}
+          className="font-mono text-xs text-brand-500 hover:underline text-left"
+        >
+          {summary}
+        </button>
+      );
+    }
     return (
-      <button onClick={() => setExpanded(true)} className="font-mono text-xs text-brand-500 hover:underline">
+      <button
+        onClick={() => setExpanded(true)}
+        className="font-mono text-xs text-brand-500 hover:underline"
+      >
         {allKeys.length} field{allKeys.length !== 1 ? "s" : ""} changed
       </button>
     );
@@ -28,7 +60,7 @@ function ValuesDiff({ old_values, new_values }: {
   return (
     <div className="space-y-1">
       {allKeys.map((k) => (
-        <div key={k} className="flex gap-1 text-xs font-mono">
+        <div key={k} className="flex gap-1 text-xs font-mono flex-wrap">
           <span className="text-gray-500 shrink-0">{k}:</span>
           {old_values?.[k] !== undefined && (
             <span className="rounded bg-error-50 px-1 text-error-700 dark:bg-error-500/10 dark:text-error-300 line-through">
@@ -42,10 +74,17 @@ function ValuesDiff({ old_values, new_values }: {
           )}
         </div>
       ))}
-      <button onClick={() => setExpanded(false)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">collapse</button>
+      <button
+        onClick={() => setExpanded(false)}
+        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+      >
+        collapse
+      </button>
     </div>
   );
 }
+
+/* ── Page ─────────────────────────────────────────────────────────────────── */
 
 export default function UserAuditLogsPage() {
   const [search, setSearch] = useState("");
@@ -57,14 +96,17 @@ export default function UserAuditLogsPage() {
 
   const { data: actionKeys = [] } = useUserActionKeys();
 
-  const params: UserAuditLogParams = useMemo(() => ({
-    search: search || undefined,
-    action: action || undefined,
-    date_from: dateFrom || undefined,
-    date_to: dateTo || undefined,
-    limit,
-    page,
-  }), [search, action, dateFrom, dateTo, page]);
+  const params: UserAuditLogParams = useMemo(
+    () => ({
+      search: search || undefined,
+      action: action || undefined,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+      limit,
+      page,
+    }),
+    [search, action, dateFrom, dateTo, page]
+  );
 
   const { data, isLoading, isError } = useUserAuditLogs(params);
   const logs = data?.data ?? [];
@@ -78,27 +120,75 @@ export default function UserAuditLogsPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Audit Logs</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Full activity trail of user actions including profile changes, orders, and more.
-          {count > 0 && <span className="font-medium text-gray-700 dark:text-gray-300"> {count} records found.</span>}
+          {count > 0 && (
+            <span className="font-medium text-gray-700 dark:text-gray-300">
+              {" "}{count.toLocaleString()} record{count !== 1 ? "s" : ""} found.
+            </span>
+          )}
         </p>
       </div>
 
       {/* Filters */}
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Input
-          startIcon={<Search size={15} className="text-gray-400" />}
-          placeholder="Search user email / name..."
-          value={search}
-          onChange={(e) => { setSearch(String(e.target.value)); setPage(1); }}
-        />
-        <select value={action} onChange={(e) => { setAction(e.target.value); setPage(1); }}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+      <div className="mb-4 flex flex-wrap gap-3">
+        {/* Search */}
+        <div className="min-w-[200px] flex-1">
+          <Input
+            startIcon={<Search size={15} className="text-gray-400" />}
+            placeholder="Search user email / name..."
+            value={search}
+            onChange={(e) => { setSearch(String(e.target.value)); setPage(1); }}
+          />
+        </div>
+
+        {/* Action filter */}
+        <select
+          value={action}
+          onChange={(e) => { setAction(e.target.value); setPage(1); }}
+          className="h-11 min-w-[180px] rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+        >
           <option value="">All Actions</option>
-          {actionKeys.map((k) => <option key={k.action_key} value={k.action_key}>{k.display_name}</option>)}
+          {actionKeys.map((k) => (
+            <option key={k.action_key} value={k.action_key}>{k.display_name}</option>
+          ))}
         </select>
-        <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white" />
-        <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white" />
+
+        {/* Date range picker */}
+        <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-900">
+          <Calendar size={15} className="shrink-0 text-gray-400" />
+          <div className="flex items-center gap-1.5 py-1.5">
+            <div className="w-[130px]">
+              <DatePicker
+                placeholder="From"
+                value={dateFrom}
+                onChange={(v) => { setDateFrom(v); setPage(1); }}
+                max={dateTo || undefined}
+                showToday={false}
+                className="border-0 shadow-none bg-transparent"
+              />
+            </div>
+            <span className="text-xs text-gray-400 select-none">→</span>
+            <div className="w-[130px]">
+              <DatePicker
+                placeholder="To"
+                value={dateTo}
+                onChange={(v) => { setDateTo(v); setPage(1); }}
+                min={dateFrom || undefined}
+                showToday
+                className="border-0 shadow-none bg-transparent"
+              />
+            </div>
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={() => { setDateFrom(""); setDateTo(""); setPage(1); }}
+                className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                title="Clear date range"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -108,52 +198,113 @@ export default function UserAuditLogsPage() {
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 {["#", "User", "Action", "IP Address", "Changes", "Date / Time"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">Loading user audit logs...</td></tr>
-              ) : isError ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-error-500">Failed to load user audit logs.</td></tr>
-              ) : logs.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">No user audit logs found.</td></tr>
-              ) : logs.map((log, idx) => (
-                <tr key={log.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                  <td className="px-4 py-3 text-xs text-gray-400">{(page - 1) * limit + idx + 1}</td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {[log.first_name, log.last_name].filter(Boolean).join(" ") || "—"}
-                    </p>
-                    <p className="text-xs text-gray-500">{log.user_email}</p>
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
+                    Loading user audit logs...
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex rounded-md bg-violet-50 px-2 py-1 font-mono text-xs font-semibold text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
-                      {log.action_display_name}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{log.ip_address ?? "—"}</td>
-                  <td className="px-4 py-3 max-w-xs">
-                    <ValuesDiff old_values={log.old_values} new_values={log.new_values} />
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
                 </tr>
-              ))}
+              ) : isError ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-error-500">
+                    Failed to load user audit logs.
+                  </td>
+                </tr>
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
+                    No user audit logs found.
+                  </td>
+                </tr>
+              ) : (
+                logs.map((log, idx) => (
+                  <tr
+                    key={log.id}
+                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 align-top"
+                  >
+                    {/* # */}
+                    <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                      {(page - 1) * limit + idx + 1}
+                    </td>
+
+                    {/* User — avatar + name + email */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300">
+                          {log.user_img_path ? (
+                            <img
+                              src={toPublicUrl(log.user_img_path)}
+                              alt={[log.first_name, log.last_name].filter(Boolean).join(" ")}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            initials(log.first_name, log.last_name)
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                            {[log.first_name, log.last_name].filter(Boolean).join(" ") || "—"}
+                          </p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                            {log.user_email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Action */}
+                    <td className="px-4 py-3">
+                      <span className="inline-flex rounded-md bg-violet-50 px-2 py-1 font-mono text-xs font-semibold text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                        {log.action_display_name}
+                      </span>
+                    </td>
+
+                    {/* IP */}
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">
+                      {log.ip_address ?? "—"}
+                    </td>
+
+                    {/* Changes diff */}
+                    <td className="px-4 py-3 max-w-xs">
+                      <ValuesDiff old_values={log.old_values} new_values={log.new_values} />
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      {new Date(log.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
         <div className="flex items-center justify-between border-t border-gray-200 px-5 py-3 dark:border-gray-800">
-          <p className="text-xs text-gray-500">Page {page} — {logs.length} entries</p>
+          <p className="text-xs text-gray-500">
+            Page {page} — {logs.length} entr{logs.length !== 1 ? "ies" : "y"}
+          </p>
           <div className="flex items-center gap-2">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300"
+            >
               <ChevronLeft size={15} />
             </button>
-            <button onClick={() => setPage((p) => p + 1)} disabled={!hasMore}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300">
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasMore}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300"
+            >
               <ChevronRight size={15} />
             </button>
           </div>
