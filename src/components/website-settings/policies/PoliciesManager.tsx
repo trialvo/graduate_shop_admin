@@ -1,53 +1,157 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2, FileText, X, Check } from "lucide-react";
-import { usePolicies, useSavePolicy, useDeletePolicy, usePolicyByKey } from "@/hooks/usePolicies";
+import { Plus, Pencil, Trash2, FileText, Eye, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import {
+  usePolicies,
+  useSavePolicy,
+  useDeletePolicy,
+} from "@/hooks/usePolicies";
+import { getPolicyByKey } from "@/api/policies.api";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import Modal from "@/components/ui/modal/Modal";
+import type { PolicySummary, UpsertPolicyBody } from "@/api/policies.api";
 
-type PolicyForm = { key: string; title: string; content: string };
+type PolicyForm = {
+  policy_key: string;
+  title: string;
+  content: string;
+  content_type: "html" | "text";
+  status: 0 | 1;
+};
 
-const EMPTY_FORM: PolicyForm = { key: "", title: "", content: "" };
+const EMPTY_FORM: PolicyForm = {
+  policy_key: "",
+  title: "",
+  content: "",
+  content_type: "html",
+  status: 1,
+};
+
+/**
+ * Hard validator — returns first error string found, or null if HTML looks valid.
+ * Save is BLOCKED when this returns a string.
+ */
+function isValidHtml(html: string): string | null {
+  if (!html.trim()) return null;
+
+  // Unclosed tag: '<p' or '<div class' without a closing '>'
+  if (/<[a-zA-Z/][^>]*$/.test(html.trim())) {
+    return "Invalid HTML: unclosed tag detected (e.g. '<p' missing '>'). Please fix before saving.";
+  }
+
+  // Stray '<' that isn't part of a tag
+  if (/<(?![a-zA-Z/!?])/.test(html)) {
+    return "Invalid HTML: stray '<' character found. Use '&lt;' to display a literal '<'.";
+  }
+
+  // Dangerous content — hard block
+  if (/<script\b/i.test(html)) return "<script> tags are not allowed in policy content.";
+  if (/<iframe\b/i.test(html)) return "<iframe> tags are not allowed in policy content.";
+  if (/\son\w+\s*=/i.test(html)) return "Event handler attributes (onclick, onerror …) are not allowed.";
+  if (/javascript:/i.test(html)) return "javascript: URLs are not allowed.";
+
+  return null;
+}
 
 export default function PoliciesManager() {
   const { data: policies = [], isLoading, isError } = usePolicies();
   const saveMutation = useSavePolicy();
   const deleteMutation = useDeletePolicy();
 
+  /* ── Editor state ── */
   const [editorOpen, setEditorOpen] = useState(false);
   const [form, setForm] = useState<PolicyForm>(EMPTY_FORM);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  /* ── View state ── */
+  const [viewPolicy, setViewPolicy] = useState<{ title: string; content: string; content_type: "html" | "text" } | null>(null);
+  const [loadingView, setLoadingView] = useState<string | null>(null);
+
+  /* ── Delete state ── */
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  /* ─────────── Open edit (fetches full content) ─────────── */
+  const openEdit = async (p: PolicySummary) => {
+    setLoadingEdit(true);
+    setEditingKey(p.policy_key);
+    try {
+      const full = await getPolicyByKey(p.policy_key);
+      setForm({
+        policy_key: full.policy_key,
+        title: full.title,
+        content: full.content ?? "",
+        content_type: full.content_type,
+        status: full.status,
+      });
+      setEditorOpen(true);
+    } catch {
+      toast.error("Failed to load policy content.");
+      setEditingKey(null);
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
+
+  /* ─────────── Open view (fetches full content) ─────────── */
+  const openView = async (p: PolicySummary) => {
+    setLoadingView(p.policy_key);
+    try {
+      const full = await getPolicyByKey(p.policy_key);
+      setViewPolicy({
+        title: full.title,
+        content: full.content ?? "(no content)",
+        content_type: full.content_type,
+      });
+    } catch {
+      toast.error("Failed to load policy content.");
+    } finally {
+      setLoadingView(null);
+    }
+  };
+
+  /* ─────────── Create ─────────── */
   const openCreate = () => {
     setForm(EMPTY_FORM);
     setEditingKey(null);
     setEditorOpen(true);
   };
 
-  const openEdit = (key: string, title: string, content = "") => {
-    setForm({ key, title, content });
-    setEditingKey(key);
-    setEditorOpen(true);
-  };
-
+  /* ─────────── Save (upsert) ─────────── */
   const handleSave = async () => {
-    if (!form.key.trim() || !form.title.trim()) {
-      toast.error("Key and title are required.");
+    if (!form.policy_key.trim() || !form.title.trim()) {
+      toast.error("Policy key and title are required.");
       return;
     }
+
+    // Hard block on invalid HTML — if content_type is html, validate before saving
+    if (form.content_type === "html" && form.content.trim()) {
+      const htmlError = isValidHtml(form.content);
+      if (htmlError) {
+        toast.error(htmlError);
+        return; // ← blocked
+      }
+    }
+
     setSaving(true);
     try {
-      await saveMutation.mutateAsync(form);
-      toast.success("Policy saved.");
+      const body: UpsertPolicyBody = {
+        policy_key: form.policy_key,
+        title: form.title,
+        content: form.content,
+        content_type: form.content_type,
+        status: form.status,
+      };
+      await saveMutation.mutateAsync(body);
+      toast.success(editingKey ? "Policy updated." : "Policy created.");
       setEditorOpen(false);
       setForm(EMPTY_FORM);
+      setEditingKey(null);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Save failed.");
     } finally {
@@ -55,6 +159,7 @@ export default function PoliciesManager() {
     }
   };
 
+  /* ─────────── Delete ─────────── */
   const handleDelete = async () => {
     if (!confirmDelete) return;
     setDeleting(true);
@@ -69,18 +174,23 @@ export default function PoliciesManager() {
     }
   };
 
+  /* ─────────── Render ─────────── */
   return (
     <div className="space-y-5">
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{policies.length} policies configured</p>
-        <Button startIcon={<Plus size={15} />} onClick={openCreate}>Add Policy</Button>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {policies.length} polic{policies.length === 1 ? "y" : "ies"} configured
+        </p>
+        <Button startIcon={<Plus size={15} />} onClick={openCreate}>
+          Add Policy
+        </Button>
       </div>
 
       {/* Table */}
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {isLoading ? (
-          <p className="p-6 text-sm text-gray-500">Loading policies...</p>
+          <p className="p-6 text-sm text-gray-500">Loading policies…</p>
         ) : isError ? (
           <p className="p-6 text-sm text-error-500">Failed to load policies.</p>
         ) : policies.length === 0 ? (
@@ -93,30 +203,75 @@ export default function PoliciesManager() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  {["Key", "Title", "Updated At", "Actions"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">{h}</th>
+                  {["Policy Key", "Title", "Type", "Status", "Updated", "Actions"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {policies.map((p) => (
-                  <tr key={p.key} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{p.key}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{p.title}</td>
+                  <tr
+                    key={p.policy_key}
+                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/40"
+                  >
+                    <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">
+                      {p.policy_key}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                      {p.title}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                        {p.content_type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.status === 1 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400">
+                          <ToggleRight size={12} /> Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                          <ToggleLeft size={12} /> Inactive
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {new Date(p.updated_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        {/* View */}
                         <button
-                          onClick={() => openEdit(p.key, p.title)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                          onClick={() => openView(p)}
+                          disabled={loadingView === p.policy_key}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 disabled:opacity-50"
+                          title="View"
+                        >
+                          {loadingView === p.policy_key
+                            ? <Loader2 size={14} className="animate-spin" />
+                            : <Eye size={14} />
+                          }
+                        </button>
+
+                        {/* Edit */}
+                        <button
+                          onClick={() => openEdit(p)}
+                          disabled={loadingEdit && editingKey === p.policy_key}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 disabled:opacity-50"
                           title="Edit"
                         >
-                          <Pencil size={14} />
+                          {loadingEdit && editingKey === p.policy_key
+                            ? <Loader2 size={14} className="animate-spin" />
+                            : <Pencil size={14} />
+                          }
                         </button>
+
+                        {/* Delete */}
                         <button
-                          onClick={() => setConfirmDelete(p.key)}
+                          onClick={() => setConfirmDelete(p.policy_key)}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-error-200 bg-white text-error-600 hover:bg-error-50 dark:border-error-900/40 dark:bg-gray-900"
                           title="Delete"
                         >
@@ -132,58 +287,170 @@ export default function PoliciesManager() {
         )}
       </div>
 
-      {/* Editor Modal */}
+      {/* ─── View Modal ─── */}
+      <Modal
+        open={Boolean(viewPolicy)}
+        title={viewPolicy?.title ?? "Policy"}
+        onClose={() => setViewPolicy(null)}
+        size="lg"
+      >
+        {viewPolicy && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                {viewPolicy.content_type}
+              </span>
+            </div>
+            {viewPolicy.content_type === "html" ? (
+              <div
+                className="prose dark:prose-invert max-w-none rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40 text-sm"
+                dangerouslySetInnerHTML={{ __html: viewPolicy.content }}
+              />
+            ) : (
+              <pre className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40 text-xs text-gray-800 dark:text-gray-200">
+                {viewPolicy.content}
+              </pre>
+            )}
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setViewPolicy(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ─── Editor Modal ─── */}
       <Modal
         open={editorOpen}
-        title={editingKey ? "Edit Policy" : "Create Policy"}
-        onClose={() => { setEditorOpen(false); setForm(EMPTY_FORM); }}
+        title={editingKey ? `Edit — ${editingKey}` : "Create Policy"}
+        onClose={() => { setEditorOpen(false); setForm(EMPTY_FORM); setEditingKey(null); }}
         size="lg"
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="policy-key">Key (slug) <span className="text-error-500">*</span></Label>
+            {/* Policy Key */}
+            <div className="space-y-1.5">
+              <Label htmlFor="policy-key">
+                Policy Key <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="policy-key"
-                value={form.key}
+                value={form.policy_key}
                 disabled={Boolean(editingKey)}
-                onChange={(e) => setForm((f) => ({ ...f, key: String(e.target.value).toLowerCase().replace(/\s+/g, "_") }))}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    policy_key: e.target.value.toLowerCase().replace(/\s+/g, "_"),
+                  }))
+                }
                 placeholder="return_policy"
               />
+              {!editingKey && (
+                <p className="text-xs text-gray-400">
+                  Unique identifier — cannot be changed after creation.
+                </p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="policy-title">Title <span className="text-error-500">*</span></Label>
+
+            {/* Title */}
+            <div className="space-y-1.5">
+              <Label htmlFor="policy-title">
+                Title <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="policy-title"
                 value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: String(e.target.value) }))}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 placeholder="Return Policy"
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="policy-content">Content (HTML)</Label>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Content Type */}
+            <div className="space-y-1.5">
+              <Label>Content Type</Label>
+              <div className="flex gap-4">
+                {(["html", "text"] as const).map((ct) => (
+                  <label key={ct} className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="content_type"
+                      value={ct}
+                      checked={form.content_type === ct}
+                      onChange={() => setForm((f) => ({ ...f, content_type: ct }))}
+                      className="accent-brand-500"
+                    />
+                    {ct.toUpperCase()}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <div className="flex gap-4">
+                {([1, 0] as const).map((s) => (
+                  <label key={s} className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="radio"
+                      name="status"
+                      value={s}
+                      checked={form.status === s}
+                      onChange={() => setForm((f) => ({ ...f, status: s }))}
+                      className="accent-brand-500"
+                    />
+                    {s === 1 ? "Active" : "Inactive"}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-1.5">
+            <Label htmlFor="policy-content">
+              Content{" "}
+              {form.content_type === "html" && (
+                <span className="text-xs text-gray-400">(HTML)</span>
+              )}
+            </Label>
             <textarea
               id="policy-content"
-              rows={10}
+              rows={12}
               value={form.content}
               onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-              placeholder="<p>Policy content here...</p>"
+              placeholder={
+                form.content_type === "html"
+                  ? "<p>Policy content here...</p>"
+                  : "Policy content here..."
+              }
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-xs text-gray-800 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-200"
             />
           </div>
+
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => { setEditorOpen(false); setForm(EMPTY_FORM); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save Policy"}</Button>
+            <Button
+              variant="outline"
+              onClick={() => { setEditorOpen(false); setForm(EMPTY_FORM); setEditingKey(null); }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : editingKey ? "Update Policy" : "Create Policy"}
+            </Button>
           </div>
         </div>
       </Modal>
 
+      {/* ─── Delete Confirm ─── */}
       <ConfirmDialog
         open={Boolean(confirmDelete)}
         title="Delete Policy"
         message={`Delete policy "${confirmDelete}"? This cannot be undone.`}
-        confirmText={deleting ? "Deleting..." : "Delete"}
+        confirmText={deleting ? "Deleting…" : "Delete"}
         cancelText="Cancel"
         tone="danger"
         onClose={() => !deleting && setConfirmDelete(null)}
