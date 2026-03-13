@@ -17,7 +17,7 @@ export type BulkRulePayload = Omit<BulkRule, "id">;
 
 export async function getBulkRules(): Promise<BulkRule[]> {
   const res = await api.get("/admin/discount/bulk-rules");
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function createBulkRule(body: BulkRulePayload): Promise<{ success: true; id: number }> {
@@ -54,7 +54,7 @@ export type ComboRulePayload = Omit<ComboRule, "id" | "items"> & {
 
 export async function getComboRules(): Promise<ComboRule[]> {
   const res = await api.get("/admin/discount/combo-rules");
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function createComboRule(body: ComboRulePayload): Promise<{ success: true; id: number }> {

@@ -28,7 +28,7 @@ export async function createRefund(body: CreateRefundPayload): Promise<{ success
 
 export async function getRefundsForOrder(order_id: number): Promise<OrderRefund[]> {
   const res = await api.get(`/admin/order/${order_id}/refunds`);
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function updateRefundStatus(

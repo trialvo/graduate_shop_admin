@@ -29,5 +29,5 @@ export async function getAssignmentLogs(params?: {
   offset?: number;
 }): Promise<AssignmentLog[]> {
   const res = await api.get("/admin/order/assignment-logs", { params });
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }

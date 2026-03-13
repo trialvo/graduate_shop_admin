@@ -23,7 +23,7 @@ export type AgentPayload = {
 
 export async function getDistributionSettings(): Promise<DistributionSettings> {
   const res = await api.get("/admin/order-distribution/settings");
-  return res.data;
+  return res.data.data; // { success, data: {} }
 }
 
 export async function updateDistributionSettings(
@@ -35,7 +35,7 @@ export async function updateDistributionSettings(
 
 export async function getAgents(): Promise<DeliveryAgent[]> {
   const res = await api.get("/admin/order-distribution/agents");
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function addAgent(body: AgentPayload): Promise<{ success: true; id: number }> {

@@ -47,12 +47,12 @@ export async function getAdminAuditLogs(
   params: AdminAuditLogParams
 ): Promise<PaginatedAuditResponse<AdminAuditLog>> {
   const res = await api.get("/admin/getAuditLogs", { params });
-  return res.data;
+  return res.data.data; // { success, data: PaginatedResponse }
 }
 
 export async function getAdminActionKeys(): Promise<AdminActionKey[]> {
   const res = await api.get("/admin/getActionsKey");
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 // ─── User Audit ───────────────────────────────────────────────────────────────
@@ -93,10 +93,10 @@ export async function getUserAuditLogs(
   params: UserAuditLogParams
 ): Promise<PaginatedAuditResponse<UserAuditLog>> {
   const res = await api.get("/admin/getUserAuditLogs", { params });
-  return res.data;
+  return res.data.data; // { success, data: PaginatedResponse }
 }
 
 export async function getUserActionKeys(): Promise<UserActionKey[]> {
   const res = await api.get("/admin/getUserActionsKey");
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }

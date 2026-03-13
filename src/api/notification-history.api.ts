@@ -39,7 +39,7 @@ export async function getNotificationBatches(params?: {
   offset?: number;
 }): Promise<NotificationBatch[]> {
   const res = await api.get("/admin/notifications/batches", { params });
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function getEmailLogs(params?: {
@@ -49,7 +49,7 @@ export async function getEmailLogs(params?: {
   to?: string;
 }): Promise<EmailLog[]> {
   const res = await api.get("/admin/notifications/email-logs", { params });
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function getSmsLogs(params?: {
@@ -57,7 +57,7 @@ export async function getSmsLogs(params?: {
   offset?: number;
 }): Promise<SmsLog[]> {
   const res = await api.get("/admin/notifications/sms-logs", { params });
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
 
 export async function getPushLogs(params?: {
@@ -65,5 +65,5 @@ export async function getPushLogs(params?: {
   offset?: number;
 }): Promise<PushLog[]> {
   const res = await api.get("/admin/notifications/push-logs", { params });
-  return res.data;
+  return res.data.data; // { success, data: [] }
 }
