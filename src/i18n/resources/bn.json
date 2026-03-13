@@ -893,6 +893,7 @@
     "currier": "কুরিয়ার",
     "couponCode": "কুপন কোড",
     "serviceSettings": "সার্ভিস (এসএমএস, ইমেইল)",
+    "analyticsSettings": "অ্যানালিটিক্স",
     "websiteSettings": "ওয়েবসাইট সেটিংস",
     "banners": "ব্যানার",
     "bannerVideo": "ব্যানার ভিডিও",
@@ -902,7 +903,18 @@
     "support": "সাপোর্ট",
     "footerSettings": "ফুটার সেটিংস",
     "contactPage": "কন্ট্যাক্ট পেজ",
-    "analyticsSettings": "অ্যানালিটিক্স"
+    "notificationPermissions": "নোটিফিকেশন অনুমতি",
+    "permissions": "অনুমতি সেটিংস",
+    "adminAuditLogs": "অ্যাডমিন অডিট লগ",
+    "userAuditLogs": "ইউজার অডিট লগ",
+    "firebaseCredential": "ফায়ারবেস ক্রেডেনশিয়াল",
+    "discountRules": "ডিসকাউন্ট নিয়ম",
+    "orderDistribution": "অর্ডার বিতরণ",
+    "notificationHistory": "নোটিফিকেশন ইতিহাস",
+    "policies": "নীতিমালা",
+    "announcements": "ঘোষণা",
+    "allAnnouncements": "সব ঘোষণা",
+    "createAnnouncement": "ঘোষণা তৈরি"
   },
   "orders": {
     "title": "অর্ডার ব্যবস্থাপনা",

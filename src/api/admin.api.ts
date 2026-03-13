@@ -13,6 +13,7 @@ export type AdminListResponse = {
     last_name: string | null;
     phone: string | null;
     address: string | null;
+    deleted_at: string | null;
   }>;
   limit: number;
   offset: number;
@@ -166,10 +167,21 @@ export const uploadProfileImage = async (id: number, file: File) => {
 };
 
 /**
- * ✅ Delete admin
- * NOTE: If your backend route is different, only change the URL here.
+ * Hard delete admin (legacy, prefer soft-delete for v2)
  */
 export const deleteAdmin = async (id: number) => {
   const { data } = await api.delete<DeleteAdminResponse>(`/admin/user/${id}`);
+  return data;
+};
+
+/**
+ * ✅ Soft delete admin (v2)
+ * Sets is_active=0, deleted_at=NOW(), increments token_version
+ * Rules: cannot self-delete, cannot delete SUPER_ADMIN, ADMIN cannot delete ADMIN
+ */
+export const softDeleteAdmin = async (id: number) => {
+  const { data } = await api.delete<{ success: true; id: number; message: string }>(
+    `/admin/soft-delete/${id}`
+  );
   return data;
 };

@@ -6,6 +6,7 @@ import {
 import {
   createAdmin,
   deleteAdmin,
+  softDeleteAdmin,
   getAdminById,
   getAdmins,
   uploadProfileImage,
@@ -99,6 +100,19 @@ export const useDeleteAdmin = (
 ) => {
   return useMutation<DeleteAdminResponse, unknown, { id: number }>({
     mutationFn: ({ id }) => deleteAdmin(id),
+    ...options,
+  });
+};
+
+/**
+ * ✅ v2 Soft Delete — sets is_active=0, deleted_at=NOW(), increments token_version.
+ * Use this instead of useDeleteAdmin for the admin list page.
+ */
+export const useSoftDeleteAdmin = (
+  options?: UseMutationOptions<{ success: true; id: number; message: string }, unknown, { id: number }>
+) => {
+  return useMutation<{ success: true; id: number; message: string }, unknown, { id: number }>({
+    mutationFn: ({ id }) => softDeleteAdmin(id),
     ...options,
   });
 };

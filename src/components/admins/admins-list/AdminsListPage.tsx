@@ -17,7 +17,7 @@ import { toPublicUrl } from "@/config/env";
 import {
   useAdminById,
   useAdmins,
-  useDeleteAdmin,
+  useSoftDeleteAdmin,
   useUpdateAdmin,
   useUploadAdminProfile,
 } from "@/hooks/useAdmins";
@@ -108,7 +108,7 @@ export default function AdminsListPage() {
 
   const updateMutation = useUpdateAdmin();
   const uploadProfileMutation = useUploadAdminProfile();
-  const deleteMutation = useDeleteAdmin();
+  const softDeleteMutation = useSoftDeleteAdmin();
 
   const toListRow = (
     admin: AdminListResponse["data"][number] | AdminByIdResponse
@@ -178,19 +178,24 @@ export default function AdminsListPage() {
 
     setDeleting(true);
     try {
-      const res = await deleteMutation.mutateAsync({ id: deleteTarget.id });
-      assertApiSuccess(res, "Delete failed");
+      await softDeleteMutation.mutateAsync({ id: deleteTarget.id });
 
-      setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      // Mark row as deleted (soft-delete — admin is deactivated, not removed)
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === deleteTarget.id
+            ? { ...r, status: "INACTIVE" as const, _softDeleted: true }
+            : r
+        )
+      );
 
-      toast.success("Admin deleted");
+      toast.success("Admin soft-deleted and deactivated.");
       setDeleteOpen(false);
       setDeleteTarget(null);
 
-      // keep server list synced
       await refetch();
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || "Failed to delete admin";
+      const msg = err?.response?.data?.error || err?.message || "Failed to soft-delete admin";
       toast.error(msg);
     } finally {
       setDeleting(false);

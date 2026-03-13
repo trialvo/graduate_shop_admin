@@ -43,12 +43,23 @@ import VisitorReport from "./pages/Reports/VisitorReport";
 
 import NotFound from "./pages/OtherPage/NotFound";
 
-// ✅ NEW (you should have these from the auth setup)
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import OrderInvoice from "./pages/Orders/OrderInvoice";
 import SupportPage from "./pages/SupportPage";
 import BusinessServicePage from "./pages/BusinessSettings/service";
+
+// ✅ V2 new pages
+import FirebaseCredentialPage from "./pages/BusinessSettings/FirebaseCredentialPage";
+import PermissionsPage from "./pages/Admins/PermissionsPage";
+import PoliciesPage from "./pages/WebsiteSettings/PoliciesPage";
+import DiscountRulesPage from "./pages/BusinessSettings/DiscountRulesPage";
+import OrderDistributionPage from "./pages/BusinessSettings/OrderDistributionPage";
+import NotificationHistoryPage from "./pages/BusinessSettings/NotificationHistoryPage";
+import AdminAuditLogsPage from "./pages/Admins/AdminAuditLogsPage";
+import UserAuditLogsPage from "./pages/Admins/UserAuditLogsPage";
+import AnnouncementsListPage from "./pages/Announcements/AnnouncementsListPage";
+import CreateAnnouncementPage from "./pages/Announcements/CreateAnnouncementPage";
 
 export default function App() {
   return (
@@ -131,10 +142,27 @@ export default function App() {
                 path="/analytics-settings"
                 element={<AnalyticsSettings />}
               />
-              <Route
-                path="/service-settings"
-                element={<BusinessServicePage />}
-              />
+              <Route path="/service-settings" element={<BusinessServicePage />} />
+
+              {/* ✅ V2: Business Settings */}
+              <Route path="/firebase-credential" element={<FirebaseCredentialPage />} />
+              <Route path="/discount-rules" element={<DiscountRulesPage />} />
+              <Route path="/order-distribution" element={<OrderDistributionPage />} />
+              <Route path="/notification-history" element={<NotificationHistoryPage />} />
+
+              {/* ✅ V2: Website Settings */}
+              <Route path="/policies" element={<PoliciesPage />} />
+
+              {/* ✅ V2: Admin & Permissions */}
+              <Route path="/notification-permissions" element={<PermissionsPage />} />
+              <Route path="/permissions" element={<PermissionsPage />} />
+              <Route path="/admin-audit-logs" element={<AdminAuditLogsPage />} />
+              <Route path="/user-audit-logs" element={<UserAuditLogsPage />} />
+
+              {/* ✅ V2: Announcements */}
+              <Route path="/announcements" element={<AnnouncementsListPage />} />
+              <Route path="/create-announcement" element={<CreateAnnouncementPage />} />
+              <Route path="/edit-announcement/:id" element={<CreateAnnouncementPage edit />} />
             </Route>
           </Route>
 

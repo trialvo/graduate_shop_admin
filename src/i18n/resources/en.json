@@ -893,6 +893,7 @@
     "currier": "Currier",
     "couponCode": "Coupon Code",
     "serviceSettings": "Service (SMS, Email)",
+    "analyticsSettings": "Analytics",
     "websiteSettings": "Website Settings",
     "banners": "Banners",
     "bannerVideo": "Banner Video",
@@ -902,7 +903,18 @@
     "support": "Support",
     "footerSettings": "Footer Settings",
     "contactPage": "Contact Page",
-    "analyticsSettings": "Analytics"
+    "notificationPermissions": "Notification Permissions",
+    "permissions": "Permissions",
+    "adminAuditLogs": "Admin Audit Logs",
+    "userAuditLogs": "User Audit Logs",
+    "firebaseCredential": "Firebase Credentials",
+    "discountRules": "Discount Rules",
+    "orderDistribution": "Order Distribution",
+    "notificationHistory": "Notification History",
+    "policies": "Policies",
+    "announcements": "Announcements",
+    "allAnnouncements": "All Announcements",
+    "createAnnouncement": "Create Announcement"
   },
   "orders": {
     "title": "Order Management",

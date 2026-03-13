@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 
@@ -15,6 +15,14 @@ import {
   PanelsTopLeft,
   UserCircle,
   ChevronDownIcon,
+  Flame,
+  Bell,
+  FileText,
+  Tag,
+  Truck,
+  History,
+  ScrollText,
+  Megaphone,
 } from "lucide-react";
 
 import { useSidebar } from "../context/SidebarContext";
@@ -96,6 +104,9 @@ const othersItems: NavItem[] = [
     subItems: [
       { nameKey: "adminsList", path: "/admins-list", pro: false },
       { nameKey: "createAdmin", path: "/create-admin", pro: false },
+      { nameKey: "permissions", path: "/permissions", pro: false },
+      { nameKey: "adminAuditLogs", path: "/admin-audit-logs", pro: false },
+      { nameKey: "userAuditLogs", path: "/user-audit-logs", pro: false },
     ],
   },
   {
@@ -108,6 +119,10 @@ const othersItems: NavItem[] = [
       { nameKey: "couponCode", path: "/coupon-code", pro: false },
       { nameKey: "serviceSettings", path: "/service-settings", pro: false },
       { nameKey: "analyticsSettings", path: "/analytics-settings", pro: false },
+      { nameKey: "firebaseCredential", path: "/firebase-credential", pro: false },
+      { nameKey: "discountRules", path: "/discount-rules", pro: false },
+      { nameKey: "orderDistribution", path: "/order-distribution", pro: false },
+      { nameKey: "notificationHistory", path: "/notification-history", pro: false },
     ],
   },
   {
@@ -116,13 +131,16 @@ const othersItems: NavItem[] = [
     subItems: [
       { nameKey: "banners", path: "/banners-settings", pro: false },
       { nameKey: "bannerVideo", path: "/banner-video-settings", pro: false },
-      // {
-      //   nameKey: "Header category",
-      //   path: "/header-category-settings",
-      //   pro: false,
-      // },
-      // { nameKey: "Footer", path: "/footer-settings", pro: false },
       { nameKey: "contactMessage", path: "/contact-page", pro: false },
+      { nameKey: "policies", path: "/policies", pro: false },
+    ],
+  },
+  {
+    icon: <Megaphone />,
+    nameKey: "announcements",
+    subItems: [
+      { nameKey: "allAnnouncements", path: "/announcements", pro: false },
+      { nameKey: "createAnnouncement", path: "/create-announcement", pro: false },
     ],
   },
   {
