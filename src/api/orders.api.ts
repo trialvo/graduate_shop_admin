@@ -383,3 +383,55 @@ export async function updateOrderItems(
     throw new Error(getErrMessage(err, "Failed to update order items"));
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Courier Balance — GET /config/courier/balance/:provider
+   ────────────────────────────────────────────────────────────────────── */
+
+export type CourierBalanceResponse = {
+  provider: string;
+  balance: number;
+  currency: string;
+  timestamp: string;
+};
+
+export async function getCourierBalance(provider: string) {
+  try {
+    const res = await api.get<CourierBalanceResponse>(
+      `/config/courier/balance/${provider}`,
+    );
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, `Failed to get ${provider} balance`));
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Track Courier — GET /admin/order/track/:order_id
+   ────────────────────────────────────────────────────────────────────── */
+
+export type TrackCourierResponse = {
+  order_id: number;
+  customer: string;
+  provider: string;
+  tracking_number: string;
+  current_internal_status: string;
+  courier_live_status: string;
+  last_updated: string;
+  raw_response: {
+    raw_status: string;
+    status_code: number;
+    updated_at: string;
+  };
+};
+
+export async function trackOrderCourier(orderId: number) {
+  try {
+    const res = await api.get<TrackCourierResponse>(
+      `/admin/order/track/${orderId}`,
+    );
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to track courier"));
+  }
+}
