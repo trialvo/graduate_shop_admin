@@ -4,7 +4,9 @@ import {
   getPolicyByKey,
   savePolicy,
   deletePolicy,
+  patchPolicy,
 } from "@/api/policies.api";
+import type { PatchPolicyBody } from "@/api/policies.api";
 
 export const policyKeys = {
   all: ["policies"] as const,
@@ -35,6 +37,15 @@ export function useDeletePolicy() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deletePolicy,
+    onSuccess: () => qc.invalidateQueries({ queryKey: policyKeys.all }),
+  });
+}
+
+export function usePatchPolicy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, body }: { key: string; body: PatchPolicyBody }) =>
+      patchPolicy(key, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: policyKeys.all }),
   });
 }

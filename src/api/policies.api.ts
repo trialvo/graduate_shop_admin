@@ -52,6 +52,22 @@ export async function deletePolicy(
   return res.data;
 }
 
+export type PatchPolicyBody = {
+  title?: string;
+  content?: string;
+  content_type?: "html" | "text";
+  status?: 0 | 1;
+};
+
+/** Admin: partial update — only sends the fields you provide */
+export async function patchPolicy(
+  key: string,
+  body: PatchPolicyBody
+): Promise<{ success: true; data: { policy_key: string } }> {
+  const res = await api.patch(`/admin/policy/${key}`, body);
+  return res.data;
+}
+
 /** Public: list active policies (no content) */
 export async function getPublicPolicies(): Promise<
   Pick<PolicySummary, "policy_key" | "title" | "updated_at">[]

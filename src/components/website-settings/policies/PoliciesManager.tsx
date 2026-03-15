@@ -5,14 +5,16 @@ import {
   usePolicies,
   useSavePolicy,
   useDeletePolicy,
+  usePatchPolicy,
 } from "@/hooks/usePolicies";
+import type { PolicySummary, UpsertPolicyBody } from "@/api/policies.api";
 import { getPolicyByKey } from "@/api/policies.api";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import Modal from "@/components/ui/modal/Modal";
-import type { PolicySummary, UpsertPolicyBody } from "@/api/policies.api";
+
 
 type PolicyForm = {
   policy_key: string;
@@ -60,6 +62,7 @@ export default function PoliciesManager() {
   const { data: policies = [], isLoading, isError } = usePolicies();
   const saveMutation = useSavePolicy();
   const deleteMutation = useDeletePolicy();
+  const patchMutation = usePatchPolicy();
 
   /* ── Editor state ── */
   const [editorOpen, setEditorOpen] = useState(false);
@@ -75,6 +78,9 @@ export default function PoliciesManager() {
   /* ── Delete state ── */
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  /* ── Status toggle state ── */
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
 
   /* ─────────── Open edit (fetches full content) ─────────── */
   const openEdit = async (p: PolicySummary) => {
@@ -120,6 +126,20 @@ export default function PoliciesManager() {
     setForm(EMPTY_FORM);
     setEditingKey(null);
     setEditorOpen(true);
+  };
+
+  /* ───── Quick status toggle (no modal needed) ───── */
+  const toggleStatus = async (p: PolicySummary) => {
+    setTogglingKey(p.policy_key);
+    try {
+      const newStatus: 0 | 1 = p.status === 1 ? 0 : 1;
+      await patchMutation.mutateAsync({ key: p.policy_key, body: { status: newStatus } });
+      toast.success(`Policy ${newStatus === 1 ? "activated" : "deactivated"}.`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Toggle failed.");
+    } finally {
+      setTogglingKey(null);
+    }
   };
 
   /* ─────────── Save (upsert) ─────────── */
@@ -228,15 +248,24 @@ export default function PoliciesManager() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {p.status === 1 ? (
-                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400">
-                          <ToggleRight size={12} /> Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                          <ToggleLeft size={12} /> Inactive
-                        </span>
-                      )}
+                      <button
+                        onClick={() => toggleStatus(p)}
+                        disabled={togglingKey === p.policy_key}
+                        title={p.status === 1 ? "Click to deactivate" : "Click to activate"}
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-opacity disabled:opacity-50 cursor-pointer"
+                      >
+                        {togglingKey === p.policy_key ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : p.status === 1 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400">
+                            <ToggleRight size={12} /> Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                            <ToggleLeft size={12} /> Inactive
+                          </span>
+                        )}
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {new Date(p.updated_at).toLocaleDateString()}
