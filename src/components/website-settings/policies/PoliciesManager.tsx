@@ -142,33 +142,53 @@ export default function PoliciesManager() {
     }
   };
 
-  /* ─────────── Save (upsert) ─────────── */
+  /* ─────────── Save ─────────── */
   const handleSave = async () => {
-    if (!form.policy_key.trim() || !form.title.trim()) {
-      toast.error("Policy key and title are required.");
+    if (!form.title.trim()) {
+      toast.error("Title is required.");
       return;
     }
 
-    // Hard block on invalid HTML — if content_type is html, validate before saving
+    // Hard block on invalid HTML when content_type is html
     if (form.content_type === "html" && form.content.trim()) {
       const htmlError = isValidHtml(form.content);
       if (htmlError) {
         toast.error(htmlError);
-        return; // ← blocked
+        return;
       }
     }
 
     setSaving(true);
     try {
-      const body: UpsertPolicyBody = {
-        policy_key: form.policy_key,
-        title: form.title,
-        content: form.content,
-        content_type: form.content_type,
-        status: form.status,
-      };
-      await saveMutation.mutateAsync(body);
-      toast.success(editingKey ? "Policy updated." : "Policy created.");
+      if (editingKey) {
+        // ── PATCH: only send what's in the form ──
+        await patchMutation.mutateAsync({
+          key: editingKey,
+          body: {
+            title: form.title,
+            content_type: form.content_type,
+            status: form.status,
+            // Only include content if the admin actually typed something
+            ...(form.content.trim() ? { content: form.content } : {}),
+          },
+        });
+        toast.success("Policy updated.");
+      } else {
+        // ── POST: full upsert for new policy ──
+        if (!form.policy_key.trim()) {
+          toast.error("Policy key is required.");
+          setSaving(false);
+          return;
+        }
+        await saveMutation.mutateAsync({
+          policy_key: form.policy_key,
+          title: form.title,
+          content: form.content,
+          content_type: form.content_type,
+          status: form.status,
+        });
+        toast.success("Policy created.");
+      }
       setEditorOpen(false);
       setForm(EMPTY_FORM);
       setEditingKey(null);
