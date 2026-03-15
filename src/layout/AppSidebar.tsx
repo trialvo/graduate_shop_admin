@@ -23,6 +23,7 @@ import {
   History,
   ScrollText,
   Megaphone,
+  Mail,
 } from "lucide-react";
 
 import { useSidebar } from "../context/SidebarContext";
@@ -133,6 +134,7 @@ const othersItems: NavItem[] = [
       { nameKey: "bannerVideo", path: "/banner-video-settings", pro: false },
       { nameKey: "contactMessage", path: "/contact-page", pro: false },
       { nameKey: "policies", path: "/policies", pro: false },
+      { nameKey: "subscribers", path: "/subscribers", pro: false },
     ],
   },
   {

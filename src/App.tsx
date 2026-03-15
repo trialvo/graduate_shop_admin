@@ -53,6 +53,7 @@ import BusinessServicePage from "./pages/BusinessSettings/service";
 import FirebaseCredentialPage from "./pages/BusinessSettings/FirebaseCredentialPage";
 import PermissionsPage from "./pages/Admins/PermissionsPage";
 import PoliciesPage from "./pages/WebsiteSettings/PoliciesPage";
+import SubscribersPage from "./pages/WebsiteSettings/SubscribersPage";
 import DiscountRulesPage from "./pages/BusinessSettings/DiscountRulesPage";
 import OrderDistributionPage from "./pages/BusinessSettings/OrderDistributionPage";
 import NotificationHistoryPage from "./pages/BusinessSettings/NotificationHistoryPage";
@@ -152,6 +153,7 @@ export default function App() {
 
               {/* ✅ V2: Website Settings */}
               <Route path="/policies" element={<PoliciesPage />} />
+              <Route path="/subscribers" element={<SubscribersPage />} />
 
               {/* ✅ V2: Admin & Permissions */}
               <Route path="/notification-permissions" element={<PermissionsPage />} />

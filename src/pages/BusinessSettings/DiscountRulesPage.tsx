@@ -1,16 +1,138 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Loader2 } from "lucide-react";
 import {
   useBulkRules, useCreateBulkRule, useEditBulkRule, useDeleteBulkRule,
   useComboRules, useCreateComboRule, useEditComboRule, useDeleteComboRule,
 } from "@/hooks/useDiscountRules";
 import type { BulkRule, BulkRulePayload, ComboRule, ComboRulePayload } from "@/api/discount-rules.api";
+import { api } from "@/api/client";
 import Button from "@/components/ui/button/Button";
-import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Modal from "@/components/ui/modal/Modal";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import { useQuery } from "@tanstack/react-query";
+
+// ─── SKU types ───────────────────────────────────────────────────────────────
+
+type SkuOption = {
+  id: number;
+  sku: string;
+  product_name: string;
+  color_name: string | null;
+  variant_name: string | null;
+  selling_price: number;
+  stock: number;
+};
+
+async function fetchSkuSuggestions(q: string): Promise<SkuOption[]> {
+  const res = await api.get("/admin/discount/skus", { params: { q } });
+  return res.data?.data ?? [];
+}
+
+// ─── SKU Searchable Dropdown ─────────────────────────────────────────────────
+
+function SkuDropdown({
+  value,          // currently selected sku_id
+  onSelect,       // (id, sku_string) => void
+  placeholder,
+}: {
+  value: number | null;
+  onSelect: (id: number, sku: string) => void;
+  placeholder?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { data: options = [], isFetching } = useQuery({
+    queryKey: ["sku-search", query],
+    queryFn: () => fetchSkuSuggestions(query),
+    enabled: open,
+    staleTime: 10_000,
+  });
+
+  // close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = value ? options.find(o => o.id === value) : null;
+
+  const handleSelect = (opt: SkuOption) => {
+    onSelect(opt.id, opt.sku);
+    setQuery("");
+    setOpen(false);
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(0, "");
+    setQuery("");
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <div
+        className="flex items-center gap-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm cursor-text dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        onClick={() => setOpen(true)}
+      >
+        <Search size={13} className="shrink-0 text-gray-400" />
+        {open ? (
+          <input
+            autoFocus
+            className="flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400"
+            placeholder={placeholder ?? "Search by SKU or product name…"}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        ) : (
+          <span className={`flex-1 truncate ${selected ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>
+            {selected
+              ? `${selected.sku} — ${selected.product_name}`
+              : placeholder ?? "Search by SKU or product name…"}
+          </span>
+        )}
+        {value ? (
+          <button type="button" onClick={handleClear} className="text-gray-400 hover:text-error-500">
+            <X size={12} />
+          </button>
+        ) : null}
+        {isFetching && <Loader2 size={12} className="animate-spin text-brand-500" />}
+      </div>
+
+      {open && (
+        <ul className="absolute z-50 top-full mt-1 left-0 right-0 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+          {options.length === 0 ? (
+            <li className="px-4 py-3 text-sm text-gray-400">
+              {isFetching ? "Searching…" : "No SKUs found"}
+            </li>
+          ) : options.map(opt => (
+            <li
+              key={opt.id}
+              onClick={() => handleSelect(opt)}
+              className="flex flex-col gap-0.5 px-4 py-2.5 cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20"
+            >
+              <span className="text-sm font-semibold text-brand-600 dark:text-brand-400">
+                {opt.sku || `#${opt.id}`}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {opt.product_name}
+                {opt.color_name ? ` · ${opt.color_name}` : ""}
+                {opt.variant_name ? ` / ${opt.variant_name}` : ""}
+                {` · ৳${opt.selling_price} · Stock: ${opt.stock}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,6 +146,46 @@ function StatusBadge({ on }: { on: boolean }) {
   );
 }
 
+/** Controlled numeric text input — shows "" when 0, parses on change */
+function NumInput({
+  value,
+  onChange,
+  placeholder,
+  min,
+  className,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  placeholder?: string;
+  min?: number;
+  className?: string;
+}) {
+  const [raw, setRaw] = useState(value === 0 ? "" : String(value));
+
+  // sync when external value changes (e.g. modal open)
+  useEffect(() => {
+    setRaw(value === 0 ? "" : String(value));
+  }, [value]);
+
+  return (
+    <input
+      type="number"
+      className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 ${className ?? ""}`}
+      value={raw}
+      min={min}
+      placeholder={placeholder}
+      onChange={e => {
+        const str = e.target.value;
+        setRaw(str);
+        const n = parseFloat(str);
+        if (!isNaN(n)) onChange(n);
+        else if (str === "" || str === "-") onChange(0);
+      }}
+      onBlur={() => setRaw(value === 0 ? "" : String(value))}
+    />
+  );
+}
+
 // ─── Bulk Rules Tab ───────────────────────────────────────────────────────────
 
 function BulkRulesManager() {
@@ -32,19 +194,15 @@ function BulkRulesManager() {
   const editM = useEditBulkRule();
   const deleteM = useDeleteBulkRule();
 
+  const EMPTY: BulkRulePayload = { name: "", product_sku_id: 0, min_quantity: 1, discount_type: 1, discount_value: 0, status: true };
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<BulkRule | null>(null);
-  const [form, setForm] = useState<BulkRulePayload>({
-    name: "", product_sku_id: 0, min_quantity: 1, discount_type: 1, discount_value: 0, status: true,
-  });
+  const [form, setForm] = useState<BulkRulePayload>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
-  const openCreate = () => {
-    setEditTarget(null);
-    setForm({ name: "", product_sku_id: 0, min_quantity: 1, discount_type: 1, discount_value: 0, status: true });
-    setModalOpen(true);
-  };
+  const openCreate = () => { setEditTarget(null); setForm(EMPTY); setModalOpen(true); };
   const openEdit = (r: BulkRule) => {
     setEditTarget(r);
     setForm({ name: r.name, product_sku_id: r.product_sku_id, min_quantity: r.min_quantity, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status });
@@ -52,6 +210,7 @@ function BulkRulesManager() {
   };
 
   const handleSave = async () => {
+    if (!form.product_sku_id) { toast.error("Please select a SKU."); return; }
     setSaving(true);
     try {
       if (editTarget) {
@@ -71,13 +230,8 @@ function BulkRulesManager() {
 
   const handleDelete = async () => {
     if (!confirmId) return;
-    try {
-      await deleteM.mutateAsync(confirmId);
-      toast.success("Deleted.");
-      setConfirmId(null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed.");
-    }
+    try { await deleteM.mutateAsync(confirmId); toast.success("Deleted."); setConfirmId(null); }
+    catch (err: any) { toast.error(err?.response?.data?.error || "Failed."); }
   };
 
   return (
@@ -89,7 +243,7 @@ function BulkRulesManager() {
         <table className="w-full border-collapse text-sm min-w-[700px]">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-              {["Name", "SKU ID", "Min Qty", "Discount", "Value", "Status", ""].map((h) => (
+              {["Name", "SKU", "Min Qty", "Discount", "Value", "Status", ""].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">{h}</th>
               ))}
             </tr>
@@ -102,7 +256,7 @@ function BulkRulesManager() {
             ) : rules.map((r) => (
               <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{r.name}</td>
-                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.product_sku_id}</td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{(r as any).sku ?? r.product_sku_id}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.min_quantity}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{DISCOUNT_TYPE_LABEL(r.discount_type)}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.discount_value}</td>
@@ -121,24 +275,60 @@ function BulkRulesManager() {
 
       <Modal open={modalOpen} title={editTarget ? "Edit Bulk Rule" : "Create Bulk Rule"} onClose={() => setModalOpen(false)} size="md">
         <div className="space-y-4">
-          <div className="space-y-2"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: String(e.target.value) }))} placeholder="Buy 3 Get 10% Off" /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><Label>SKU ID *</Label><Input type="number" value={form.product_sku_id} onChange={(e) => setForm((f) => ({ ...f, product_sku_id: Number(e.target.value) }))} /></div>
-            <div className="space-y-2"><Label>Min Quantity *</Label><Input type="number" value={form.min_quantity} onChange={(e) => setForm((f) => ({ ...f, min_quantity: Number(e.target.value) }))} /></div>
+          <div className="space-y-2">
+            <Label>Name *</Label>
+            <input
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Buy 3 Get 10% Off"
+            />
           </div>
+
+          {/* SKU picker */}
+          <div className="space-y-2">
+            <Label>SKU *</Label>
+            <SkuDropdown
+              value={form.product_sku_id || null}
+              onSelect={(id) => setForm(f => ({ ...f, product_sku_id: id }))}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Discount Type</Label>
-              <select value={form.discount_type} onChange={(e) => setForm((f) => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                <option value={0}>Flat Amount (৳)</option>
-                <option value={1}>Percentage (%)</option>
-              </select>
+              <Label>Min Quantity *</Label>
+              <NumInput
+                value={form.min_quantity}
+                onChange={n => setForm(f => ({ ...f, min_quantity: Math.max(1, Math.floor(n)) }))}
+                placeholder="e.g. 3"
+                min={1}
+              />
             </div>
-            <div className="space-y-2"><Label>Value *</Label><Input type="number" value={form.discount_value} onChange={(e) => setForm((f) => ({ ...f, discount_value: Number(e.target.value) }))} /></div>
+            <div className="space-y-2">
+              <Label>Discount Value *</Label>
+              <NumInput
+                value={form.discount_value}
+                onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))}
+                placeholder="e.g. 10"
+                min={0}
+              />
+            </div>
           </div>
+
+          <div className="space-y-2">
+            <Label>Discount Type</Label>
+            <select
+              value={form.discount_type}
+              onChange={e => setForm(f => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            >
+              <option value={0}>Flat Amount (৳)</option>
+              <option value={1}>Percentage (%)</option>
+            </select>
+          </div>
+
           <div className="flex items-center gap-3">
-            <input type="checkbox" id="bulk-status" checked={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.checked }))} className="rounded" />
+            <input type="checkbox" id="bulk-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
             <Label htmlFor="bulk-status">Active</Label>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -164,30 +354,38 @@ function ComboRulesManager() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ComboRule | null>(null);
   const [form, setForm] = useState<ComboRulePayload>({ name: "", discount_type: 0, discount_value: 0, status: true, items: [] });
-  const [skuInput, setSkuInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
+
+  // selected SKU for adding to combo
+  const [pendingSku, setPendingSku] = useState<{ id: number; sku: string } | null>(null);
+  const [pendingQty, setPendingQty] = useState(1);
 
   const openCreate = () => {
     setEditTarget(null);
     setForm({ name: "", discount_type: 0, discount_value: 0, status: true, items: [] });
-    setSkuInput("");
+    setPendingSku(null);
+    setPendingQty(1);
     setModalOpen(true);
   };
   const openEdit = (r: ComboRule) => {
     setEditTarget(r);
-    setForm({ name: r.name, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status, items: r.items.map((i) => ({ product_sku_id: i.product_sku_id })) });
-    setSkuInput("");
+    setForm({ name: r.name, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status, items: r.items.map(i => ({ product_sku_id: i.product_sku_id, required_qty: i.required_qty ?? 1 })) });
+    setPendingSku(null);
+    setPendingQty(1);
     setModalOpen(true);
   };
 
   const addSku = () => {
-    const id = parseInt(skuInput.trim(), 10);
-    if (!id || form.items.find((i) => i.product_sku_id === id)) return;
-    setForm((f) => ({ ...f, items: [...f.items, { product_sku_id: id }] }));
-    setSkuInput("");
+    if (!pendingSku || form.items.find(i => i.product_sku_id === pendingSku.id)) {
+      toast.error("SKU already added or none selected.");
+      return;
+    }
+    setForm(f => ({ ...f, items: [...f.items, { product_sku_id: pendingSku.id, required_qty: Math.max(1, pendingQty) }] }));
+    setPendingSku(null);
+    setPendingQty(1);
   };
-  const removeSku = (id: number) => setForm((f) => ({ ...f, items: f.items.filter((i) => i.product_sku_id !== id) }));
+  const removeSku = (id: number) => setForm(f => ({ ...f, items: f.items.filter(i => i.product_sku_id !== id) }));
 
   const handleSave = async () => {
     if (form.items.length < 2) { toast.error("At least 2 SKUs are required."); return; }
@@ -223,56 +421,96 @@ function ComboRulesManager() {
           <tbody>
             {isLoading ? <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">Loading...</td></tr>
               : rules.length === 0 ? <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">No combo rules yet.</td></tr>
-              : rules.map((r) => (
-                <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{r.name}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{DISCOUNT_TYPE_LABEL(r.discount_type)}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.discount_value}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.items.map((i) => i.product_sku_id).join(", ")}</td>
-                  <td className="px-4 py-3"><StatusBadge on={r.status} /></td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button onClick={() => openEdit(r)} className="h-7 w-7 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300"><Pencil size={13} /></button>
-                      <button onClick={() => setConfirmId(r.id)} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50"><Trash2 size={13} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                : rules.map((r) => (
+                  <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{r.name}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{DISCOUNT_TYPE_LABEL(r.discount_type)}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.discount_value}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{r.items.map(i => i.product_sku_id).join(", ")}</td>
+                    <td className="px-4 py-3"><StatusBadge on={r.status} /></td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button onClick={() => openEdit(r)} className="h-7 w-7 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300"><Pencil size={13} /></button>
+                        <button onClick={() => setConfirmId(r.id)} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50"><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
           </tbody>
         </table>
       </div>
 
       <Modal open={modalOpen} title={editTarget ? "Edit Combo Rule" : "Create Combo Rule"} onClose={() => setModalOpen(false)} size="md">
         <div className="space-y-4">
-          <div className="space-y-2"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: String(e.target.value) }))} placeholder="Shirt + Pant Bundle" /></div>
+          <div className="space-y-2">
+            <Label>Name *</Label>
+            <input
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Shirt + Pant Bundle"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Discount Type</Label>
-              <select value={form.discount_type} onChange={(e) => setForm((f) => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+              <select
+                value={form.discount_type}
+                onChange={e => setForm(f => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))}
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
                 <option value={0}>Flat Amount (৳)</option>
                 <option value={1}>Percentage (%)</option>
               </select>
             </div>
-            <div className="space-y-2"><Label>Discount Value *</Label><Input type="number" value={form.discount_value} onChange={(e) => setForm((f) => ({ ...f, discount_value: Number(e.target.value) }))} /></div>
-          </div>
-          <div className="space-y-2">
-            <Label>SKU IDs (min 2 required)</Label>
-            <div className="flex gap-2">
-              <Input type="number" value={skuInput} onChange={(e) => setSkuInput(e.target.value)} placeholder="Enter SKU ID" />
-              <Button variant="outline" onClick={addSku}>Add</Button>
+            <div className="space-y-2">
+              <Label>Discount Value *</Label>
+              <NumInput
+                value={form.discount_value}
+                onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))}
+                placeholder="e.g. 200"
+                min={0}
+              />
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {form.items.map((i) => (
+          </div>
+
+          {/* SKU picker for combo items */}
+          <div className="space-y-2">
+            <Label>Add SKU Items (min 2 required)</Label>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <SkuDropdown
+                  value={pendingSku?.id ?? null}
+                  onSelect={(id, sku) => setPendingSku({ id, sku })}
+                  placeholder="Search SKU to add…"
+                />
+              </div>
+              <div className="w-24 shrink-0">
+                <Label className="text-xs mb-1 block">Qty</Label>
+                <NumInput
+                  key={`pending-qty-${modalOpen}`}
+                  value={pendingQty}
+                  onChange={n => setPendingQty(Math.max(1, Math.floor(n)))}
+                  placeholder="1"
+                  min={1}
+                />
+              </div>
+              <Button variant="outline" onClick={addSku} disabled={!pendingSku}>Add</Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {form.items.map(i => (
                 <span key={i.product_sku_id} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400">
-                  SKU {i.product_sku_id}
+                  SKU {i.product_sku_id} <span className="opacity-70">(qty×{i.required_qty})</span>
                   <button type="button" onClick={() => removeSku(i.product_sku_id)} className="ml-0.5 hover:text-error-500">×</button>
                 </span>
               ))}
+              {form.items.length === 0 && <p className="text-xs text-gray-400">No SKUs added yet.</p>}
             </div>
           </div>
+
           <div className="flex items-center gap-3">
-            <input type="checkbox" id="combo-status" checked={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.checked }))} className="rounded" />
+            <input type="checkbox" id="combo-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
             <Label htmlFor="combo-status">Active</Label>
           </div>
           <div className="flex justify-end gap-3 pt-2">
