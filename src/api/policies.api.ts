@@ -4,6 +4,7 @@ export type PolicySummary = {
   id: number;
   policy_key: string;
   title: string;
+  bd_title: string | null;
   content_type: "html" | "text";
   status: 0 | 1;
   updated_by_admin: number | null;
@@ -19,6 +20,7 @@ export type PolicyFull = PolicySummary & {
 export type UpsertPolicyBody = {
   policy_key: string;
   title: string;
+  bd_title?: string | null;
   content: string;
   content_type?: "html" | "text";
   status?: 0 | 1;
@@ -54,6 +56,7 @@ export async function deletePolicy(
 
 export type PatchPolicyBody = {
   title?: string;
+  bd_title?: string | null;
   content?: string;
   content_type?: "html" | "text";
   status?: 0 | 1;

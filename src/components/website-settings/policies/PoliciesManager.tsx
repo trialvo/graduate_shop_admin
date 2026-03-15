@@ -19,6 +19,7 @@ import Modal from "@/components/ui/modal/Modal";
 type PolicyForm = {
   policy_key: string;
   title: string;
+  bd_title: string;
   content: string;
   content_type: "html" | "text";
   status: 0 | 1;
@@ -27,6 +28,7 @@ type PolicyForm = {
 const EMPTY_FORM: PolicyForm = {
   policy_key: "",
   title: "",
+  bd_title: "",
   content: "",
   content_type: "html",
   status: 1,
@@ -91,6 +93,7 @@ export default function PoliciesManager() {
       setForm({
         policy_key: full.policy_key,
         title: full.title,
+        bd_title: full.bd_title ?? "",
         content: full.content ?? "",
         content_type: full.content_type,
         status: full.status,
@@ -166,9 +169,9 @@ export default function PoliciesManager() {
           key: editingKey,
           body: {
             title: form.title,
+            bd_title: form.bd_title.trim() || null,
             content_type: form.content_type,
             status: form.status,
-            // Only include content if the admin actually typed something
             ...(form.content.trim() ? { content: form.content } : {}),
           },
         });
@@ -183,6 +186,7 @@ export default function PoliciesManager() {
         await saveMutation.mutateAsync({
           policy_key: form.policy_key,
           title: form.title,
+          bd_title: form.bd_title.trim() || undefined,
           content: form.content,
           content_type: form.content_type,
           status: form.status,
@@ -414,6 +418,19 @@ export default function PoliciesManager() {
                 placeholder="Return Policy"
               />
             </div>
+          </div>
+
+          {/* BD Title */}
+          <div className="space-y-1.5">
+            <Label htmlFor="policy-bd-title">
+              Bengali Title <span className="text-gray-400 text-xs">(optional)</span>
+            </Label>
+            <Input
+              id="policy-bd-title"
+              value={form.bd_title}
+              onChange={(e) => setForm((f) => ({ ...f, bd_title: e.target.value }))}
+              placeholder="ফেরত নীতি"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
