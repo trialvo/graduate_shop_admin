@@ -374,10 +374,12 @@ export default function AllOrdersView() {
       const courierProvider = (mainCourier?.courier_provider || "").toLowerCase();
 
       const autoList =
-        courierOption?.available_providers?.map((p: any) => ({
+        courierOption?.available_providers?.map((p: any, idx: number) => ({
           providerId: (String(p.provider || "").toLowerCase() as any),
           providerName: p.provider,
           connected: Number(p.is_auto_available) === 1,
+          isDefault: idx === 0,
+          image: p.image || null,
         })) ?? [];
 
       const apiConnected = autoList.some((x: any) => x.providerId === courierProvider && x.connected);

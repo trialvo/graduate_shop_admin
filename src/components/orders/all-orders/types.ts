@@ -143,6 +143,7 @@ export type OrderRow = {
       providerName: string;
       connected: boolean;
       isDefault?: boolean;
+      image?: string | null;
     }[];
   };
 };
