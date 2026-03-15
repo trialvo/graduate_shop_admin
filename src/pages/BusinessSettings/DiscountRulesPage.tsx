@@ -33,8 +33,8 @@ async function fetchSkuSuggestions(q: string): Promise<SkuOption[]> {
 // ─── SKU Searchable Dropdown ─────────────────────────────────────────────────
 
 function SkuDropdown({
-  value,          // currently selected sku_id
-  onSelect,       // (id, sku_string) => void
+  value,
+  onSelect,
   placeholder,
 }: {
   value: number | null;
@@ -43,27 +43,44 @@ function SkuDropdown({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  // Keep track of the full option object for the selected item so we can show a nice label
+  const [selectedOpt, setSelectedOpt] = useState<SkuOption | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Debounced query so we don't fire on every keystroke
+  const [debouncedQ, setDebouncedQ] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(query), 250);
+    return () => clearTimeout(t);
+  }, [query]);
 
   const { data: options = [], isFetching } = useQuery({
-    queryKey: ["sku-search", query],
-    queryFn: () => fetchSkuSuggestions(query),
-    enabled: open,
-    staleTime: 10_000,
+    queryKey: ["sku-search", debouncedQ],
+    queryFn: () => fetchSkuSuggestions(debouncedQ),
+    enabled: open && debouncedQ.length >= 1,
+    staleTime: 15_000,
   });
 
-  // close on outside click
+  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const selected = value ? options.find(o => o.id === value) : null;
+  // Reset selectedOpt when value is cleared from outside
+  useEffect(() => {
+    if (!value) setSelectedOpt(null);
+  }, [value]);
 
   const handleSelect = (opt: SkuOption) => {
+    setSelectedOpt(opt);
     onSelect(opt.id, opt.sku);
     setQuery("");
     setOpen(false);
@@ -71,63 +88,107 @@ function SkuDropdown({
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setSelectedOpt(null);
     onSelect(0, "");
     setQuery("");
   };
 
+  const openDropdown = () => {
+    setOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  // Build a nice human-readable label for the selected item
+  const selectedLabel = selectedOpt
+    ? [
+        selectedOpt.product_name,
+        [selectedOpt.color_name, selectedOpt.variant_name].filter(Boolean).join(" / "),
+      ].filter(Boolean).join(" — ")
+    : null;
+
+  // Group results by product name
+  const grouped = options.reduce<Record<string, SkuOption[]>>((acc, opt) => {
+    const key = opt.product_name;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(opt);
+    return acc;
+  }, {});
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={containerRef} className="relative">
+      {/* Trigger / Input */}
       <div
         className="flex items-center gap-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm cursor-text dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-        onClick={() => setOpen(true)}
+        onClick={openDropdown}
       >
         <Search size={13} className="shrink-0 text-gray-400" />
+
         {open ? (
           <input
-            autoFocus
+            ref={inputRef}
             className="flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400"
-            placeholder={placeholder ?? "Search by SKU or product name…"}
+            placeholder="Type product name or SKU code…"
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
         ) : (
-          <span className={`flex-1 truncate ${selected ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>
-            {selected
-              ? `${selected.sku} — ${selected.product_name}`
-              : placeholder ?? "Search by SKU or product name…"}
+          <span className={`flex-1 truncate ${selectedLabel ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>
+            {selectedLabel ?? (placeholder ?? "Select a product SKU…")}
           </span>
         )}
+
         {value ? (
-          <button type="button" onClick={handleClear} className="text-gray-400 hover:text-error-500">
+          <button type="button" onClick={handleClear} className="text-gray-400 hover:text-error-500" title="Clear">
             <X size={12} />
           </button>
         ) : null}
-        {isFetching && <Loader2 size={12} className="animate-spin text-brand-500" />}
+        {isFetching && <Loader2 size={12} className="animate-spin text-brand-500 shrink-0" />}
       </div>
 
+      {/* Dropdown */}
       {open && (
-        <ul className="absolute z-50 top-full mt-1 left-0 right-0 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-          {options.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-gray-400">
-              {isFetching ? "Searching…" : "No SKUs found"}
+        <ul className="absolute z-50 top-full mt-1 left-0 right-0 max-h-72 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
+          {debouncedQ.length === 0 ? (
+            <li className="px-4 py-4 text-center text-sm text-gray-400">
+              Start typing a <span className="font-medium text-brand-500">product name</span> or SKU code…
             </li>
-          ) : options.map(opt => (
-            <li
-              key={opt.id}
-              onClick={() => handleSelect(opt)}
-              className="flex flex-col gap-0.5 px-4 py-2.5 cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20"
-            >
-              <span className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-                {opt.sku || `#${opt.id}`}
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {opt.product_name}
-                {opt.color_name ? ` · ${opt.color_name}` : ""}
-                {opt.variant_name ? ` / ${opt.variant_name}` : ""}
-                {` · ৳${opt.selling_price} · Stock: ${opt.stock}`}
-              </span>
+          ) : isFetching ? (
+            <li className="px-4 py-3 text-sm text-gray-400 flex items-center gap-2">
+              <Loader2 size={13} className="animate-spin" /> Searching…
             </li>
-          ))}
+          ) : options.length === 0 ? (
+            <li className="px-4 py-3 text-sm text-gray-400">No matching products found.</li>
+          ) : (
+            Object.entries(grouped).map(([productName, variants]) => (
+              <li key={productName}>
+                {/* Product group header */}
+                <div className="sticky top-0 px-4 py-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 uppercase tracking-wide">
+                  {productName}
+                </div>
+                {/* Variant options */}
+                {variants.map(opt => (
+                  <div
+                    key={opt.id}
+                    onClick={() => handleSelect(opt)}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                        {[opt.color_name, opt.variant_name].filter(Boolean).join(" / ") || "Default"}
+                      </span>
+                      <span className="text-xs text-gray-400 font-mono">{opt.sku}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 text-xs">
+                      <span className="text-brand-600 dark:text-brand-400 font-semibold">৳{opt.selling_price}</span>
+                      <span className={`px-1.5 py-0.5 rounded font-medium ${opt.stock > 0 ? "bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400" : "bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400"}`}>
+                        {opt.stock > 0 ? `${opt.stock} in stock` : "Out of stock"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>
