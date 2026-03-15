@@ -247,7 +247,7 @@ export default function PoliciesManager() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  {["Policy Key", "Title", "Type", "Status", "Updated", "Actions"].map((h) => (
+                  {["Policy Key", "Title", "BD Title", "Type", "Status", "Updated", "Actions"].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">
                       {h}
                     </th>
@@ -265,6 +265,9 @@ export default function PoliciesManager() {
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                       {p.title}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      {p.bd_title ?? <span className="text-gray-300 dark:text-gray-600 italic text-xs">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
