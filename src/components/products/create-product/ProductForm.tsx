@@ -1,10 +1,12 @@
 // src/components/products/product-create/ProductForm.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CheckCircle2, Copy, Pencil, Wand2 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -18,13 +20,14 @@ import { useTranslation } from "react-i18next";
 
 import { getAttributes } from "@/api/attributes.api";
 import { getVariants } from "@/api/variants.api";
-import { createProduct, updateProduct, type Product, type ProductVariationPayload } from "@/api/products.api";
+import { createProduct, updateProduct, reorderProductImages, type Product, type ProductVariationPayload } from "@/api/products.api";
 
 // import VariantMatrix from "./components/VariantMatrix";
 import type { ExistingImage, Option, ProductStatusFlags, SeoMeta, VariantMatrixRow } from "./types";
 import { genSkuFromParts, safeNumber, slugify } from "./utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import ConfirmDeleteModal from "@/components/ui/modal/ConfirmDeleteModal";
+import DraggableImageGrid from "./DraggableImageGrid";
 
 type SkuMode = "auto" | "manual";
 
@@ -359,6 +362,18 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
 
   const brandNameForSku = brands.find((b) => b.id === brandId)?.name ?? "BRAND";
 
+  const handleReorderImages = useCallback(
+    (newOrder: ExistingImage[]) => {
+      setExistingImages(newOrder);
+      if (productId) {
+        reorderProductImages(productId, newOrder.map((i) => i.id)).catch(() =>
+          toast.error("Failed to save image order")
+        );
+      }
+    },
+    [productId],
+  );
+
   return (
     <div className="space-y-6">
       {validationError ? (
@@ -547,47 +562,21 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
         {/* Existing images (edit only) */}
         {mode === "edit" && existingImages.length ? (
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.createProduct.existingImages")}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              {t("products.createProduct.existingImages")}
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                — {t("products.createProduct.dragToReorder", "drag to reorder")}
+              </span>
+            </p>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {existingImages.map((img) => {
-                const marked = deleteImageIds.includes(img.id);
-                return (
-                  <div
-                    key={img.id}
-                    className={cn(
-                      "overflow-hidden rounded-lg border bg-white dark:bg-gray-900",
-                      marked ? "border-error-300 dark:border-error-900/40" : "border-gray-200 dark:border-gray-800",
-                    )}
-                  >
-                    <div className="aspect-square w-full bg-gray-50 dark:bg-gray-800">
-                      {/* toPublicUrl */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={toPublicUrl(img.path)}
-                        alt="product"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-
-                    <div className="p-2">
-                      <button
-                        type="button"
-                        className={cn(
-                          "w-full rounded-md border px-2 py-1 text-xs font-semibold",
-                          marked
-                            ? "border-error-200 bg-error-50 text-error-700 dark:border-error-900/40 dark:bg-error-500/10 dark:text-error-300"
-                            : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]",
-                        )}
-                        onClick={() => setDeleteImgModal({ open: true, imageId: img.id })}
-                      >
-                        {marked ? t("products.createProduct.markedForDelete") : t("products.createProduct.deleteImage")}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DndProvider backend={HTML5Backend}>
+              <DraggableImageGrid
+                images={existingImages}
+                deleteImageIds={deleteImageIds}
+                onReorder={handleReorderImages}
+                onToggleDelete={(id) => setDeleteImgModal({ open: true, imageId: id })}
+              />
+            </DndProvider>
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t("products.createProduct.deleteImageHint")}

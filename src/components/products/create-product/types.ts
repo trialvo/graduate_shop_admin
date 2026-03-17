@@ -37,6 +37,7 @@ export type VariantMatrixRow = {
 export type ExistingImage = {
   id: number;
   path: string; // backend path
+  serial?: number;
 };
 
 // Mock data support types

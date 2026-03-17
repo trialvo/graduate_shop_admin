@@ -39,9 +39,11 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 import { api } from "@/api/client";
-import { getProduct, updateProduct } from "@/api/products.api";
+import { getProduct, updateProduct, reorderProductImages } from "@/api/products.api";
 import {
   getMainCategories,
   getSubCategories,
@@ -52,6 +54,7 @@ import { getColors } from "@/api/colors.api";
 import { getBrands } from "@/api/brands.api";
 import BaseModal from "./BaseModal";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+import DraggableImageGrid from "@/components/products/create-product/DraggableImageGrid";
 
 type Props = {
   open: boolean;
@@ -62,7 +65,7 @@ type Props = {
 
 type Option = { value: string; label: string; status?: boolean };
 
-type ExistingImage = { id: number; path: string };
+type ExistingImage = { id: number; path: string; serial?: number };
 
 type VariationColor = {
   id: number;
@@ -819,6 +822,18 @@ export default function EditProductModal({
     updateVarMutation.isPending ||
     deleteVarMutation.isPending;
 
+  const handleReorderImages = React.useCallback(
+    (newOrder: ExistingImage[]) => {
+      setExistingImages(newOrder);
+      if (productId) {
+        reorderProductImages(productId, newOrder.map((i) => i.id)).catch(() =>
+          toast.error("Failed to save image order")
+        );
+      }
+    },
+    [productId],
+  );
+
   const footer = (
     <div className="flex items-center justify-between gap-4">
       <div className="text-xs text-gray-400 dark:text-gray-500">
@@ -1039,44 +1054,14 @@ export default function EditProductModal({
                   </label>
 
                   {existingImages.length ? (
-                    <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                      {existingImages.map((img) => {
-                        const marked = deleteImageIds.includes(img.id);
-                        return (
-                          <button
-                            key={img.id}
-                            type="button"
-                            onClick={() => toggleDeleteImage(img.id)}
-                            className={cn(
-                              "group relative aspect-square overflow-hidden rounded-lg border-2 transition-all duration-200",
-                              marked
-                                ? "border-error-400 ring-2 ring-error-400/20"
-                                : "border-gray-200 hover:border-brand-300 hover:shadow-md dark:border-gray-700 dark:hover:border-brand-600",
-                            )}
-                            title={marked ? t("products.editProduct.clickRestore") : t("products.editProduct.clickMarkDelete")}
-                          >
-                            <img
-                              src={toPublicUrl(img.path)}
-                              alt={`img-${img.id}`}
-                              className={cn(
-                                "h-full w-full object-cover transition-all duration-200",
-                                marked ? "scale-95 opacity-30 grayscale" : "group-hover:scale-105",
-                              )}
-                            />
-                            {marked ? (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-error-500/10">
-                                <Trash2 size={18} className="text-error-500" />
-                                <span className="text-[10px] font-bold text-error-600">{t("products.editProduct.removeLabel")}</span>
-                              </div>
-                            ) : (
-                              <div className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
-                                #{img.id}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <DndProvider backend={HTML5Backend}>
+                      <DraggableImageGrid
+                        images={existingImages}
+                        deleteImageIds={deleteImageIds}
+                        onReorder={handleReorderImages}
+                        onToggleDelete={toggleDeleteImage}
+                      />
+                    </DndProvider>
                   ) : (
                     <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{t("products.editProduct.noExistingImages")}</p>
                   )}

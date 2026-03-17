@@ -1,7 +1,7 @@
 // src/api/products.api.ts
 import { api } from "./client";
 
-export type ProductImage = { id: number; path: string };
+export type ProductImage = { id: number; path: string; serial?: number };
 
 // ✅ list variations (your older shape)
 export type ProductVariation = {
@@ -392,5 +392,19 @@ export async function updateProductStatus(
     headers: { "Content-Type": "multipart/form-data" },
   });
 
+  return res.data;
+}
+
+/**
+ * PATCH /api/v1/admin/product/:id/images/reorder
+ * Sends the new ordered array of image IDs — the server assigns serial 1, 2, 3…
+ */
+export async function reorderProductImages(
+  productId: number,
+  imageIds: number[],
+): Promise<{ success: true }> {
+  const res = await api.patch(`/admin/product/${productId}/images/reorder`, {
+    image_ids: imageIds,
+  });
   return res.data;
 }
