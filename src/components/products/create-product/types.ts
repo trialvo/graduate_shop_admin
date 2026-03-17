@@ -38,6 +38,9 @@ export type ExistingImage = {
   id: number;
   path: string; // backend path
   serial?: number;
+  sku_id?: number | null;       // null = shared (shown for all SKUs)
+  sku_color_id?: number | null; // denormalized from product_skus.color_id
+  sku_variant_id?: number | null; // denormalized from product_skus.variant_id
 };
 
 // Mock data support types

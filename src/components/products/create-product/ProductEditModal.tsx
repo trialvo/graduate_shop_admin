@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 import ProductForm from "./ProductForm";
-import { getProduct, type ProductEntity, type ProductSingleResponseEntity } from "@/api/products.api";
+import { assignImageSku, getProduct, type ProductEntity, type ProductSingleResponseEntity, type ProductSingleVariation } from "@/api/products.api";
 
 type Props = {
   open: boolean;
@@ -17,7 +17,7 @@ type Props = {
   onUpdated?: () => void;
 };
 
-const toProductEntity = (product: ProductSingleResponseEntity): ProductEntity => {
+const toProductEntity = (product: ProductSingleResponseEntity) => {
   return {
     id: product.id,
     name: product.name,
@@ -45,7 +45,8 @@ const toProductEntity = (product: ProductSingleResponseEntity): ProductEntity =>
     updated_at: product.updated_at,
     images: product.images ?? [],
     product_images: product.images ?? [],
-    variations: [],
+    // Pass real variations so ProductForm can derive productSkus for the image SKU picker
+    variations: (product.variations ?? []) as any,
   };
 };
 
@@ -99,6 +100,10 @@ export default function ProductEditModal({ open, productId, onClose, onUpdated }
               mode="edit"
               productId={productId as number}
               initialProduct={data?.product ? toProductEntity(data.product) : null}
+              productVariations={data?.product?.variations ?? []}
+              onSkuAssign={async (imageId, sku_id) => {
+                try { await assignImageSku(imageId, sku_id); } catch (e) { console.error(e); }
+              }}
               onClose={onClose}
               onSuccess={() => onUpdated?.()}
             />

@@ -27,7 +27,8 @@ import type { ExistingImage, Option, ProductStatusFlags, SeoMeta, VariantMatrixR
 import { genSkuFromParts, safeNumber, slugify } from "./utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import ConfirmDeleteModal from "@/components/ui/modal/ConfirmDeleteModal";
-import DraggableImageGrid from "./DraggableImageGrid";
+import DraggableImageGrid, { type ProductSku } from "./DraggableImageGrid";
+import { assignImageSku, type ProductSingleVariation } from "@/api/products.api";
 
 type SkuMode = "auto" | "manual";
 
@@ -59,9 +60,13 @@ type Props = {
   initialProduct?: Product | null;
   onSuccess?: () => void;
   onClose?: () => void; // for modal usage
+  /** Full variation objects from API — used to populate the SKU picker on each image card */
+  productVariations?: ProductSingleVariation[];
+  /** Optional override callback for SKU assignment (injected from ProductEditModal) */
+  onSkuAssign?: (imageId: number, sku_id: number | null) => Promise<void>;
 };
 
-export default function ProductForm({ mode, productId, initialProduct, onSuccess, onClose }: Props) {
+export default function ProductForm({ mode, productId, initialProduct, onSuccess, onClose, productVariations, onSkuAssign: onSkuAssignProp }: Props) {
   const { t } = useTranslation();
   // Data (mock for now)
   const categories = INITIAL_CATEGORIES;
@@ -575,6 +580,26 @@ export default function ProductForm({ mode, productId, initialProduct, onSuccess
                 deleteImageIds={deleteImageIds}
                 onReorder={handleReorderImages}
                 onToggleDelete={(id) => setDeleteImgModal({ open: true, imageId: id })}
+                productSkus={(productVariations ?? []).map((v): ProductSku | null => {
+                  const colorId = v.color?.id ?? 0;
+                  const variantId = v.variant?.id ?? 0;
+                  if (!colorId && !variantId) return null;
+                  return {
+                    id: v.id,
+                    color_id: colorId,
+                    color_name: v.color?.name || `Color #${colorId}`,
+                    color_hex: (v.color as any)?.hex || "",
+                    variant_id: variantId,
+                    variant_name: v.variant?.name || (variantId ? `Size #${variantId}` : "—"),
+                  };
+                }).filter((s): s is ProductSku => s !== null)}
+                onSkuAssign={async (imageId, sku_id) => {
+                  if (onSkuAssignProp) {
+                    await onSkuAssignProp(imageId, sku_id);
+                  } else {
+                    try { await assignImageSku(imageId, sku_id); } catch (e) { console.error(e); }
+                  }
+                }}
               />
             </DndProvider>
 

@@ -55,6 +55,7 @@ import { getBrands } from "@/api/brands.api";
 import BaseModal from "./BaseModal";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import DraggableImageGrid from "@/components/products/create-product/DraggableImageGrid";
+import { assignImageSku } from "@/api/products.api";
 
 type Props = {
   open: boolean;
@@ -1060,6 +1061,41 @@ export default function EditProductModal({
                         deleteImageIds={deleteImageIds}
                         onReorder={handleReorderImages}
                         onToggleDelete={toggleDeleteImage}
+                        productSkus={variations
+                          .map((v) => {
+                            const colorId = getVariationColorId(v);
+                            const variantId = getVariationVariantId(v);
+                            if (!colorId && !variantId) return null; // completely empty row, skip
+                            return {
+                              id: v.id,
+                              color_id: colorId,
+                              color_name: v.color?.name || `Color #${colorId}`,
+                              color_hex: v.color?.hex || "",
+                              variant_id: variantId,
+                              variant_name: v.variant?.name || (variantId ? `Size #${variantId}` : "—"),
+                            };
+                          })
+                          .filter((s): s is NonNullable<typeof s> => s !== null)}
+                        onSkuAssign={async (imageId, sku_id) => {
+                          try {
+                            await assignImageSku(imageId, sku_id);
+                            const matchedSku = variations.find((v) => v.id === sku_id);
+                            setExistingImages((prev) =>
+                              prev.map((img) =>
+                                img.id === imageId
+                                  ? {
+                                      ...img,
+                                      sku_id,
+                                      sku_color_id: matchedSku?.color?.id ?? null,
+                                      sku_variant_id: matchedSku?.variant?.id ?? null,
+                                    }
+                                  : img
+                              )
+                            );
+                          } catch (e) {
+                            console.error("Failed to assign SKU to image:", e);
+                          }
+                        }}
                       />
                     </DndProvider>
                   ) : (

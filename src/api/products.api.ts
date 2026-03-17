@@ -1,7 +1,7 @@
 // src/api/products.api.ts
 import { api } from "./client";
 
-export type ProductImage = { id: number; path: string; serial?: number };
+export type ProductImage = { id: number; path: string; serial?: number; sku_id?: number | null; sku_color_id?: number | null; sku_variant_id?: number | null };
 
 // ✅ list variations (your older shape)
 export type ProductVariation = {
@@ -406,5 +406,18 @@ export async function reorderProductImages(
   const res = await api.patch(`/admin/product/${productId}/images/reorder`, {
     image_ids: imageIds,
   });
+  return res.data;
+}
+
+/**
+ * PATCH /api/v1/admin/product/image/:imageId/sku
+ * Assigns or clears the sku_id on a product image.
+ * Pass sku_id: null to clear (image becomes shared — shown for all SKUs).
+ */
+export async function assignImageSku(
+  imageId: number,
+  sku_id: number | null,
+): Promise<{ success: true; image_id: number; sku_id: number | null }> {
+  const res = await api.patch(`/admin/product/image/${imageId}/sku`, { sku_id });
   return res.data;
 }

@@ -1,13 +1,13 @@
 // src/components/products/create-product/DraggableImageGrid.tsx
 /**
- * Drag-and-drop + arrow-button image grid for reordering product images.
+ * Drag-and-drop + arrow-button + SKU-assignment image grid.
  *
- * Key design: visual reorder is kept in LOCAL state during a drag.
- * onReorder (→ API call) fires only ONCE when the user releases the card.
- * Arrow / "Set cover" buttons call onReorder immediately (discrete click).
- *
- * Desktop  → grab ⠿ handle, drop anywhere (free-form, any distance)
- * Mobile   → use ‹ › arrow buttons or ★ to jump to position 1
+ * Each image card has:
+ *  - ⠿ grab handle (free-form drag – fires API only on drop)
+ *  - ‹ › arrow buttons (1-slot move, works on small screens)
+ *  - ★ Set as Cover (jump to position 1)
+ *  - 🎨 SKU badge / dropdown  (assign color+size SKU, or clear to "shared")
+ *  - 🗑 Delete toggle
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
+  Layers,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -24,6 +26,19 @@ import type { ExistingImage } from "./types";
 
 const ITEM_TYPE = "PRODUCT_IMAGE";
 type DragItem = { index: number; id: number };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ProductSku = {
+  id: number;
+  color_id: number;
+  color_name: string;
+  color_hex: string;
+  variant_id: number;
+  variant_name: string;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Single card
@@ -34,15 +49,13 @@ type ImageCardProps = {
   index: number;
   total: number;
   markedForDelete: boolean;
-  /** Live swap during drag – updates local state, NO API call */
+  productSkus: ProductSku[];
   onHoverMove: (from: number, to: number) => void;
-  /** Called once on drag end – triggers API call in parent */
   onDropEnd: (finalImages: ExistingImage[]) => void;
-  /** Get current local order at drop time */
   getCurrentImages: () => ExistingImage[];
-  /** Arrow / cover button – discrete, triggers API immediately */
   onDiscreteMove: (from: number, to: number) => void;
   onToggleDelete: (id: number) => void;
+  onSkuAssign: (imageId: number, sku_id: number | null) => void;
 };
 
 function ImageCard({
@@ -50,15 +63,17 @@ function ImageCard({
   index,
   total,
   markedForDelete,
+  productSkus,
   onHoverMove,
   onDropEnd,
   getCurrentImages,
   onDiscreteMove,
   onToggleDelete,
+  onSkuAssign,
 }: ImageCardProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [skuOpen, setSkuOpen] = useState(false);
 
-  // ── Drag source – fires onDropEnd once when released ──────────────────────
   const [{ isDragging }, drag, preview] = useDrag<
     DragItem,
     void,
@@ -67,13 +82,9 @@ function ImageCard({
     type: ITEM_TYPE,
     item: { index, id: image.id },
     collect: (m) => ({ isDragging: m.isDragging() }),
-    end: () => {
-      // Drag finished – push final local order to parent (one API call)
-      onDropEnd(getCurrentImages());
-    },
+    end: () => onDropEnd(getCurrentImages()),
   });
 
-  // ── Drop target – updates local state only (no API) ───────────────────────
   const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>({
     accept: ITEM_TYPE,
     collect: (m) => ({ isOver: m.isOver() }),
@@ -89,11 +100,17 @@ function ImageCard({
   const isFirst = index === 0;
   const isLast = index === total - 1;
 
+  const assignedSku = productSkus.find((s) => s.id === image.sku_id);
+
+  const badgeLabel = assignedSku
+    ? `${assignedSku.color_name} / ${assignedSku.variant_name}`
+    : null;
+
   return (
     <div
       ref={ref}
       className={cn(
-        "relative flex flex-col overflow-hidden rounded-lg border bg-white dark:bg-gray-900 transition-all duration-150",
+        "relative flex flex-col rounded-lg border bg-white dark:bg-gray-900 transition-all duration-150",
         markedForDelete
           ? "border-error-300 dark:border-error-900/40 opacity-50"
           : isOver
@@ -102,7 +119,7 @@ function ImageCard({
         isDragging ? "opacity-30 scale-95" : "",
       )}
     >
-      {/* Serial badge */}
+      {/* Serial / Cover badge */}
       {!markedForDelete && (
         <div
           className={cn(
@@ -111,6 +128,20 @@ function ImageCard({
           )}
         >
           {index === 0 ? "Cover" : `#${index + 1}`}
+        </div>
+      )}
+
+      {/* SKU badge on top-center when assigned */}
+      {badgeLabel && !markedForDelete && (
+        <div
+          className="absolute top-1 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold text-white leading-none shadow"
+          style={{ backgroundColor: assignedSku?.color_hex || "#555" }}
+        >
+          <span
+            className="inline-block w-2 h-2 rounded-full border border-white/50"
+            style={{ backgroundColor: assignedSku?.color_hex }}
+          />
+          {badgeLabel}
         </div>
       )}
 
@@ -124,7 +155,7 @@ function ImageCard({
       </div>
 
       {/* Image */}
-      <div className="aspect-square w-full bg-gray-50 dark:bg-gray-800">
+      <div className="aspect-square w-full overflow-hidden rounded-t-lg bg-gray-50 dark:bg-gray-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={toPublicUrl(image.path)}
@@ -134,8 +165,71 @@ function ImageCard({
         />
       </div>
 
+      {/* SKU assignment dropdown */}
+      {!markedForDelete && productSkus.length > 0 && (
+        <div className="relative px-1.5 pt-1">
+          <button
+            type="button"
+            onClick={() => setSkuOpen((p) => !p)}
+            className={cn(
+              "flex w-full items-center justify-center gap-1 rounded border px-2 py-0.5 text-[10px] font-semibold transition-colors truncate",
+              assignedSku
+                ? "border-transparent text-white"
+                : "border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 dark:border-gray-700 dark:text-gray-400",
+            )}
+            style={
+              assignedSku
+                ? { backgroundColor: assignedSku.color_hex || "#555" }
+                : undefined
+            }
+            title={badgeLabel ?? "Assign to a SKU (color + size)"}
+          >
+            <Layers size={10} />
+            <span className="truncate">
+              {badgeLabel ?? "Assign SKU"}
+            </span>
+          </button>
+
+          {skuOpen && (
+            <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 shadow-lg overflow-auto max-h-48">
+              {/* Clear option */}
+              <button
+                type="button"
+                onClick={() => { onSkuAssign(image.id, null); setSkuOpen(false); }}
+                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-[10px] text-gray-500 hover:bg-gray-50 dark:hover:bg-white/[0.04] border-b border-gray-100 dark:border-gray-800"
+              >
+                <X size={10} /> All SKUs (shared)
+              </button>
+
+              {productSkus.map((sku) => (
+                <button
+                  key={sku.id}
+                  type="button"
+                  onClick={() => { onSkuAssign(image.id, sku.id); setSkuOpen(false); }}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2.5 py-1.5 text-[10px] transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.04]",
+                    image.sku_id === sku.id
+                      ? "font-bold text-gray-900 dark:text-gray-100"
+                      : "text-gray-700 dark:text-gray-300",
+                  )}
+                >
+                  <span
+                    className="inline-block w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
+                    style={{ backgroundColor: sku.color_hex }}
+                  />
+                  <span className="truncate">{sku.color_name} / {sku.variant_name}</span>
+                  {image.sku_id === sku.id && (
+                    <span className="ml-auto text-brand-500 text-[9px] flex-shrink-0">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Controls row */}
-      <div className="flex items-center gap-1 p-1.5">
+      <div className="flex items-center gap-1 p-1.5 pt-1">
         {/* ← */}
         <button
           type="button"
@@ -152,10 +246,10 @@ function ImageCard({
           <ChevronLeft size={13} />
         </button>
 
-        {/* ★ Set as Cover */}
+        {/* ★ Set Cover */}
         <button
           type="button"
-          title="Set as cover (position 1)"
+          title="Set as cover"
           disabled={isFirst || markedForDelete}
           onClick={() => onDiscreteMove(index, 0)}
           className={cn(
@@ -164,7 +258,7 @@ function ImageCard({
               ? "border-brand-200 bg-brand-50 text-brand-600 dark:border-brand-900/40 dark:bg-brand-500/10 dark:text-brand-300 cursor-default"
               : markedForDelete
               ? "opacity-30 cursor-not-allowed border-gray-100 dark:border-gray-800 text-gray-400"
-              : "border-gray-200 text-gray-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-brand-500/10",
+              : "border-gray-200 text-gray-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 dark:border-gray-700 dark:text-gray-300",
           )}
         >
           <Star size={10} />
@@ -207,33 +301,36 @@ function ImageCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Grid — owns local order state during drag; parent is notified once on drop
+// Grid
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Props = {
   images: ExistingImage[];
   deleteImageIds: number[];
+  /** SKUs (color+size combos) used by this product's variations */
+  productSkus?: ProductSku[];
   onReorder: (newImages: ExistingImage[]) => void;
   onToggleDelete: (id: number) => void;
+  /** Called when a SKU is assigned or cleared on an image */
+  onSkuAssign?: (imageId: number, sku_id: number | null) => void;
 };
 
 export default function DraggableImageGrid({
   images,
   deleteImageIds,
+  productSkus = [],
   onReorder,
   onToggleDelete,
+  onSkuAssign,
 }: Props) {
-  // Local copy for live visual reorder during drag (no API calls yet)
   const [localImages, setLocalImages] = useState<ExistingImage[]>(images);
   const localRef = useRef<ExistingImage[]>(images);
 
-  // Sync local state when parent's images prop changes (after API response)
   useEffect(() => {
     setLocalImages(images);
     localRef.current = images;
   }, [images]);
 
-  /** During drag: update visual order only — no API */
   const handleHoverMove = useCallback((from: number, to: number) => {
     setLocalImages((prev) => {
       const next = [...prev];
@@ -244,17 +341,13 @@ export default function DraggableImageGrid({
     });
   }, []);
 
-  /** On drag end: fire onReorder once with the settled order → single API call */
   const handleDropEnd = useCallback(
-    (finalImages: ExistingImage[]) => {
-      onReorder(finalImages);
-    },
+    (finalImages: ExistingImage[]) => onReorder(finalImages),
     [onReorder],
   );
 
   const getCurrentImages = useCallback(() => localRef.current, []);
 
-  /** Arrow / cover buttons: discrete click → call onReorder immediately */
   const handleDiscreteMove = useCallback(
     (from: number, to: number) => {
       if (from === to) return;
@@ -268,12 +361,37 @@ export default function DraggableImageGrid({
     [onReorder],
   );
 
+  const handleSkuAssign = useCallback(
+    (imageId: number, sku_id: number | null) => {
+      setLocalImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId
+            ? {
+                ...img,
+                sku_id,
+                sku_color_id: sku_id
+                  ? (productSkus.find((s) => s.id === sku_id)?.color_id ?? null)
+                  : null,
+                sku_variant_id: sku_id
+                  ? (productSkus.find((s) => s.id === sku_id)?.variant_id ?? null)
+                  : null,
+              }
+            : img,
+        ),
+      );
+      localRef.current = localRef.current.map((img) =>
+        img.id === imageId ? { ...img, sku_id } : img,
+      );
+      onSkuAssign?.(imageId, sku_id);
+    },
+    [onSkuAssign, productSkus],
+  );
+
   return (
     <div className="space-y-2">
       <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
         <GripVertical size={12} className="inline" />
-        Drag to reorder &middot; use ‹ › buttons on mobile &middot; first image
-        is the cover
+        Drag or use ‹ › to reorder &middot; assign a SKU so customers see image only for that color+size
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -284,11 +402,13 @@ export default function DraggableImageGrid({
             index={idx}
             total={localImages.length}
             markedForDelete={deleteImageIds.includes(img.id)}
+            productSkus={productSkus}
             onHoverMove={handleHoverMove}
             onDropEnd={handleDropEnd}
             getCurrentImages={getCurrentImages}
             onDiscreteMove={handleDiscreteMove}
             onToggleDelete={onToggleDelete}
+            onSkuAssign={handleSkuAssign}
           />
         ))}
       </div>
