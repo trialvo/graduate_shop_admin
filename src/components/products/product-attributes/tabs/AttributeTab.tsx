@@ -1,10 +1,10 @@
 // src/components/products/product-attributes/tabs/AttributeTab.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Download, Layers, Pencil, Plus, Search, ShieldCheck, Trash2, X } from "lucide-react";
+import { Download, GripVertical, Layers, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Pagination } from "@/components/ui";
@@ -30,6 +30,7 @@ import {
   createVariant,
   deleteVariant,
   getVariant,
+  reorderVariants,
   updateVariant,
   type Variant,
 } from "@/api/variants.api";
@@ -39,21 +40,6 @@ const STATUS_OPTIONS: Option[] = [
   { value: "true", label: "Active" },
   { value: "false", label: "Inactive" },
 ];
-
-// attribute + variant priority: 1 Normal, 2 Medium, 3 High
-const PRIORITY_OPTIONS: Option[] = [
-  { value: "all", label: "All Priority" },
-  { value: "1", label: "Normal" },
-  { value: "2", label: "Medium" },
-  { value: "3", label: "High" },
-];
-
-function priorityLabel(p: number): string {
-  if (p === 1) return "Normal";
-  if (p === 2) return "Medium";
-  if (p === 3) return "High";
-  return String(p);
-}
 
 function parseApiError(err: any, fallback: string) {
   return err?.response?.data?.error ?? err?.response?.data?.message ?? fallback;
@@ -68,7 +54,7 @@ function normalizeAttribute(a: Attribute): AttributeRow {
       attribute_id: typeof v.attribute_id === "string" ? parseInt(v.attribute_id, 10) : (v.attribute_id ?? a.id),
       name: v.name ?? "",
       name_bd: v.name_bd ?? null,
-      priority: v.priority ?? 1,
+      serial: v.serial ?? 1,
       status: v.status === 1 || v.status === "1" || v.status === true || Boolean(v.status),
       created_at: v.created_at,
       updated_at: v.updated_at,
@@ -125,7 +111,225 @@ function TableSkeleton() {
   );
 }
 
-/* ---------------------- Attribute Modal ---------------------- */
+/* ─────────────────────────────────────────────────────────────
+   DRAGGABLE VARIANT LIST
+   Uses native HTML5 drag-and-drop; no external DnD library.
+───────────────────────────────────────────────────────────── */
+
+interface DraggableVariantsProps {
+  attributeId: number;
+  variants: VariantRow[];
+  onReordered: (newVariants: VariantRow[]) => void;
+  onEdit: (id: number) => void;
+  onDelete: (v: VariantRow) => void;
+  isDeleting: boolean;
+}
+
+function DraggableVariants({
+  attributeId,
+  variants,
+  onReordered,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: DraggableVariantsProps) {
+  const [localVariants, setLocalVariants] = useState<VariantRow[]>(variants);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const dragIndexRef = useRef<number | null>(null);
+  const pendingRef = useRef<VariantRow[] | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync when server data changes (but not while dragging)
+  useEffect(() => {
+    if (draggingId === null) {
+      setLocalVariants(variants);
+    }
+  }, [variants, draggingId]);
+
+  const scheduleSave = useCallback(
+    (ordered: VariantRow[]) => {
+      pendingRef.current = ordered;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(async () => {
+        const toSave = pendingRef.current;
+        if (!toSave) return;
+        setIsSaving(true);
+        try {
+          await reorderVariants(attributeId, {
+            order: toSave.map((v, i) => ({ id: v.id, serial: i + 1 })),
+          });
+          onReordered(toSave.map((v, i) => ({ ...v, serial: i + 1 })));
+        } catch (e: any) {
+          toast.error(parseApiError(e, "Failed to save order."));
+        } finally {
+          setIsSaving(false);
+          pendingRef.current = null;
+        }
+      }, 600);
+    },
+    [attributeId, onReordered],
+  );
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    dragIndexRef.current = index;
+    setDraggingId(localVariants[index].id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    const fromIndex = dragIndexRef.current;
+    if (fromIndex === null || fromIndex === dropIndex) {
+      setDraggingId(null);
+      setOverIndex(null);
+      dragIndexRef.current = null;
+      return;
+    }
+
+    const updated = [...localVariants];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(dropIndex, 0, moved);
+
+    setLocalVariants(updated);
+    setDraggingId(null);
+    setOverIndex(null);
+    dragIndexRef.current = null;
+    scheduleSave(updated);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setOverIndex(null);
+    dragIndexRef.current = null;
+  };
+
+  if (localVariants.length === 0) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/30">
+        <Layers size={14} className="text-gray-400 dark:text-gray-500" />
+        <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+          No variants yet — add one below
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {/* Saving indicator */}
+      {isSaving && (
+        <div className="absolute -top-1 right-0 flex items-center gap-1 rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-600 ring-1 ring-brand-200 dark:bg-brand-500/10 dark:text-brand-400 dark:ring-brand-700/40">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
+          Saving order…
+        </div>
+      )}
+
+      {/* Drag hint */}
+      <p className="mb-1.5 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500">
+        <GripVertical size={11} className="opacity-60" />
+        Drag to reorder
+      </p>
+
+      <div
+        className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        style={{ minWidth: 280 }}
+      >
+        {localVariants.map((v, index) => {
+          const isDragging = draggingId === v.id;
+          const isDropTarget = overIndex === index && draggingId !== null && draggingId !== v.id;
+
+          return (
+            <div
+              key={v.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
+              className={cn(
+                "group relative flex flex-col rounded-lg border p-2 transition-all duration-150 select-none",
+                "cursor-grab active:cursor-grabbing",
+                isDragging
+                  ? "scale-95 opacity-40 ring-2 ring-brand-400 ring-offset-1 dark:ring-brand-500"
+                  : "hover:shadow-md hover:-translate-y-px",
+                isDropTarget
+                  ? "border-brand-400 bg-brand-50/60 dark:border-brand-500 dark:bg-brand-500/10"
+                  : v.status
+                    ? "border-gray-200 bg-gradient-to-br from-white to-gray-50/60 dark:border-gray-700 dark:from-gray-800/90 dark:to-gray-800/40"
+                    : "border-gray-200/50 bg-gray-50/40 opacity-65 dark:border-gray-800/50 dark:bg-gray-900/30",
+              )}
+            >
+              {/* Drag handle + status dot + name */}
+              <div className="flex items-center gap-1.5">
+                <GripVertical
+                  size={12}
+                  className="shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-400"
+                />
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    v.status ? "bg-success-500" : "bg-gray-400 dark:bg-gray-500",
+                  )}
+                />
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
+                    {v.name}
+                  </span>
+                  {v.name_bd && (
+                    <span className="block truncate text-[10px] text-brand-500 dark:text-brand-400">
+                      {v.name_bd}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Serial badge */}
+              <div className="mt-1.5">
+                <span className="inline-flex items-center rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ring-1 bg-gray-100 text-gray-500 ring-gray-200/60 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700/40">
+                  #{index + 1}
+                </span>
+              </div>
+
+              {/* Hover actions */}
+              <div className="absolute -top-1 -right-1 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white px-1 py-0.5 opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 dark:border-gray-600 dark:bg-gray-800">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onEdit(v.id); }}
+                  className="rounded p-0.5 text-gray-400 transition-colors hover:text-brand-600 dark:hover:text-brand-400"
+                  title="Edit"
+                >
+                  <Pencil size={11} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDelete(v); }}
+                  disabled={isDeleting}
+                  className="rounded p-0.5 text-gray-400 transition-colors hover:text-error-600 dark:hover:text-error-400"
+                  title="Delete"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ATTRIBUTE MODAL
+───────────────────────────────────────────────────────────── */
 
 type AttributeModalMode = "create" | "edit";
 
@@ -134,12 +338,9 @@ type AttributeModalState = {
   mode: AttributeModalMode;
   id?: number;
   hydrated: boolean;
-
   name: string;
   name_bd: string;
   status: boolean;
-  priority: number;
-
   // only for create: comma separated variants
   variantsCsv: string;
 };
@@ -161,8 +362,6 @@ function AttributeModal({
   if (!state.open) return null;
 
   const isCreate = state.mode === "create";
-
-  // Split CSV preview chips
   const variantChips = state.variantsCsv
     .split(",")
     .map((s) => s.trim())
@@ -172,12 +371,10 @@ function AttributeModal({
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
-        {/* ── Header ─────────────────────────────────── */}
+        {/* Header */}
         <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-brand-50 via-white to-brand-50/40 px-6 py-5 dark:border-gray-800 dark:from-brand-900/20 dark:via-gray-900 dark:to-brand-900/10">
-          {/* Decorative circles */}
           <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-brand-100/40 dark:bg-brand-500/5" />
           <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-brand-100/30 dark:bg-brand-500/5" />
-
           <div className="relative flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25">
@@ -192,7 +389,6 @@ function AttributeModal({
                 </p>
               </div>
             </div>
-
             <button
               type="button"
               onClick={() => setState((p) => ({ ...p, open: false }))}
@@ -203,7 +399,7 @@ function AttributeModal({
           </div>
         </div>
 
-        {/* ── Body ─────────────────────────────────── */}
+        {/* Body */}
         <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
           {state.mode === "edit" && loadingSingle ? (
             <div className="space-y-4">
@@ -256,26 +452,6 @@ function AttributeModal({
                       গ্রাহকদের জন্য বাংলা নাম
                     </p>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("common.priority")}
-                    </label>
-                    <Select
-                      key={`attr-modal-priority-${state.hydrated}-${state.priority}`}
-                      options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
-                      placeholder="Select priority"
-                      defaultValue={String(state.priority)}
-                      onChange={(v) =>
-                        setState((p) => ({
-                          ...p,
-                          priority: safeNumber(String(v), 1),
-                        }))
-                      }
-                    />
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                      Higher priority attributes appear first
-                    </p>
-                  </div>
                 </div>
               </div>
 
@@ -315,7 +491,7 @@ function AttributeModal({
                 </div>
               </div>
 
-              {/* Section 3: Variants (only create) */}
+              {/* Section 3: Variants (only on create) */}
               {isCreate && (
                 <div>
                   <div className="mb-4 flex items-center gap-2">
@@ -344,7 +520,6 @@ function AttributeModal({
                       </p>
                     </div>
 
-                    {/* Live preview chips */}
                     {variantChips.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {variantChips.map((chip, i) => (
@@ -367,12 +542,11 @@ function AttributeModal({
           )}
         </div>
 
-        {/* ── Footer ─────────────────────────────────── */}
+        {/* Footer */}
         <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/50">
           <p className="text-[10px] text-gray-400 dark:text-gray-500">
             {isCreate ? "Fill in the details to create a new attribute" : `Editing attribute #${state.id ?? ""}`}
           </p>
-
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -381,7 +555,6 @@ function AttributeModal({
             >
               {t("common.cancel")}
             </Button>
-
             <Button
               onClick={onSubmit}
               disabled={submitting || !state.name.trim()}
@@ -391,24 +564,23 @@ function AttributeModal({
             </Button>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-/* ---------------------- Variant Modal ---------------------- */
+/* ─────────────────────────────────────────────────────────────
+   VARIANT MODAL (edit)
+───────────────────────────────────────────────────────────── */
 
 type VariantModalState = {
   open: boolean;
   id?: number;
   hydrated: boolean;
-
   attribute_id: number;
   name: string;
   name_bd: string;
   status: boolean;
-  priority: number;
 };
 
 function VariantModal({
@@ -433,11 +605,10 @@ function VariantModal({
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
-        {/* ── Header ─────────────────────────────────── */}
+        {/* Header */}
         <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-brand-50 via-white to-brand-50/40 px-6 py-5 dark:border-gray-800 dark:from-brand-900/20 dark:via-gray-900 dark:to-brand-900/10">
           <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-brand-100/40 dark:bg-brand-500/5" />
           <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-brand-100/30 dark:bg-brand-500/5" />
-
           <div className="relative flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25">
@@ -452,7 +623,6 @@ function VariantModal({
                 </p>
               </div>
             </div>
-
             <button
               type="button"
               onClick={() => setState((p) => ({ ...p, open: false }))}
@@ -463,7 +633,7 @@ function VariantModal({
           </div>
         </div>
 
-        {/* ── Body ─────────────────────────────────── */}
+        {/* Body */}
         <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
           {loadingSingle ? (
             <div className="space-y-4">
@@ -548,26 +718,6 @@ function VariantModal({
                       গ্রাহকদের জন্য বাংলা নাম
                     </p>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("common.priority")}
-                    </label>
-                    <Select
-                      key={`var-modal-priority-${state.hydrated}-${state.priority}`}
-                      options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
-                      placeholder="Select priority"
-                      defaultValue={String(state.priority)}
-                      onChange={(v) =>
-                        setState((p) => ({
-                          ...p,
-                          priority: safeNumber(String(v), 1),
-                        }))
-                      }
-                    />
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                      Higher priority variants appear first
-                    </p>
-                  </div>
                 </div>
               </div>
 
@@ -610,12 +760,11 @@ function VariantModal({
           )}
         </div>
 
-        {/* ── Footer ─────────────────────────────────── */}
+        {/* Footer */}
         <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/50">
           <p className="text-[10px] text-gray-400 dark:text-gray-500">
             Editing variant #{state.id ?? ""}
           </p>
-
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -624,7 +773,6 @@ function VariantModal({
             >
               {t("common.cancel")}
             </Button>
-
             <Button
               onClick={onSubmit}
               disabled={submitting || !state.name.trim()}
@@ -634,13 +782,14 @@ function VariantModal({
             </Button>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-/* ---------------------- Main Tab ---------------------- */
+/* ─────────────────────────────────────────────────────────────
+   MAIN TAB
+───────────────────────────────────────────────────────────── */
 
 export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactNode }) {
   const { t } = useTranslation();
@@ -648,23 +797,23 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "true" | "false">("all");
-  const [priority, setPriority] = useState<"all" | "1" | "2" | "3">("all");
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
 
   // inline variant draft per attribute
   const [variantDraftByAttrId, setVariantDraftByAttrId] = useState<Record<number, string>>({});
 
-  // IMPORTANT: initial GET => only {limit:10}
+  // Local variant overrides (to reflect optimistic reorder without full refetch)
+  const [variantOverrideByAttrId, setVariantOverrideByAttrId] = useState<Record<number, VariantRow[]>>({});
+
   const params = useMemo(() => {
     return {
       limit,
       name: search.trim() ? search.trim() : undefined,
       status: status === "all" ? undefined : status === "true",
-      priority: priority === "all" ? undefined : safeNumber(priority, 1),
       offset: page > 1 ? (page - 1) * limit : undefined,
     };
-  }, [limit, search, status, priority, page]);
+  }, [limit, search, status, page]);
 
   const queryKey = useMemo(() => ["attributes", params] as const, [params]);
 
@@ -681,6 +830,11 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     [data?.data],
   );
 
+  // Clear local overrides when query data changes (e.g. after adding/deleting variants)
+  useEffect(() => {
+    setVariantOverrideByAttrId({});
+  }, [data]);
+
   const total = data?.total ?? 0;
 
   const attributeOptions: Option[] = useMemo(
@@ -688,7 +842,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     [rows],
   );
 
-  /* ---------- Modals state ---------- */
+  /* ---- Modals state ---- */
 
   const [attrModal, setAttrModal] = useState<AttributeModalState>({
     open: false,
@@ -697,7 +851,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     name: "",
     name_bd: "",
     status: true,
-    priority: 1,
     variantsCsv: "",
   });
 
@@ -708,10 +861,9 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     name: "",
     name_bd: "",
     status: true,
-    priority: 1,
   });
 
-  /* ---------- Single loads for modals ---------- */
+  /* ---- Single loads for modals ---- */
 
   const { data: singleAttr, isLoading: singleAttrLoading } = useQuery({
     queryKey: ["attribute", attrModal.id],
@@ -733,7 +885,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         name: singleAttr.name ?? "",
         name_bd: singleAttr.name_bd ?? "",
         status: Boolean(singleAttr.status),
-        priority: singleAttr.priority ?? 1,
         hydrated: true,
       };
     });
@@ -760,33 +911,29 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         name: singleVar.name ?? "",
         name_bd: singleVar.name_bd ?? "",
         status: Boolean(singleVar.status),
-        priority: singleVar.priority ?? 1,
         hydrated: true,
       };
     });
   }, [variantModal.open, singleVar]);
 
-  /* ---------- Mutations ---------- */
+  /* ---- Mutations ---- */
 
   const createAttrMutation = useMutation({
     mutationFn: createAttribute,
     onSuccess: async (created) => {
-      // optional: create variants from CSV
       const values = attrModal.variantsCsv
         .split(",")
         .map((v) => v.trim())
         .filter(Boolean);
 
       if (values.length) {
-        // create sequentially
         for (const val of values) {
           try {
-            // eslint-disable-next-line no-await-in-loop
             await createVariant({
               attribute_id: created.id,
               name: val,
               status: true,
-              priority: 1,
+              serial: 1,
             });
           } catch (e: any) {
             toast.error(parseApiError(e, `Failed to create variant "${val}"`));
@@ -803,7 +950,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         name: "",
         name_bd: "",
         status: true,
-        priority: 1,
         variantsCsv: "",
       });
     },
@@ -876,7 +1022,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     },
   });
 
-  /* ---------- Actions ---------- */
+  /* ---- Actions ---- */
 
   const openCreateAttribute = () => {
     setAttrModal({
@@ -886,7 +1032,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       name: "",
       name_bd: "",
       status: true,
-      priority: 1,
       variantsCsv: "",
     });
   };
@@ -900,7 +1045,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       name: "",
       name_bd: "",
       status: true,
-      priority: 1,
       variantsCsv: "",
     });
   };
@@ -914,7 +1058,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         name: trimmed,
         name_bd: attrModal.name_bd.trim() || undefined,
         status: attrModal.status,
-        priority: attrModal.priority,
+        priority: 1,
       });
       return;
     }
@@ -926,7 +1070,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         name: trimmed,
         name_bd: attrModal.name_bd.trim() || undefined,
         status: attrModal.status,
-        priority: attrModal.priority,
       },
     });
   };
@@ -942,12 +1085,11 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         name: trimmed,
         name_bd: variantModal.name_bd.trim() || undefined,
         status: variantModal.status,
-        priority: variantModal.priority,
       },
     });
   };
 
-  const addVariantInline = (attributeId: number) => {
+  const addVariantInline = (attributeId: number, currentCount: number) => {
     const v = (variantDraftByAttrId[attributeId] ?? "").trim();
     if (!v) return;
 
@@ -955,7 +1097,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       attribute_id: attributeId,
       name: v,
       status: true,
-      priority: 1,
+      serial: currentCount + 1, // append at end
     });
 
     setVariantDraftByAttrId((p) => ({ ...p, [attributeId]: "" }));
@@ -968,13 +1110,6 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     });
   };
 
-  const updateAttributePriority = (row: AttributeRow, p: number) => {
-    updateAttrMutation.mutate({
-      id: row.id,
-      payload: { priority: p, name: row.name, status: row.status },
-    });
-  };
-
   const openEditVariant = (variantId: number) => {
     setVariantModal({
       open: true,
@@ -984,8 +1119,12 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       name: "",
       name_bd: "",
       status: true,
-      priority: 1,
     });
+  };
+
+  const handleDeleteVariant = (v: VariantRow) => {
+    if (window.confirm(`Delete variant "${v.name}"?`))
+      deleteVarMutation.mutate(v.id);
   };
 
   const onExport = () => {
@@ -1014,9 +1153,9 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters — removed priority filter */}
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
-          <div className="md:col-span-5">
+          <div className="md:col-span-7">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("common.search")}
             </p>
@@ -1034,7 +1173,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
             </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-3">
             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("common.status")}
             </p>
@@ -1050,28 +1189,12 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
           </div>
 
           <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("products.attributes.priority")}
-            </p>
-            <Select
-              options={PRIORITY_OPTIONS}
-              placeholder="Priority"
-              defaultValue={priority}
-              onChange={(v) => {
-                setPage(1);
-                setPriority(v as any);
-              }}
-            />
-          </div>
-
-          <div className="md:col-span-1">
             <Button
               variant="outline"
               className="w-full"
               onClick={() => {
                 setSearch("");
                 setStatus("all");
-                setPriority("all");
                 setLimit(10);
                 setPage(1);
               }}
@@ -1103,10 +1226,10 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-[1180px] w-full border-collapse">
+              <table className="min-w-[1050px] w-full border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                    {["SL", "Id", "Attribute", "Variants", "Status", "Priority", "Action"].map(
+                    {["SL", "Id", "Attribute", "Variants (drag to reorder)", "Status", "Action"].map(
                       (h) => (
                         <th
                           key={h}
@@ -1120,216 +1243,124 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                 </thead>
 
                 <tbody>
-                  {rows.map((row, idx) => (
-                    <tr
-                      key={row.id}
-                      className="border-b border-gray-100 dark:border-gray-800 align-top"
-                    >
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {(page - 1) * limit + (idx + 1)}
-                      </td>
+                  {rows.map((row, idx) => {
+                    const effectiveVariants = variantOverrideByAttrId[row.id] ?? row.variants ?? [];
 
-                      <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {row.id}
-                      </td>
+                    return (
+                      <tr
+                        key={row.id}
+                        className="border-b border-gray-100 dark:border-gray-800 align-top"
+                      >
+                        <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                          {(page - 1) * limit + (idx + 1)}
+                        </td>
 
-                      <td className="px-4 py-4">
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {row.name}
-                          </p>
-                          {row.name_bd && (
-                            <p className="text-xs text-brand-500 dark:text-brand-400">{row.name_bd}</p>
-                          )}
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {row.variants?.length ?? 0} {t("products.attributes.variants")}
-                          </p>
-                        </div>
-                      </td>
+                        <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                          {row.id}
+                        </td>
 
-                      {/* Variants */}
-                      <td className="px-4 py-4">
-                        <div className="space-y-3">
-                          {/* Variant Cards */}
-                          {(row.variants ?? []).length > 0 ? (
-                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" style={{ minWidth: 280 }}>
-                              {(row.variants ?? []).map((v) => {
-                                const prBadge =
-                                  v.priority === 3
-                                    ? { label: "High", cls: "bg-error-50 text-error-600 ring-error-200/60 dark:bg-error-500/10 dark:text-error-400 dark:ring-error-700/40" }
-                                    : v.priority === 2
-                                      ? { label: "Medium", cls: "bg-amber-50 text-amber-600 ring-amber-200/60 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-700/40" }
-                                      : { label: "Normal", cls: "bg-gray-100 text-gray-500 ring-gray-200/60 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700/40" };
+                        <td className="px-4 py-4">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {row.name}
+                            </p>
+                            {row.name_bd && (
+                              <p className="text-xs text-brand-500 dark:text-brand-400">{row.name_bd}</p>
+                            )}
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {effectiveVariants.length} {t("products.attributes.variants")}
+                            </p>
+                          </div>
+                        </td>
 
-                                return (
-                                  <div
-                                    key={v.id}
-                                    className={cn(
-                                      "group relative flex flex-col rounded-lg border p-2 transition-all duration-200",
-                                      "hover:shadow-md hover:-translate-y-px",
-                                      v.status
-                                        ? "border-gray-200 bg-gradient-to-br from-white to-gray-50/60 dark:border-gray-700 dark:from-gray-800/90 dark:to-gray-800/40"
-                                        : "border-gray-200/50 bg-gray-50/40 opacity-65 dark:border-gray-800/50 dark:bg-gray-900/30",
-                                    )}
-                                  >
-                                    {/* Row 1: status dot + name */}
-                                    <div className="flex items-center gap-1.5">
-                                      <span
-                                        className={cn(
-                                          "h-1.5 w-1.5 shrink-0 rounded-full",
-                                          v.status
-                                            ? "bg-success-500"
-                                            : "bg-gray-400 dark:bg-gray-500",
-                                        )}
-                                      />
-                                      <div className="min-w-0 flex-1">
-                                        <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
-                                          {v.name}
-                                        </span>
-                                        {v.name_bd && (
-                                          <span className="block truncate text-[10px] text-brand-500 dark:text-brand-400">
-                                            {v.name_bd}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
+                        {/* Variants with DnD */}
+                        <td className="px-4 py-4">
+                          <div className="space-y-3">
+                            <DraggableVariants
+                              attributeId={row.id}
+                              variants={effectiveVariants}
+                              onReordered={(updated) =>
+                                setVariantOverrideByAttrId((p) => ({ ...p, [row.id]: updated }))
+                              }
+                              onEdit={openEditVariant}
+                              onDelete={handleDeleteVariant}
+                              isDeleting={deleteVarMutation.isPending}
+                            />
 
-                                    {/* Row 2: priority badge */}
-                                    <div className="mt-1.5">
-                                      <span
-                                        className={cn(
-                                          "inline-flex items-center rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ring-1",
-                                          prBadge.cls,
-                                        )}
-                                      >
-                                        {prBadge.label}
-                                      </span>
-                                    </div>
-
-                                    {/* Hover actions — top-right corner */}
-                                    <div className="absolute -top-1 -right-1 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white px-1 py-0.5 opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 dark:border-gray-600 dark:bg-gray-800">
-                                      <button
-                                        type="button"
-                                        onClick={() => openEditVariant(v.id)}
-                                        className="rounded p-0.5 text-gray-400 transition-colors hover:text-brand-600 dark:hover:text-brand-400"
-                                        title="Edit"
-                                      >
-                                        <Pencil size={11} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          if (window.confirm(`Delete variant "${v.name}"?`))
-                                            deleteVarMutation.mutate(v.id);
-                                        }}
-                                        className="rounded p-0.5 text-gray-400 transition-colors hover:text-error-600 dark:hover:text-error-400"
-                                        title="Delete"
-                                      >
-                                        <Trash2 size={11} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                            {/* Add Variant Input */}
+                            <div className="flex items-center gap-2">
+                              <div style={{ width: 200 }}>
+                                <Input
+                                  placeholder="Add variant (e.g. XL)"
+                                  value={variantDraftByAttrId[row.id] ?? ""}
+                                  onChange={(e) =>
+                                    setVariantDraftByAttrId((p) => ({
+                                      ...p,
+                                      [row.id]: e.target.value,
+                                    }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") addVariantInline(row.id, effectiveVariants.length);
+                                  }}
+                                />
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addVariantInline(row.id, effectiveVariants.length)}
+                                ariaLabel="Add variant"
+                                disabled={createVarMutation.isPending}
+                                startIcon={<Plus size={14} />}
+                              >
+                                Add
+                              </Button>
                             </div>
-                          ) : (
-                            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/30">
-                              <Layers size={14} className="text-gray-400 dark:text-gray-500" />
-                              <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                                No variants yet — add one below
-                              </span>
-                            </div>
-                          )}
+                          </div>
+                        </td>
 
-                          {/* Add Variant Input */}
+                        {/* Status */}
+                        <td className="px-4 py-4">
+                          <Switch
+                            key={`attr-st-${row.id}-${row.status}`}
+                            label=""
+                            defaultChecked={row.status}
+                            onChange={(checked) => toggleAttributeStatus(row, checked)}
+                          />
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <div style={{ width: 200 }}>
-                              <Input
-                                placeholder="Add variant (e.g. XL)"
-                                value={variantDraftByAttrId[row.id] ?? ""}
-                                onChange={(e) =>
-                                  setVariantDraftByAttrId((p) => ({
-                                    ...p,
-                                    [row.id]: e.target.value,
-                                  }))
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") addVariantInline(row.id);
-                                }}
-                              />
-                            </div>
                             <Button
                               variant="outline"
-                              size="sm"
-                              onClick={() => addVariantInline(row.id)}
-                              ariaLabel="Add variant"
-                              disabled={createVarMutation.isPending}
-                              startIcon={<Plus size={14} />}
-                            >
-                              Add
-                            </Button>
+                              size="icon"
+                              onClick={() => openEditAttribute(row.id)}
+                              ariaLabel="Edit attribute"
+                              startIcon={<Pencil size={16} />}
+                            />
+
+                            <Button
+                              variant="danger"
+                              size="icon"
+                              onClick={() => {
+                                const ok = window.confirm(`Delete attribute "${row.name}"?`);
+                                if (!ok) return;
+                                deleteAttrMutation.mutate(row.id);
+                              }}
+                              ariaLabel="Delete attribute"
+                              disabled={deleteAttrMutation.isPending}
+                              startIcon={<Trash2 size={16} />}
+                            />
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-4">
-                        <Switch
-                          key={`attr-st-${row.id}-${row.status}`}
-                          label=""
-                          defaultChecked={row.status}
-                          onChange={(checked) => toggleAttributeStatus(row, checked)}
-                        />
-                      </td>
-
-                      {/* Priority */}
-                      <td className="px-4 py-4">
-                        <div className="max-w-[180px]">
-                          <Select
-                            key={`attr-pr-${row.id}-${row.priority}`}
-                            options={PRIORITY_OPTIONS.filter((x) => x.value !== "all")}
-                            placeholder="Priority"
-                            defaultValue={String(row.priority)}
-                            onChange={(v) => updateAttributePriority(row, safeNumber(String(v), 1))}
-                          />
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            {priorityLabel(row.priority)}
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Action */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openEditAttribute(row.id)}
-                            ariaLabel="Edit attribute"
-                            startIcon={<Pencil size={16} />}
-                          />
-
-                          <Button
-                            variant="danger"
-                            size="icon"
-                            onClick={() => {
-                              const ok = window.confirm(`Delete attribute "${row.name}"?`);
-                              if (!ok) return;
-                              deleteAttrMutation.mutate(row.id);
-                            }}
-                            ariaLabel="Delete attribute"
-                            disabled={deleteAttrMutation.isPending}
-                            startIcon={<Trash2 size={16} />}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
 
                   {!rows.length ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={6}
                         className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         {t("products.attributes.noAttributes")}

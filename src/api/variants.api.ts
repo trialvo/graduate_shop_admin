@@ -7,7 +7,7 @@ export type Variant = {
   attribute_id: number;
   name: string;
   name_bd?: string | null;
-  priority: number;
+  serial: number;
   status: boolean;
   created_at?: string;
   updated_at?: string;
@@ -22,7 +22,6 @@ export type VariantsListParams = {
   offset?: number;
   name?: string;
   status?: boolean;
-  priority?: number;
 };
 
 export type VariantsListResponse = {
@@ -35,7 +34,7 @@ export type CreateVariantPayload = {
   name: string;
   name_bd?: string;
   status?: boolean;
-  priority?: number;
+  serial?: number;
 };
 
 export type UpdateVariantPayload = {
@@ -43,7 +42,11 @@ export type UpdateVariantPayload = {
   name?: string;
   name_bd?: string;
   status?: boolean;
-  priority?: number;
+  serial?: number;
+};
+
+export type ReorderVariantsPayload = {
+  order: { id: number; serial: number }[];
 };
 
 export async function getVariants(
@@ -75,4 +78,12 @@ export async function updateVariant(
 
 export async function deleteVariant(id: number): Promise<void> {
   await api.delete(`/variant/${id}`);
+}
+
+export async function reorderVariants(
+  attributeId: number,
+  payload: ReorderVariantsPayload,
+): Promise<{ success: true }> {
+  const res = await api.patch(`/attribute/${attributeId}/variants/reorder`, payload);
+  return res.data;
 }

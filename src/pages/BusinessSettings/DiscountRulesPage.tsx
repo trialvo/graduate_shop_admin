@@ -263,29 +263,87 @@ function BulkRulesManager() {
   const [saving, setSaving] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
-  const openCreate = () => { setEditTarget(null); setForm(EMPTY); setModalOpen(true); };
+  // ── Multi-tier state (create mode only) ──────────────────────────────────
+  type Tier = { id: number; name: string; min_quantity: number; discount_value: number };
+  const [skuId, setSkuId] = useState<number>(0);
+  const [discountType, setDiscountType] = useState<0 | 1>(1);
+  const [status, setStatus] = useState(true);
+  const [tiers, setTiers] = useState<Tier[]>([{ id: Date.now(), name: "", min_quantity: 1, discount_value: 0 }]);
+
+  const addTier = () =>
+    setTiers(ts => [...ts, { id: Date.now(), name: "", min_quantity: 1, discount_value: 0 }]);
+
+  const removeTier = (id: number) =>
+    setTiers(ts => ts.length > 1 ? ts.filter(t => t.id !== id) : ts);
+
+  const updateTier = (id: number, patch: Partial<Omit<Tier, "id">>) =>
+    setTiers(ts => ts.map(t => t.id === id ? { ...t, ...patch } : t));
+
+  // ── Open helpers ─────────────────────────────────────────────────────────
+  const openCreate = () => {
+    setEditTarget(null);
+    setSkuId(0);
+    setDiscountType(1);
+    setStatus(true);
+    setTiers([{ id: Date.now(), name: "", min_quantity: 1, discount_value: 0 }]);
+    setModalOpen(true);
+  };
+
   const openEdit = (r: BulkRule) => {
     setEditTarget(r);
     setForm({ name: r.name, product_sku_id: r.product_sku_id, min_quantity: r.min_quantity, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status });
     setModalOpen(true);
   };
 
+  // ── Save ─────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!form.product_sku_id) { toast.error("Please select a SKU."); return; }
-    setSaving(true);
-    try {
-      if (editTarget) {
+    if (editTarget) {
+      // Edit mode: single rule
+      if (!form.product_sku_id) { toast.error("Please select a SKU."); return; }
+      setSaving(true);
+      try {
         await editM.mutateAsync({ id: editTarget.id, body: form });
         toast.success("Bulk rule updated.");
-      } else {
-        await createM.mutateAsync(form);
-        toast.success("Bulk rule created.");
-      }
-      setModalOpen(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed.");
-    } finally {
-      setSaving(false);
+        setModalOpen(false);
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || "Failed.");
+      } finally { setSaving(false); }
+    } else {
+      // Create mode: multi-tier
+      if (!skuId) { toast.error("Please select a SKU."); return; }
+      const invalid = tiers.find(t => !t.name.trim() || t.min_quantity < 1 || t.discount_value <= 0);
+      if (invalid) { toast.error("Each tier needs a name, min quantity ≥ 1, and discount value > 0."); return; }
+      setSaving(true);
+      try {
+        const results = await Promise.allSettled(
+          tiers.map(t =>
+            createM.mutateAsync({
+              name: t.name.trim(),
+              product_sku_id: skuId,
+              min_quantity: t.min_quantity,
+              discount_type: discountType,
+              discount_value: t.discount_value,
+              status,
+            })
+          )
+        );
+        const succeeded = results.filter(r => r.status === "fulfilled").length;
+        const failed = results.filter(r => r.status === "rejected") as PromiseRejectedResult[];
+
+        if (failed.length === 0) {
+          toast.success(tiers.length > 1 ? `${tiers.length} bulk rules created.` : "Bulk rule created.");
+          setModalOpen(false);
+        } else if (succeeded > 0) {
+          toast.success(`${succeeded} rule(s) created.`);
+          failed.forEach(f => toast.error(f.reason?.response?.data?.error || "One tier failed."));
+          setModalOpen(false);
+        } else {
+          // All failed
+          failed.forEach(f => toast.error(f.reason?.response?.data?.error || "Failed."));
+        }
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || "Failed.");
+      } finally { setSaving(false); }
     }
   };
 
@@ -294,6 +352,8 @@ function BulkRulesManager() {
     try { await deleteM.mutateAsync(confirmId); toast.success("Deleted."); setConfirmId(null); }
     catch (err: any) { toast.error(err?.response?.data?.error || "Failed."); }
   };
+
+  const typeLabel = discountType === 0 ? "৳" : "%";
 
   return (
     <div className="space-y-4">
@@ -334,69 +394,148 @@ function BulkRulesManager() {
         </table>
       </div>
 
-      <Modal open={modalOpen} title={editTarget ? "Edit Bulk Rule" : "Create Bulk Rule"} onClose={() => setModalOpen(false)} size="md">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Name *</Label>
-            <input
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Buy 3 Get 10% Off"
-            />
-          </div>
-
-          {/* SKU picker */}
-          <div className="space-y-2">
-            <Label>SKU *</Label>
-            <SkuDropdown
-              value={form.product_sku_id || null}
-              onSelect={(id) => setForm(f => ({ ...f, product_sku_id: id }))}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      {/* ── Modal ── */}
+      <Modal open={modalOpen} title={editTarget ? "Edit Bulk Rule" : "Add Bulk Rules"} onClose={() => setModalOpen(false)} size="md">
+        {editTarget ? (
+          /* ── Edit: single-tier form (unchanged) ── */
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Min Quantity *</Label>
-              <NumInput
-                value={form.min_quantity}
-                onChange={n => setForm(f => ({ ...f, min_quantity: Math.max(1, Math.floor(n)) }))}
-                placeholder="e.g. 3"
-                min={1}
+              <Label>Name *</Label>
+              <input
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Buy 3 Get 10% Off"
               />
             </div>
             <div className="space-y-2">
-              <Label>Discount Value *</Label>
-              <NumInput
-                value={form.discount_value}
-                onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))}
-                placeholder="e.g. 10"
-                min={0}
+              <Label>SKU *</Label>
+              <SkuDropdown
+                value={form.product_sku_id || null}
+                onSelect={(id) => setForm(f => ({ ...f, product_sku_id: id }))}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Min Quantity *</Label>
+                <NumInput value={form.min_quantity} onChange={n => setForm(f => ({ ...f, min_quantity: Math.max(1, Math.floor(n)) }))} placeholder="e.g. 3" min={1} />
+              </div>
+              <div className="space-y-2">
+                <Label>Discount Value *</Label>
+                <NumInput value={form.discount_value} onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))} placeholder="e.g. 10" min={0} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Discount Type</Label>
+              <select value={form.discount_type} onChange={e => setForm(f => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                <option value={0}>Flat Amount (৳)</option>
+                <option value={1}>Percentage (%)</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-3">
+              <input type="checkbox" id="bulk-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
+              <Label htmlFor="bulk-status">Active</Label>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            </div>
           </div>
+        ) : (
+          /* ── Create: multi-tier form ── */
+          <div className="space-y-5">
+            {/* SKU (shared) */}
+            <div className="space-y-2">
+              <Label>Product SKU *</Label>
+              <SkuDropdown value={skuId || null} onSelect={(id) => setSkuId(id)} />
+            </div>
 
-          <div className="space-y-2">
-            <Label>Discount Type</Label>
-            <select
-              value={form.discount_type}
-              onChange={e => setForm(f => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-            >
-              <option value={0}>Flat Amount (৳)</option>
-              <option value={1}>Percentage (%)</option>
-            </select>
-          </div>
+            {/* Discount type (shared) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Discount Type</Label>
+                <select value={discountType} onChange={e => setDiscountType(Number(e.target.value) as 0 | 1)} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                  <option value={1}>Percentage (%)</option>
+                  <option value={0}>Flat Amount (৳)</option>
+                </select>
+              </div>
+              <div className="flex items-end pb-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={status} onChange={e => setStatus(e.target.checked)} className="rounded" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
+                </label>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="bulk-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
-            <Label htmlFor="bulk-status">Active</Label>
+            {/* Tiers */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Quantity Tiers</Label>
+                <button
+                  type="button"
+                  onClick={addTier}
+                  className="flex items-center gap-1 rounded-lg border border-brand-300 px-2.5 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-400 dark:hover:bg-brand-900/20 transition-colors"
+                >
+                  <Plus size={12} /> Add Tier
+                </button>
+              </div>
+
+              {/* Header row */}
+              <div className="grid grid-cols-[1fr_100px_100px_28px] gap-2 px-1">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Rule Name</span>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Min Qty</span>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Discount ({typeLabel})</span>
+                <span />
+              </div>
+
+              {tiers.map((t, idx) => (
+                <div key={t.id} className="grid grid-cols-[1fr_100px_100px_28px] gap-2 items-center">
+                  <input
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder={`Tier ${idx + 1} name…`}
+                    value={t.name}
+                    onChange={e => updateTier(t.id, { name: e.target.value })}
+                  />
+                  <NumInput
+                    value={t.min_quantity}
+                    onChange={n => updateTier(t.id, { min_quantity: Math.max(1, Math.floor(n)) })}
+                    placeholder="e.g. 100"
+                    min={1}
+                  />
+                  <NumInput
+                    value={t.discount_value}
+                    onChange={n => updateTier(t.id, { discount_value: Math.max(0, n) })}
+                    placeholder={discountType === 1 ? "e.g. 20" : "e.g. 50"}
+                    min={0}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeTier(t.id)}
+                    disabled={tiers.length === 1}
+                    className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-500 hover:bg-error-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Remove tier"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+
+              {/* Preview pill */}
+              {tiers.length > 1 && (
+                <p className="text-xs text-gray-400 pt-1">
+                  This will create <span className="font-semibold text-brand-600">{tiers.length} separate rules</span> for the selected SKU.
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-1">
+              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : tiers.length > 1 ? `Save ${tiers.length} Rules` : "Save Rule"}
+              </Button>
+            </div>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
-          </div>
-        </div>
+        )}
       </Modal>
 
       <ConfirmDialog open={Boolean(confirmId)} title="Delete Bulk Rule" message="Delete this bulk rule?" confirmText="Delete" cancelText="Cancel" tone="danger" onClose={() => setConfirmId(null)} onConfirm={handleDelete} />

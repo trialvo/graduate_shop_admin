@@ -71,7 +71,7 @@ export interface VariantRow {
   attribute_id: number;
   name: string;
   name_bd?: string | null;
-  priority: number;
+  serial: number;
   status: boolean;
   created_at?: string;
   updated_at?: string;
