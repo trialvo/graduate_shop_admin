@@ -538,6 +538,7 @@ export default function ProductAddModal({
                           image: img || "",
                           unitPrice,
                           qty,
+                          weight_kg: Number(selectedVariation.weight_kg ?? 0),
 
                           // legacy optional fields
                           variant: selectedVariation.color.name,

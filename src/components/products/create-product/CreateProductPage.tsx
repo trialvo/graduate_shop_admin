@@ -55,6 +55,7 @@ type VariantRow = {
   discount: number;
   stock: number;
   sku: string;
+  weightKg: number;
 
   active: boolean;
 };
@@ -150,6 +151,7 @@ function ensureMatrixRows(
           discount: defaults.discount,
           stock: 0,
           sku: "",
+          weightKg: 0,
           active: true,
         },
       );
@@ -786,6 +788,7 @@ export default function CreateProductPage() {
         discount: Math.max(0, r.discount),
         stock: Math.max(0, r.stock),
         sku: r.sku,
+        weight_kg: r.weightKg ?? 0,
       }));
 
     // ✅ Child Category rules:

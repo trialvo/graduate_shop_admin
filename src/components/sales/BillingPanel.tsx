@@ -369,9 +369,20 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
     () => Number(deliveryCharge?.customer_charge ?? 0),
     [deliveryCharge]
   );
+
+  // Weight surcharge
+  const weightSurcharge = useMemo(() => {
+    const weightFreeKg = Number(deliveryCharge?.default_weight_kg ?? 0);
+    const extraPerKg = Number(deliveryCharge?.extra_charge_per_kg ?? 0);
+    if (extraPerKg <= 0) return 0;
+    const totalWeightKg = cart.reduce((sum, i) => sum + (Number(i.weight_kg ?? 0) * i.qty), 0);
+    const excessKg = weightFreeKg > 0 ? Math.max(0, totalWeightKg - weightFreeKg) : totalWeightKg;
+    return Math.round(excessKg * extraPerKg);
+  }, [cart, deliveryCharge]);
+
   const discount = 0;
   const tax = 0;
-  const total = subtotal - discount + deliveryFee + tax;
+  const total = subtotal - discount + deliveryFee + weightSurcharge + tax;
 
   // ---------- PLACE ORDER ----------
   const canPlaceExisting = useMemo(() => {
@@ -875,6 +886,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                       {formatCurrencyBDT(deliveryFee)}
                     </span>
                   </div>
+                  {weightSurcharge > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">⚖ Weight Surcharge</span>
+                      <span className="font-semibold text-orange-500">
+                        +{formatCurrencyBDT(weightSurcharge)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500 dark:text-gray-400">{t("sales.discount")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">

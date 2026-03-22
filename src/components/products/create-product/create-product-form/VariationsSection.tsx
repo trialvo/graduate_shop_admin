@@ -2,10 +2,11 @@ import { AttributeVariant } from "@/api/attributes.api";
 import Section from "./Section";
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
+import NumericInput from "@/components/form/input/NumericInput";
 import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
-import { Check, Layers, Palette, Sparkles, Tag, X } from "lucide-react";
+import { Check, Layers, Palette, Tag, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type Option = { value: string; label: string };
@@ -19,6 +20,7 @@ type VariantRow = {
   discount: number;
   stock: number;
   sku: string;
+  weightKg: number;
   active: boolean;
 };
 
@@ -35,18 +37,6 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function safeNumber(input: string, fallback: number) {
-  const n = Number(input);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function selectAllOnFocus(e: React.FocusEvent<HTMLInputElement>) {
-  e.currentTarget.select();
-}
-
-function blurOnWheel(e: React.WheelEvent<HTMLInputElement>) {
-  e.currentTarget.blur();
-}
 
 function cleanSkuPart(input: string) {
   return input.toUpperCase().replace(/[^A-Z0-9]+/g, "");
@@ -330,6 +320,7 @@ function VariationsSection({
                   "Selling",
                   "Discount",
                   "Stock",
+                  "Wt (kg)",
                   "SKU",
                   "Active",
                 ].map((h) => (
@@ -397,70 +388,43 @@ function VariationsSection({
                         </td>
 
                         <td className="px-4 py-2">
-                          <Input
-                            type="number"
+                          <NumericInput
                             value={r.buyingPrice}
-                            onFocus={selectAllOnFocus}
-                            onWheel={blurOnWheel}
-                            onChange={(e) =>
-                              updateRow(r.key, {
-                                buyingPrice: safeNumber(
-                                  String(e.target.value),
-                                  r.buyingPrice,
-                                ),
-                              })
-                            }
+                            onValueChange={(n) => updateRow(r.key, { buyingPrice: n })}
+                            min={0}
                           />
                         </td>
 
                         <td className="px-4 py-2">
-                          <Input
-                            type="number"
+                          <NumericInput
                             value={r.sellingPrice}
-                            onFocus={selectAllOnFocus}
-                            onWheel={blurOnWheel}
-                            onChange={(e) =>
-                              updateRow(r.key, {
-                                sellingPrice: safeNumber(
-                                  String(e.target.value),
-                                  r.sellingPrice,
-                                ),
-                              })
-                            }
+                            onValueChange={(n) => updateRow(r.key, { sellingPrice: n })}
+                            min={0}
                           />
                         </td>
 
                         <td className="px-4 py-2">
-                          <Input
-                            type="number"
+                          <NumericInput
                             value={r.discount}
-                            onFocus={selectAllOnFocus}
-                            onWheel={blurOnWheel}
-                            onChange={(e) =>
-                              updateRow(r.key, {
-                                discount: safeNumber(
-                                  String(e.target.value),
-                                  r.discount,
-                                ),
-                              })
-                            }
+                            onValueChange={(n) => updateRow(r.key, { discount: n })}
+                            min={0}
                           />
                         </td>
 
                         <td className="px-4 py-2">
-                          <Input
-                            type="number"
+                          <NumericInput
                             value={r.stock}
-                            onFocus={selectAllOnFocus}
-                            onWheel={blurOnWheel}
-                            onChange={(e) =>
-                              updateRow(r.key, {
-                                stock: Math.max(
-                                  0,
-                                  safeNumber(String(e.target.value), r.stock),
-                                ),
-                              })
-                            }
+                            onValueChange={(n) => updateRow(r.key, { stock: Math.max(0, n) })}
+                            min={0}
+                          />
+                        </td>
+
+                        <td className="px-4 py-2">
+                          <NumericInput
+                            value={r.weightKg ?? 0}
+                            onValueChange={(n) => updateRow(r.key, { weightKg: Math.max(0, n) })}
+                            min={0}
+                            step={0.001}
                           />
                         </td>
 

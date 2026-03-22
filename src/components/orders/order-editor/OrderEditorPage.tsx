@@ -11,6 +11,8 @@ import SidebarCourierCard from "./SidebarCourierCard";
 import SidebarCustomerHistoryCard from "./SidebarCustomerHistoryCard";
 import SidebarInfoCard from "./SidebarInfoCard";
 import SidebarShippingStickerCard from "./SidebarShippingStickerCard";
+import OrderRefundPanel from "./OrderRefundPanel";
+import { AlertTriangle, Lock } from "lucide-react";
 
 import type { OrderEditorData, OrderProductLine } from "./types";
 
@@ -20,6 +22,9 @@ import {
   patchOrderPaymentStatus,
   patchOrderStatus,
   updateOrderItems,
+  updateOrderInfo,
+  dispatchOrderCourier,
+  manualDispatchOrder,
   type ApiOrder,
   type UpdateOrderItemsPayload,
 } from "@/api/orders.api";
@@ -33,6 +38,12 @@ const statusLabel = (status: OrderEditorData["orderStatus"]): string => {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 };
+
+const LOCKED_STATUSES = ["delivered", "cancelled", "returned", "trash"] as const;
+const WARN_STATUSES   = ["shipped", "out_for_delivery"] as const;
+
+type LockedStatus = typeof LOCKED_STATUSES[number];
+type WarnStatus   = typeof WARN_STATUSES[number];
 
 const formatDateLabel = (iso: string): string => {
   const d = new Date(iso);
@@ -77,7 +88,7 @@ const calcLineTotals = (
   const original = p.unitPrice * p.quantity;
   const discountAmt = p.discount * p.quantity;
   const net = Math.max(0, original - discountAmt);
-  const tax = (net * p.taxPercent) / 100;
+  const tax = 0;
   return { original, discountAmt, net, tax };
 };
 
@@ -103,7 +114,6 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     discount: Number(it.discount ?? 0),
     unitPrice: Number(it.selling_price ?? 0),
     quantity: Number(it.quantity ?? 1),
-    taxPercent: 0,
     // API reference IDs
     productId: it.product_id,
     productSkuId: it.product_sku_id,
@@ -111,6 +121,7 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     variantId: it.variant_id,
     attributeId: it.attribute_id,
     colorHex: it.color_hex,
+    weight_kg: typeof it.weight_kg === "number" ? it.weight_kg : Number(it.weight_kg ?? 0),
   }));
 
   const firstCourier = (o.couriers ?? [])[0];
@@ -128,11 +139,9 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     postalCode: o.zip_code || "N/A",
 
     phone: o.customer_phone || "N/A",
-    altPhone: "",
 
     orderStatus: o.order_status,
     paymentStatus: o.payment_status,
-    deliveryType,
     paymentMethod: o.payment_type,
 
     note: o.note ?? "",
@@ -142,6 +151,8 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     deliveryCharge: Number(o.delivery_charge ?? 0),
     specialDiscount: Number(o.discount_total ?? 0),
     advancePayment: Number(o.paid_amount ?? 0),
+    weightKgTotal: Number(o.weight_kg_total ?? 0),
+    weightExtraCharge: Number(o.weight_extra_charge ?? 0),
 
     courier: {
       method: firstCourier?.courier_provider ?? "manual",
@@ -172,7 +183,6 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
       timeAgo: timeAgoLabel(o.created_at),
       orderStatus: o.order_status,
       sentBy: "manually",
-      altPhone: "",
       additionalNotes: o.note ?? "N/A",
     },
   };
@@ -244,11 +254,9 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     const originalTotal = lineTotals.reduce((s, t) => s + t.original, 0);
     const productDiscount = lineTotals.reduce((s, t) => s + t.discountAmt, 0);
     const subTotal = lineTotals.reduce((s, t) => s + t.net, 0);
-    const taxTotal = lineTotals.reduce((s, t) => s + t.tax, 0);
     const items = data.products.reduce((s, p) => s + p.quantity, 0);
 
-    const grandTotal =
-      subTotal + taxTotal + (Number(data.deliveryCharge) || 0);
+    const grandTotal = subTotal + (Number(data.deliveryCharge) || 0) + (Number(data.weightExtraCharge) || 0);
     const payable =
       grandTotal -
       (Number(data.specialDiscount) || 0) -
@@ -259,7 +267,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       originalTotal,
       productDiscount,
       subTotal,
-      taxTotal,
+      taxTotal: 0,
       grandTotal,
       payable: Math.max(0, payable),
     };
@@ -285,10 +293,21 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       orderId: number;
       new_status: ApiOrder["order_status"];
     }) => patchOrderStatus(payload.orderId, payload.new_status),
-    onSuccess: async () => {
+    onSuccess: async (result, payload) => {
       toast.success(t("orders.orderEditor.orderStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+
+      // If the cancellation triggered a pending refund, notify the admin
+      if (result?.data?.refund_suggested) {
+        const refundAmt = result.data.refund_amount;
+        toast(
+          `↩ Refund required: Customer paid ৳${Number(refundAmt).toLocaleString()}. A pending refund entry has been created — please process it from the Refund Ledger below.`,
+          { duration: 8000, icon: "⚠️" }
+        );
+        // Refresh the refund panel
+        await queryClient.invalidateQueries({ queryKey: ["order-refunds", payload.orderId] });
+      }
     },
     onError: (err: any) => {
       toast.error(err?.message ?? t("orders.orderEditor.failedOrderStatus"));
@@ -311,15 +330,32 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
 
     const jobs: Promise<any>[] = [];
 
+    // Always push info mutation on save
+    jobs.push(
+      updateOrderInfo(orderId, {
+        customer_name: data.billingName,
+        customer_phone: data.phone,
+        customer_email: data.email,
+        payment_type: data.paymentMethod,
+        note: data.note,
+        full_address: data.shippingAddress,
+        city: data.city,
+        zip_code: data.postalCode,
+      }).catch((err: any) => {
+        toast.error(err?.message ?? "Failed to update order info.");
+        throw err;
+      })
+    );
+
     if (prev.orderStatus !== nextStatus) {
       jobs.push(
-        statusMutation.mutateAsync({ orderId, new_status: nextStatus }),
+        statusMutation.mutateAsync({ orderId, new_status: nextStatus })
       );
     }
 
     if (prev.paymentStatus !== nextPay) {
       jobs.push(
-        paymentMutation.mutateAsync({ orderId, new_payment_status: nextPay }),
+        paymentMutation.mutateAsync({ orderId, new_payment_status: nextPay })
       );
     }
 
@@ -412,6 +448,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
         product_sku_id: p.productSkuId!,
         quantity: p.quantity,
         discount: p.discount,
+        weight_kg: typeof p.weight_kg === "number" ? p.weight_kg : 0,
       }));
 
     if (!items.length) {
@@ -439,7 +476,44 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     });
   };
 
-  const handleCourierSend = () => toast(t("orders.orderEditor.noCourierApi"));
+  const courierDispatchMutation = useMutation({
+    mutationFn: async (payload: { method: string; data: any }) => {
+      if (!orderId) throw new Error("No order ID");
+      if (payload.method === "manual") {
+        return manualDispatchOrder(orderId, payload.data);
+      }
+      return dispatchOrderCourier(orderId, payload.data);
+    },
+    onSuccess: async () => {
+      toast.success(t("orders.orderEditor.orderUpdated"));
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message ?? t("orders.orderEditor.failedOrderStatus"));
+    },
+  });
+
+  const handleCourierSend = async () => {
+    if (!data) return;
+    const method = data.courier.method;
+    if (method === "manual") {
+      await courierDispatchMutation.mutateAsync({
+        method: "manual",
+        data: {
+          courier_provider: "manual",
+          tracking_number: data.courier.consignmentId,
+          memo: data.courier.consignmentId,
+        },
+      });
+    } else {
+      await courierDispatchMutation.mutateAsync({
+        method: "auto",
+        data: { courier_provider: method as any },
+      });
+    }
+  };
+
   const handleCourierComplete = () =>
     toast(t("orders.orderEditor.noCourierCompleteApi"));
   const handleCourierInvoice = () =>
@@ -584,6 +658,34 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
           customerIp={data.customerIp}
         />
 
+        {/* ── Status Banner ────────────────────────────────────────── */}
+        {(LOCKED_STATUSES as readonly string[]).includes(data.orderStatus) && (
+          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+            <Lock size={16} className="mt-0.5 shrink-0 text-red-500" />
+            <div>
+              <div className="text-sm font-semibold text-red-700 dark:text-red-300">
+                Order Locked — {statusLabel(data.orderStatus)}
+              </div>
+              <div className="mt-0.5 text-xs text-red-600/80 dark:text-red-400/80">
+                This order is closed. Items, delivery charge, and customer info cannot be edited.
+              </div>
+            </div>
+          </div>
+        )}
+        {(WARN_STATUSES as readonly string[]).includes(data.orderStatus) && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
+            <div>
+              <div className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                Caution — Order is {statusLabel(data.orderStatus)}
+              </div>
+              <div className="mt-0.5 text-xs text-amber-600/80 dark:text-amber-400/80">
+                This order has already been dispatched. Edits will update the record but may not reflect the physical shipment. The customer will be notified if the total changes.
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
             <OrderFormCard
@@ -592,9 +694,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
                 shippingAddress: data.shippingAddress,
                 orderStatus: data.orderStatus,
                 phone: data.phone,
-                altPhone: data.altPhone,
                 paymentStatus: data.paymentStatus,
-                deliveryType: data.deliveryType,
                 city: data.city,
                 postalCode: data.postalCode,
                 email: data.email,
@@ -613,6 +713,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
               deliveryCharge={data.deliveryCharge}
               specialDiscount={data.specialDiscount}
               advancePayment={data.advancePayment}
+              weightKgTotal={data.weightKgTotal}
+              weightExtraCharge={data.weightExtraCharge}
               onChangeTotals={handleChangeTotals}
               totals={{
                 itemCount: totals.itemCount,
@@ -658,7 +760,6 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
               timeAgo={data.customerHistory.timeAgo}
               orderStatus={data.customerHistory.orderStatus}
               sentBy={data.customerHistory.sentBy}
-              altPhone={data.customerHistory.altPhone}
               additionalNotes={data.customerHistory.additionalNotes}
               onDownloadInvoice={handleInvoiceDownload}
             />
@@ -666,6 +767,11 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
             {/* <SidebarShippingStickerCard
               onOpenGenerator={handleOpenStickerGenerator}
             /> */}
+
+            <OrderRefundPanel
+              orderId={Number(data.orderId)}
+              isLocked={(LOCKED_STATUSES as readonly string[]).includes(data.orderStatus)}
+            />
           </div>
         </div>
       </div>

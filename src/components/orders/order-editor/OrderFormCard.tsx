@@ -7,16 +7,14 @@ import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import { useTranslation } from "react-i18next";
 
-import type { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from "./types";
+import type { OrderStatus, PaymentMethod, PaymentStatus } from "./types";
 
 interface OrderFormValues {
   billingName: string;
   shippingAddress: string;
   orderStatus: OrderStatus;
   phone: string;
-  altPhone: string;
   paymentStatus: PaymentStatus;
-  deliveryType: DeliveryType;
   city: string;
   postalCode: string;
   email: string;
@@ -108,20 +106,6 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
                 className="bg-white dark:bg-gray-800/50"
               />
             </div>
-            <div>
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                {t("orders.orderEditor.deliveryType")}
-              </div>
-              <Select
-                options={[
-                  { value: "inside_dhaka", label: t("orders.delivery.insideDhaka") },
-                  { value: "out_of_dhaka", label: t("orders.delivery.outOfDhaka") },
-                ]}
-                defaultValue={values.deliveryType}
-                onChange={(v) => onChange("deliveryType", v as DeliveryType)}
-                className="bg-white dark:bg-gray-800/50"
-              />
-            </div>
           </div>
 
           <div>
@@ -152,8 +136,7 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
+          <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
                 {t("orders.orderEditor.phone")}
               </div>
@@ -163,18 +146,6 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
                 placeholder={t("orders.orderEditor.phone")}
                 className="bg-white dark:bg-gray-800/50"
               />
-            </div>
-            <div>
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                {t("orders.orderEditor.altPhone")}
-              </div>
-              <Input
-                value={values.altPhone}
-                onChange={(e) => onChange("altPhone", e.target.value)}
-                placeholder={t("orders.orderEditor.altPhonePlaceholder")}
-                className="bg-white dark:bg-gray-800/50"
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

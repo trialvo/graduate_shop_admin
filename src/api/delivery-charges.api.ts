@@ -13,6 +13,9 @@ export type DeliveryChargeEntity = {
   customer_charge: number;
   our_charge: number;
 
+  default_weight_kg: number;
+  extra_charge_per_kg: number;
+
   status: boolean;
 
   img_path: string | null;
@@ -48,6 +51,9 @@ export type CreateDeliveryChargeInput = {
   customer_charge: number;
   our_charge: number;
 
+  default_weight_kg?: number;
+  extra_charge_per_kg?: number;
+
   status: boolean;
 };
 
@@ -66,6 +72,9 @@ function buildFormData(input: Partial<CreateDeliveryChargeInput>) {
   if (typeof input.customer_charge === "number") fd.append("customer_charge", String(input.customer_charge));
   if (typeof input.our_charge === "number") fd.append("our_charge", String(input.our_charge));
 
+  if (typeof input.default_weight_kg === "number") fd.append("default_weight_kg", String(input.default_weight_kg));
+  if (typeof input.extra_charge_per_kg === "number") fd.append("extra_charge_per_kg", String(input.extra_charge_per_kg));
+
   if (typeof input.status === "boolean") fd.append("status", input.status ? "true" : "false");
 
   return fd;
@@ -81,6 +90,9 @@ function mapEntity(raw: any): DeliveryChargeEntity {
 
     customer_charge: Number(raw?.customer_charge ?? 0),
     our_charge: Number(raw?.our_charge ?? 0),
+
+    default_weight_kg: Number(raw?.default_weight_kg ?? 0),
+    extra_charge_per_kg: Number(raw?.extra_charge_per_kg ?? 0),
 
     status: Boolean(raw?.status),
 

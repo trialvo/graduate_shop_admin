@@ -13,7 +13,6 @@ interface SidebarCustomerHistoryCardProps {
   timeAgo: string;
   orderStatus: OrderStatus;
   sentBy: "manually" | "auto";
-  altPhone: string;
   additionalNotes: string;
   onDownloadInvoice: () => void;
 }
@@ -36,7 +35,6 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
   timeAgo,
   orderStatus,
   sentBy,
-  altPhone,
   additionalNotes,
   onDownloadInvoice,
 }) => {
@@ -49,7 +47,6 @@ const SidebarCustomerHistoryCard: React.FC<SidebarCustomerHistoryCardProps> = ({
     { label: t("orders.orderEditor.time"), value: timeAgo },
     { label: t("orders.orderEditor.orderStatus"), value: statusLabel(orderStatus) },
     { label: t("orders.orderEditor.sentBy"), value: sentBy === "auto" ? t("orders.orderEditor.auto") : t("orders.orderEditor.manually") },
-    { label: t("orders.orderEditor.altPhone"), value: altPhone || "—" },
   ];
 
   return (

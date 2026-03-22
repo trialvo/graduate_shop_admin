@@ -173,6 +173,8 @@ export default function OrderInvoicePage() {
       subtotal: safeNumber(order?.subtotal),
       discount: safeNumber(order?.discount_total),
       delivery: safeNumber(order?.delivery_charge),
+      weightKg: safeNumber((order as any)?.weight_kg_total),
+      weightSurcharge: safeNumber((order as any)?.weight_extra_charge),
       total: safeNumber(order?.grand_total),
       paid: safeNumber(order?.paid_amount),
       due: safeNumber(order?.due_amount),
@@ -445,6 +447,13 @@ export default function OrderInvoicePage() {
                     <span>{t("orders.invoice.delivery")}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">{formatBDT(totals.delivery)}</span>
                   </div>
+
+                  {totals.weightSurcharge > 0 && (
+                    <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+                      <span>⚖ Weight surcharge {totals.weightKg > 0 ? `(${totals.weightKg} kg)` : ""}</span>
+                      <span className="font-semibold text-orange-600 dark:text-orange-400">+{formatBDT(totals.weightSurcharge)}</span>
+                    </div>
+                  )}
 
                   <div className="my-2 h-px bg-gray-200 dark:bg-gray-800" />
 

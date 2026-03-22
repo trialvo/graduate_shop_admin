@@ -25,6 +25,7 @@ import {
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
+import NumericInput from "@/components/form/input/NumericInput";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
@@ -114,6 +115,7 @@ type VariationDraft = {
   discount: number;
   stock: number;
   sku: string;
+  weight_kg: number;
 };
 
 type InlineEditState = Record<number, VariationDraft>;
@@ -414,6 +416,7 @@ export default function EditProductModal({
     discount: 0,
     stock: 0,
     sku: "",
+    weight_kg: 0,
   });
 
   // small confirm modal for variation delete
@@ -475,6 +478,7 @@ export default function EditProductModal({
         discount: vr.discount,
         stock: vr.stock,
         sku: vr.sku ?? "",
+        weight_kg: Number((vr as any).weight_kg ?? 0),
       };
     }
     setVarEdit(autoEdit);
@@ -487,6 +491,7 @@ export default function EditProductModal({
       discount: 0,
       stock: 0,
       sku: "",
+      weight_kg: 0,
     });
   }, [enabled, productQuery.data]);
 
@@ -662,7 +667,8 @@ export default function EditProductModal({
           draft.selling_price !== v.selling_price ||
           draft.discount !== v.discount ||
           draft.stock !== v.stock ||
-          draft.sku !== (v.sku ?? "");
+          draft.sku !== (v.sku ?? "") ||
+          draft.weight_kg !== Number((v as any).weight_kg ?? 0);
         if (changed) {
           varPromises.push(updateVariation(v.id, draft));
         }
@@ -708,6 +714,7 @@ export default function EditProductModal({
       discount: payload.discount,
       stock: payload.stock,
       sku: payload.sku,
+      weight_kg: payload.weight_kg ?? 0,
     };
 
     const res = await api.post("/product/variation", body);
@@ -726,6 +733,7 @@ export default function EditProductModal({
       discount: payload.discount,
       stock: payload.stock,
       sku: payload.sku,
+      weight_kg: payload.weight_kg ?? 0,
     };
 
     const res = await api.put(`/product/variation/${id}`, body);
@@ -788,6 +796,7 @@ export default function EditProductModal({
         discount: v.discount,
         stock: v.stock,
         sku: v.sku ?? "",
+        weight_kg: Number((v as any).weight_kg ?? 0),
       },
     }));
   };
@@ -1253,18 +1262,12 @@ export default function EditProductModal({
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {t("products.editProduct.buyLabel")}
                     </p>
-                    <Input
-                      type="number"
+                    <NumericInput
                       value={addDraft.buying_price}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({
-                          ...p,
-                          buying_price: safeNumber(
-                            e.target.value,
-                            p.buying_price,
-                          ),
-                        }))
+                      onValueChange={(n) =>
+                        setAddDraft((p) => ({ ...p, buying_price: n }))
                       }
+                      min={0}
                     />
                   </div>
 
@@ -1272,18 +1275,12 @@ export default function EditProductModal({
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {t("products.editProduct.sellLabel")}
                     </p>
-                    <Input
-                      type="number"
+                    <NumericInput
                       value={addDraft.selling_price}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({
-                          ...p,
-                          selling_price: safeNumber(
-                            e.target.value,
-                            p.selling_price,
-                          ),
-                        }))
+                      onValueChange={(n) =>
+                        setAddDraft((p) => ({ ...p, selling_price: n }))
                       }
+                      min={0}
                     />
                   </div>
 
@@ -1291,15 +1288,12 @@ export default function EditProductModal({
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {t("products.editProduct.discountLabel")}
                     </p>
-                    <Input
-                      type="number"
+                    <NumericInput
                       value={addDraft.discount}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({
-                          ...p,
-                          discount: safeNumber(e.target.value, p.discount),
-                        }))
+                      onValueChange={(n) =>
+                        setAddDraft((p) => ({ ...p, discount: n }))
                       }
+                      min={0}
                     />
                   </div>
 
@@ -1307,18 +1301,26 @@ export default function EditProductModal({
                     <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {t("products.editProduct.stockLabel")}
                     </p>
-                    <Input
-                      type="number"
+                    <NumericInput
                       value={addDraft.stock}
-                      onChange={(e) =>
-                        setAddDraft((p) => ({
-                          ...p,
-                          stock: Math.max(
-                            0,
-                            safeNumber(e.target.value, p.stock),
-                          ),
-                        }))
+                      onValueChange={(n) =>
+                        setAddDraft((p) => ({ ...p, stock: Math.max(0, n) }))
                       }
+                      min={0}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      Wt (kg)
+                    </p>
+                    <NumericInput
+                      value={addDraft.weight_kg}
+                      onValueChange={(n) =>
+                        setAddDraft((p) => ({ ...p, weight_kg: Math.max(0, n) }))
+                      }
+                      min={0}
+                      step={0.001}
                     />
                   </div>
 
@@ -1380,6 +1382,7 @@ export default function EditProductModal({
                           discount: 0,
                           stock: 0,
                           sku: "",
+                          weight_kg: 0,
                         })
                       }
                     >
@@ -1418,6 +1421,7 @@ export default function EditProductModal({
                         t("products.editProduct.thSelling"),
                         t("products.editProduct.thDiscount"),
                         t("products.editProduct.thStock"),
+                        "Wt (kg)",
                         t("products.editProduct.thSku"),
                         t("products.editProduct.thAction"),
                       ].map((h) => (
@@ -1489,50 +1493,53 @@ export default function EditProductModal({
                             </TableCell>
 
                             <TableCell className="px-4 py-2">
-                              <Input
-                                type="number"
+                              <NumericInput
                                 value={draft?.buying_price ?? v.buying_price}
-                                onChange={(e) =>
-                                  patchEditVariation(v.id, {
-                                    buying_price: safeNumber(e.target.value, v.buying_price),
-                                  })
+                                onValueChange={(n) =>
+                                  patchEditVariation(v.id, { buying_price: n })
                                 }
+                                min={0}
                               />
                             </TableCell>
 
                             <TableCell className="px-4 py-2">
-                              <Input
-                                type="number"
+                              <NumericInput
                                 value={draft?.selling_price ?? v.selling_price}
-                                onChange={(e) =>
-                                  patchEditVariation(v.id, {
-                                    selling_price: safeNumber(e.target.value, v.selling_price),
-                                  })
+                                onValueChange={(n) =>
+                                  patchEditVariation(v.id, { selling_price: n })
                                 }
+                                min={0}
                               />
                             </TableCell>
 
                             <TableCell className="px-4 py-2">
-                              <Input
-                                type="number"
+                              <NumericInput
                                 value={draft?.discount ?? v.discount}
-                                onChange={(e) =>
-                                  patchEditVariation(v.id, {
-                                    discount: safeNumber(e.target.value, v.discount),
-                                  })
+                                onValueChange={(n) =>
+                                  patchEditVariation(v.id, { discount: n })
                                 }
+                                min={0}
                               />
                             </TableCell>
 
                             <TableCell className="px-4 py-2">
-                              <Input
-                                type="number"
+                              <NumericInput
                                 value={draft?.stock ?? v.stock}
-                                onChange={(e) =>
-                                  patchEditVariation(v.id, {
-                                    stock: Math.max(0, safeNumber(e.target.value, v.stock)),
-                                  })
+                                onValueChange={(n) =>
+                                  patchEditVariation(v.id, { stock: Math.max(0, n) })
                                 }
+                                min={0}
+                              />
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
+                              <NumericInput
+                                value={draft?.weight_kg ?? Number((v as any).weight_kg ?? 0)}
+                                onValueChange={(n) =>
+                                  patchEditVariation(v.id, { weight_kg: Math.max(0, n) })
+                                }
+                                min={0}
+                                step={0.001}
                               />
                             </TableCell>
 

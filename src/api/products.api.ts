@@ -118,6 +118,7 @@ export type ProductSingleVariation = {
 
   stock: number;
   sku: string;
+  weight_kg: number;
 
   status: boolean;
   in_stock: boolean;
@@ -209,6 +210,7 @@ export type ProductVariationPayload = {
   discount: number;
   stock: number;
   sku: string;
+  weight_kg?: number;
 };
 
 export type CreateProductPayload = {

@@ -24,6 +24,7 @@ export type SaleProductVariation = {
   selling_price?: number;
   discount?: number;
   stock?: number;
+  weight_kg?: number;
   // legacy/demo fields (if any)
   name?: string;
 };
@@ -71,6 +72,7 @@ export type CartItem = {
   image: string;
   unitPrice: number;
   qty: number;
+  weight_kg?: number; // variation weight in kg
 
   // legacy fields (optional)
   variant?: string;

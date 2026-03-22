@@ -24,6 +24,8 @@ interface ProductCalculationsCardProps {
   deliveryCharge: number;
   specialDiscount: number;
   advancePayment: number;
+  weightKgTotal?: number;
+  weightExtraCharge?: number;
   onChangeTotals: (patch: {
     deliveryCharge?: number;
     specialDiscount?: number;
@@ -179,8 +181,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
   };
 
   const lineBaseTotal = Math.max(0, p.unitPrice - p.discount) * p.quantity;
-  const lineTax = (lineBaseTotal * p.taxPercent) / 100;
-  const lineTotal = lineBaseTotal + lineTax;
+  const lineTotal = lineBaseTotal;
 
   // Check stock status
   const currentVariation = useMemo(() => {
@@ -300,6 +301,22 @@ const ProductRow: React.FC<ProductRowProps> = ({
       </td>
 
       <td className="px-4 py-4 align-top">
+        <div className="w-[80px]">
+          <Input
+            type="number"
+            value={p.weight_kg ?? 0}
+            onChange={(e) =>
+              onChangeLine(p.id, {
+                weight_kg: Math.max(0, Number(e.target.value)),
+              })
+            }
+            className="bg-white dark:bg-gray-800/50"
+          />
+          <p className="mt-0.5 text-[10px] text-gray-400">kg</p>
+        </div>
+      </td>
+
+      <td className="px-4 py-4 align-top">
         <div className="w-[110px]">
           <Input
             type="number"
@@ -335,12 +352,6 @@ const ProductRow: React.FC<ProductRowProps> = ({
         </div>
       </td>
 
-      <td className="px-4 py-4 align-top">
-        <div className="min-w-[90px] text-gray-600 dark:text-gray-300">
-          {p.taxPercent.toFixed(2)}%
-        </div>
-      </td>
-
       <td className="px-4 py-4 align-top text-right">
         <div className="min-w-[120px] font-bold text-gray-900 dark:text-white">
           {formatBDT(lineTotal)} BDT
@@ -372,6 +383,8 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
   deliveryCharge,
   specialDiscount,
   advancePayment,
+  weightKgTotal,
+  weightExtraCharge,
   onChangeTotals,
   totals,
   onSubmit,
@@ -423,10 +436,10 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
               <th className="px-4 py-3">{t("orders.orderEditor.product")}</th>
               <th className="px-4 py-3">{t("orders.orderEditor.color")}</th>
               <th className="px-4 py-3">{t("orders.orderEditor.size")}</th>
+              <th className="px-4 py-3">Weight (kg)</th>
               <th className="px-4 py-3">{t("orders.orderEditor.discount")}</th>
               <th className="px-4 py-3">{t("orders.orderEditor.unitPrice")}</th>
               <th className="px-4 py-3">{t("orders.orderEditor.quantity")}</th>
-              <th className="px-4 py-3">{t("orders.orderEditor.tax")}</th>
               <th className="px-4 py-3 text-right">{t("orders.orderEditor.total")}</th>
               <th className="px-4 py-3 text-right">{t("orders.orderEditor.action")}</th>
             </tr>
@@ -593,13 +606,30 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
               </span>
             </div>
 
+            {/* Weight Surcharge — only shown when > 0 */}
+            {(weightExtraCharge ?? 0) > 0 && (
+              <div className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-gray-500 dark:text-gray-400">
+                  ⚖ Weight surcharge
+                  {(weightKgTotal ?? 0) > 0 && (
+                    <span className="ml-1 text-[10px] text-gray-400">
+                      ({weightKgTotal?.toFixed(2)} kg)
+                    </span>
+                  )}
+                </span>
+                <span className="font-semibold text-orange-500 dark:text-orange-400">
+                  +৳{formatBDT(weightExtraCharge ?? 0)}
+                </span>
+              </div>
+            )}
+
             {/* Total Payable */}
             <div className="flex items-center justify-between pt-3.5 pb-1 text-sm">
               <span className="font-bold text-gray-800 dark:text-gray-100">
                 {t("orders.orderEditor.totalPayable", "Total Payable")}
               </span>
               <span className="text-xl font-extrabold text-brand-600 dark:text-brand-400">
-                ৳{formatBDT(totals.subTotal + deliveryCharge)}
+                ৳{formatBDT(totals.subTotal + deliveryCharge + (weightExtraCharge ?? 0))}
               </span>
             </div>
           </div>

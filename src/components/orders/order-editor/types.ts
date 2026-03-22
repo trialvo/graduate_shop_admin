@@ -30,7 +30,7 @@ export interface OrderProductLine {
   discount: number;
   unitPrice: number;
   quantity: number;
-  taxPercent: number;
+  weight_kg?: number;
 
   // API reference IDs for dynamic color/size selection
   productId?: number;
@@ -55,11 +55,9 @@ export interface OrderEditorData {
   postalCode: string;
 
   phone: string;
-  altPhone: string;
 
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
-  deliveryType: DeliveryType;
   paymentMethod: PaymentMethod;
 
   note: string;
@@ -69,6 +67,8 @@ export interface OrderEditorData {
   deliveryCharge: number;
   specialDiscount: number;
   advancePayment: number;
+  weightKgTotal: number;
+  weightExtraCharge: number;
 
   courier: {
     method: string;
@@ -92,7 +92,6 @@ export interface OrderEditorData {
     timeAgo: string;
     orderStatus: OrderStatus;
     sentBy: "manually" | "auto";
-    altPhone: string;
     additionalNotes: string;
   };
 }

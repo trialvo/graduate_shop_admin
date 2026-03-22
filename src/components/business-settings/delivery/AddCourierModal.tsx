@@ -66,6 +66,8 @@ export default function AddCourierModal({
 
   const [customerCharge, setCustomerCharge] = useState("60");
   const [ourCharge, setOurCharge] = useState("40");
+  const [weightFreeKg, setWeightFreeKg] = useState("0");
+  const [extraPerKg, setExtraPerKg] = useState("0");
 
   const [status, setStatus] = useState(true);
 
@@ -84,6 +86,8 @@ export default function AddCourierModal({
       setType("outside_of_dhaka");
       setCustomerCharge("60");
       setOurCharge("40");
+      setWeightFreeKg("0");
+      setExtraPerKg("0");
       setStatus(true);
 
       setImgFile(null);
@@ -100,6 +104,8 @@ export default function AddCourierModal({
 
     setCustomerCharge(String(Number(data.customer_charge ?? 0)));
     setOurCharge(String(Number(data.our_charge ?? 0)));
+    setWeightFreeKg(String(Number(data.default_weight_kg ?? 0)));
+    setExtraPerKg(String(Number(data.extra_charge_per_kg ?? 0)));
 
     setStatus(Boolean(data.status));
 
@@ -141,6 +147,8 @@ export default function AddCourierModal({
         type,
         customer_charge: isFree ? 0 : Math.max(0, safeNumber(customerCharge, 0)),
         our_charge: Math.max(0, safeNumber(ourCharge, 0)),
+        default_weight_kg: Math.max(0, safeNumber(weightFreeKg, 0)),
+        extra_charge_per_kg: Math.max(0, safeNumber(extraPerKg, 0)),
         status,
       }),
     onSuccess: (res: any) => {
@@ -169,6 +177,8 @@ export default function AddCourierModal({
         type,
         customer_charge: isFree ? 0 : Math.max(0, safeNumber(customerCharge, 0)),
         our_charge: Math.max(0, safeNumber(ourCharge, 0)),
+        default_weight_kg: Math.max(0, safeNumber(weightFreeKg, 0)),
+        extra_charge_per_kg: Math.max(0, safeNumber(extraPerKg, 0)),
         status,
       });
     },
@@ -283,6 +293,35 @@ export default function AddCourierModal({
                   ) : (
                     <p className="text-xs text-gray-500 dark:text-gray-400">Internal cost (profit calculation ready)।</p>
                   )}
+                </div>
+
+                {/* Weight surcharge settings */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Free Weight Threshold (kg)
+                  </p>
+                  <Input
+                    value={weightFreeKg}
+                    onChange={(e) => setWeightFreeKg(String(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Orders up to this weight pay no extra charge. 0 = always charge per kg.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Extra Charge per kg (BDT)
+                  </p>
+                  <Input
+                    value={extraPerKg}
+                    onChange={(e) => setExtraPerKg(String(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Charged per kg above the free threshold. 0 = no weight surcharge.
+                  </p>
                 </div>
 
                 <div className="space-y-2 md:col-span-2">

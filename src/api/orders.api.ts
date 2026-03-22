@@ -123,6 +123,7 @@ export type ApiOrderItem = {
   created_at: string;
   stock_adjusted: number;
   sell_count_adjusted: number;
+  weight_kg: number;
   sku?: string | null;
   attribute_name?: string | null;
   brand_name?: string | null;
@@ -146,6 +147,8 @@ export type ApiOrder = {
   subtotal: number;
   discount_total: number;
   delivery_charge: number;
+  weight_kg_total: number;
+  weight_extra_charge: number;
   grand_total: number;
 
   paid_amount: number;
@@ -308,6 +311,36 @@ export async function patchOrderStatus(
   }
 }
 
+export type UpdateOrderInfoPayload = {
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string;
+  payment_type: string;
+  note?: string;
+  full_address: string;
+  city: string;
+  zip_code: string;
+};
+
+export async function updateOrderInfo(
+  orderId: number,
+  payload: UpdateOrderInfoPayload
+) {
+  try {
+    const res = await api.patch(`/admin/order/info/${orderId}`, payload);
+    const data: any = res.data;
+    if (Number.isFinite(Number(data?.flag)) && Number(data.flag) !== 200) {
+      const message =
+        data?.error || data?.message || "Failed to update order info";
+      throw new Error(message);
+    }
+    return data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to update order info"));
+  }
+}
+
+
 /** Auto dispatch via API: POST /admin/order/dispatch/:id */
 export async function dispatchOrderCourier(
   orderId: number,
@@ -433,5 +466,70 @@ export async function trackOrderCourier(orderId: number) {
     return res.data;
   } catch (err: any) {
     throw new Error(getErrMessage(err, "Failed to track courier"));
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   V2-019: Order Refund Ledger
+   ────────────────────────────────────────────────────────────────────── */
+
+export type RefundMethod = "original_method" | "bank_transfer" | "mobile_banking" | "cash" | "other";
+export type RefundStatus = "pending" | "processed" | "failed";
+
+export interface OrderRefund {
+  id: number;
+  order_id: number;
+  order_payment_id: number | null;
+  refund_method: RefundMethod;
+  refund_amount: number;
+  refund_reference: string | null;
+  note: string | null;
+  refunded_by_admin: number | null;
+  refunded_by_name: string | null;
+  status: RefundStatus;
+  refunded_at: string | null;
+  created_at: string;
+}
+
+export interface CreateRefundPayload {
+  order_id: number;
+  order_payment_id?: number;
+  refund_method: RefundMethod;
+  refund_amount: number;
+  refund_reference?: string;
+  note?: string;
+}
+
+export async function createRefund(payload: CreateRefundPayload) {
+  try {
+    const res = await api.post("/admin/order/refund", payload);
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to create refund"));
+  }
+}
+
+export async function getRefundsByOrder(orderId: number): Promise<{
+  success: boolean;
+  data: OrderRefund[];
+  summary: { total_refunded: number; total_pending: number };
+}> {
+  try {
+    const res = await api.get(`/admin/order/refund/${orderId}`);
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to load refunds"));
+  }
+}
+
+export async function updateRefundStatus(
+  refundId: number,
+  payload: { status: RefundStatus; refund_reference?: string; note?: string },
+) {
+  try {
+    const res = await api.patch(`/admin/order/refund/status/${refundId}`, payload);
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to update refund status"));
   }
 }
