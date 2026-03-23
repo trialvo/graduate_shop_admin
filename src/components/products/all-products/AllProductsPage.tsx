@@ -5,6 +5,7 @@ import React from "react";
 import toast from "react-hot-toast";
 import { Download, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import Input from "@/components/form/input/InputField";
@@ -46,6 +47,8 @@ const AllProductsPage: React.FC = () => {
   const { t } = useTranslation();
   const qc = useQueryClient();
 
+  const navigate = useNavigate();
+
   const [filters, setFilters] = React.useState<ProductListFilters>({
     q: "",
     mainCategoryId: undefined,
@@ -58,8 +61,10 @@ const AllProductsPage: React.FC = () => {
     minPrice: undefined,
     maxPrice: undefined,
     limit: 20,
-    offset: 0, // state can keep 0, but API call won't send it
+    offset: 0,
   });
+
+  const [showLowStock, setShowLowStock] = React.useState(false);
 
   const debouncedQ = useDebouncedValue(filters.q, 450);
 
@@ -125,12 +130,12 @@ const AllProductsPage: React.FC = () => {
 
   // ✅ initial request => only ?limit=20 (no offset=0, no search=on)
   const productsQuery = useQuery({
-    queryKey: ["products", { ...filters, q: debouncedQ }],
+    queryKey: ["products", { ...filters, q: debouncedQ, showLowStock }],
     queryFn: () => {
       const params: any = { limit: filters.limit };
 
       if (filters.offset > 0) params.offset = filters.offset;
-      if (debouncedQ.trim()) params.q = debouncedQ.trim();
+      if (debouncedQ.trim()) params.search = debouncedQ.trim();
 
       if (filters.mainCategoryId) params.main_category_id = filters.mainCategoryId;
       if (filters.subCategoryId) params.sub_category_id = filters.subCategoryId;
@@ -143,6 +148,9 @@ const AllProductsPage: React.FC = () => {
 
       if (filters.minPrice !== undefined) params.min_price = filters.minPrice;
       if (filters.maxPrice !== undefined) params.max_price = filters.maxPrice;
+
+      // Low-stock filter: show only out-of-stock or near-zero stock products
+      if (showLowStock) params.in_stock = false;
 
       return getProducts(params);
     },
@@ -290,18 +298,23 @@ const AllProductsPage: React.FC = () => {
               </Button>
 
               <Button
-                variant="primary"
-                className="h-11 bg-teal-700 hover:bg-teal-800"
-                onClick={() => console.log("low stock list")}
+                variant={showLowStock ? "primary" : "outline"}
+                className={`h-11 ${showLowStock ? "bg-orange-600 hover:bg-orange-700" : "border-orange-400 text-orange-600 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-400"}`}
+                onClick={() => {
+                  setShowLowStock((prev) => !prev);
+                  setFilters((p) => ({ ...p, offset: 0 }));
+                }}
                 type="button"
               >
-                {t("products.lowStockList", { count: lowStockCount })}
+                {showLowStock
+                  ? t("products.showAll", "Show All")
+                  : t("products.lowStockList", { count: lowStockCount })}
               </Button>
 
               <Button
                 variant="primary"
                 className="h-11 bg-teal-700 hover:bg-teal-800"
-                onClick={() => console.log("new product request")}
+                onClick={() => navigate("/create-product")}
                 type="button"
               >
                 {t("products.newProductRequest")}
