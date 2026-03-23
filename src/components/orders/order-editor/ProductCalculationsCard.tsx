@@ -43,6 +43,7 @@ interface ProductCalculationsCardProps {
     bulkDiscountTotal?: number;
     comboDiscountTotal?: number;
     cartWideDiscount?: number;
+    couponDiscount?: number;
   };
 
   onSubmit: () => void;
@@ -587,13 +588,13 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
               </span>
             </div>
 
-            {/* Discount */}
+            {/* Item Discount (per-SKU) */}
             {totals.productDiscount > 0 && (
               <div className="flex items-center justify-between py-2.5 text-sm">
                 <span className="text-gray-500 dark:text-gray-400">
-                  {t("orders.orderEditor.discount")}
+                  {t("orders.orderEditor.itemDiscount", "Item Discount")}
                 </span>
-                <span className="font-semibold text-red-500 dark:text-red-400">
+                <span className="font-semibold text-green-600 dark:text-green-400">
                   −৳{formatBDT(totals.productDiscount)}
                 </span>
               </div>
@@ -652,6 +653,16 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
                 <span className="text-gray-500 dark:text-gray-400">🏷️ Cart Discount</span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
                   −৳{formatBDT(totals.cartWideDiscount ?? 0)}
+                </span>
+              </div>
+            )}
+
+            {/* Coupon Discount */}
+            {(totals.couponDiscount ?? 0) > 0 && (
+              <div className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-gray-500 dark:text-gray-400">🎟️ Coupon Discount</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  −৳{formatBDT(totals.couponDiscount ?? 0)}
                 </span>
               </div>
             )}

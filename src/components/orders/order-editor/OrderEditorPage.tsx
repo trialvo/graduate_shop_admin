@@ -737,6 +737,10 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
                 taxTotal: totals.taxTotal,
                 grandTotal: totals.grandTotal,
                 payable: totals.payable,
+                bulkDiscountTotal: totals.bulkDiscountTotal,
+                comboDiscountTotal: totals.comboDiscountTotal,
+                cartWideDiscount: totals.cartWideDiscount,
+                couponDiscount: data.couponDiscount,
               }}
               onSubmit={handleSubmitProducts}
             />

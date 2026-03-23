@@ -57,9 +57,14 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
   const items = order.items ?? [];
 
   const subTotal = useMemo(() => {
-    if (!items.length) return Number(order.total ?? 0);
-    return items.reduce((sum, it) => sum + (Number(it.total) || 0), 0);
-  }, [order.total, items]);
+    // item.total is line_total = final_unit_price × qty (net, after per-item discount).
+    // We add skuDiscount back to get the gross subtotal (selling_price × qty),
+    // matching the shop panel, order success page, and account order detail.
+    const netTotal = items.length
+      ? items.reduce((sum, it) => sum + (Number(it.total) || 0), 0)
+      : Number(order.total ?? 0);
+    return netTotal + Number(order.skuDiscount ?? 0);
+  }, [order.total, order.skuDiscount, items]);
 
   const discount = Number(order.discount ?? 0);
   const paid = Number(order.paidAmount ?? 0);
