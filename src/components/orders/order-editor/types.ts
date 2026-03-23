@@ -69,6 +69,10 @@ export interface OrderEditorData {
   advancePayment: number;
   weightKgTotal: number;
   weightExtraCharge: number;
+  bulkDiscountTotal: number;
+  comboDiscountTotal: number;
+  cartWideDiscount: number;
+  couponDiscount: number;
 
   courier: {
     method: string;

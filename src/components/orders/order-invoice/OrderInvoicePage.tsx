@@ -175,6 +175,9 @@ export default function OrderInvoicePage() {
       delivery: safeNumber(order?.delivery_charge),
       weightKg: safeNumber((order as any)?.weight_kg_total),
       weightSurcharge: safeNumber((order as any)?.weight_extra_charge),
+      bulkDiscount: safeNumber((order as any)?.bulk_discount_total),
+      comboDiscount: safeNumber((order as any)?.combo_discount_total),
+      cartWideDiscount: safeNumber((order as any)?.cart_wide_discount),
       total: safeNumber(order?.grand_total),
       paid: safeNumber(order?.paid_amount),
       due: safeNumber(order?.due_amount),
@@ -452,6 +455,27 @@ export default function OrderInvoicePage() {
                     <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
                       <span>⚖ Weight surcharge {totals.weightKg > 0 ? `(${totals.weightKg} kg)` : ""}</span>
                       <span className="font-semibold text-orange-600 dark:text-orange-400">+{formatBDT(totals.weightSurcharge)}</span>
+                    </div>
+                  )}
+
+                  {totals.bulkDiscount > 0 && (
+                    <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+                      <span>⚡ Bulk Discount</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">−{formatBDT(totals.bulkDiscount)}</span>
+                    </div>
+                  )}
+
+                  {totals.comboDiscount > 0 && (
+                    <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+                      <span>🎁 Combo Discount</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">−{formatBDT(totals.comboDiscount)}</span>
+                    </div>
+                  )}
+
+                  {totals.cartWideDiscount > 0 && (
+                    <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+                      <span>🏷️ Cart Discount</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">−{formatBDT(totals.cartWideDiscount)}</span>
                     </div>
                   )}
 

@@ -40,6 +40,9 @@ interface ProductCalculationsCardProps {
     taxTotal: number;
     grandTotal: number;
     payable: number;
+    bulkDiscountTotal?: number;
+    comboDiscountTotal?: number;
+    cartWideDiscount?: number;
   };
 
   onSubmit: () => void;
@@ -623,13 +626,43 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
               </div>
             )}
 
+            {/* Bulk Discount — from API (read-only snapshot) */}
+            {(totals.bulkDiscountTotal ?? 0) > 0 && (
+              <div className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-gray-500 dark:text-gray-400">⚡ Bulk Discount</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  −৳{formatBDT(totals.bulkDiscountTotal ?? 0)}
+                </span>
+              </div>
+            )}
+
+            {/* Combo Discount */}
+            {(totals.comboDiscountTotal ?? 0) > 0 && (
+              <div className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-gray-500 dark:text-gray-400">🎁 Combo Discount</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  −৳{formatBDT(totals.comboDiscountTotal ?? 0)}
+                </span>
+              </div>
+            )}
+
+            {/* Cart Wide Discount */}
+            {(totals.cartWideDiscount ?? 0) > 0 && (
+              <div className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-gray-500 dark:text-gray-400">🏷️ Cart Discount</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  −৳{formatBDT(totals.cartWideDiscount ?? 0)}
+                </span>
+              </div>
+            )}
+
             {/* Total Payable */}
             <div className="flex items-center justify-between pt-3.5 pb-1 text-sm">
               <span className="font-bold text-gray-800 dark:text-gray-100">
                 {t("orders.orderEditor.totalPayable", "Total Payable")}
               </span>
               <span className="text-xl font-extrabold text-brand-600 dark:text-brand-400">
-                ৳{formatBDT(totals.subTotal + deliveryCharge + (weightExtraCharge ?? 0))}
+                ৳{formatBDT(totals.grandTotal)}
               </span>
             </div>
           </div>

@@ -146,6 +146,11 @@ export type ApiOrder = {
 
   subtotal: number;
   discount_total: number;
+  sku_discount_total: number;
+  bulk_discount_total?: number;
+  combo_discount_total?: number;
+  cart_wide_discount?: number;
+  coupon_discount?: number;
   delivery_charge: number;
   weight_kg_total: number;
   weight_extra_charge: number;

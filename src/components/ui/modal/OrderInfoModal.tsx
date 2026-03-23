@@ -389,16 +389,55 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                     </td>
                   </tr>
 
-                  <tr className="border-t border-gray-100 dark:border-gray-900">
-                    <td className="px-5 py-4" colSpan={6} />
-                    <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-200">
-                      Discount
-                    </td>
-                    <td className="px-5 py-4 text-right text-sm text-gray-900 dark:text-white">
-                      {order.currencySymbol}
-                      {discount.toLocaleString()}
-                    </td>
-                  </tr>
+                  {order.bulkDiscount > 0 && (
+                    <tr className="border-t border-gray-100 dark:border-gray-900">
+                      <td className="px-5 py-3" colSpan={6} />
+                      <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-200">⚡ Bulk Discount</td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 dark:text-green-400">
+                        -{order.currencySymbol}{order.bulkDiscount.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
+
+                  {order.comboDiscount > 0 && (
+                    <tr className="border-t border-gray-100 dark:border-gray-900">
+                      <td className="px-5 py-3" colSpan={6} />
+                      <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-200">🎁 Combo Discount</td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 dark:text-green-400">
+                        -{order.currencySymbol}{order.comboDiscount.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
+
+                  {order.cartWideDiscount > 0 && (
+                    <tr className="border-t border-gray-100 dark:border-gray-900">
+                      <td className="px-5 py-3" colSpan={6} />
+                      <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-200">🏷️ Cart Discount</td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 dark:text-green-400">
+                        -{order.currencySymbol}{order.cartWideDiscount.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
+
+                  {order.skuDiscount > 0 && (
+                    <tr className="border-t border-gray-100 dark:border-gray-900">
+                      <td className="px-5 py-3" colSpan={6} />
+                      <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-200">Item Discount</td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 dark:text-green-400">
+                        -{order.currencySymbol}{order.skuDiscount.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
+
+                  {order.couponDiscount > 0 && (
+                    <tr className="border-t border-gray-100 dark:border-gray-900">
+                      <td className="px-5 py-3" colSpan={6} />
+                      <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-200">🎟️ Coupon Discount</td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 dark:text-green-400">
+                        -{order.currencySymbol}{order.couponDiscount.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
 
                   <tr className="border-t border-gray-100 dark:border-gray-900">
                     <td className="px-5 py-4" colSpan={6} />

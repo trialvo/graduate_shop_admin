@@ -425,6 +425,12 @@ export default function AllOrdersView() {
         paidAmount: Number(o.paid_amount ?? 0),
         shippingCost: Number(o.delivery_charge ?? 0),
         discount: Number(o.discount_total ?? 0),
+        // Individual discount breakdown — all directly from stored DB columns
+        bulkDiscount: Number(o.bulk_discount_total ?? 0),
+        comboDiscount: Number(o.combo_discount_total ?? 0),
+        cartWideDiscount: Number(o.cart_wide_discount ?? 0),
+        couponDiscount: Number(o.coupon_discount ?? 0),
+        skuDiscount: Number(o.sku_discount_total ?? 0),
         dueAmount: Number(o.due_amount ?? 0),
 
         paymentType: o.payment_type,

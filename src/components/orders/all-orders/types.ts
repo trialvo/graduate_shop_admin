@@ -104,7 +104,12 @@ export type OrderRow = {
 
   paidAmount: number;
   shippingCost: number;
-  discount: number;
+  discount: number;         // combined discount_total (kept for backward compat)
+  skuDiscount: number;      // sku item-level discount only
+  bulkDiscount: number;
+  comboDiscount: number;
+  cartWideDiscount: number;
+  couponDiscount: number;
   dueAmount?: number;
 
   paymentType: "gateway" | "cod" | "mixed";

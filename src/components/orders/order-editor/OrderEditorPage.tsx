@@ -153,6 +153,10 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     advancePayment: Number(o.paid_amount ?? 0),
     weightKgTotal: Number(o.weight_kg_total ?? 0),
     weightExtraCharge: Number(o.weight_extra_charge ?? 0),
+    bulkDiscountTotal: Number((o as any).bulk_discount_total ?? 0),
+    comboDiscountTotal: Number((o as any).combo_discount_total ?? 0),
+    cartWideDiscount: Number((o as any).cart_wide_discount ?? 0),
+    couponDiscount: Number((o as any).coupon_discount ?? 0),
 
     courier: {
       method: firstCourier?.courier_provider ?? "manual",
@@ -256,7 +260,13 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     const subTotal = lineTotals.reduce((s, t) => s + t.net, 0);
     const items = data.products.reduce((s, p) => s + p.quantity, 0);
 
-    const grandTotal = subTotal + (Number(data.deliveryCharge) || 0) + (Number(data.weightExtraCharge) || 0);
+    const grandTotal = subTotal
+      + (Number(data.deliveryCharge) || 0)
+      + (Number(data.weightExtraCharge) || 0)
+      - (Number(data.bulkDiscountTotal) || 0)
+      - (Number(data.comboDiscountTotal) || 0)
+      - (Number(data.cartWideDiscount) || 0)
+      - (Number(data.couponDiscount) || 0);
     const payable =
       grandTotal -
       (Number(data.specialDiscount) || 0) -
@@ -270,6 +280,9 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       taxTotal: 0,
       grandTotal,
       payable: Math.max(0, payable),
+      bulkDiscountTotal: Number(data.bulkDiscountTotal) || 0,
+      comboDiscountTotal: Number(data.comboDiscountTotal) || 0,
+      cartWideDiscount: Number(data.cartWideDiscount) || 0,
     };
   }, [data]);
 
