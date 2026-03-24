@@ -1,6 +1,6 @@
 import type React from "react";
 import { useMemo, useState } from "react";
-import { ShoppingCart, Trash2, Plus, Save, AlertCircle, Loader2, Truck, Check } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Save, AlertCircle, Loader2, Truck, Check, Gift } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -408,6 +408,20 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
   }, [deliveryQuery.data]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  // Admin-override: Free Delivery toggle
+  const [adminFreeDelivery, setAdminFreeDelivery] = useState(false);
+  // Track explicitly selected delivery option by ID (null = nothing selected yet)
+  const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
+
+  const handleToggleFreeDelivery = () => {
+    if (!adminFreeDelivery) {
+      // Enable: zero out delivery charge, clear any option selection
+      onChangeTotals({ deliveryCharge: 0 });
+      setSelectedOptionId(null);
+    }
+    // Disable: leave deliveryCharge as is (admin re-selects from options)
+    setAdminFreeDelivery((prev) => !prev);
+  };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 dark:border-gray-800 dark:bg-gray-900">
@@ -466,17 +480,43 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left: delivery option cards */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Truck size={14} className="text-gray-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-              {t("orders.orderEditor.deliveryOption", "Delivery Option")}
-            </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Truck size={14} className="text-gray-400" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+                {t("orders.orderEditor.deliveryOption", "Delivery Option")}
+              </span>
+            </div>
+            {/* Free Delivery Admin Toggle */}
+            <button
+              type="button"
+              onClick={handleToggleFreeDelivery}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 ${
+                adminFreeDelivery
+                  ? "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600"
+                  : "border border-dashed border-gray-300 text-gray-500 hover:border-emerald-400 hover:text-emerald-600 dark:border-gray-600 dark:text-gray-400"
+              }`}
+            >
+              <Gift size={12} />
+              {adminFreeDelivery ? "✓ Free Delivery" : "Set Free Delivery"}
+            </button>
           </div>
 
           {deliveryQuery.isLoading ? (
             <div className="flex items-center gap-2 py-6 text-xs text-gray-400">
               <Loader2 size={14} className="animate-spin" />
               {t("orders.orderEditor.loadingDelivery", "Loading delivery options...")}
+            </div>
+          ) : adminFreeDelivery ? (
+            <div className="flex items-center gap-3 rounded-xl border-2 border-emerald-400 bg-emerald-50 px-4 py-3 dark:border-emerald-500/50 dark:bg-emerald-500/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20">
+                <Gift size={18} />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Free Delivery</div>
+                <div className="text-xs text-emerald-600/70 dark:text-emerald-400/70">Delivery charge waived by admin</div>
+              </div>
+              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">৳0</div>
             </div>
           ) : deliveryOptions.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gray-300 px-4 py-6 text-center text-xs text-gray-400 dark:border-gray-700">
@@ -485,14 +525,18 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
           ) : (
             <div className="flex flex-col gap-2.5">
               {deliveryOptions.map((opt) => {
-                const isSelected = deliveryCharge === opt.customer_charge;
+                // Only show as selected if the admin explicitly clicked this option
+                const isSelected = selectedOptionId === opt.id;
                 const imgSrc = opt.img_path ? toPublicUrl(opt.img_path) : null;
 
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => onChangeTotals({ deliveryCharge: opt.customer_charge })}
+                    onClick={() => {
+                      setSelectedOptionId(opt.id);
+                      onChangeTotals({ deliveryCharge: opt.customer_charge });
+                    }}
                     className={`group relative flex items-center gap-3.5 rounded-xl border-2 px-4 py-3 text-left transition-all duration-200 ${isSelected
                       ? "border-brand-500 bg-gradient-to-r from-brand-50 to-white shadow-sm ring-1 ring-brand-200 dark:border-brand-400 dark:from-brand-500/10 dark:to-gray-900 dark:ring-brand-500/30"
                       : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600"
@@ -605,9 +649,15 @@ const ProductCalculationsCard: React.FC<ProductCalculationsCardProps> = ({
               <span className="text-gray-500 dark:text-gray-400">
                 {t("orders.orderEditor.deliveryCharge")}
               </span>
-              <span className="font-semibold text-gray-900 dark:text-white">
-                +৳{formatBDT(deliveryCharge)}
-              </span>
+              {adminFreeDelivery ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                  <Gift size={10} /> Free (Waived)
+                </span>
+              ) : (
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  +৳{formatBDT(deliveryCharge)}
+                </span>
+              )}
             </div>
 
             {/* Weight Surcharge — only shown when > 0 */}
