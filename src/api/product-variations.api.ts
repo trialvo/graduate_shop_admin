@@ -10,6 +10,7 @@ export type ProductVariationPayload = {
   discount?: number;
   stock?: number;
   sku?: string;
+  free_delivery?: boolean | null; // null = inherit from product, true = free, false = paid
 };
 
 export type ProductVariationEntity = {
@@ -23,6 +24,7 @@ export type ProductVariationEntity = {
   discount: number;
   stock: number;
   status: 1 | 0;
+  free_delivery: 1 | 0 | null; // null = inherit from product
 };
 
 /**

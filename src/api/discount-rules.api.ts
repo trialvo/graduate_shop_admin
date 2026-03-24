@@ -11,6 +11,7 @@ export type BulkRule = {
   discount_type: 0 | 1;
   discount_value: number;
   status: boolean;
+  free_delivery: boolean;
   sku?: string; // joined from product_skus
 };
 
@@ -24,7 +25,8 @@ function toBackendBulk(body: Partial<BulkRulePayload>) {
   if (body.min_quantity     !== undefined) out.min_qty        = body.min_quantity;
   if (body.discount_type    !== undefined) out.discount_type  = body.discount_type;
   if (body.discount_value   !== undefined) out.discount_value = body.discount_value;
-  if (body.status           !== undefined) out.status         = body.status; // DB col is `status`
+  if (body.status           !== undefined) out.status         = body.status;
+  if (body.free_delivery    !== undefined) out.free_delivery  = body.free_delivery ? 1 : 0;
   return out;
 }
 
@@ -37,7 +39,8 @@ function fromBackendBulk(row: any): BulkRule {
     min_quantity:   row.min_qty ?? row.min_quantity ?? 1,
     discount_type:  row.discount_type,
     discount_value: Number(row.discount_value),
-    status:         Boolean(row.status),  // DB col is `status`
+    status:         Boolean(row.status),
+    free_delivery:  Boolean(row.free_delivery),
     sku:            row.sku,
   };
 }
@@ -72,6 +75,7 @@ export type ComboRule = {
   discount_type: 0 | 1;
   discount_value: number;
   status: boolean;
+  free_delivery: boolean;
   items: ComboRuleItem[];
 };
 
@@ -88,6 +92,7 @@ export async function getComboRules(): Promise<ComboRule[]> {
     discount_type:  r.tiers?.[0]?.discount_type  ?? 0,
     discount_value: Number(r.tiers?.[0]?.discount_value ?? 0),
     status:         Boolean(r.status),
+    free_delivery:  Boolean(r.free_delivery),
     // flatten all tiers' items into a single list
     items: (r.tiers ?? []).flatMap((t: any) =>
       (t.items ?? []).map((i: any) => ({ product_sku_id: i.product_sku_id, required_qty: i.required_qty ?? 1 }))
@@ -95,13 +100,20 @@ export async function getComboRules(): Promise<ComboRule[]> {
   }));
 }
 
+/** Convert combo frontend shape → backend field names */
+function toBackendCombo(body: Partial<ComboRulePayload>) {
+  const out: Record<string, unknown> = { ...body };
+  if (body.free_delivery !== undefined) out.free_delivery = body.free_delivery ? 1 : 0;
+  return out;
+}
+
 export async function createComboRule(body: ComboRulePayload): Promise<{ success: true; id: number }> {
-  const res = await api.post("/admin/discount/combo-rule", body);
+  const res = await api.post("/admin/discount/combo-rule", toBackendCombo(body));
   return res.data;
 }
 
 export async function editComboRule(id: number, body: Partial<ComboRulePayload>): Promise<{ success: true }> {
-  const res = await api.put(`/admin/discount/combo-rule/${id}`, body);
+  const res = await api.put(`/admin/discount/combo-rule/${id}`, toBackendCombo(body));
   return res.data;
 }
 

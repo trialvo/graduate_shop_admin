@@ -56,6 +56,7 @@ type VariantRow = {
   stock: number;
   sku: string;
   weightKg: number;
+  freeDelivery: boolean | null; // null = inherit from product, true = free, false = paid
 
   active: boolean;
 };
@@ -152,6 +153,7 @@ function ensureMatrixRows(
           stock: 0,
           sku: "",
           weightKg: 0,
+          freeDelivery: null, // null = inherit from product-level free_delivery
           active: true,
         },
       );
@@ -345,6 +347,12 @@ function FlagsSection({
       icon: <Star className="h-5 w-5" />,
     },
     {
+      key: "free_delivery" as const,
+      label: t("products.createProduct.flagFreeDelivery"),
+      description: t("products.createProduct.flagFreeDeliveryDesc"),
+      icon: <Truck className="h-5 w-5" />,
+    },
+    {
       key: "best_deal" as const,
       label: t("products.createProduct.flagBestDeal"),
       description: t("products.createProduct.flagBestDealDesc"),
@@ -358,7 +366,7 @@ function FlagsSection({
       description={t("products.createProduct.flagsDesc")}
       icon={<ToggleLeft className="h-5 w-5" />}
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((item) => (
           <div
             key={item.key}
@@ -789,6 +797,7 @@ export default function CreateProductPage() {
         stock: Math.max(0, r.stock),
         sku: r.sku,
         weight_kg: r.weightKg ?? 0,
+        free_delivery: r.freeDelivery !== undefined ? r.freeDelivery : null,
       }));
 
     // ✅ Child Category rules:

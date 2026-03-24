@@ -18,6 +18,7 @@ import {
   Star,
   ToggleLeft,
   Trash2,
+  Truck,
   Video,
   X,
   Zap,
@@ -116,6 +117,7 @@ type VariationDraft = {
   stock: number;
   sku: string;
   weight_kg: number;
+  free_delivery: boolean | null; // null = inherit from product
 };
 
 type InlineEditState = Record<number, VariationDraft>;
@@ -417,6 +419,7 @@ export default function EditProductModal({
     stock: 0,
     sku: "",
     weight_kg: 0,
+    free_delivery: null,
   });
 
   // small confirm modal for variation delete
@@ -470,6 +473,7 @@ export default function EditProductModal({
     // Auto-populate varEdit so all rows are always in edit mode
     const autoEdit: InlineEditState = {};
     for (const vr of vars) {
+      const skuFd = (vr as any).free_delivery;
       autoEdit[vr.id] = {
         color_id: getVariationColorId(vr),
         variant_id: getVariationVariantId(vr),
@@ -479,6 +483,7 @@ export default function EditProductModal({
         stock: vr.stock,
         sku: vr.sku ?? "",
         weight_kg: Number((vr as any).weight_kg ?? 0),
+        free_delivery: skuFd === null || skuFd === undefined ? null : Boolean(skuFd),
       };
     }
     setVarEdit(autoEdit);
@@ -492,6 +497,7 @@ export default function EditProductModal({
       stock: 0,
       sku: "",
       weight_kg: 0,
+      free_delivery: null,
     });
   }, [enabled, productQuery.data]);
 
@@ -660,6 +666,8 @@ export default function EditProductModal({
       for (const v of variations) {
         const draft = varEdit[v.id];
         if (!draft) continue;
+        const skuFd = (v as any).free_delivery;
+        const origFd = skuFd === null || skuFd === undefined ? null : Boolean(skuFd);
         const changed =
           draft.color_id !== getVariationColorId(v) ||
           draft.variant_id !== getVariationVariantId(v) ||
@@ -668,7 +676,8 @@ export default function EditProductModal({
           draft.discount !== v.discount ||
           draft.stock !== v.stock ||
           draft.sku !== (v.sku ?? "") ||
-          draft.weight_kg !== Number((v as any).weight_kg ?? 0);
+          draft.weight_kg !== Number((v as any).weight_kg ?? 0) ||
+          draft.free_delivery !== origFd;
         if (changed) {
           varPromises.push(updateVariation(v.id, draft));
         }
@@ -715,6 +724,7 @@ export default function EditProductModal({
       stock: payload.stock,
       sku: payload.sku,
       weight_kg: payload.weight_kg ?? 0,
+      free_delivery: payload.free_delivery !== undefined ? payload.free_delivery : null,
     };
 
     const res = await api.post("/product/variation", body);
@@ -734,6 +744,7 @@ export default function EditProductModal({
       stock: payload.stock,
       sku: payload.sku,
       weight_kg: payload.weight_kg ?? 0,
+      free_delivery: payload.free_delivery !== undefined ? payload.free_delivery : null,
     };
 
     const res = await api.put(`/product/variation/${id}`, body);
@@ -786,6 +797,7 @@ export default function EditProductModal({
   // Variation UI helpers
   // ----------------------------
   const startEditVariation = (v: VariationRow) => {
+    const skuFd = (v as any).free_delivery;
     setVarEdit((p) => ({
       ...p,
       [v.id]: {
@@ -797,6 +809,7 @@ export default function EditProductModal({
         stock: v.stock,
         sku: v.sku ?? "",
         weight_kg: Number((v as any).weight_kg ?? 0),
+        free_delivery: skuFd === null || skuFd === undefined ? null : Boolean(skuFd),
       },
     }));
   };
@@ -1131,10 +1144,11 @@ export default function EditProductModal({
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("products.editProduct.productFlags")}</h3>
               </div>
-              <div className="grid grid-cols-1 gap-px bg-gray-100 dark:bg-gray-800 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-px bg-gray-100 dark:bg-gray-800 sm:grid-cols-4">
                 {[
                   { label: t("products.editProduct.flagStatus"), desc: t("products.editProduct.flagStatusDesc"), icon: ToggleLeft, value: status, onChange: setStatus },
                   { label: t("products.editProduct.flagFeatured"), desc: t("products.editProduct.flagFeaturedDesc"), icon: Star, value: featured, onChange: setFeatured },
+                  { label: t("products.editProduct.flagFreeDelivery"), desc: t("products.editProduct.flagFreeDeliveryDesc"), icon: Truck, value: freeDelivery, onChange: setFreeDelivery },
                   { label: t("products.editProduct.flagBestDeal"), desc: t("products.editProduct.flagBestDealDesc"), icon: Zap, value: bestDeal, onChange: setBestDeal },
                 ].map((x) => (
                   <div key={x.label} className="flex items-center justify-between gap-3 bg-white px-5 py-4 dark:bg-gray-900">
@@ -1383,6 +1397,7 @@ export default function EditProductModal({
                           stock: 0,
                           sku: "",
                           weight_kg: 0,
+                          free_delivery: null,
                         })
                       }
                     >
@@ -1422,6 +1437,7 @@ export default function EditProductModal({
                         t("products.editProduct.thDiscount"),
                         t("products.editProduct.thStock"),
                         "Wt (kg)",
+                        "Free Del.",
                         t("products.editProduct.thSku"),
                         t("products.editProduct.thAction"),
                       ].map((h) => (
@@ -1544,6 +1560,23 @@ export default function EditProductModal({
                             </TableCell>
 
                             <TableCell className="px-4 py-2">
+                              <select
+                                className="h-9 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                value={draft?.free_delivery === null || draft?.free_delivery === undefined ? "inherit" : draft.free_delivery ? "true" : "false"}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  patchEditVariation(v.id, {
+                                    free_delivery: val === "inherit" ? null : val === "true",
+                                  });
+                                }}
+                              >
+                                <option value="inherit">🔗 Inherit</option>
+                                <option value="true">🚚 Free</option>
+                                <option value="false">💳 Paid</option>
+                              </select>
+                            </TableCell>
+
+                            <TableCell className="px-4 py-2">
                               <div className="flex items-center gap-2">
                                 <Input
                                   value={draft?.sku ?? v.sku ?? ""}
@@ -1594,7 +1627,7 @@ export default function EditProductModal({
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={8}
+                          colSpan={9}
                           className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                         >
                           {t("products.editProduct.noVariations")}

@@ -255,7 +255,7 @@ function BulkRulesManager() {
   const editM = useEditBulkRule();
   const deleteM = useDeleteBulkRule();
 
-  const EMPTY: BulkRulePayload = { name: "", product_sku_id: 0, min_quantity: 1, discount_type: 1, discount_value: 0, status: true };
+  const EMPTY: BulkRulePayload = { name: "", product_sku_id: 0, min_quantity: 1, discount_type: 1, discount_value: 0, status: true, free_delivery: false };
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<BulkRule | null>(null);
@@ -268,6 +268,7 @@ function BulkRulesManager() {
   const [skuId, setSkuId] = useState<number>(0);
   const [discountType, setDiscountType] = useState<0 | 1>(1);
   const [status, setStatus] = useState(true);
+  const [bulkFreeDelivery, setBulkFreeDelivery] = useState(false);
   const [tiers, setTiers] = useState<Tier[]>([{ id: Date.now(), name: "", min_quantity: 1, discount_value: 0 }]);
 
   const addTier = () =>
@@ -285,13 +286,14 @@ function BulkRulesManager() {
     setSkuId(0);
     setDiscountType(1);
     setStatus(true);
+    setBulkFreeDelivery(false);
     setTiers([{ id: Date.now(), name: "", min_quantity: 1, discount_value: 0 }]);
     setModalOpen(true);
   };
 
   const openEdit = (r: BulkRule) => {
     setEditTarget(r);
-    setForm({ name: r.name, product_sku_id: r.product_sku_id, min_quantity: r.min_quantity, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status });
+    setForm({ name: r.name, product_sku_id: r.product_sku_id, min_quantity: r.min_quantity, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status, free_delivery: r.free_delivery });
     setModalOpen(true);
   };
 
@@ -324,6 +326,7 @@ function BulkRulesManager() {
               discount_type: discountType,
               discount_value: t.discount_value,
               status,
+              free_delivery: bulkFreeDelivery,
             })
           )
         );
@@ -364,7 +367,7 @@ function BulkRulesManager() {
         <table className="w-full border-collapse text-sm min-w-[700px]">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-              {["Name", "SKU", "Min Qty", "Discount", "Value", "Status", ""].map((h) => (
+              {["Name", "SKU", "Min Qty", "Discount", "Value", "Delivery", "Status", ""].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">{h}</th>
               ))}
             </tr>
@@ -381,6 +384,11 @@ function BulkRulesManager() {
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.min_quantity}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{DISCOUNT_TYPE_LABEL(r.discount_type)}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.discount_value}</td>
+                <td className="px-4 py-3">
+                  {r.free_delivery
+                    ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-full">🚚 Free</span>
+                    : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-2 py-0.5 rounded-full">💸 Paid</span>}
+                </td>
                 <td className="px-4 py-3"><StatusBadge on={r.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
@@ -436,6 +444,10 @@ function BulkRulesManager() {
               <input type="checkbox" id="bulk-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
               <Label htmlFor="bulk-status">Active</Label>
             </div>
+            <div className="flex items-center gap-3">
+              <input type="checkbox" id="bulk-fd" checked={!!form.free_delivery} onChange={e => setForm(f => ({ ...f, free_delivery: e.target.checked }))} className="rounded" />
+              <Label htmlFor="bulk-fd">🚚 Free Delivery (whole cart ships free when rule triggered)</Label>
+            </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
@@ -459,10 +471,14 @@ function BulkRulesManager() {
                   <option value={0}>Flat Amount (৳)</option>
                 </select>
               </div>
-              <div className="flex items-end pb-1">
+              <div className="flex flex-col gap-2 items-start justify-end pb-1">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input type="checkbox" checked={status} onChange={e => setStatus(e.target.checked)} className="rounded" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={bulkFreeDelivery} onChange={e => setBulkFreeDelivery(e.target.checked)} className="rounded" />
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">🚚 Free Delivery</span>
                 </label>
               </div>
             </div>
@@ -553,7 +569,7 @@ function ComboRulesManager() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ComboRule | null>(null);
-  const [form, setForm] = useState<ComboRulePayload>({ name: "", discount_type: 0, discount_value: 0, status: true, items: [] });
+  const [form, setForm] = useState<ComboRulePayload>({ name: "", discount_type: 0, discount_value: 0, status: true, free_delivery: false, items: [] });
   const [saving, setSaving] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
@@ -563,14 +579,14 @@ function ComboRulesManager() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", discount_type: 0, discount_value: 0, status: true, items: [] });
+    setForm({ name: "", discount_type: 0, discount_value: 0, status: true, free_delivery: false, items: [] });
     setPendingSku(null);
     setPendingQty(1);
     setModalOpen(true);
   };
   const openEdit = (r: ComboRule) => {
     setEditTarget(r);
-    setForm({ name: r.name, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status, items: r.items.map(i => ({ product_sku_id: i.product_sku_id, required_qty: i.required_qty ?? 1 })) });
+    setForm({ name: r.name, discount_type: r.discount_type, discount_value: r.discount_value, status: r.status, free_delivery: r.free_delivery, items: r.items.map(i => ({ product_sku_id: i.product_sku_id, required_qty: i.required_qty ?? 1 })) });
     setPendingSku(null);
     setPendingQty(1);
     setModalOpen(true);
@@ -613,20 +629,25 @@ function ComboRulesManager() {
         <table className="w-full border-collapse text-sm min-w-[600px]">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-              {["Name", "Discount", "Value", "SKUs", "Status", ""].map((h) => (
+              {["Name", "Discount", "Value", "SKUs", "Delivery", "Status", ""].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-brand-500">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {isLoading ? <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">Loading...</td></tr>
-              : rules.length === 0 ? <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">No combo rules yet.</td></tr>
+            {isLoading ? <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">Loading...</td></tr>
+              : rules.length === 0 ? <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">No combo rules yet.</td></tr>
                 : rules.map((r) => (
                   <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{r.name}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{DISCOUNT_TYPE_LABEL(r.discount_type)}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.discount_value}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{r.items.map(i => i.product_sku_id).join(", ")}</td>
+                    <td className="px-4 py-3">
+                      {r.free_delivery
+                        ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-full">🚚 Free</span>
+                        : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-2 py-0.5 rounded-full">💸 Paid</span>}
+                    </td>
                     <td className="px-4 py-3"><StatusBadge on={r.status} /></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
@@ -712,6 +733,10 @@ function ComboRulesManager() {
           <div className="flex items-center gap-3">
             <input type="checkbox" id="combo-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
             <Label htmlFor="combo-status">Active</Label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" id="combo-fd" checked={!!form.free_delivery} onChange={e => setForm(f => ({ ...f, free_delivery: e.target.checked }))} className="rounded" />
+            <Label htmlFor="combo-fd">🚚 Free Delivery (whole cart ships free when combo triggered)</Label>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>

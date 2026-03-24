@@ -21,6 +21,7 @@ type VariantRow = {
   stock: number;
   sku: string;
   weightKg: number;
+  freeDelivery: boolean | null; // null = inherit from product, true = free, false = paid
   active: boolean;
 };
 
@@ -321,6 +322,7 @@ function VariationsSection({
                   "Discount",
                   "Stock",
                   "Wt (kg)",
+                  "Free Del.",
                   "SKU",
                   "Active",
                 ].map((h) => (
@@ -426,6 +428,23 @@ function VariationsSection({
                             min={0}
                             step={0.001}
                           />
+                        </td>
+
+                        <td className="px-4 py-2">
+                          <select
+                            value={r.freeDelivery === null ? "inherit" : r.freeDelivery ? "free" : "paid"}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              updateRow(r.key, {
+                                freeDelivery: v === "inherit" ? null : v === "free",
+                              });
+                            }}
+                            className="w-[110px] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                          >
+                            <option value="inherit">🔗 Inherit</option>
+                            <option value="free">🚚 Free</option>
+                            <option value="paid">💳 Paid</option>
+                          </select>
                         </td>
 
                         <td className="px-4 py-2">

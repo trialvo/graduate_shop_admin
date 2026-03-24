@@ -87,12 +87,18 @@ export default function StockVariantsModal({ open, productId, productName, onClo
   const rows = variationsQuery.data ?? [];
 
   const [draftStock, setDraftStock] = React.useState<Record<number, number>>({});
+  const [draftFreeDelivery, setDraftFreeDelivery] = React.useState<Record<number, boolean | null>>({});
 
   React.useEffect(() => {
     if (!enabled) return;
-    const next: Record<number, number> = {};
-    for (const r of rows) next[r.id] = Number(r.stock ?? 0);
-    setDraftStock(next);
+    const nextStock: Record<number, number> = {};
+    const nextFD: Record<number, boolean | null> = {};
+    for (const r of rows) {
+      nextStock[r.id] = Number(r.stock ?? 0);
+      nextFD[r.id] = r.free_delivery != null ? Boolean(r.free_delivery) : null;
+    }
+    setDraftStock(nextStock);
+    setDraftFreeDelivery(nextFD);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, variationsQuery.data]);
 
@@ -106,10 +112,11 @@ export default function StockVariantsModal({ open, productId, productName, onClo
         color_id: row.color_id,
         variant_id: row.variant_id,
         buying_price: row.buying_price,
-        selling_price: row.selling_price, // required
+        selling_price: row.selling_price,
         discount: row.discount,
         stock: nextStock,
         sku: row.sku,
+        free_delivery: draftFreeDelivery[row.id] !== undefined ? draftFreeDelivery[row.id] : null,
       });
     },
     onSuccess: async () => {
@@ -163,7 +170,7 @@ export default function StockVariantsModal({ open, productId, productName, onClo
           <Table className="min-w-[980px] border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
-                {[t("products.stockVariants.color"), t("products.stockVariants.variant"), t("products.stockVariants.sku"), t("products.stockVariants.buying"), t("products.stockVariants.selling"), t("products.stockVariants.discount"), t("products.stockVariants.stock"), t("products.stockVariants.action")].map((h) => (
+                {[t("products.stockVariants.color"), t("products.stockVariants.variant"), t("products.stockVariants.sku"), t("products.stockVariants.buying"), t("products.stockVariants.selling"), t("products.stockVariants.discount"), "Free Del.", t("products.stockVariants.stock"), t("products.stockVariants.action")].map((h) => (
                   <TableCell key={h} isHeader className="px-4 py-4 text-left text-xs font-semibold text-brand-500">
                     {h}
                   </TableCell>
@@ -204,6 +211,21 @@ export default function StockVariantsModal({ open, productId, productName, onClo
 
                     <TableCell className="px-4 py-4">
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">{r.discount}</span>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-4">
+                      <select
+                        value={draftFreeDelivery[r.id] === null || draftFreeDelivery[r.id] === undefined ? "inherit" : draftFreeDelivery[r.id] ? "free" : "paid"}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setDraftFreeDelivery(p => ({ ...p, [r.id]: v === "inherit" ? null : v === "free" }));
+                        }}
+                        className="w-[110px] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                      >
+                        <option value="inherit">🔗 Inherit</option>
+                        <option value="free">🚚 Free</option>
+                        <option value="paid">💳 Paid</option>
+                      </select>
                     </TableCell>
 
                     <TableCell className="px-4 py-4">
