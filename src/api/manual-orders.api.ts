@@ -10,6 +10,7 @@ export type ManualAddressPayload = {
   city?: string;
   zip_code?: string;
   type?: "home" | "office" | "n/a";
+  location_mapping_id?: number;
 };
 
 export type ManualOrderItemPayload = {
@@ -34,6 +35,7 @@ export type ManualOrderStrangerPayload = {
   full_address: string;
   city?: string;
   zip_code?: string;
+  location_mapping_id?: number;
   payment_type: "gateway" | "cod" | "mixed";
   delivery_charge_id: number;
   coupon_code?: string;

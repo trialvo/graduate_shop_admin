@@ -29,7 +29,12 @@ import {
   patchOrderStatus,
 } from "@/api/orders.api";
 
-type Props = { rows: OrderRow[] };
+type Props = { 
+  rows: OrderRow[];
+  selectedIds?: Set<string>;
+  onSelect?: (id: string, checked: boolean) => void;
+  onSelectAll?: (checked: boolean) => void;
+};
 
 function fraudIcon(level: OrderRow["fraudLevel"]) {
   if (level === "safe")
@@ -78,7 +83,7 @@ function getErrorMessage(err: unknown, fallback: string) {
   );
 }
 
-export default function OrdersTable({ rows }: Props) {
+export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -224,7 +229,14 @@ export default function OrdersTable({ rows }: Props) {
                     "sticky top-0 z-20 bg-white dark:bg-gray-900"
                   )}
                 >
-                  {/* ✅ user said avoid check thing, keeping header empty */}
+                  {selectedIds && onSelectAll && (
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                      checked={mergedRows.length > 0 && selectedIds.size === mergedRows.length}
+                      onChange={(e) => onSelectAll(e.target.checked)}
+                    />
+                  )}
                 </th>
 
                 {[
@@ -268,11 +280,21 @@ export default function OrdersTable({ rows }: Props) {
                   key={r.id}
                   className="group border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
                 >
-                  {/* ✅ remove checkbox */}
+                  {/* ✅ checkbox + index */}
                   <td className="px-4 py-4">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                      {i + 1}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {selectedIds && onSelect && (
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                          checked={selectedIds.has(r.id)}
+                          onChange={(e) => onSelect(r.id, e.target.checked)}
+                        />
+                      )}
+                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                        {i + 1}
+                      </span>
+                    </div>
                   </td>
 
                   {/* Customer (single-line content to prevent height growth) */}

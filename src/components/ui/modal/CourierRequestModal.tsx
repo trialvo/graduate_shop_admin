@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Truck,
   Send,
@@ -363,24 +363,40 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
         : "manual";
     setTab(nextTab);
     setAutoProvider(defaultAuto);
-    setAutoWeightKg("1");
+    const wkg = String(Number(preview.weightKg ?? 0));
+    setAutoWeightKg(wkg);
     setManualProvider(defaultAuto || "steadfast");
     setManualTracking("");
     setManualReferenceId("");
     setManualMemo("");
-    setManualWeightKg("1");
+    setManualWeightKg(wkg);
     setDispatchResult(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, order.id]);
 
-  /* ── Balance query (only for selected auto provider) ── */
-  const balanceQuery = useQuery({
-    queryKey: ["courier-balance", autoProvider],
-    queryFn: () => getCourierBalance(autoProvider),
-    enabled: open && tab === "auto" && !!autoProvider && hasAnyAuto,
-    staleTime: 60_000,
-    retry: 1,
+  /* ── Balance queries for ALL connected providers (parallel) ── */
+  const balanceQueries = useQueries({
+    queries: autoConnectedList.map((c) => ({
+      queryKey: ["courier-balance", c.providerId],
+      queryFn: () => getCourierBalance(String(c.providerId)),
+      enabled: open && tab === "auto" && hasAnyAuto,
+      staleTime: 60_000,
+      retry: 1,
+    })),
   });
+
+  // Build a map: providerId -> { balance, isLoading }
+  const balanceByProvider = useMemo(() => {
+    const map: Record<string, { balance: number | null; loading: boolean }> = {};
+    autoConnectedList.forEach((c, i) => {
+      const q = balanceQueries[i];
+      map[String(c.providerId)] = {
+        balance: (q?.data as any)?.balance ?? null,
+        loading: q?.isFetching ?? false,
+      };
+    });
+    return map;
+  }, [balanceQueries, autoConnectedList]);
 
   /* ── Tracking query ── */
   const trackingQuery = useQuery({
@@ -820,13 +836,10 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
                         onClick={() => setAutoProvider(c.providerId)}
                         image={c.image}
                         balance={
-                          autoProvider === c.providerId
-                            ? (balanceQuery.data?.balance ?? null)
-                            : null
+                          balanceByProvider[String(c.providerId)]?.balance ?? null
                         }
                         balanceLoading={
-                          autoProvider === c.providerId &&
-                          balanceQuery.isFetching
+                          balanceByProvider[String(c.providerId)]?.loading ?? false
                         }
                       />
                     ))}

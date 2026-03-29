@@ -177,6 +177,9 @@ export type ApiOrder = {
 
   full_address: string;
   city: string;
+  area_name: string | null;
+  lm_city_name: string | null;
+  location_mapping_id: number | null;
   zip_code: string;
 
   items: ApiOrderItem[];
@@ -325,6 +328,7 @@ export type UpdateOrderInfoPayload = {
   full_address: string;
   city: string;
   zip_code: string;
+  location_mapping_id?: number | null;
 };
 
 export async function updateOrderInfo(

@@ -135,7 +135,9 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     email: o.customer_email || "N/A",
 
     shippingAddress: o.full_address || "N/A",
-    city: o.city || "N/A",
+    city: o.lm_city_name || o.city || "N/A",
+    area_name: o.area_name || "",
+    location_mapping_id: o.location_mapping_id ?? null,
     postalCode: o.zip_code || "N/A",
 
     phone: o.customer_phone || "N/A",
@@ -354,6 +356,7 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
         full_address: data.shippingAddress,
         city: data.city,
         zip_code: data.postalCode,
+        location_mapping_id: data.location_mapping_id ?? undefined,
       }).catch((err: any) => {
         toast.error(err?.message ?? "Failed to update order info.");
         throw err;
@@ -709,6 +712,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
                 phone: data.phone,
                 paymentStatus: data.paymentStatus,
                 city: data.city,
+                area_name: data.area_name,
+                location_mapping_id: data.location_mapping_id,
                 postalCode: data.postalCode,
                 email: data.email,
                 paymentMethod: data.paymentMethod,

@@ -1,15 +1,111 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ArrowLeft, ImagePlus, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ImagePlus, RefreshCw, Search, X } from "lucide-react";
 import {
   useCreateAnnouncement, useEditAnnouncement, useAnnouncementById, useCityZones,
 } from "@/hooks/useAnnouncements";
 import type { AnnouncementChannel, AnnouncementStatus, AnnouncementTargetType, AnnouncementZoneScope } from "@/api/announcements.api";
 import Button from "@/components/ui/button/Button";
-import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import PageMeta from "@/components/common/PageMeta";
+
+/** Inline searchable city multi-select — sourced from location_mappings via useCityZones */
+function ZonePicker({
+  cities,
+  selected,
+  onToggle,
+  isSyncing,
+}: {
+  cities: string[];
+  selected: string[];
+  onToggle: (city: string) => void;
+  isSyncing: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = useMemo(() => {
+    const lower = q.toLowerCase().trim();
+    return lower ? cities.filter((c) => c.toLowerCase().includes(lower)) : cities;
+  }, [cities, q]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const label = selected.length === 0
+    ? "Select zones…"
+    : `${selected.length} zone${selected.length > 1 ? "s" : ""} selected`;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen((p) => !p); }}
+        className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white hover:border-gray-400 transition-colors"
+      >
+        <Search size={13} className="shrink-0 text-gray-400" />
+        <span className={`flex-1 text-left ${selected.length ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>{label}</span>
+        <ChevronDown size={13} className={`shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
+          {/* Search within dropdown */}
+          <div className="border-b border-gray-100 p-2 dark:border-gray-800">
+            <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1.5 dark:bg-gray-900">
+              <Search size={12} className="text-gray-400" />
+              <input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search city…"
+                className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400 dark:text-gray-200"
+              />
+              {q && <button onClick={() => setQ("")}><X size={11} className="text-gray-400" /></button>}
+            </div>
+          </div>
+
+          <div className="max-h-56 overflow-y-auto">
+            {isSyncing ? (
+              <p className="py-4 text-center text-xs text-gray-400">Loading zones…</p>
+            ) : filtered.length === 0 ? (
+              <p className="py-4 text-center text-xs text-gray-400">No zones found</p>
+            ) : (
+              filtered.map((city) => {
+                const isSelected = selected.includes(city);
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => onToggle(city)}
+                    className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 ${
+                      isSelected ? "bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400" : "text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      isSelected ? "border-brand-500 bg-brand-500" : "border-gray-300 dark:border-gray-600"
+                    }`}>
+                      {isSelected && <Check size={10} className="text-white" />}
+                    </span>
+                    {city}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 type FormState = {
   headline: string;
@@ -51,7 +147,6 @@ export default function CreateAnnouncementPage({ edit }: Props) {
   const { cities: liveCities, isSyncing, sync: syncZones } = useCityZones();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [zoneInput, setZoneInput] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [saving, setSaving] = useState(false);
@@ -81,7 +176,6 @@ export default function CreateAnnouncementPage({ edit }: Props) {
     const trimmed = zone.trim();
     if (trimmed && !form.zones.includes(trimmed))
       setForm((f) => ({ ...f, zones: [...f.zones, trimmed] }));
-    setZoneInput("");
   };
   const removeZone = (z: string) => setForm((f) => ({ ...f, zones: f.zones.filter((x) => x !== z) }));
 
@@ -163,7 +257,7 @@ export default function CreateAnnouncementPage({ edit }: Props) {
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="headline">Headline <span className="text-error-500">*</span></Label>
-              <Input id="headline" value={form.headline} onChange={(e) => set("headline", String(e.target.value))} placeholder="e.g. Eid Special Offer — 25% Off!" />
+              <input id="headline" value={form.headline} onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("headline", e.target.value)} placeholder="e.g. Eid Special Offer — 25% Off!" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white focus:border-brand-500 focus:outline-none" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="body">Body Message <span className="text-error-500">*</span></Label>
@@ -266,41 +360,33 @@ export default function CreateAnnouncementPage({ edit }: Props) {
                     type="button"
                     onClick={() => syncZones()}
                     disabled={isSyncing}
-                    title="Sync latest cities from orders/addresses"
+                    title="Sync latest zones from location_mappings"
                     className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs text-gray-500 hover:text-brand-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
                     <RefreshCw size={11} className={isSyncing ? "animate-spin" : ""} />
                     Sync zones
                   </button>
                 </div>
-                <div className="flex gap-2">
-                  <input value={zoneInput} onChange={(e) => setZoneInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (addZone(zoneInput), e.preventDefault())}
-                    placeholder="e.g. Dhaka"
-                    className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white" />
-                  <Button variant="outline" onClick={() => addZone(zoneInput)}>Add</Button>
-                </div>
-                {/* Live suggestions from API (falls back to empty if loading) */}
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {(liveCities.length > 0 ? liveCities : []).filter((z) => !form.zones.includes(z)).map((z) => (
-                    <button key={z} type="button" onClick={() => addZone(z)}
-                      className="rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                      + {z}
-                    </button>
-                  ))}
-                  {isSyncing && (
-                    <span className="text-xs text-gray-400 italic px-1">Syncing cities…</span>
-                  )}
-                </div>
-                {/* Selected */}
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {form.zones.map((z) => (
-                    <span key={z} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400">
-                      {z}
-                      <button type="button" onClick={() => removeZone(z)} className="ml-0.5 hover:text-error-500">×</button>
-                    </span>
-                  ))}
-                </div>
+
+                {/* Searchable zone dropdown */}
+                <ZonePicker
+                  cities={liveCities}
+                  selected={form.zones}
+                  onToggle={(city) => form.zones.includes(city) ? removeZone(city) : addZone(city)}
+                  isSyncing={isSyncing}
+                />
+
+                {/* Selected zone chips */}
+                {form.zones.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {form.zones.map((z) => (
+                      <span key={z} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400">
+                        {z}
+                        <button type="button" onClick={() => removeZone(z)} className="ml-0.5 hover:text-error-500">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

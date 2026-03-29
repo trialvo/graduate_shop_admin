@@ -52,6 +52,8 @@ export interface OrderEditorData {
 
   shippingAddress: string;
   city: string;
+  area_name: string;
+  location_mapping_id: number | null;
   postalCode: string;
 
   phone: string;

@@ -6,7 +6,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import { useTranslation } from "react-i18next";
-
+import AdminZonePicker, { type ZoneSelection } from "@/components/shared/AdminZonePicker";
 import type { OrderStatus, PaymentMethod, PaymentStatus } from "./types";
 
 interface OrderFormValues {
@@ -16,6 +16,8 @@ interface OrderFormValues {
   phone: string;
   paymentStatus: PaymentStatus;
   city: string;
+  area_name: string;
+  location_mapping_id: number | null;
   postalCode: string;
   email: string;
   paymentMethod: PaymentMethod;
@@ -151,13 +153,19 @@ const OrderFormCard: React.FC<OrderFormCardProps> = ({ values, onChange, onSubmi
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
-                {t("orders.orderEditor.city")}
+                {t("orders.orderEditor.zone")}
               </div>
-              <Input
-                value={values.city}
-                onChange={(e) => onChange("city", e.target.value)}
-                placeholder={t("orders.orderEditor.city")}
-                className="bg-white dark:bg-gray-800/50"
+              <AdminZonePicker
+                value={
+                  values.location_mapping_id
+                    ? { location_mapping_id: values.location_mapping_id, city_name: values.city, area_name: values.area_name ?? "" }
+                    : null
+                }
+                onChange={(sel: ZoneSelection | null) => {
+                  onChange("city", sel?.city_name ?? "");
+                  onChange("area_name", sel?.area_name ?? "");
+                  onChange("location_mapping_id", sel?.location_mapping_id ?? null);
+                }}
               />
             </div>
             <div>

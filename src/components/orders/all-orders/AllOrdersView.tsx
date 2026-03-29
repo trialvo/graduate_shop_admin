@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
+import BulkDispatchModal from "./BulkDispatchModal";
 import { Pagination } from "@/components/ui";
 
 import type { OrderRow, OrderStatus, OrderItemRow, FraudCheckSummary, FraudLevel } from "./types";
@@ -205,6 +206,9 @@ export default function AllOrdersView() {
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<OrderStatus>("new");
+  
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDispatchOpen, setBulkDispatchOpen] = useState(false);
 
   const [search, setSearch] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -387,7 +391,10 @@ export default function AllOrdersView() {
       const fraudCheck = parseFraudResults(o.fraud_test_results);
       const fraudLevel: FraudLevel = fraudCheck ? fraudCheck.status : o.is_fraud ? "high" : "safe";
 
-      const shippingLocation = `${o.city ?? ""} ${o.full_address ?? ""} `.trim() || "—";
+      const zone = o.area_name
+        ? `${o.lm_city_name || o.city} — ${o.area_name}`
+        : (o.city ?? "");
+      const shippingLocation = `${zone} ${o.full_address ?? ""}`.trim() || "—";
 
       return {
         id: String(o.id),
@@ -418,7 +425,9 @@ export default function AllOrdersView() {
 
         shippingLocation,
         shippingAddress: `${o.full_address ?? ""}`.trim() || "—",
-        shippingArea: `${o.city ?? ""}`.trim() || "—",
+        shippingArea: o.area_name
+          ? `${o.lm_city_name || o.city} — ${o.area_name}`
+          : (`${o.city ?? ""}`.trim() || "—"),
 
         email: o.customer_email ?? undefined,
 
@@ -446,6 +455,16 @@ export default function AllOrdersView() {
           apiConfigured: Boolean(courierOption?.any_auto_available),
           apiConnected,
           availableAutoCouriers: autoList as any,
+          preview: {
+            receiverName: o.customer_name || undefined,
+            receiverPhone: o.customer_phone || undefined,
+            address: `${o.full_address ?? ""}`.trim() || "—",
+            area: o.area_name
+              ? `${o.lm_city_name || o.city} — ${o.area_name}`
+              : (`${o.city ?? ""}`.trim() || "—"),
+            codAmount: o.payment_type === "cod" ? Number(o.grand_total ?? 0) : 0,
+            weightKg: Number(o.weight_kg_total ?? 0) || 0,
+          },
         },
       };
     });
@@ -475,6 +494,24 @@ export default function AllOrdersView() {
     setDateTo("");
     setLimit(20);
     setOffset(0);
+    setSelectedIds(new Set());
+  };
+
+  const handleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && rows.length > 0) {
+      setSelectedIds(new Set(rows.map((r) => r.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
   };
 
   const onRefresh = async () => {
@@ -615,7 +652,47 @@ export default function AllOrdersView() {
       />
 
       {/* Table */}
-      <OrdersTable rows={rows} />
+      <OrdersTable 
+        rows={rows} 
+        selectedIds={selectedIds}
+        onSelect={handleSelect}
+        onSelectAll={handleSelectAll}
+      />
+
+      {/* Floating Action Bar */}
+        {selectedIds.size > 0 && (
+          <div
+            className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-2xl dark:border-gray-800 dark:bg-gray-900"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
+                {selectedIds.size}
+              </span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Orders selected
+              </span>
+            </div>
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700" />
+            <button
+              onClick={() => setBulkDispatchOpen(true)}
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+            >
+              Bulk Dispatch
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      <BulkDispatchModal
+        open={bulkDispatchOpen}
+        onClose={() => setBulkDispatchOpen(false)}
+        selectedIds={Array.from(selectedIds)}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
 
       {/* Pagination */}
       <Pagination
