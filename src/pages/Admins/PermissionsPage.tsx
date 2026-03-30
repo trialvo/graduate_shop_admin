@@ -36,6 +36,7 @@ const SECTION_ORDER = [
   "order__notification_admin",
   "personal_notification_admin",
   "overall_cart_discount",
+  "storefront_visibility",
   "announcement",
 ];
 
@@ -80,6 +81,11 @@ const SECTION_META: Record<string, SectionMeta> = {
     description: "Automatic discount applied to the entire cart based on configurable rules.",
     icon: <Percent size={15} />,
   },
+  storefront_visibility: {
+    label: "Storefront Visibility",
+    description: "Control whether optional storefront pages are visible to users.",
+    icon: <Settings2 size={15} />,
+  },
   announcement: {
     label: "Announcements",
     description: "System behaviour for scheduled and automated announcements.",
@@ -104,6 +110,15 @@ const KEY_META: Record<string, KeyMeta> = {
   discount_value: { label: "Discount Value", description: "The discount amount — flat (৳) or percentage (%) depending on Discount Type." },
   basis: { label: "Apply Based On", description: "Which threshold triggers the discount — item count or cart total price." },
   apply_with_bulk_combo: { label: "Stack With Bulk / Combo Offers", description: "When enabled, this discount applies on top of existing bulk or combo deals." },
+  show_megasale: { label: "Show Mega Sale", description: "When enabled, the storefront displays the Mega Sale page and quick links." },
+  megasale_campaign_end_at: { label: "Campaign End Time", description: "Set the main Mega Sale countdown date and time." },
+  megasale_product_end_at: { label: "Product Timer End Time", description: "Set the product card countdown date and time." },
+  megasale_product_timers: {
+    label: "Product-wise Timers",
+    description: "One per line: productId=YYYY-MM-DDTHH:mm (example: 12=2026-04-05T23:59).",
+  },
+  megasale_product_ids: { label: "Mega Sale Product IDs (CSV)", description: "Comma-separated product IDs to prioritize/show in Mega Sale. Example: 12,45,78" },
+  megasale_product_limit: { label: "Mega Sale Product Limit", description: "Maximum number of products shown on Mega Sale page." },
   auto_send_scheduled_announcement: { label: "Auto-Send Scheduled Announcements", description: "When enabled, the system automatically sends scheduled announcements at their configured time without manual admin action." },
 };
 
@@ -136,6 +151,99 @@ const KEY_ICON: Record<string, React.ReactNode> = {
   sms: <Smartphone size={13} />,
   firebase_push_notification: <Bell size={13} />,
 };
+
+const MEGASALE_DATE_KEYS = new Set(["megasale_campaign_end_at", "megasale_product_end_at"]);
+const MEGASALE_IDS_KEY = "megasale_product_ids";
+const MEGASALE_LIMIT_KEY = "megasale_product_limit";
+const MEGASALE_TIMERS_KEY = "megasale_product_timers";
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+function toDateTimeLocalValue(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+function toIsoWithOffset(localValue: string): string {
+  const trimmed = localValue.trim();
+  if (!trimmed) return "";
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const offsetMinutes = -date.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMinutes);
+  const offsetHours = pad2(Math.floor(abs / 60));
+  const offsetMins = pad2(abs % 60);
+
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}:00${sign}${offsetHours}:${offsetMins}`;
+}
+
+function normalizeMegaSaleIds(value: string): string {
+  const ids = value
+    .split(",")
+    .map((part) => Number.parseInt(part.trim(), 10))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  return Array.from(new Set(ids)).join(",");
+}
+
+function normalizeMegaSaleProductTimers(value: string): string {
+  const timerMap = new Map<number, string>();
+  const entries = value
+    .split(/[\n,;]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (const entry of entries) {
+    let pair = entry.split("=");
+    if (pair.length < 2) pair = entry.split("|");
+    if (pair.length < 2) continue;
+
+    const productId = Number.parseInt((pair[0] || "").trim(), 10);
+    if (!Number.isFinite(productId) || productId <= 0) continue;
+
+    const dateRaw = pair.slice(1).join("=").trim();
+    const date = new Date(dateRaw);
+    if (Number.isNaN(date.getTime())) continue;
+
+    const localValue = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    const isoValue = toIsoWithOffset(localValue);
+    if (!isoValue) continue;
+
+    timerMap.set(productId, isoValue);
+  }
+
+  return Array.from(timerMap.entries())
+    .map(([productId, isoValue]) => `${productId}=${isoValue}`)
+    .join(",");
+}
+
+function toMegaSaleTimersTextAreaValue(value: string): string {
+  if (!value.trim()) return "";
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error !== "object" || error === null) return fallback;
+  const err = error as {
+    response?: { data?: { error?: unknown; message?: unknown } };
+    message?: unknown;
+  };
+  const apiError = err.response?.data?.error;
+  if (typeof apiError === "string" && apiError.trim()) return apiError.trim();
+  const apiMessage = err.response?.data?.message;
+  if (typeof apiMessage === "string" && apiMessage.trim()) return apiMessage.trim();
+  if (typeof err.message === "string" && err.message.trim()) return err.message.trim();
+  return fallback;
+}
 
 
 // ─── SystemPermissionsPanel ───────────────────────────────────────────────── //
@@ -246,8 +354,8 @@ function SystemPermissionsPanel({
       setEdits({});
       toast.success("System permissions saved.");
       opts?.onSuccess?.();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to save.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to save."));
     } finally {
       setSaving(false);
     }
@@ -347,7 +455,11 @@ function SystemPermissionsPanel({
 
                   {/* Number input */}
                   {valType === "number" && (
-                    <input type="number" min={0} value={String(val)}
+                    <input
+                      type="number"
+                      min={row.key === MEGASALE_LIMIT_KEY ? 1 : 0}
+                      max={row.key === MEGASALE_LIMIT_KEY ? 24 : undefined}
+                      value={String(val)}
                       onChange={(e) => handleChange(row, Number(e.target.value))}
                       className="w-28 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-right dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
                   )}
@@ -374,10 +486,69 @@ function SystemPermissionsPanel({
                         </select>
                       );
                     }
+
+                    const isMegaSaleDateKey = MEGASALE_DATE_KEYS.has(row.key);
+                    const isMegaSaleIdsKey = row.key === MEGASALE_IDS_KEY;
+                    const isMegaSaleTimersKey = row.key === MEGASALE_TIMERS_KEY;
+
+                    const inputValue = typeof val === "string" ? val : String(val ?? "");
+                    const dateValue = isMegaSaleDateKey ? toDateTimeLocalValue(inputValue) : "";
+                    const placeholder = isMegaSaleDateKey
+                      ? "Select date and time"
+                      : isMegaSaleIdsKey
+                        ? "12,45,78"
+                        : isMegaSaleTimersKey
+                          ? "12=2026-04-05T23:59"
+                        : undefined;
+
+                    if (isMegaSaleDateKey) {
+                      return (
+                        <input
+                          type="datetime-local"
+                          value={dateValue}
+                          onChange={(e) => {
+                            const normalized = toIsoWithOffset(e.target.value);
+                            handleChange(row, normalized);
+                          }}
+                          className="w-56 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        />
+                      );
+                    }
+
+                    if (isMegaSaleTimersKey) {
+                      return (
+                        <textarea
+                          rows={3}
+                          value={toMegaSaleTimersTextAreaValue(inputValue)}
+                          placeholder={placeholder}
+                          onChange={(e) => handleChange(row, e.target.value)}
+                          onBlur={(e) => {
+                            handleChange(row, normalizeMegaSaleProductTimers(e.target.value));
+                          }}
+                          className="w-72 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        />
+                      );
+                    }
+
                     return (
-                      <input type="text" value={String(val)}
-                        onChange={(e) => handleChange(row, e.target.value)}
-                        className="w-48 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+                      <input
+                        type="text"
+                        value={inputValue}
+                        placeholder={placeholder}
+                        onChange={(e) => {
+                          const next = isMegaSaleIdsKey
+                            ? e.target.value.replace(/[^\d,\s]/g, "")
+                            : e.target.value;
+                          handleChange(row, next);
+                        }}
+                        onBlur={(e) => {
+                          if (isMegaSaleIdsKey) {
+                            handleChange(row, normalizeMegaSaleIds(e.target.value));
+                            return;
+                          }
+                        }}
+                        className="w-56 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      />
                     );
                   })()}
                 </div>
@@ -403,15 +574,6 @@ function SystemPermissionsPanel({
 }
 
 // ─── AdminNotifPermissionsPanel ───────────────────────────────────────────── //
-const NOTIF_FIELDS: { key: keyof SetNotificationPermissionsPayload; label: string }[] = [
-  { key: "order_notification_email", label: "Order Email" },
-  { key: "order_notification_sms", label: "Order SMS" },
-  { key: "order_notification_firebase_push", label: "Order Push" },
-  { key: "personal_notification_email", label: "Personal Email" },
-  { key: "personal_notification_sms", label: "Personal SMS" },
-  { key: "personal_notification_firebase_push", label: "Personal Push" },
-];
-
 function AdminNotifPermissionsPanel() {
   const { data, isLoading, isError } = useAllAdminNotificationPermissions();
   const setPermsMutation = useSetAdminNotificationPermissions();
@@ -486,8 +648,8 @@ function AdminNotifPermissionsPanel() {
       await setPermsMutation.mutateAsync({ admin_id: row.admin_id, payload });
       setRows((prev) => prev.map((r) => (r.admin_id === row.admin_id ? { ...r, dirty: false } : r)));
       toast.success(`Permissions saved for ${row.admin_name ?? "admin"}`);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to save.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to save."));
     } finally {
       setSaving((s) => ({ ...s, [row.admin_id]: false }));
     }
@@ -775,7 +937,7 @@ function useNavigationGuard(isDirty: boolean) {
     const origReplace = window.history.replaceState.bind(window.history);
 
     const intercept = (fn: typeof origPush) =>
-      function (this: History, ...args: Parameters<typeof origPush>) {
+      (...args: Parameters<typeof origPush>) => {
         if (bypassRef.current) { bypassRef.current = false; return fn(...args); }
         const url = args[2];
         if (url && typeof url === "string") {

@@ -53,6 +53,14 @@ function getApiErrorMessage(err: unknown): string {
 
 
 const typeOptions: Option[] = TYPES.map((t) => ({ value: t, label: t }));
+const ZONE_LABEL_KEY: Record<string, string> = {
+  "Home Top": "homeTop",
+  "Home Middle": "homeMiddle",
+  "Home Bottom": "homeBottom",
+  "Category Page": "categoryPage",
+  "Product Page": "productPage",
+  Campaign: "campaign",
+};
 
 type LinkMode = "manual" | "product" | "category";
 
@@ -131,7 +139,14 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
   const [cropSourceName, setCropSourceName] = useState<string | undefined>(undefined);
 
-  const zoneOptions: Option[] = useMemo(() => ZONES.map((z) => ({ value: z, label: z })), []);
+  const zoneOptions: Option[] = useMemo(
+    () =>
+      ZONES.map((z) => ({
+        value: z,
+        label: t(`banners.zones.${ZONE_LABEL_KEY[z] ?? "default"}`, { defaultValue: z }),
+      })),
+    [t]
+  );
 
   const linkModeOptions: Option[] = useMemo(
     () => [
@@ -139,7 +154,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
       { value: "product", label: t("bannerModal.linkModeProduct") },
       { value: "category", label: t("bannerModal.linkModeCategory") },
     ],
-    []
+    [t]
   );
 
   // ✅ Products list (render list, select -> auto path)
