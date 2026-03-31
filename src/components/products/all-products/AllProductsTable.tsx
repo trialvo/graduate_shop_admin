@@ -1,18 +1,20 @@
-// src/components/products/all-products/AllProductsTable.tsx
 "use client";
 
+import type { TFunction } from "i18next";
+import { Pencil, Plus, Trash2, PackageSearch } from "lucide-react";
 import React from "react";
-import { Pencil, Trash2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { Product } from "./types";
 
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
-import { cn } from "@/lib/utils";
 import StatusToggle from "@/components/ui/button/StatusToggle";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Props = {
   products: Product[];
@@ -22,25 +24,88 @@ type Props = {
   onDelete: (productId: string) => void;
 };
 
-const formatMoney = (n: number) => `${Number(n ?? 0).toFixed(2)}`;
+type RowActionHandlers = Pick<Props, "onStockPlus" | "onToggleStatus" | "onEdit" | "onDelete">;
+type TranslationProps = { t: TFunction };
 
-function CategoryBadges({ p }: { p: Product }) {
-  const { category, subCategory, childCategory } = p.categoryPath;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const formatMoney = (n: number): string => (Number.isFinite(n) ? n : 0).toFixed(2);
+const isLowStock  = (qty: number): boolean => qty <= 10;
+
+// ─── Shell / sticky classes ───────────────────────────────────────────────────
+
+/**
+ * Shell matches SectionCard:
+ *   shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)]
+ */
+const tableShellClass = cn(
+  "w-full max-w-full min-w-0 overflow-hidden rounded-2xl bg-white",
+  "border border-gray-100",
+  "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)]",
+  "transition-shadow duration-300 ease-out",
+  "dark:border-gray-800 dark:bg-gray-900",
+  "dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]",
+);
+
+// Header: stronger bg + text so columns are immediately scannable
+const headerCellBaseClass =
+  "px-4 py-3.5 text-left text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400";
+
+const stickyActionHeaderClass = cn(
+  "sticky right-0 z-40",  // z-40 > thead z-30 > body action z-20
+  "w-[1%] whitespace-nowrap",
+  // Fully solid — no transparency so it always sits above row content
+  "border-l border-gray-200 bg-gray-100",
+  "shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.08)]",
+  "dark:border-gray-700 dark:bg-gray-800",
+  "dark:shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.4)]",
+);
+
+const stickyActionCellClass = cn(
+  "sticky right-0 z-20",
+  "w-[1%] whitespace-nowrap",
+  // Solid, never transparent — consistent with the header column
+  "border-l border-gray-100 bg-white",
+  "group-hover:bg-gray-50",
+  "transition-colors duration-150",
+  "dark:border-gray-800 dark:bg-gray-900 dark:group-hover:bg-gray-800/80",
+);
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function CategoryBadges({ product }: Readonly<{ product: Product }>) {
+  const { category, subCategory, childCategory } = product.categoryPath;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200">
+    <div className="flex flex-wrap items-center gap-1.5">
+      {/* Main category */}
+      <span className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5",
+        "text-xs font-medium",
+        "border border-gray-200 bg-gray-50 text-gray-600",
+        "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      )}>
         {category}
       </span>
 
       {subCategory ? (
-        <span className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200">
+        <span className={cn(
+          "inline-flex items-center rounded-full px-2.5 py-0.5",
+          "text-xs font-medium",
+          "border border-brand-100 bg-brand-50/60 text-brand-700",
+          "dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-300",
+        )}>
           {subCategory}
         </span>
       ) : null}
 
       {childCategory ? (
-        <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200">
+        <span className={cn(
+          "inline-flex items-center rounded-full px-2.5 py-0.5",
+          "text-xs font-medium",
+          "border border-teal-100 bg-teal-50/60 text-teal-700",
+          "dark:border-teal-500/20 dark:bg-teal-500/10 dark:text-teal-300",
+        )}>
           {childCategory}
         </span>
       ) : null}
@@ -48,210 +113,372 @@ function CategoryBadges({ p }: { p: Product }) {
   );
 }
 
-const stickyActionHeaderClass = cn(
-  "sticky right-0 z-30",
-  "bg-gray-50 dark:bg-gray-950",
-  "border-l border-gray-200 dark:border-gray-800",
-  "w-[1%] whitespace-nowrap",
-  // ✅ subtle shadow so it feels floating
-  "shadow-[-10px_0_22px_-18px_rgba(0,0,0,0.35)] dark:shadow-[-10px_0_22px_-18px_rgba(0,0,0,0.75)]",
-);
-
-const stickyActionCellClass = cn(
-  "sticky right-0 z-20",
-  "bg-white dark:bg-gray-900",
-  "group-hover:bg-gray-50 dark:group-hover:bg-white/[0.04]",
-  "border-l border-gray-200 dark:border-gray-800",
-  "w-[1%] whitespace-nowrap",
-);
-
-const AllProductsTable: React.FC<Props> = ({ products, onStockPlus, onToggleStatus, onEdit, onDelete }) => {
-  const { t } = useTranslation();
+function TableHeadRow({ t }: Readonly<TranslationProps>) {
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
-        <Table className="min-w-[1100px] border-collapse">
+    // Solid, visually distinct header row — strong bg + bottom divider + sticky shadow
+    <TableRow className="border-b-2 border-gray-200 bg-gray-100 shadow-[0_2px_8px_-2px_rgba(16,24,40,0.10)] dark:border-gray-700 dark:bg-gray-800 dark:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)]">
+      <TableCell isHeader className={cn(headerCellBaseClass, "w-[52px] text-center")}>
+        {t("products.table.sl")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[300px]")}>
+        {t("products.table.product")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[120px]")}>
+        {t("products.table.position")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[320px]")}>
+        {t("products.table.category")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>
+        {t("products.table.stock")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>
+        {t("products.table.price")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[120px]")}>
+        {t("products.table.status")}
+      </TableCell>
+      <TableCell
+        isHeader
+        className={cn(
+          stickyActionHeaderClass,
+          headerCellBaseClass,
+          "min-w-[120px] text-right",
+        )}
+      >
+        {t("products.table.action")}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function ProductIdentityCell({ product }: Readonly<{ product: Product }>) {
+  const fallback = imageFallbackSvgDataUri(product.name);
+  const imageSrc = product.imageUrl ? toPublicUrl(product.imageUrl) : fallback;
+
+  return (
+    <TableCell className="px-4 py-3.5">
+      <div className="flex min-w-0 items-center gap-3">
+        {/* Image */}
+        <div className={cn(
+          "relative flex h-11 w-11 shrink-0 items-center justify-center",
+          "overflow-hidden rounded-xl",
+          "border border-gray-200/80 bg-gray-100",
+          "shadow-[0_1px_3px_rgba(0,0,0,0.07)]",
+          "dark:border-gray-700/60 dark:bg-gray-800",
+        )}>
+          <img
+            src={imageSrc}
+            alt={product.name}
+            className="h-full w-full object-cover transition-opacity duration-200"
+            loading="lazy"
+            onError={(e) => {
+              const t = e.currentTarget;
+              if (t.src !== fallback) t.src = fallback;
+            }}
+          />
+        </div>
+
+        {/* Text */}
+        <div className="min-w-0">
+          <div className="max-w-[260px] truncate text-sm font-semibold text-gray-900 dark:text-white">
+            {product.name}
+          </div>
+          {product.name_bd ? (
+            <div className="max-w-[260px] truncate text-xs text-brand-500 dark:text-brand-400">
+              {product.name_bd}
+            </div>
+          ) : null}
+          <div className="mt-0.5 truncate font-mono text-[11px] text-gray-400 dark:text-gray-500">
+            {product.sku}
+          </div>
+        </div>
+      </div>
+    </TableCell>
+  );
+}
+
+function StockInfoCell({
+  product,
+  t,
+  onStockPlus,
+}: Readonly<{
+  product: Product;
+  t: TFunction;
+  onStockPlus: (productId: string) => void;
+}>) {
+  const lowStock = isLowStock(product.stockQty);
+
+  return (
+    <TableCell className="px-4 py-3.5">
+      <div className="flex items-center gap-2.5">
+        <div className="flex flex-col leading-snug">
+          <span className={cn(
+            "text-sm font-semibold tabular-nums",
+            lowStock ? "text-error-500 dark:text-error-400" : "text-gray-900 dark:text-white",
+          )}>
+            {t("products.table.totalLabel", { count: product.stockQty })}
+          </span>
+          <span className="text-[11px] text-gray-400 dark:text-gray-500">
+            {t("products.table.variantsLabel", { count: product.variantCount })}
+          </span>
+        </div>
+
+        {/* Stock update button */}
+        <button
+          type="button"
+          onClick={() => onStockPlus(product.id)}
+          aria-label="Update stock"
+          className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-lg",
+            "border border-brand-200/60 bg-brand-50/60 text-brand-600",
+            "hover:bg-brand-100 hover:border-brand-300",
+            "transition-all duration-150",
+            "dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-400",
+            "dark:hover:bg-brand-500/20",
+          )}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Low stock badge */}
+        {lowStock ? (
+          <span className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5",
+            "text-[10px] font-semibold",
+            "border border-error-100 bg-error-50 text-error-600",
+            "dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-400",
+          )}>
+            {/* Pulsing dot */}
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-error-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-error-500" />
+            </span>
+            {t("products.table.low")}
+          </span>
+        ) : null}
+      </div>
+    </TableCell>
+  );
+}
+
+function PriceInfoCell({ product, t }: Readonly<{ product: Product; t: TFunction }>) {
+  const hasDiscount = (product.discount ?? 0) > 0;
+
+  return (
+    <TableCell className="px-4 py-3.5">
+      <div className="leading-snug">
+        <div className="whitespace-nowrap text-sm font-semibold tabular-nums text-gray-900 dark:text-white">
+          ৳{formatMoney(product.price)}
+        </div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+          {hasDiscount ? (
+            <span className={cn(
+              "rounded-full px-1.5 py-0.5",
+              "border border-success-100 bg-success-50 text-success-700 font-medium",
+              "dark:border-success-500/20 dark:bg-success-500/10 dark:text-success-400",
+            )}>
+              -{product.discount}%
+            </span>
+          ) : null}
+          <span className="text-gray-400 dark:text-gray-500">
+            {t("products.table.sale", { value: formatMoney(product.salePrice ?? product.price) })}
+          </span>
+        </div>
+      </div>
+    </TableCell>
+  );
+}
+
+function RowActionCell({
+  product,
+  onEdit,
+  onDelete,
+}: Readonly<{
+  product: Product;
+  onEdit: (productId: string) => void;
+  onDelete: (productId: string) => void;
+}>) {
+  return (
+    <TableCell className={cn(stickyActionCellClass, "px-4 py-3.5")}>
+      <div className="inline-flex items-center justify-end gap-1.5">
+        {/* Edit — solid surface, never transparent */}
+        <button
+          type="button"
+          onClick={() => onEdit(product.id)}
+          aria-label="Edit product"
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-lg",
+            "border border-gray-200 bg-gray-50 text-gray-600",
+            "hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600",
+            "active:scale-95 transition-all duration-150",
+            "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+            "dark:hover:border-brand-500/50 dark:hover:bg-brand-500/15 dark:hover:text-brand-300",
+          )}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Delete — solid surface, never transparent */}
+        <button
+          type="button"
+          onClick={() => onDelete(product.id)}
+          aria-label="Delete product"
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-lg",
+            "border border-error-100 bg-error-50 text-error-500",
+            "hover:border-error-300 hover:bg-error-100 hover:text-error-700",
+            "active:scale-95 transition-all duration-150",
+            "dark:border-error-500/25 dark:bg-error-500/10 dark:text-error-400",
+            "dark:hover:border-error-500/50 dark:hover:bg-error-500/20 dark:hover:text-error-300",
+          )}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </TableCell>
+  );
+}
+
+type ProductDataRowProps = {
+  product: Product;
+  index: number;
+  t: TFunction;
+} & RowActionHandlers;
+
+function ProductDataRow({
+  product,
+  index,
+  t,
+  onStockPlus,
+  onToggleStatus,
+  onEdit,
+  onDelete,
+}: ProductDataRowProps) {
+  return (
+    <TableRow
+      className={cn(
+        "group border-b border-gray-100/80",
+        "transition-colors duration-150",
+        "hover:bg-gray-50/60",
+        "dark:border-gray-800/80 dark:hover:bg-white/[0.02]",
+      )}
+    >
+      {/* Serial */}
+      <TableCell className="px-4 py-3.5 text-center">
+        <span className={cn(
+          "inline-flex h-6 w-6 items-center justify-center rounded-md",
+          "text-xs font-semibold",
+          "bg-gray-100 text-gray-500",
+          "dark:bg-gray-800 dark:text-gray-400",
+        )}>
+          {index + 1}
+        </span>
+      </TableCell>
+
+      <ProductIdentityCell product={product} />
+
+      {/* Position */}
+      <TableCell className="px-4 py-3.5">
+        <span className={cn(
+          "inline-flex items-center rounded-lg px-2.5 py-1",
+          "text-xs font-semibold tabular-nums",
+          "bg-gray-100 text-gray-700",
+          "dark:bg-gray-800 dark:text-gray-300",
+        )}>
+          #{product.positionNumber}
+        </span>
+      </TableCell>
+
+      {/* Category breadcrumb */}
+      <TableCell className="px-4 py-3.5">
+        <CategoryBadges product={product} />
+      </TableCell>
+
+      <StockInfoCell product={product} t={t} onStockPlus={onStockPlus} />
+      <PriceInfoCell product={product} t={t} />
+
+      {/* Status toggle */}
+      <TableCell className="px-4 py-3.5">
+        <StatusToggle
+          value={product.status}
+          onChange={(next) => onToggleStatus(product.id, next)}
+        />
+      </TableCell>
+
+      <RowActionCell product={product} onEdit={onEdit} onDelete={onDelete} />
+    </TableRow>
+  );
+}
+
+function EmptyStateRow({ t }: Readonly<TranslationProps>) {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell colSpan={8} className="px-4 py-20">
+        <div className="flex flex-col items-center gap-3 text-center">
+          {/* Illustration circle */}
+          <div className={cn(
+            "flex h-16 w-16 items-center justify-center rounded-2xl",
+            "bg-gray-100 dark:bg-gray-800",
+          )}>
+            <PackageSearch className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+              {t("products.table.noProducts")}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+              Try adjusting your filters or add a new product.
+            </p>
+          </div>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+const AllProductsTable: React.FC<Props> = ({
+  products,
+  onStockPlus,
+  onToggleStatus,
+  onEdit,
+  onDelete,
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className={tableShellClass}>
+      {/*
+        overflow-auto enables BOTH x-scroll (wide table) and y-scroll (tall list).
+        max-h constrains the table so the sticky <thead> actually pins within this box.
+        overscroll-contain prevents the parent page from scrolling while inside.
+      */}
+      <div className="w-full max-w-full min-w-0 overflow-auto overscroll-contain" style={{ maxHeight: "calc(100vh - 280px)" }}>
+        <Table className="min-w-[1080px] border-collapse">
           <TableHeader>
-            <TableRow className="bg-gray-50 dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-950">
-              <TableCell isHeader className="w-[70px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.sl")}
-              </TableCell>
-
-              <TableCell isHeader className="min-w-[320px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.product")}
-              </TableCell>
-
-              <TableCell isHeader className="min-w-[170px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.position")}
-              </TableCell>
-
-              <TableCell isHeader className="min-w-[360px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.category")}
-              </TableCell>
-
-              <TableCell isHeader className="min-w-[220px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.stock")}
-              </TableCell>
-
-              <TableCell isHeader className="min-w-[240px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.price")}
-              </TableCell>
-
-              <TableCell isHeader className="min-w-[140px] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {t("products.table.status")}
-              </TableCell>
-
-              {/* ✅ Sticky Action header (right) */}
-              <TableCell
-                isHeader
-                className={cn(
-                  stickyActionHeaderClass,
-                  "min-w-[132px] px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-brand-500",
-                )}
-              >
-                {t("products.table.action")}
-              </TableCell>
-            </TableRow>
+            <TableHeadRow t={t} />
           </TableHeader>
 
           <TableBody>
-            {products.map((p, idx) => {
-              const lowStock = p.stockQty <= 10;
-              const fallback = imageFallbackSvgDataUri(p.name);
-              const imageSrc = p.imageUrl ? toPublicUrl(p.imageUrl) : fallback;
-
-              return (
-                <TableRow
-                  key={p.id}
-                  className="group border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.04]"
-                >
-                  <TableCell className="px-4 py-4 text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {idx + 1}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={imageSrc}
-                          alt={p.name}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          onError={(event) => {
-                            const target = event.currentTarget;
-                            if (target.src !== fallback) {
-                              target.src = fallback;
-                            }
-                          }}
-                        />
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="max-w-[280px] truncate font-semibold text-gray-900 dark:text-white">
-                          {p.name}
-                        </div>
-                        {p.name_bd && (
-                          <div className="max-w-[280px] truncate text-xs text-brand-500 dark:text-brand-400">{p.name_bd}</div>
-                        )}
-                        <div className="truncate text-xs text-gray-500 dark:text-gray-400">{p.sku}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                    #{p.positionNumber}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-4">
-                    <CategoryBadges p={p} />
-                  </TableCell>
-
-                  {/* ✅ Stock: total stock + variants */}
-                  <TableCell className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col leading-tight">
-                        <span
-                          className={cn(
-                            "text-sm font-semibold",
-                            lowStock ? "text-error-500" : "text-gray-900 dark:text-white",
-                          )}
-                        >
-                          {t("products.table.totalLabel", { count: p.stockQty })}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{t("products.table.variantsLabel", { count: p.variantCount })}</span>
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onStockPlus(p.id)}
-                        className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06]"
-                        ariaLabel="Update stock"
-                      >
-                        <Plus className="h-4 w-4 text-brand-600" />
-                      </Button>
-
-                      {lowStock ? (
-                        <span className="rounded-full border border-error-100 bg-error-50 px-2 py-1 text-xs font-semibold text-error-500 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-300">
-                          {t("products.table.low")}
-                        </span>
-                      ) : null}
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-4">
-                    <div className="leading-tight">
-                      <div className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
-                        {formatMoney(p.price)}
-                      </div>
-
-                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span>{t("products.table.discount", { value: p.discount ?? 0 })}</span>
-                        <span>{t("products.table.sale", { value: formatMoney(p.salePrice ?? p.price) })}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-4">
-                    <StatusToggle value={p.status} onChange={(next) => onToggleStatus(p.id, next)} />
-                  </TableCell>
-
-                  {/* ✅ Sticky Action cell (right) */}
-                  <TableCell className={cn(stickyActionCellClass, "px-4 py-4")}>
-                    <div className="inline-flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onEdit(p.id)}
-                        className="h-10 w-10"
-                        ariaLabel="Edit product"
-                      >
-                        <Pencil className="h-4 w-4 text-brand-600" />
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onDelete(p.id)}
-                        className="h-10 w-10 border-error-200 text-error-500 hover:text-error-600 dark:border-error-500/30"
-                        ariaLabel="Delete product"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-
             {products.length === 0 ? (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                  {t("products.table.noProducts")}
-                </TableCell>
-              </TableRow>
-            ) : null}
+              <EmptyStateRow t={t} />
+            ) : (
+              products.map((product, index) => (
+                <ProductDataRow
+                  key={product.id}
+                  product={product}
+                  index={index}
+                  t={t}
+                  onStockPlus={onStockPlus}
+                  onToggleStatus={onToggleStatus}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

@@ -1,36 +1,30 @@
 "use client";
 
-import React from "react";
-import toast from "react-hot-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  ChevronDown,
-  ChevronUp,
   FileText,
   Globe,
   Image as ImageIcon,
   Layers,
   Package,
-  Pencil,
   Plus,
   Save,
-  Search,
   Star,
   ToggleLeft,
   Trash2,
   Truck,
   Video,
-  X,
-  Zap,
+  Zap
 } from "lucide-react";
+import React from "react";
+import toast from "react-hot-toast";
 
-import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import NumericInput from "@/components/form/input/NumericInput";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
+import Button from "@/components/ui/button/Button";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
-import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
 import {
   Table,
   TableBody,
@@ -38,26 +32,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ImageMultiUploader, { type UploadedImage } from "@/components/ui/upload/ImageMultiUploader";
 
-import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { useTranslation } from "react-i18next";
 
-import { api } from "@/api/client";
-import { getProduct, updateProduct, reorderProductImages } from "@/api/products.api";
+import { getAttributes } from "@/api/attributes.api";
+import { getBrands } from "@/api/brands.api";
 import {
+  getChildCategories,
   getMainCategories,
   getSubCategories,
-  getChildCategories,
 } from "@/api/categories.api";
-import { getAttributes } from "@/api/attributes.api";
+import { api } from "@/api/client";
 import { getColors } from "@/api/colors.api";
-import { getBrands } from "@/api/brands.api";
-import BaseModal from "./BaseModal";
-import { toPublicUrl } from "@/utils/toPublicUrl";
+import { assignImageSku, getProduct, reorderProductImages, updateProduct } from "@/api/products.api";
 import DraggableImageGrid from "@/components/products/create-product/DraggableImageGrid";
-import { assignImageSku } from "@/api/products.api";
+import BaseModal from "./BaseModal";
 
 type Props = {
   open: boolean;
@@ -1106,11 +1098,11 @@ export default function EditProductModal({
                               prev.map((img) =>
                                 img.id === imageId
                                   ? {
-                                      ...img,
-                                      sku_id,
-                                      sku_color_id: matchedSku?.color?.id ?? null,
-                                      sku_variant_id: matchedSku?.variant?.id ?? null,
-                                    }
+                                    ...img,
+                                    sku_id,
+                                    sku_color_id: matchedSku?.color?.id ?? null,
+                                    sku_variant_id: matchedSku?.variant?.id ?? null,
+                                  }
                                   : img
                               )
                             );

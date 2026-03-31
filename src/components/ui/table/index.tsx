@@ -41,7 +41,19 @@ const Table: React.FC<TableProps> = ({ children, className }) => {
 
 // TableHeader Component
 const TableHeader: React.FC<TableHeaderProps> = ({ children, className }) => {
-  return <thead className={className}>{children}</thead>;
+  return (
+    <thead
+      className={[
+        // z-30 so thead always sits above sticky body cells (z-20)
+        "sticky top-0 z-30",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {children}
+    </thead>
+  );
 };
 
 // TableBody Component
