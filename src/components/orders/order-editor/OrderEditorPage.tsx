@@ -153,7 +153,9 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
     deliveryCharge: Number(o.delivery_charge ?? 0),
     specialDiscount: Number(o.discount_total ?? 0),
     advancePayment: Number(o.paid_amount ?? 0),
-    weightKgTotal: Number(o.weight_kg_total ?? 0),
+    weightKgTotal: (firstCourier?.weight != null && Number(firstCourier.weight) > 0)
+      ? Number(firstCourier.weight)
+      : Number(o.weight_kg_total ?? 0),
     weightExtraCharge: Number(o.weight_extra_charge ?? 0),
     bulkDiscountTotal: Number((o as any).bulk_discount_total ?? 0),
     comboDiscountTotal: Number((o as any).combo_discount_total ?? 0),

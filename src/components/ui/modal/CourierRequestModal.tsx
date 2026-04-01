@@ -349,6 +349,7 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
   const [dispatchResult, setDispatchResult] = useState<{
     success: boolean;
     message: string;
+    detail?: string;
     tracking?: string;
     provider?: string;
   } | null>(null);
@@ -433,6 +434,37 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
     };
   }, [order]);
 
+  /* ── Helpers ── */
+  /**
+   * Immediately patch the dispatched order in every cached list query so the
+   * new courier weight / status is visible the instant the user switches tabs
+   * — without needing a page refresh.
+   */
+  const patchOrderInCache = (provider: string, newWeight: number | undefined) => {
+    queryClient.setQueriesData<any>(
+      { queryKey: ordersKeys.lists() },
+      (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((o: any) => {
+            if (String(o.id) !== String(order.id)) return o;
+            const prevCourier = o.couriers?.[0] ?? {};
+            return {
+              ...o,
+              order_status: 'processing',
+              couriers: [{
+                ...prevCourier,
+                courier_provider: provider,
+                weight: newWeight != null ? newWeight : prevCourier.weight,
+              }],
+            };
+          }),
+        };
+      }
+    );
+  };
+
   /* ── Mutations ── */
   const dispatchMutation = useMutation({
     mutationFn: async (payload: {
@@ -443,7 +475,9 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
         courier_provider: payload.provider,
         weight: payload.weight,
       }),
-    onSuccess: async (res) => {
+    onSuccess: async (res, payload) => {
+      // Immediately patch all cached list queries so switching tabs shows new weight
+      patchOrderInCache(payload.provider, payload.weight);
       setDispatchResult({
         success: true,
         message: res?.message || "Order dispatched successfully!",
@@ -451,13 +485,14 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
         provider: res?.courier,
       });
       toast.success(res?.message || "Order dispatched successfully!");
-      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
-      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      // Background refresh to get authoritative server data
+      queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
     onError: (err: any) => {
-      const msg = readApiError(err, "Failed to dispatch order");
-      setDispatchResult({ success: false, message: msg });
-      toast.error(msg);
+      const detail = readApiError(err, "Failed to dispatch order");
+      setDispatchResult({ success: false, message: "Dispatch Failed", detail });
+      toast.error("Order could not be dispatched. Check the error message for details.");
     },
   });
 
@@ -476,7 +511,9 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
         memo: payload.memo || undefined,
         weight: payload.weight,
       }),
-    onSuccess: async (res) => {
+    onSuccess: async (res, payload) => {
+      // Immediately patch all cached list queries so switching tabs shows new weight
+      patchOrderInCache(payload.provider, payload.weight);
       setDispatchResult({
         success: true,
         message: res?.message || "Order manually dispatched!",
@@ -484,13 +521,14 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
         provider: res?.courier,
       });
       toast.success(res?.message || "Order manually dispatched!");
-      await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
-      await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      // Background refresh to get authoritative server data
+      queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
     onError: (err: any) => {
-      const msg = readApiError(err, "Failed to manual dispatch");
-      setDispatchResult({ success: false, message: msg });
-      toast.error(msg);
+      const detail = readApiError(err, "Failed to manual dispatch");
+      setDispatchResult({ success: false, message: "Dispatch Failed", detail });
+      toast.error("Order could not be dispatched. Check the error message for details.");
     },
   });
 
@@ -500,6 +538,16 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
     Math.max(0, Number(autoWeightKg || "0") || 0) || undefined;
   const manualWeight =
     Math.max(0, Number(manualWeightKg || "0") || 0) || undefined;
+
+  /** Max weight allowed per courier (mirrors backend COURIER_MAX_WEIGHT) */
+  const COURIER_MAX_WEIGHT: Record<string, number> = {
+    pathao:    200,
+    steadfast: 99999, // no documented hard cap
+    redx:      200,
+    paperfly:  200,
+  };
+  const autoMaxWeight   = COURIER_MAX_WEIGHT[autoProvider]   ?? 200;
+  const manualMaxWeight = COURIER_MAX_WEIGHT[manualProvider] ?? 200;
 
   const isPending =
     dispatchMutation.isPending || manualDispatchMutation.isPending;
@@ -603,6 +651,11 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
               >
                 {dispatchResult.message}
               </p>
+              {dispatchResult.detail && (
+                <p className="mt-1 text-xs text-error-700 dark:text-error-300 opacity-80">
+                  {dispatchResult.detail}
+                </p>
+              )}
               {dispatchResult.tracking && (
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-xs text-gray-600 dark:text-gray-300">
@@ -866,9 +919,10 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
                       value={autoWeightKg}
                       onChange={(e) => setAutoWeightKg(e.target.value)}
                       type="number"
-                      min={0}
+                      min={0.1}
+                      max={autoMaxWeight}
                       step="0.1"
-                      placeholder="1"
+                      placeholder="e.g. 1.5"
                       className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none transition focus:border-brand-500 focus:bg-white dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:focus:bg-gray-950"
                     />
                   </div>
@@ -978,9 +1032,10 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
                         value={manualWeightKg}
                         onChange={(e) => setManualWeightKg(e.target.value)}
                         type="number"
-                        min={0}
+                        min={0.1}
+                        max={manualMaxWeight}
                         step="0.1"
-                        placeholder="1"
+                        placeholder="e.g. 1.5"
                         className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none transition focus:border-brand-500 focus:bg-white dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:focus:bg-gray-950"
                       />
                     </div>

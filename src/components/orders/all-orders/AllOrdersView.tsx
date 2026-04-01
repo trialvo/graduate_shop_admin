@@ -463,7 +463,13 @@ export default function AllOrdersView() {
               ? `${o.lm_city_name || o.city} — ${o.area_name}`
               : (`${o.city ?? ""}`.trim() || "—"),
             codAmount: o.payment_type === "cod" ? Number(o.grand_total ?? 0) : 0,
-            weightKg: Number(o.weight_kg_total ?? 0) || 0,
+            // Prefer the weight that was last dispatched to a courier (order_couriers.weight).
+            // Fall back to the order's computed item weight (weight_kg_total) so the
+            // field pre-fills with a sensible default even before first dispatch.
+            weightKg:
+              (mainCourier?.weight != null && Number(mainCourier.weight) > 0)
+                ? Number(mainCourier.weight)
+                : Number(o.weight_kg_total ?? 0) || 0,
           },
         },
       };

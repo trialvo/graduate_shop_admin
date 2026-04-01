@@ -173,7 +173,9 @@ export default function OrderInvoicePage() {
       subtotal: safeNumber(order?.subtotal),
       discount: safeNumber(order?.discount_total),
       delivery: safeNumber(order?.delivery_charge),
-      weightKg: safeNumber((order as any)?.weight_kg_total),
+      weightKg: (courier?.weight != null && Number(courier.weight) > 0)
+        ? Number(courier.weight)
+        : safeNumber((order as any)?.weight_kg_total),
       weightSurcharge: safeNumber((order as any)?.weight_extra_charge),
       bulkDiscount: safeNumber((order as any)?.bulk_discount_total),
       comboDiscount: safeNumber((order as any)?.combo_discount_total),
