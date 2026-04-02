@@ -1,13 +1,12 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { Pencil, Plus, Trash2, PackageSearch } from "lucide-react";
+import { PackageSearch, Pencil, Plus, Trash2 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
 import type { Product } from "./types";
 
-import Button from "@/components/ui/button/Button";
 import StatusToggle from "@/components/ui/button/StatusToggle";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -452,11 +451,11 @@ const AllProductsTable: React.FC<Props> = ({
   return (
     <div className={tableShellClass}>
       {/*
-        overflow-auto enables BOTH x-scroll (wide table) and y-scroll (tall list).
-        max-h constrains the table so the sticky <thead> actually pins within this box.
-        overscroll-contain prevents the parent page from scrolling while inside.
+        overflow-x/y-auto enables both axes as needed.
+        max-h constrains the table so sticky <thead> pins within this box.
+        No overscroll containment: at inner scroll limits, outer page scroll continues.
       */}
-      <div className="w-full max-w-full min-w-0 overflow-auto overscroll-contain" style={{ maxHeight: "calc(100vh - 280px)" }}>
+      <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
         <Table className="min-w-[1080px] border-collapse">
           <TableHeader>
             <TableHeadRow t={t} />

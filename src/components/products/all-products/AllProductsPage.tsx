@@ -452,8 +452,15 @@ const AllProductsPage: React.FC = () => {
           deleteMutation.mutate(deleteId);
         }}
         loading={deleteMutation.isPending}
-        title={t("products.deleteProduct")}
+        title={t("products.confirmDelete.title")}
+        subtitle={t("products.confirmDelete.subtitle")}
         message={deleteName ? `"${deleteName}"` : undefined}
+        consequenceLines={[
+          t("products.confirmDelete.effects.productRemoved"),
+          t("products.confirmDelete.effects.variantsRemoved"),
+          t("products.confirmDelete.effects.cannotRecover"),
+        ]}
+        confirmLabel={t("products.confirmDelete.confirm")}
       />
     </div>
   );

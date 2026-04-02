@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Trash2, X, ShieldAlert } from "lucide-react";
+import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal/useModalTransition";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,10 +13,13 @@ type Props = {
   loading?: boolean;
 
   title?: string;
+  subtitle?: React.ReactNode;
   message?: React.ReactNode;
+  consequenceLines?: React.ReactNode[];
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "danger" | "warning";
+  zIndexClassName?: string;
 };
 
 // ─── Easings ─────────────────────────────────────────────────────────────────
@@ -28,11 +33,6 @@ const EASE_STD   = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Returns the current scrollbar width so we can compensate when locking. */
-function getScrollbarWidth(): number {
-  return window.innerWidth - document.documentElement.clientWidth;
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ConfirmModal({
@@ -41,10 +41,17 @@ export default function ConfirmModal({
   onConfirm,
   loading,
   title = "Are you sure?",
+  subtitle = "This action is permanent and cannot be undone.",
   message,
+  consequenceLines = [
+    "Selected data will be permanently removed",
+    "Any related records may be affected",
+    "This cannot be recovered",
+  ],
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
   variant = "danger",
+  zIndexClassName = "z-[999]",
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -82,18 +89,8 @@ export default function ConfirmModal({
   // paddingRight compensates for the missing scrollbar so the page doesn't shift.
   useEffect(() => {
     if (!isMounted) return;
-
-    const scrollbarW = getScrollbarWidth();
-    const prevOverflow = document.body.style.overflow;
-    const prevPadding  = document.body.style.paddingRight;
-
-    document.body.style.overflow     = "hidden";
-    document.body.style.paddingRight = scrollbarW > 0 ? `${scrollbarW}px` : "";
-
-    return () => {
-      document.body.style.overflow     = prevOverflow;
-      document.body.style.paddingRight = prevPadding;
-    };
+    lockBodyScroll();
+    return () => unlockBodyScroll();
   }, [isMounted]);
 
   // ── Escape key ─────────────────────────────────────────────────────────────
@@ -121,8 +118,8 @@ export default function ConfirmModal({
       : `opacity 140ms ${CLOSE_EASE}, transform 140ms ${CLOSE_EASE}`,
   });
 
-  return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center px-4">
+  const modalNode = (
+    <div className={cn("fixed inset-0 flex items-center justify-center px-4", zIndexClassName)}>
       {/* ── Backdrop ──────────────────────────────────────────────────────── */}
       <div
         aria-hidden="true"
@@ -221,9 +218,11 @@ export default function ConfirmModal({
               >
                 {title}
               </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                This action is permanent and cannot be undone.
-              </p>
+              {subtitle ? (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {subtitle}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -252,27 +251,25 @@ export default function ConfirmModal({
           ) : null}
 
           {/* Consequences list */}
-          <div
-            style={childAnim(200)}
-            className={cn(
-              "rounded-xl border px-4 py-3 space-y-1.5",
-              "border-gray-100 bg-gray-50 dark:border-gray-700/60 dark:bg-gray-800/50",
-            )}
-          >
-            {[
-              "Product data will be permanently removed",
-              "All associated variants and stock will be lost",
-              "This cannot be recovered",
-            ].map((line, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className={cn(
-                  "mt-px h-1.5 w-1.5 shrink-0 rounded-full",
-                  isDanger ? "bg-red-400" : "bg-amber-400",
-                )} />
-                <span className="text-xs text-gray-500 dark:text-gray-400">{line}</span>
-              </div>
-            ))}
-          </div>
+          {consequenceLines.length ? (
+            <div
+              style={childAnim(200)}
+              className={cn(
+                "rounded-xl border px-4 py-3 space-y-1.5",
+                "border-gray-100 bg-gray-50 dark:border-gray-700/60 dark:bg-gray-800/50",
+              )}
+            >
+              {consequenceLines.map((line, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className={cn(
+                    "mt-px h-1.5 w-1.5 shrink-0 rounded-full",
+                    isDanger ? "bg-red-400" : "bg-amber-400",
+                  )} />
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{line}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           {/* Action buttons */}
           <div style={childAnim(240)} className="flex gap-2.5 pt-1">
@@ -328,4 +325,7 @@ export default function ConfirmModal({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return modalNode;
+  return createPortal(modalNode, document.body);
 }

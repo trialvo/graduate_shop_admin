@@ -25,6 +25,7 @@ import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import Button from "@/components/ui/button/Button";
 import RichTextEditor from "@/components/ui/editor/RichTextEditor";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 import {
   Table,
   TableBody,
@@ -836,6 +837,32 @@ export default function EditProductModal({
     createVarMutation.isPending ||
     updateVarMutation.isPending ||
     deleteVarMutation.isPending;
+
+  const deleteVariationMessage = React.useMemo(() => {
+    if (varDeleteId === null) return undefined;
+
+    const target = variations.find((v) => v.id === varDeleteId);
+    if (!target) return t("products.editProduct.deleteVarConfirm");
+
+    const colorLabel =
+      target.color?.name ??
+      colorNameById.get(getVariationColorId(target)) ??
+      `#${getVariationColorId(target)}`;
+    const variantLabel =
+      target.variant?.name ??
+      variantLabelById.get(getVariationVariantId(target)) ??
+      `#${getVariationVariantId(target)}`;
+
+    return `"${colorLabel} / ${variantLabel}${
+      target.sku ? ` • SKU: ${target.sku}` : ""
+    }"`;
+  }, [
+    colorNameById,
+    t,
+    varDeleteId,
+    variantLabelById,
+    variations,
+  ]);
 
   const handleReorderImages = React.useCallback(
     (newOrder: ExistingImage[]) => {
@@ -1691,46 +1718,30 @@ export default function EditProductModal({
       </BaseModal>
 
       {/* Variation Delete Confirm */}
-      <BaseModal
+      <ConfirmModal
         open={varDeleteOpen}
         onClose={() => {
           if (deleteVarMutation.isPending) return;
           setVarDeleteOpen(false);
           setVarDeleteId(null);
         }}
+        onConfirm={() => {
+          if (varDeleteId === null) return;
+          deleteVarMutation.mutate(varDeleteId);
+        }}
+        loading={deleteVarMutation.isPending}
         title={t("products.editProduct.deleteVarTitle")}
-        description={t("products.editProduct.deleteVarDesc")}
-        widthClassName="w-[520px]"
-        footer={
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              className="h-10"
-              onClick={() => {
-                if (deleteVarMutation.isPending) return;
-                setVarDeleteOpen(false);
-                setVarDeleteId(null);
-              }}
-            >
-              {t("products.editProduct.cancel")}
-            </Button>
-            <Button
-              className="h-10 bg-error-600 hover:bg-error-700"
-              onClick={() => {
-                if (!varDeleteId) return;
-                deleteVarMutation.mutate(varDeleteId);
-              }}
-              disabled={deleteVarMutation.isPending}
-            >
-              {t("products.editProduct.delete")}
-            </Button>
-          </div>
-        }
-      >
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          {t("products.editProduct.deleteVarConfirm")}
-        </div>
-      </BaseModal>
+        subtitle={t("products.editProduct.deleteVarDesc")}
+        message={deleteVariationMessage}
+        consequenceLines={[
+          t("products.editProduct.deleteVarEffects.variationRemoved"),
+          t("products.editProduct.deleteVarEffects.skuStockRemoved"),
+          t("products.editProduct.deleteVarEffects.cannotRecover"),
+        ]}
+        confirmLabel={t("products.editProduct.delete")}
+        cancelLabel={t("products.editProduct.cancel")}
+        zIndexClassName="z-[10020]"
+      />
     </>
   );
 }

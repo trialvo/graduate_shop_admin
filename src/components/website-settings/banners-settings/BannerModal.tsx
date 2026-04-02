@@ -22,6 +22,11 @@ import { toPublicUrl } from "@/utils/toPublicUrl";
 import type { BannerRow, Option } from "./types";
 import { TYPES, ZONES } from "./banner.constants";
 import ImageCropperModal from "./BannerImageCropper";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 type Props = {
   open: boolean;
@@ -444,6 +449,7 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
   };
 
   const pending = createMut.isPending || updateMut.isPending;
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   // ✅ when crop applied
   const onCropApply = ({ file, previewUrl }: { file: File; previewUrl: string }) => {
@@ -492,19 +498,24 @@ export default function BannerModal({ open, mode, initial, onClose }: Props) {
     toast.success(t("bannerModal.categoryPathSet"));
   };
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   return (
     <>
       <div className="fixed inset-0 z-[70] flex items-center justify-center">
         <button
           type="button"
+          style={getModalBackdropStyle(isVisible)}
           className="absolute inset-0 bg-black/60"
           onClick={() => !pending && onClose()}
           aria-label={t("bannerModal.closeOverlay")}
         />
 
-        <div className="relative w-[96vw] max-w-6xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+        <div
+          onTransitionEnd={handleTransitionEnd}
+          style={getModalDialogStyle(isVisible)}
+          className="relative w-[96vw] max-w-6xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900"
+        >
           {/* Header */}
           <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-4 py-4 dark:border-gray-800 sm:px-6">
             <div>
