@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -174,7 +174,7 @@ const StatisticsChart: React.FC = () => {
   );
 
   return (
-    <div className="w-full flex-1 rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
+    <div className="w-full flex-1 rounded-2xl bg-white px-5 pb-5 pt-5 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)] sm:px-6 sm:pt-6">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

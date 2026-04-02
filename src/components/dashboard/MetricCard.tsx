@@ -1,6 +1,6 @@
-import * as React from "react";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import * as React from "react";
 
 export type MetricsRange = "day" | "week" | "month" | "year";
 
@@ -31,8 +31,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
     return (
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm",
-          "dark:border-gray-800 dark:bg-gray-900"
+          "relative overflow-hidden rounded-2xl bg-white p-5",
+          "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)]",
+          "dark:bg-gray-900",
+          "dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]"
         )}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -81,9 +83,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm",
-        "transition-all duration-200 hover:shadow-md",
-        "dark:border-gray-800 dark:bg-gray-900"
+        "group relative overflow-hidden rounded-2xl bg-white p-5",
+        "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out",
+        "dark:bg-gray-900",
+        "dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]"
       )}
     >
       {/* Top row: badge + sparkline */}

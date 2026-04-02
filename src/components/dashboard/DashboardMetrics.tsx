@@ -1,10 +1,10 @@
-﻿import * as React from "react";
-import { DollarSign, ShoppingCart, Users, XCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { DollarSign, ShoppingCart, Users, XCircle } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 
-import MetricsFilter from "./MetricsFilter";
 import MetricCard, { MetricsRange } from "./MetricCard";
+import MetricsFilter from "./MetricsFilter";
 
 import {
   dashboardKeys,

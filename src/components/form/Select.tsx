@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import { ChevronDown, Loader2, Search, X } from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -7,8 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Check, ChevronDown, Loader2, Search, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -147,7 +148,10 @@ export default function Select({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef    = useRef<HTMLDivElement    | null>(null);
   const searchRef  = useRef<HTMLInputElement  | null>(null);
+  const openRafRef = useRef<number | null>(null);
   const listboxId  = useId();
+  const portalRoot =
+    useFixedLayer && typeof document !== "undefined" ? document.body : null;
 
   // ── Value state ────────────────────────────────────────────────────────────
   const isControlled  = value !== undefined;
@@ -174,20 +178,36 @@ export default function Select({
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, searchQuery, searchable]);
 
-  // ── Two-frame mount/visible trick ──────────────────────────────────────────
-  // Mount → paint with opacity 0 → flip isVisible → CSS transition fires cleanly
-  useEffect(() => {
-    if (open) {
-      setIsMounted(true);
-      const id = window.requestAnimationFrame(() =>
-        window.requestAnimationFrame(() => setIsVisible(true)),
-      );
-      return () => window.cancelAnimationFrame(id);
-    } else {
-      setIsVisible(false);  // begin exit transition
-      setSearchQuery("");   // reset search when closed
+  const cancelOpenRaf = useCallback(() => {
+    if (openRafRef.current !== null) {
+      window.cancelAnimationFrame(openRafRef.current);
+      openRafRef.current = null;
     }
-  }, [open]);
+  }, []);
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const openMenu = useCallback(() => {
+    if (open) return;
+    setOpen(true);
+    setIsMounted(true);
+    cancelOpenRaf();
+    // Mount → paint with opacity 0 → flip isVisible (next frame) for clean transition
+    openRafRef.current = window.requestAnimationFrame(() => {
+      openRafRef.current = window.requestAnimationFrame(() => {
+        setIsVisible(true);
+        openRafRef.current = null;
+      });
+    });
+  }, [cancelOpenRaf, open]);
+
+  const close = useCallback(() => {
+    cancelOpenRaf();
+    setOpen(false);
+    setIsVisible(false);  // begin exit transition
+    setSearchQuery("");   // reset search when closed
+  }, [cancelOpenRaf]);
+
+  useEffect(() => () => cancelOpenRaf(), [cancelOpenRaf]);
 
   const handleTransitionEnd = useCallback(() => {
     if (!open) setIsMounted(false); // unmount after exit transition completes
@@ -200,9 +220,6 @@ export default function Select({
       return () => window.clearTimeout(id);
     }
   }, [isVisible, searchable]);
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  const close = useCallback(() => setOpen(false), []);
 
   const commitValue = useCallback(
     (next: string) => {
@@ -323,7 +340,7 @@ export default function Select({
           ? `opacity 240ms ${SPRING}, transform 300ms ${SPRING}`
           : `opacity 160ms ${EASE_IN}, transform 160ms ${EASE_IN}`,
         transformOrigin: isFromTop ? "bottom center" : "top center",
-        pointerEvents:   isVisible ? undefined : "none",
+        pointerEvents:   isVisible ? "auto" : "none",
         willChange:      "opacity, transform",
       }}
       className={cn(
@@ -520,7 +537,10 @@ export default function Select({
         ref={triggerRef}
         type="button"
         disabled={disabled || isLoading}
-        onClick={() => setOpen((s) => !s)}
+        onClick={() => {
+          if (open) close();
+          else openMenu();
+        }}
         style={{
           // All interactive states driven by box-shadow for smooth blended glow
           boxShadow: open
@@ -597,7 +617,12 @@ export default function Select({
       {/* ── Dropdown portal ───────────────────────────────────────────────── */}
       {isMounted
         ? useFixedLayer
-          ? <div className="fixed inset-0 z-[9999]">{menu}</div>
+          ? portalRoot
+            ? createPortal(
+              <div className="fixed inset-0 z-[9999] pointer-events-none">{menu}</div>,
+              portalRoot,
+            )
+            : null
           : menu
         : null}
     </div>

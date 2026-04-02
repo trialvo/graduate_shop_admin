@@ -39,16 +39,31 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useTranslation } from "react-i18next";
 
-import { getAttributes } from "@/api/attributes.api";
-import { getBrands } from "@/api/brands.api";
+import {
+  getAttributes,
+  type Attribute,
+  type AttributeVariant,
+} from "@/api/attributes.api";
+import { getBrands, type Brand } from "@/api/brands.api";
 import {
   getChildCategories,
   getMainCategories,
   getSubCategories,
 } from "@/api/categories.api";
 import { api } from "@/api/client";
-import { getColors } from "@/api/colors.api";
-import { assignImageSku, getProduct, reorderProductImages, updateProduct } from "@/api/products.api";
+import { getColors, type Color } from "@/api/colors.api";
+import {
+  assignImageSku,
+  getProduct,
+  reorderProductImages,
+  updateProduct,
+  type ProductImage,
+} from "@/api/products.api";
+import type {
+  ChildCategory,
+  MainCategory,
+  SubCategory,
+} from "@/components/products/product-category/types";
 import DraggableImageGrid from "@/components/products/create-product/DraggableImageGrid";
 import BaseModal from "./BaseModal";
 
@@ -61,7 +76,7 @@ type Props = {
 
 type Option = { value: string; label: string; status?: boolean };
 
-type ExistingImage = { id: number; path: string; serial?: number };
+type ExistingImage = ProductImage;
 
 type VariationColor = {
   id: number;
@@ -97,6 +112,8 @@ type VariationRow = {
   final_price?: number;
   stock: number;
   sku: string;
+  weight_kg?: number;
+  free_delivery?: boolean | null;
   status?: number | boolean;
   in_stock?: boolean;
 };
@@ -114,17 +131,47 @@ type VariationDraft = {
 };
 
 type InlineEditState = Record<number, VariationDraft>;
+type UnknownRecord = Record<string, unknown>;
+type ApiErrorData = {
+  error?: string;
+  message?: string;
+  errors?: Array<string | { message?: string; error?: string }>;
+};
+type AttributeWithValues = Attribute & { values?: unknown[] };
+type UpdateProductResponseLike = {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  flag?: number;
+};
+
+const EMPTY_VARIATION_DRAFT: VariationDraft = {
+  color_id: 0,
+  variant_id: 0,
+  buying_price: 0,
+  selling_price: 0,
+  discount: 0,
+  stock: 0,
+  sku: "",
+  weight_kg: 0,
+  free_delivery: null,
+};
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null;
+}
 
 function safeNumber(v: string, fallback: number) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function unwrapList<T>(payload: any): T[] {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.rows)) return payload.rows;
-  if (Array.isArray(payload?.items)) return payload.items;
+function unwrapList<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) return payload as T[];
+  if (!isRecord(payload)) return [];
+  if (Array.isArray(payload.data)) return payload.data as T[];
+  if (Array.isArray(payload.rows)) return payload.rows as T[];
+  if (Array.isArray(payload.items)) return payload.items as T[];
   return [];
 }
 
@@ -182,34 +229,56 @@ function getVariationVariantId(v: VariationRow) {
   return readId(v.variant_id ?? v.variant?.id ?? 0);
 }
 
-function pickNestedId(payload: any, directKey: string, nestedKey: string) {
-  return readId(payload?.[directKey] ?? payload?.[nestedKey]?.id ?? 0);
+function pickNestedId(payload: unknown, directKey: string, nestedKey: string) {
+  if (!isRecord(payload)) return 0;
+  const nested = payload[nestedKey];
+  const nestedId = isRecord(nested) ? nested.id : undefined;
+  return readId(payload[directKey] ?? nestedId ?? 0);
+}
+
+function readStringValue(payload: unknown, key: string, fallback = "") {
+  if (!isRecord(payload)) return fallback;
+  const value = payload[key];
+  return typeof value === "string" ? value : fallback;
+}
+
+function readNullableBool(payload: unknown, key: string): boolean | null {
+  if (!isRecord(payload)) return null;
+  const value = payload[key];
+  if (value === null || value === undefined) return null;
+  return Boolean(value);
+}
+
+function parseApiErrorData(data: unknown): ApiErrorData | null {
+  if (typeof data === "string") {
+    try {
+      const parsed: unknown = JSON.parse(data);
+      if (!isRecord(parsed)) return { message: data };
+      return parsed as ApiErrorData;
+    } catch {
+      return { message: data };
+    }
+  }
+  if (!isRecord(data)) return null;
+  return data as ApiErrorData;
 }
 
 function getApiErrorMessage(err: unknown, fallback: string) {
-  const anyErr = err as any;
-  const data = anyErr?.response?.data;
-
-  if (typeof data === "string") {
-    try {
-      const parsed = JSON.parse(data);
-      if (typeof parsed?.error === "string") return parsed.error;
-      if (typeof parsed?.message === "string") return parsed.message;
-    } catch {
-      return data;
-    }
-  }
+  const errObj = isRecord(err) ? err : null;
+  const response = errObj && isRecord(errObj.response) ? errObj.response : null;
+  const data = parseApiErrorData(response?.data);
 
   if (typeof data?.error === "string") return data.error;
   if (typeof data?.message === "string") return data.message;
   if (Array.isArray(data?.errors)) {
     return data.errors
-      .map((e: any) => (typeof e === "string" ? e : (e?.message ?? e?.error)))
+      .map((e) => (typeof e === "string" ? e : (e.message ?? e.error)))
       .filter(Boolean)
       .join(", ");
   }
 
-  if (typeof anyErr?.message === "string") return anyErr.message;
+  const message = errObj?.message;
+  if (typeof message === "string") return message;
 
   return fallback;
 }
@@ -222,32 +291,32 @@ function getApiErrorMessage(err: unknown, fallback: string) {
  */
 function buildVariantOptionsForAttribute(
   attributeId: number,
-  attributesRaw: any[],
+  attributesRaw: Attribute[],
 ): Option[] {
   const attr = attributesRaw.find(
-    (a: any) => Number(a?.id) === Number(attributeId),
+    (a) => Number(a.id) === Number(attributeId),
   );
   if (!attr) return [];
 
   const variants = Array.isArray(attr?.variants) ? attr.variants : null;
   if (variants?.length) {
-    return variants.map((x: any) => ({
+    return variants.map((x: AttributeVariant) => ({
       value: String(x.id),
-      label: String(x.name ?? x.title ?? x.value ?? x.id),
+      label: String(x.name ?? x.id),
     }));
   }
 
-  const values = Array.isArray(attr?.values) ? attr.values : null;
+  const values = Array.isArray((attr as AttributeWithValues).values)
+    ? (attr as AttributeWithValues).values
+    : null;
   if (values?.length) {
-    if (
-      typeof values[0] === "object" &&
-      values[0] !== null &&
-      "id" in values[0]
-    ) {
-      return values.map((x: any) => ({
-        value: String(x.id),
-        label: String(x.name ?? x.title ?? x.value ?? x.id),
-      }));
+    if (isRecord(values[0]) && "id" in values[0]) {
+      return values
+        .filter(isRecord)
+        .map((x) => ({
+          value: String(x.id),
+          label: String(x.name ?? x.title ?? x.value ?? x.id),
+        }));
     }
     return [];
   }
@@ -291,7 +360,7 @@ export default function EditProductModal({
 
   const { data: attrsRes, isFetching: attrsFetching } = useQuery({
     queryKey: ["attributes-all"],
-    queryFn: () => getAttributes({} as any),
+    queryFn: () => getAttributes(),
     staleTime: 60_000,
   });
 
@@ -301,26 +370,26 @@ export default function EditProductModal({
     staleTime: 60_000,
   });
 
-  const mains = React.useMemo(() => unwrapList<any>(mainRes), [mainRes]);
-  const subs = React.useMemo(() => unwrapList<any>(subRes), [subRes]);
-  const childs = React.useMemo(() => unwrapList<any>(childRes), [childRes]);
+  const mains = React.useMemo(() => unwrapList<MainCategory>(mainRes), [mainRes]);
+  const subs = React.useMemo(() => unwrapList<SubCategory>(subRes), [subRes]);
+  const childs = React.useMemo(() => unwrapList<ChildCategory>(childRes), [childRes]);
 
   const colorsRaw = React.useMemo(
-    () => unwrapList<any>(colorsRes),
+    () => unwrapList<Color>(colorsRes),
     [colorsRes],
   );
-  const attrsRaw = React.useMemo(() => unwrapList<any>(attrsRes), [attrsRes]);
+  const attrsRaw = React.useMemo(() => unwrapList<Attribute>(attrsRes), [attrsRes]);
   const brandsRaw = React.useMemo(
-    () => unwrapList<any>(brandsRes),
+    () => unwrapList<Brand>(brandsRes),
     [brandsRes],
   );
 
   const colorNameById = React.useMemo(
     () =>
       new Map(
-        colorsRaw.map((c: any) => [
+        colorsRaw.map((c) => [
           Number(c.id),
-          String(c.name ?? c.title ?? `#${c.id}`),
+          String(c.name ?? `#${c.id}`),
         ]),
       ),
     [colorsRaw],
@@ -329,9 +398,9 @@ export default function EditProductModal({
   const brandNameById = React.useMemo(
     () =>
       new Map(
-        brandsRaw.map((b: any) => [
+        brandsRaw.map((b) => [
           Number(b.id),
-          String(b.name ?? b.title ?? `#${b.id}`),
+          String(b.name ?? `#${b.id}`),
         ]),
       ),
     [brandsRaw],
@@ -339,7 +408,7 @@ export default function EditProductModal({
 
   const colorHexById = React.useMemo(
     () =>
-      new Map(colorsRaw.map((c: any) => [Number(c.id), String(c.hex ?? "")])),
+      new Map(colorsRaw.map((c) => [Number(c.id), String(c.hex ?? "")])),
     [colorsRaw],
   );
 
@@ -427,7 +496,7 @@ export default function EditProductModal({
     if (!p) return;
 
     setName(String(p.name ?? ""));
-    setNameBd(String((p as any).name_bd ?? ""));
+    setNameBd(readStringValue(p, "name_bd"));
     setSlug(String(p.slug ?? ""));
 
     setMainCategoryId(pickNestedId(p, "main_category_id", "main_category"));
@@ -438,35 +507,39 @@ export default function EditProductModal({
     setAttributeId(pickNestedId(p, "attribute_id", "attribute"));
 
     // ✅ initial value fix
-    setVideoUrl(String((p as any).video_path ?? ""));
-    setShortDescription(String((p as any).short_description ?? ""));
-    setLongDescription(String((p as any).long_description ?? ""));
+    setVideoUrl(String(p.video_path ?? ""));
+    setShortDescription(String(p.short_description ?? ""));
+    setLongDescription(String(p.long_description ?? ""));
 
     setStatus(Boolean(p.status));
     setFeatured(Boolean(p.featured));
-    setFreeDelivery(Boolean((p as any).free_delivery ?? false));
+    setFreeDelivery(Boolean(p.free_delivery ?? false));
     setBestDeal(Boolean(p.best_deal));
 
-    setMetaTitle(String((p as any).meta_title ?? ""));
-    setMetaDescription(String((p as any).meta_description ?? ""));
-    setMetaKeywords(String((p as any).meta_keywords ?? ""));
-    setCanonicalUrl(String((p as any).canonical_url ?? ""));
-    setOgTitle(String((p as any).og_title ?? ""));
-    setOgDescription(String((p as any).og_description ?? ""));
-    setRobots(normalizeRobots(String((p as any).robots ?? "index, follow")));
+    setMetaTitle(String(p.meta_title ?? ""));
+    setMetaDescription(String(p.meta_description ?? ""));
+    setMetaKeywords(String(p.meta_keywords ?? ""));
+    setCanonicalUrl(String(p.canonical_url ?? ""));
+    setOgTitle(String(p.og_title ?? ""));
+    setOgDescription(String(p.og_description ?? ""));
+    setRobots(normalizeRobots(String(p.robots ?? "index, follow")));
 
     setExistingImages(Array.isArray(p.images) ? p.images : []);
     setDeleteImageIds([]);
     setNewImages([]);
 
-    const vars = Array.isArray((p as any).variations)
-      ? ((p as any).variations as VariationRow[])
-      : [];
+    const vars: VariationRow[] = (Array.isArray(p.variations) ? p.variations : [])
+      .map((variation) => ({
+        ...variation,
+        color_id: variation.color?.id,
+        variant_id: variation.variant?.id,
+        free_delivery: readNullableBool(variation, "free_delivery"),
+      }));
     setVariations(vars);
     // Auto-populate varEdit so all rows are always in edit mode
     const autoEdit: InlineEditState = {};
     for (const vr of vars) {
-      const skuFd = (vr as any).free_delivery;
+      const skuFd = vr.free_delivery;
       autoEdit[vr.id] = {
         color_id: getVariationColorId(vr),
         variant_id: getVariationVariantId(vr),
@@ -475,23 +548,13 @@ export default function EditProductModal({
         discount: vr.discount,
         stock: vr.stock,
         sku: vr.sku ?? "",
-        weight_kg: Number((vr as any).weight_kg ?? 0),
+        weight_kg: Number(vr.weight_kg ?? 0),
         free_delivery: skuFd === null || skuFd === undefined ? null : Boolean(skuFd),
       };
     }
     setVarEdit(autoEdit);
 
-    setAddDraft({
-      color_id: 0,
-      variant_id: 0,
-      buying_price: 0,
-      selling_price: 0,
-      discount: 0,
-      stock: 0,
-      sku: "",
-      weight_kg: 0,
-      free_delivery: null,
-    });
+    setAddDraft(EMPTY_VARIATION_DRAFT);
   }, [enabled, productQuery.data]);
 
   // newImages is managed by ImageMultiUploader (includes cropper)
@@ -499,7 +562,7 @@ export default function EditProductModal({
   // dropdown options
   const mainOptions: Option[] = React.useMemo(
     () =>
-      mains.map((c: any) => ({
+      mains.map((c) => ({
         value: String(c.id),
         label: String(c.name),
         status: c.status !== false,
@@ -510,13 +573,13 @@ export default function EditProductModal({
   const availableSubs = React.useMemo(() => {
     if (!mainCategoryId) return subs;
     return subs.filter(
-      (s: any) => Number(s.main_category_id) === Number(mainCategoryId),
+      (s) => Number(s.main_category_id) === Number(mainCategoryId),
     );
   }, [subs, mainCategoryId]);
 
   const subOptions: Option[] = React.useMemo(
     () =>
-      availableSubs.map((c: any) => ({
+      availableSubs.map((c) => ({
         value: String(c.id),
         label: String(c.name),
         status: c.status !== false,
@@ -527,14 +590,14 @@ export default function EditProductModal({
   const availableChild = React.useMemo(() => {
     if (!subCategoryId) return childs;
     return childs.filter(
-      (c: any) => Number(c.sub_category_id) === Number(subCategoryId),
+      (c) => Number(c.sub_category_id) === Number(subCategoryId),
     );
   }, [childs, subCategoryId]);
 
   const childOptions: Option[] = React.useMemo(
     () => [
       { value: "", label: t("products.editProduct.selectChildCategory") },
-      ...availableChild.map((c: any) => ({
+      ...availableChild.map((c) => ({
         value: String(c.id),
         label: String(c.name),
         status: c.status !== false,
@@ -544,27 +607,27 @@ export default function EditProductModal({
   );
 
   const attributeOptions: Option[] = React.useMemo(() => {
-    return attrsRaw.map((a: any) => ({
+    return attrsRaw.map((a) => ({
       value: String(a.id),
-      label: String(a.name ?? a.title ?? `#${a.id}`),
+      label: String(a.name ?? `#${a.id}`),
     }));
   }, [attrsRaw]);
 
   const brandOptions: Option[] = React.useMemo(
     () => [
       { value: "", label: t("products.editProduct.selectBrand") },
-      ...brandsRaw.map((b: any) => ({
+      ...brandsRaw.map((b) => ({
         value: String(b.id),
-        label: String(b.name ?? b.title ?? `#${b.id}`),
+        label: String(b.name ?? `#${b.id}`),
       })),
     ],
     [brandsRaw],
   );
 
   const colorOptions: Option[] = React.useMemo(() => {
-    return colorsRaw.map((c: any) => ({
+    return colorsRaw.map((c) => ({
       value: String(c.id),
-      label: String(c.name ?? c.title ?? `#${c.id}`),
+      label: String(c.name ?? `#${c.id}`),
     }));
   }, [colorsRaw]);
 
@@ -588,7 +651,7 @@ export default function EditProductModal({
       return;
     }
     if (
-      !availableSubs.some((s: any) => Number(s.id) === Number(subCategoryId))
+      !availableSubs.some((s) => Number(s.id) === Number(subCategoryId))
     ) {
       setSubCategoryId(Number(availableSubs[0].id));
     }
@@ -607,7 +670,7 @@ export default function EditProductModal({
     if (!childCategoryId) return;
 
     if (
-      !availableChild.some((c: any) => Number(c.id) === Number(childCategoryId))
+      !availableChild.some((c) => Number(c.id) === Number(childCategoryId))
     ) {
       setChildCategoryId(0);
     }
@@ -652,14 +715,14 @@ export default function EditProductModal({
         robots,
 
         delete_image_ids: deleteImageIds.length ? deleteImageIds : undefined,
-      } as any);
+      });
 
       // 2. Save all modified variations
-      const varPromises: Promise<any>[] = [];
+      const varPromises: Promise<unknown>[] = [];
       for (const v of variations) {
         const draft = varEdit[v.id];
         if (!draft) continue;
-        const skuFd = (v as any).free_delivery;
+        const skuFd = v.free_delivery;
         const origFd = skuFd === null || skuFd === undefined ? null : Boolean(skuFd);
         const changed =
           draft.color_id !== getVariationColorId(v) ||
@@ -669,7 +732,7 @@ export default function EditProductModal({
           draft.discount !== v.discount ||
           draft.stock !== v.stock ||
           draft.sku !== (v.sku ?? "") ||
-          draft.weight_kg !== Number((v as any).weight_kg ?? 0) ||
+          draft.weight_kg !== Number(v.weight_kg ?? 0) ||
           draft.free_delivery !== origFd;
         if (changed) {
           varPromises.push(updateVariation(v.id, draft));
@@ -679,7 +742,7 @@ export default function EditProductModal({
 
       return productRes;
     },
-    onSuccess: async (res: any) => {
+    onSuccess: async (res: UpdateProductResponseLike) => {
       if (
         res?.error ||
         (Number(res?.flag) >= 400 && Number.isFinite(Number(res?.flag)))
@@ -696,7 +759,7 @@ export default function EditProductModal({
       onUpdated?.();
       onClose();
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, t("products.editProduct.failedUpdate")));
     },
   });
@@ -755,7 +818,7 @@ export default function EditProductModal({
       toast.success(t("products.editProduct.variationAdded"));
       await productQuery.refetch();
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, t("products.editProduct.failedAddVariation")));
     },
   });
@@ -768,7 +831,7 @@ export default function EditProductModal({
       setVarEdit({});
       await productQuery.refetch();
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, t("products.editProduct.failedUpdateVariation")));
     },
   });
@@ -781,7 +844,7 @@ export default function EditProductModal({
       setVarDeleteId(null);
       await productQuery.refetch();
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, t("products.editProduct.failedDeleteVariation")));
     },
   });
@@ -790,7 +853,7 @@ export default function EditProductModal({
   // Variation UI helpers
   // ----------------------------
   const startEditVariation = (v: VariationRow) => {
-    const skuFd = (v as any).free_delivery;
+    const skuFd = v.free_delivery;
     setVarEdit((p) => ({
       ...p,
       [v.id]: {
@@ -801,7 +864,7 @@ export default function EditProductModal({
         discount: v.discount,
         stock: v.stock,
         sku: v.sku ?? "",
-        weight_kg: Number((v as any).weight_kg ?? 0),
+        weight_kg: Number(v.weight_kg ?? 0),
         free_delivery: skuFd === null || skuFd === undefined ? null : Boolean(skuFd),
       },
     }));
@@ -818,7 +881,7 @@ export default function EditProductModal({
   const patchEditVariation = (id: number, patch: Partial<VariationDraft>) => {
     setVarEdit((p) => ({
       ...p,
-      [id]: { ...(p[id] ?? ({} as VariationDraft)), ...patch },
+      [id]: { ...(p[id] ?? EMPTY_VARIATION_DRAFT), ...patch },
     }));
   };
 
@@ -1569,7 +1632,7 @@ export default function EditProductModal({
 
                             <TableCell className="px-4 py-2">
                               <NumericInput
-                                value={draft?.weight_kg ?? Number((v as any).weight_kg ?? 0)}
+                                value={draft?.weight_kg ?? Number(v.weight_kg ?? 0)}
                                 onValueChange={(n) =>
                                   patchEditVariation(v.id, { weight_kg: Math.max(0, n) })
                                 }

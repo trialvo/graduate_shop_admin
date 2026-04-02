@@ -1,23 +1,22 @@
 "use client";
 
-import React from "react";
 import {
-  Copy,
-  Trash2,
-  Mail,
-  Phone,
   CalendarDays,
   Clock,
+  Copy,
+  Mail,
   MapPin,
-  CircleDot,
+  Phone,
   ShoppingCart,
+  Trash2
 } from "lucide-react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GuestOrder } from "./types";
 
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 
 const initials = (name: string) => {
   const parts = name.trim().split(" ").filter(Boolean);

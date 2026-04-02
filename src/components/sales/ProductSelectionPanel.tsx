@@ -1,13 +1,13 @@
-import React from "react";
-import { LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { LayoutGrid, Search, ShoppingBag } from "lucide-react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
-import ProductCard from "@/components/sales/ProductCard";
 import ProductAddModal from "@/components/sales/ProductAddModal";
+import ProductCard from "@/components/sales/ProductCard";
 import type {
   CartItem,
   SaleChildCategory,
@@ -18,7 +18,7 @@ import ImageSelectDropdown, {
   type ImageSelectOption,
 } from "@/components/ui/dropdown/ImageSelectDropdown";
 
-import { getSubCategories, getChildCategories } from "@/api/categories.api";
+import { getChildCategories, getSubCategories } from "@/api/categories.api";
 import { getProducts } from "@/api/products.api";
 import Pagination from "./Pagination";
 
@@ -183,8 +183,9 @@ const ProductSelectionPanel: React.FC<Props> = ({ onAddToCart }) => {
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm",
-        "dark:border-gray-800 dark:bg-gray-900"
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white",
+        "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out",
+        "dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]"
       )}
     >
       {/* ── Panel Header ── */}

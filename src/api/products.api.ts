@@ -253,7 +253,20 @@ export type CreateProductPayload = {
   variations: ProductVariationPayload[];
 };
 
-export type UpdateProductPayload = Omit<CreateProductPayload, "variations"> & {
+export type UpdateProductPayload = Omit<
+  CreateProductPayload,
+  | "variations"
+  | "main_category_id"
+  | "sub_category_id"
+  | "child_category_id"
+  | "brand_id"
+  | "attribute_id"
+> & {
+  main_category_id: number | null;
+  sub_category_id: number | null;
+  child_category_id: number | null;
+  brand_id: number | null;
+  attribute_id: number | null;
   delete_image_ids?: number[];
 };
 
