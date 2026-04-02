@@ -542,3 +542,26 @@ export async function updateRefundStatus(
     throw new Error(getErrMessage(err, "Failed to update refund status"));
   }
 }
+
+export async function syncCourierStatus(orderId: number): Promise<{
+  success: boolean;
+  updated: boolean;
+  courier_raw_status: string;
+  previous_status: string;
+  new_status: string;
+  message: string;
+}> {
+  const res = await api.post(`/admin/order/sync-courier-status/${orderId}`);
+  return res.data;
+}
+
+export async function bulkSyncCourierStatus(): Promise<{
+  success: boolean;
+  checked: number;
+  updated: number;
+  errors: number;
+  message: string;
+}> {
+  const res = await api.post(`/admin/orders/bulk-sync-courier-status`);
+  return res.data;
+}

@@ -1279,11 +1279,12 @@ export default function CourierRequestModal({ open, onClose, order }: Props) {
                       const provider = (
                         existingProvider || ""
                       ).toLowerCase();
+                      const phone = order.customerPhone || "";
                       let url = "";
                       if (provider.includes("steadfast"))
-                        url = `https://portal.packzy.com/tracking/${existingTracking}`;
+                        url = `https://steadfast.com.bd/t/${existingTracking}`;
                       else if (provider.includes("pathao"))
-                        url = `https://merchant.pathao.com/tracking/${existingTracking}`;
+                        url = `https://merchant.pathao.com/tracking?consignment_id=${existingTracking}${phone ? `&phone=${phone}` : ""}`;
                       else if (provider.includes("redx"))
                         url = `https://redx.com.bd/track-parcel/?trackingId=${existingTracking}`;
 

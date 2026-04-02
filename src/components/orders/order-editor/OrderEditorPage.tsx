@@ -25,6 +25,7 @@ import {
   updateOrderInfo,
   dispatchOrderCourier,
   manualDispatchOrder,
+  syncCourierStatus,
   type ApiOrder,
   type UpdateOrderItemsPayload,
 } from "@/api/orders.api";
@@ -169,9 +170,21 @@ function mapApiOrderToEditorData(o: ApiOrder): OrderEditorData {
           firstCourier?.reference_id !== undefined
           ? String(firstCourier.reference_id)
           : (firstCourier?.memo ?? ""),
-      trackingUrl: firstCourier?.tracking_number
-        ? `Tracking: ${firstCourier.tracking_number}`
-        : undefined,
+      trackingUrl: (() => {
+        const trackingNo = firstCourier?.tracking_number ?? "";
+        const prov = (firstCourier?.courier_provider ?? "").toLowerCase();
+        const phone = (o.customer_phone ?? "").replace(/\D/g, "");
+        if (!trackingNo) return undefined;
+        if (prov.includes("steadfast"))
+          return `https://steadfast.com.bd/t/${trackingNo}`;
+        if (prov.includes("pathao"))
+          return `https://merchant.pathao.com/tracking?consignment_id=${trackingNo}${phone ? `&phone=${phone}` : ""}`;
+        if (prov.includes("redx"))
+          return `https://redx.com.bd/track-parcel/?trackingId=${trackingNo}`;
+        if (prov.includes("paperfly"))
+          return `https://paperfly.com.bd/tracking/?trackId=${trackingNo}`;
+        return `Tracking: ${trackingNo}`;
+      })(),
       lastUpdatedAt: firstCourier?.created_at,
     },
 
@@ -540,6 +553,26 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
   const handleOpenStickerGenerator = () =>
     toast(t("orders.orderEditor.noStickerApi"));
 
+  const [syncingStatus, setSyncingStatus] = useState(false);
+  const handleSyncStatus = async () => {
+    if (!orderId || syncingStatus) return;
+    setSyncingStatus(true);
+    try {
+      const result = await syncCourierStatus(orderId);
+      if (result.updated) {
+        await queryClient.refetchQueries({ queryKey: ordersKeys.details(), type: "active" });
+        await queryClient.refetchQueries({ queryKey: ordersKeys.lists(), type: "active" });
+        toast.success(result.message);
+      } else {
+        toast(result.message);
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to sync courier status");
+    } finally {
+      setSyncingStatus(false);
+    }
+  };
+
   // ─── No order ID ───────────────────────────────────────────
   if (!orderId) {
     return (
@@ -774,6 +807,8 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
               onSend={handleCourierSend}
               onComplete={handleCourierComplete}
               onDownloadInvoice={handleCourierInvoice}
+              onSyncStatus={handleSyncStatus}
+              syncingStatus={syncingStatus}
             />
 
             <SidebarCustomerHistoryCard

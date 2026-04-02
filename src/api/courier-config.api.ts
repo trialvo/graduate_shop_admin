@@ -31,3 +31,8 @@ export async function updateCourierProviderConfig(provider: CourierProvider, for
   });
   return res.data;
 }
+
+export async function generateSteadfastWebhookToken(): Promise<{ success: boolean; token: string }> {
+  const res = await api.get("/config/steadfast/webhook-token");
+  return res.data;
+}

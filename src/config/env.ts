@@ -2,11 +2,11 @@
 //   import.meta.env.VITE_API_ORIGIN || "https://shop-api.shoplinkbd.com";
 // export const PUBLIC_ORIGIN = import.meta.env.VITE_PUBLIC_ORIGIN || "https://shop-api.shoplinkbd.com";
 
-export const API_ORIGIN = "http://localhost:7000";
-export const PUBLIC_ORIGIN = "http://localhost:7000";
+// export const API_ORIGIN = "http://localhost:7000";
+// export const PUBLIC_ORIGIN = "http://localhost:7000";
 
-// export const API_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
-// export const PUBLIC_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
+export const API_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
+export const PUBLIC_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
 
 // export const API_ORIGIN = "https://shop-api.trialvo.com";
 // export const PUBLIC_ORIGIN = "https://shop-api.trialvo.com";

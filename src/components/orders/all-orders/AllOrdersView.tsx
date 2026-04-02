@@ -19,7 +19,7 @@ import {
   STATUS_OPTIONS,
 } from "./orderData";
 
-import { getAdminOrders, ordersKeys, type ApiOrder } from "@/api/orders.api";
+import { getAdminOrders, ordersKeys, bulkSyncCourierStatus, type ApiOrder } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 function nowLabel() {
@@ -530,6 +530,27 @@ export default function AllOrdersView() {
     }
   };
 
+  const [bulkSyncing, setBulkSyncing] = useState(false);
+  const onBulkSync = async () => {
+    if (bulkSyncing) return;
+    setBulkSyncing(true);
+    try {
+      const result = await bulkSyncCourierStatus();
+      if (result.updated > 0) {
+        // refetchQueries (not invalidateQueries) to force immediate active refetch
+        await queryClient.refetchQueries({ queryKey: ordersKeys.lists(), type: "active" });
+        setRefreshedAt(nowLabel());
+        toast.success(`✓ Synced: ${result.updated} updated of ${result.checked} checked`);
+      } else {
+        toast(result.message);
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Bulk sync failed");
+    } finally {
+      setBulkSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
       {/* ─── Header ─── */}
@@ -556,8 +577,22 @@ export default function AllOrdersView() {
           </div>
         </div>
 
-        {/* Right: refresh + live indicator */}
-        <div className="flex items-center gap-2 self-start rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-800 dark:bg-gray-900">
+        {/* Right: sync-all + refresh + live indicator */}
+        <div className="flex items-center gap-2 self-start">
+          {/* Sync All Courier Status */}
+          <button
+            type="button"
+            onClick={onBulkSync}
+            disabled={bulkSyncing}
+            title="Sync all courier statuses from courier APIs"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-300"
+          >
+            <RefreshCw size={12} className={bulkSyncing ? "animate-spin" : undefined} />
+            <span className="hidden sm:inline">{bulkSyncing ? "Syncing…" : "Sync All Status"}</span>
+          </button>
+
+          {/* Live indicator + manual refresh */}
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success-400 opacity-75" />
@@ -571,14 +606,15 @@ export default function AllOrdersView() {
           <span className="hidden text-[11px] text-gray-400 dark:text-gray-500 sm:inline">
             {refreshedAt}
           </span>
-          <button
-            type="button"
-            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/[0.06] dark:hover:text-gray-200"
-            onClick={onRefresh}
-            aria-label="Refresh"
-          >
-            <RefreshCw size={13} />
-          </button>
+            <button
+              type="button"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/[0.06] dark:hover:text-gray-200"
+              onClick={onRefresh}
+              aria-label="Refresh"
+            >
+              <RefreshCw size={13} />
+            </button>
+          </div>
         </div>
       </div>
 

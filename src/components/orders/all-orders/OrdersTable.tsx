@@ -8,6 +8,7 @@ import {
   Eye,
   Pencil,
   Printer,
+  XCircle,
   MoreVertical,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -510,13 +511,48 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
                         <Printer size={16} />
                       </button>
 
-                      {/* <button
-                        type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-white/[0.03]"
-                        aria-label="More"
-                      >
-                        <MoreVertical size={16} />
-                      </button> */}
+                      {/* Quick cancel — only for active (non-terminal) orders */}
+                      {!["cancelled", "delivered", "returned", "trash"].includes(r.status) && (
+                        <button
+                          type="button"
+                          title="Cancel this order"
+                          disabled={statusMutation.isPending}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 hover:bg-red-50 disabled:opacity-40 dark:border-red-900/40 dark:bg-gray-950 dark:text-red-400 dark:hover:bg-red-500/10"
+                          aria-label="Cancel order"
+                          onClick={() => {
+                            const tid = toast(
+                              (tt) => (
+                                <span className="flex items-center gap-3 text-sm">
+                                  Cancel order <strong>#{r.id}</strong>?
+                                  <button
+                                    className="rounded bg-red-500 px-2 py-0.5 text-xs font-semibold text-white hover:bg-red-600"
+                                    onClick={() => {
+                                      toast.dismiss(tt.id);
+                                      statusMutation.mutate({
+                                        orderId: Number(r.id),
+                                        newStatus: "cancelled",
+                                        previousStatus: r.status,
+                                      });
+                                    }}
+                                  >
+                                    Confirm
+                                  </button>
+                                  <button
+                                    className="text-xs text-gray-500 hover:text-gray-700"
+                                    onClick={() => toast.dismiss(tt.id)}
+                                  >
+                                    Dismiss
+                                  </button>
+                                </span>
+                              ),
+                              { duration: 6000 }
+                            );
+                            void tid;
+                          }}
+                        >
+                          <XCircle size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

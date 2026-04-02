@@ -1,5 +1,5 @@
 import type React from "react";
-import { Truck, CheckCircle, FileText } from "lucide-react";
+import { Truck, CheckCircle, FileText, RefreshCw } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
@@ -21,6 +21,8 @@ interface SidebarCourierCardProps {
   onSend: () => void;
   onComplete: () => void;
   onDownloadInvoice: () => void;
+  onSyncStatus?: () => void;
+  syncingStatus?: boolean;
 }
 
 function toLabel(p: string) {
@@ -41,6 +43,8 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
   onSend,
   onComplete,
   onDownloadInvoice,
+  onSyncStatus,
+  syncingStatus = false,
 }) => {
   const { t } = useTranslation();
   const options =
@@ -166,6 +170,19 @@ const SidebarCourierCard: React.FC<SidebarCourierCardProps> = ({
           >
             {t("orders.orderEditor.courierInvoice")}
           </Button>
+          {onSyncStatus && trackingUrl && (
+            <Button
+              onClick={onSyncStatus}
+              size="sm"
+              variant="outline"
+              disabled={syncingStatus}
+              startIcon={
+                <RefreshCw size={13} className={syncingStatus ? "animate-spin" : undefined} />
+              }
+            >
+              {syncingStatus ? "Syncing…" : "Sync Status"}
+            </Button>
+          )}
         </div>
 
         {lastUpdatedAtLabel ? (

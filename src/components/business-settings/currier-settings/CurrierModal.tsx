@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { AlertTriangle, Image as ImageIcon } from "lucide-react";
+import { AlertTriangle, Image as ImageIcon, Copy, Check, Webhook, RefreshCw } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
 import Button from "@/components/ui/button/Button";
@@ -13,9 +13,58 @@ import Modal from "@/components/ui/modal/Modal";
 
 import { COURIER_PROVIDER_DEFS } from "./providerDefs";
 import type { CourierProvider, CourierProviderConfigCard, Option } from "./types";
-import { setDefaultCourier, updateCourierProviderConfig } from "@/api/courier-config.api";
+import {
+  setDefaultCourier,
+  updateCourierProviderConfig,
+  generateSteadfastWebhookToken,
+} from "@/api/courier-config.api";
 import { cn } from "@/lib/utils";
+import { API_ORIGIN, API_PREFIX } from "@/config/env";
 
+const WEBHOOK_BASE = `${API_ORIGIN}${API_PREFIX}`;
+
+// ─── Copy-to-clipboard helper row ────────────────────────────────────────────
+function CopyRow({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
+  const [copied, setCopied] = useState(false);
+
+  const doCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed – please select and copy manually");
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
+      <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex-1 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs dark:border-gray-700 dark:bg-gray-800/60",
+            mono && "font-mono"
+          )}
+        >
+          <span className="block truncate text-gray-800 dark:text-gray-100">{value}</span>
+        </div>
+        <button
+          type="button"
+          onClick={doCopy}
+          title="Copy"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-white"
+        >
+          {copied ? <Check size={13} className="text-success-500" /> : <Copy size={13} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 type Props = {
   open: boolean;
   provider: CourierProvider | null;
@@ -39,6 +88,7 @@ function safeStr(v: unknown): string {
   return String(v);
 }
 
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function CurrierModal({ open, provider, initial, onClose, onSaved }: Props) {
   const [currentProvider, setCurrentProvider] = useState<CourierProvider>("steadfast");
 
@@ -57,6 +107,9 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
   // image
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+
+  // webhook token state (Steadfast)
+  const [generatingToken, setGeneratingToken] = useState(false);
 
   const hydratingRef = useRef(false);
 
@@ -187,7 +240,34 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
     mutation.mutate(fd);
   };
 
+  // ─── Generate Steadfast webhook token ──────────────────────────────────────
+  const handleGenerateToken = async () => {
+    setGeneratingToken(true);
+    try {
+      const data = await generateSteadfastWebhookToken();
+      if (data?.success && data.token) {
+        // Pre-fill the webhook_secret credential field
+        changeCred("webhook_secret", data.token);
+        toast.success("Token generated — fill in the field above and save.");
+      } else {
+        toast.error("Failed to generate token");
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Failed to generate token");
+    } finally {
+      setGeneratingToken(false);
+    }
+  };
+
   if (!open) return null;
+
+  // Webhook callback URLs
+  const steadfastCallbackUrl = `${WEBHOOK_BASE}/webhooks/steadfast`;
+  const pathaoCallbackUrl    = `${WEBHOOK_BASE}/webhooks/pathao`;
+
+  const isSteadfast = currentProvider === "steadfast";
+  const isPathao    = currentProvider === "pathao";
+  const showWebhookPanel = isSteadfast || isPathao;
 
   return (
     <Modal
@@ -320,6 +400,105 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
           ))}
         </div>
       </div>
+
+      {/* ─── Webhook Integration Panel ─── */}
+      {showWebhookPanel && (
+        <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/40 dark:bg-blue-500/10">
+          {/* Header */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300">
+              <Webhook size={15} />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                Webhook Integration
+              </h4>
+              <p className="text-xs text-blue-600/80 dark:text-blue-300/70">
+                {isSteadfast
+                  ? "Copy the Callback URL & Bearer token below into Steadfast → Webhook → Add Webhook."
+                  : "Copy the Callback URL below into Pathao → Developer API → Webhook Integration."}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-4">
+            {/* Callback URL */}
+            <CopyRow
+              label="Callback URL"
+              value={isSteadfast ? steadfastCallbackUrl : pathaoCallbackUrl}
+            />
+
+            {/* Steadfast-specific: generate token */}
+            {isSteadfast && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600/80 dark:text-blue-300/70">
+                  Auth Token (Bearer)
+                </p>
+
+                {/* Show current stored token if any */}
+                {credentials["webhook_secret"] && (
+                  <CopyRow
+                    label="Current Webhook Token (stored)"
+                    value={credentials["webhook_secret"]}
+                  />
+                )}
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleGenerateToken}
+                    disabled={generatingToken}
+                    startIcon={
+                      <RefreshCw
+                        size={13}
+                        className={generatingToken ? "animate-spin" : undefined}
+                      />
+                    }
+                  >
+                    {generatingToken ? "Generating…" : "Generate Webhook Token"}
+                  </Button>
+                  <p className="text-xs text-blue-600/70 dark:text-blue-300/60">
+                    Fills the Webhook Integration Secret field above. Save after generating.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-blue-200 bg-white/60 px-3 py-2.5 text-[11px] text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/10 dark:text-blue-300">
+                  <strong>Steps:</strong> Click Generate → save config → copy the token from
+                  the field above → paste it as <em>Auth Token (Bearer)</em> on Steadfast.
+                </div>
+              </div>
+            )}
+
+            {/* Pathao-specific: secret explanation */}
+            {isPathao && (
+              <div className="space-y-2">
+                <div className="rounded-lg border border-blue-200 bg-white/60 px-3 py-2.5 text-[11px] text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/10 dark:text-blue-300">
+                  <strong>Steps:</strong>{" "}
+                  <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+                    <li>
+                      Paste the <strong>Callback URL</strong> above into Pathao → Developer API →
+                      Webhook Integration → <em>Callback URL</em>.
+                    </li>
+                    <li>
+                      Set the <strong>Webhook Integration Secret</strong> field in this modal to
+                      any secure string, then save.
+                    </li>
+                    <li>
+                      Enter that same string as the <em>Secret</em> in Pathao's webhook form.
+                    </li>
+                    <li>
+                      Pathao will echo it back in the{" "}
+                      <span className="font-mono">X-PATHAO-Signature</span> header on every
+                      event; our server validates it automatically.
+                    </li>
+                  </ol>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Image */}
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
