@@ -1,17 +1,18 @@
 // src/components/products/product-attributes/tabs/AttributeTab.tsx
 "use client";
 
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, GripVertical, Layers, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Download, GripVertical, Layers, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { Pagination } from "@/components/ui";
-import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
+import { Pagination } from "@/components/ui";
+import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
 
 import type { AttributeRow, Option, VariantRow } from "../types";
@@ -31,8 +32,7 @@ import {
   deleteVariant,
   getVariant,
   reorderVariants,
-  updateVariant,
-  type Variant,
+  updateVariant
 } from "@/api/variants.api";
 
 const STATUS_OPTIONS: Option[] = [
@@ -863,6 +863,13 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
     status: true,
   });
 
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    type: "attribute" | "variant";
+    id: number | null;
+    name: string;
+  }>({ open: false, type: "attribute", id: null, name: "" });
+
   /* ---- Single loads for modals ---- */
 
   const { data: singleAttr, isLoading: singleAttrLoading } = useQuery({
@@ -1123,8 +1130,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
   };
 
   const handleDeleteVariant = (v: VariantRow) => {
-    if (window.confirm(`Delete variant "${v.name}"?`))
-      deleteVarMutation.mutate(v.id);
+    setDeleteConfirm({ open: true, type: "variant", id: v.id, name: v.name });
   };
 
   const onExport = () => {
@@ -1137,7 +1143,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
         {/* Header */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -1220,7 +1226,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
         {isLoading ? (
           <TableSkeleton />
         ) : (
@@ -1342,11 +1348,7 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
                             <Button
                               variant="danger"
                               size="icon"
-                              onClick={() => {
-                                const ok = window.confirm(`Delete attribute "${row.name}"?`);
-                                if (!ok) return;
-                                deleteAttrMutation.mutate(row.id);
-                              }}
+                              onClick={() => setDeleteConfirm({ open: true, type: "attribute", id: row.id, name: row.name })}
                               ariaLabel="Delete attribute"
                               disabled={deleteAttrMutation.isPending}
                               startIcon={<Trash2 size={16} />}
@@ -1402,6 +1404,48 @@ export default function AttributeTab({ tabsHeader }: { tabsHeader?: React.ReactN
         onSubmit={submitVariantModal}
         submitting={updateVarMutation.isPending}
         loadingSingle={singleVarLoading}
+      />
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        open={deleteConfirm.open}
+        onClose={() => {
+          if (deleteAttrMutation.isPending || deleteVarMutation.isPending) return;
+          setDeleteConfirm((p) => ({ ...p, open: false }));
+        }}
+        onConfirm={() => {
+          if (!deleteConfirm.id) return;
+          if (deleteConfirm.type === "attribute") deleteAttrMutation.mutate(deleteConfirm.id);
+          else deleteVarMutation.mutate(deleteConfirm.id);
+          setDeleteConfirm((p) => ({ ...p, open: false }));
+        }}
+        loading={deleteAttrMutation.isPending || deleteVarMutation.isPending}
+        title={deleteConfirm.type === "attribute" ? "Delete Attribute?" : "Delete Variant?"}
+        subtitle="This action is permanent and cannot be undone."
+        message={
+          deleteConfirm.name ? (
+            <span>
+              <span className="font-normal text-gray-500 dark:text-gray-400">
+                {deleteConfirm.type === "attribute" ? "Attribute" : "Variant"}&nbsp;·&nbsp;
+              </span>
+              <span className="font-semibold">{deleteConfirm.name}</span>
+            </span>
+          ) : undefined
+        }
+        consequenceLines={
+          deleteConfirm.type === "attribute"
+            ? [
+              "This attribute and all its variants will be removed",
+              "Products using this attribute may be affected",
+              "This action cannot be recovered or reversed",
+            ]
+            : [
+              "This variant will be permanently deleted",
+              "Product listings using this variant may be affected",
+              "This action cannot be recovered or reversed",
+            ]
+        }
+        confirmLabel={deleteConfirm.type === "attribute" ? "Delete Attribute" : "Delete Variant"}
       />
     </div>
   );

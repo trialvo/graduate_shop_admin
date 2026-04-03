@@ -12,7 +12,7 @@ import GuestOrdersHeader from "./GuestOrdersHeader";
 import GuestOrdersToolbar from "./GuestOrdersToolbar";
 import GuestOrdersTable from "./GuestOrdersTable";
 import { Pagination } from "@/components/ui";
-import ConfirmDeleteModal from "@/components/ui/modal/ConfirmDeleteModal";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
 import {
   deleteGuestOrder,
@@ -156,6 +156,26 @@ const GuestOrdersPage: React.FC = () => {
     return list.map(toRow);
   }, [listQuery.data]);
 
+  const deleteOrderLabel = React.useMemo((): React.ReactNode => {
+    if (!deleteTarget) return undefined;
+    const row = rows.find((r) => String(r.id) === deleteTarget);
+    if (!row) return undefined;
+    return (
+      <span className="flex flex-col gap-0.5">
+        <span>
+          <span className="font-normal text-gray-500 dark:text-gray-400">Order placed by&nbsp;·&nbsp;</span>
+          <span className="font-semibold">{row.customerName}</span>
+        </span>
+        {row.orderId != null && (
+          <span>
+            <span className="font-normal text-gray-500 dark:text-gray-400">Order ID&nbsp;·&nbsp;</span>
+            <span className="font-semibold">#{row.orderId}</span>
+          </span>
+        )}
+      </span>
+    );
+  }, [deleteTarget, rows]);
+
   const totalItems = listQuery.data?.total ?? 0;
 
   const tabBadges: Record<"all" | GuestOrderStatus, number> = {
@@ -243,17 +263,26 @@ const GuestOrdersPage: React.FC = () => {
       />
 
       {/* Delete confirmation modal */}
-      <ConfirmDeleteModal
+      <ConfirmModal
         open={deleteTarget !== null}
-        title={t("guestOrders.deleteConfirmTitle", "Delete Guest Order?")}
-        description={t("guestOrders.deleteConfirmDesc", "This action cannot be undone. The guest order will be permanently removed.")}
-        confirmText={t("guestOrders.deleteConfirmBtn", "Yes, Delete")}
-        cancelText={t("guestOrders.deleteCancel", "Cancel")}
-        loading={deleteMutation.isPending}
+        onClose={() => {
+          if (deleteMutation.isPending) return;
+          setDeleteTarget(null);
+        }}
         onConfirm={() => {
           if (deleteTarget) deleteMutation.mutate(deleteTarget, { onSettled: () => setDeleteTarget(null) });
         }}
-        onClose={() => setDeleteTarget(null)}
+        loading={deleteMutation.isPending}
+        title={t("guestOrders.deleteConfirmTitle", "Delete Guest Order?")}
+        subtitle={t("guestOrders.deleteConfirmDesc", "This action cannot be undone. The guest order will be permanently removed.")}
+        message={deleteOrderLabel}
+        consequenceLines={[
+          t("guestOrders.deleteEffect1", "The order record will be permanently deleted"),
+          t("guestOrders.deleteEffect2", "Customer & payment info linked to this order will be lost"),
+          t("guestOrders.deleteEffect3", "This cannot be recovered or reversed"),
+        ]}
+        confirmLabel={t("guestOrders.deleteConfirmBtn", "Yes, Delete")}
+        cancelLabel={t("guestOrders.deleteCancel", "Cancel")}
       />
 
       <Pagination

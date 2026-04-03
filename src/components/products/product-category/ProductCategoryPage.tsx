@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
-import Tabs from "@/components/ui/tabs/Tabs";
+import SlidingTabFilter, { type SlidingTabOption } from "@/components/ui/SlidingTabFilter";
 import SectionCard from "@/components/ui/layout/SectionCard";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 import { useTranslation } from "react-i18next";
@@ -131,6 +131,19 @@ export default function ProductCategoryPage() {
   const isRefreshing = currentQuery.isFetching && !currentQuery.isLoading;
   const rows = currentQuery.data?.data ?? [];
 
+  const entityLabel = useMemo(() => {
+    if (!deleteState) return "Category";
+    if (deleteState.entity === "main") return "Main Category";
+    if (deleteState.entity === "sub") return "Sub Category";
+    return "Child Category";
+  }, [deleteState]);
+
+  const deleteCategoryName = useMemo(() => {
+    if (!deleteState) return undefined;
+    const row = (rows as any[]).find((r) => Number(r.id) === deleteState.id);
+    return row?.name as string | undefined;
+  }, [deleteState, rows]);
+
   const openCreate = () => setEditState({ open: true, entity: tab, mode: "create", id: null });
   const openEdit = (entity: CategoryEntity, id: number) =>
     setEditState({ open: true, entity, mode: "edit", id });
@@ -190,11 +203,13 @@ export default function ProductCategoryPage() {
     }
   };
 
-  // Tabs for the reusable Tabs component
-  const tabItems = TABS.map((tb) => ({
-    id: tb.id,
-    label: t(tb.labelKey),
-    count: tab === tb.id ? total : undefined,
+  // Sliding tab options (count shown inline on active tab)
+  const tabOptions: SlidingTabOption<CategoryEntity>[] = TABS.map((tb) => ({
+    value: tb.id,
+    label:
+      tab === tb.id && total > 0
+        ? `${t(tb.labelKey)} (${total})`
+        : t(tb.labelKey),
   }));
 
   const createLabel =
@@ -218,9 +233,9 @@ export default function ProductCategoryPage() {
       >
         {/* Tab row */}
         <div className="border-b border-gray-100 px-4 py-2.5 dark:border-gray-800">
-          <Tabs
-            tabs={tabItems}
-            active={tab}
+          <SlidingTabFilter<CategoryEntity>
+            options={tabOptions}
+            value={tab}
             onChange={(id) => { setTab(id); setOffset(0); }}
           />
         </div>
@@ -266,11 +281,28 @@ export default function ProductCategoryPage() {
       {/* Confirm Delete Modal */}
       <ConfirmModal
         open={!!deleteState?.open}
-        onClose={() => setDeleteState(null)}
+        onClose={() => {
+          if (delMain.isPending || delSub.isPending || delChild.isPending) return;
+          setDeleteState(null);
+        }}
         onConfirm={confirmDelete}
         loading={delMain.isPending || delSub.isPending || delChild.isPending}
-        title={t("products.categories.confirmDeleteTitle")}
-        message={t("products.categories.confirmDeleteMsg")}
+        title={`Delete ${entityLabel}?`}
+        subtitle="This action is permanent and cannot be undone."
+        message={
+          deleteCategoryName ? (
+            <span>
+              <span className="font-normal text-gray-500 dark:text-gray-400">{entityLabel}&nbsp;·&nbsp;</span>
+              <span className="font-semibold">{deleteCategoryName}</span>
+            </span>
+          ) : undefined
+        }
+        consequenceLines={[
+          "This category will be permanently deleted",
+          "Any products or sub-categories linked to it may be affected",
+          "This action cannot be recovered or reversed",
+        ]}
+        confirmLabel={`Delete ${entityLabel}`}
       />
     </div>
   );
