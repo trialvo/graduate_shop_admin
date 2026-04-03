@@ -151,4 +151,10 @@ export type OrderRow = {
       image?: string | null;
     }[];
   };
+
+  /** V2-017: Order Assignment fields */
+  assignedToAdminId: number | null;
+  assignedAdminName: string | null;
+  assignmentMethod: "auto" | "manual" | "redistribute" | null;
+  isAssignedToMe: boolean;
 };

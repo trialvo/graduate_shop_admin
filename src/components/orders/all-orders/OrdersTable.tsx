@@ -10,6 +10,7 @@ import {
   Printer,
   XCircle,
   MoreVertical,
+  UserCheck,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -216,6 +217,7 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
               <col className="w-[150px]" />
               <col className="w-[170px]" />
               <col className="w-[150px]" />
+              <col className="w-[180px]" />
               <col className="w-[220px]" />
               <col className="w-[220px]" />
               <col className="w-[220px]" />
@@ -248,6 +250,7 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
                   "Status",
                   "Date Time",
                   "Send Currier",
+                  "Assigned",
                   "Order Note",
                   "Shipping Location",
                 ].map((label) => (
@@ -469,13 +472,33 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
                     </div>
                   </td>
 
+                  {/* Assigned */}
+                  <td className="px-4 py-4">
+                    {r.assignedToAdminId ? (
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <UserCheck size={13} className="shrink-0 text-brand-500" />
+                          <p className="truncate text-xs font-semibold text-gray-800 dark:text-white">
+                            {r.assignedAdminName ?? `#${r.assignedToAdminId}`}
+                          </p>
+                        </div>
+                        {r.isAssignedToMe && (
+                          <span className="inline-flex items-center rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
+                            Me
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">&mdash;</span>
+                    )}
+                  </td>
+
                   {/* Order Note */}
                   <td className="px-4 py-4">
                     <p className="truncate text-sm text-gray-600 dark:text-gray-300">
                       {r.orderNote || "—"}
                     </p>
                   </td>
-
                   {/* Shipping Location */}
                   <td className="px-4 py-4">
                     <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
@@ -561,7 +584,7 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
               {!mergedRows.length ? (
                 <tr>
                   <td
-                    colSpan={11}
+                    colSpan={12}
                     className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     No orders found.

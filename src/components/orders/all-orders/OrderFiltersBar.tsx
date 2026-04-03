@@ -56,6 +56,9 @@ type Props = {
 
   onClear: () => void;
 
+  assignedToMe: boolean;
+  setAssignedToMe: (v: boolean) => void;
+
   uiOptions: {
     orderType: readonly { id: string; label: string }[];
     paymentStatus: readonly { id: string; label: string }[];
@@ -100,6 +103,8 @@ export default function OrderFiltersBar({
   onClear,
   uiOptions,
   loading,
+  assignedToMe,
+  setAssignedToMe,
 }: Props) {
   const { t } = useTranslation();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -171,6 +176,22 @@ export default function OrderFiltersBar({
         >
           <SlidersHorizontal size={14} />
           <span className="hidden sm:inline">Filters</span>
+        </button>
+
+        {/* Assigned to Me toggle */}
+        <button
+          type="button"
+          onClick={() => setAssignedToMe(!assignedToMe)}
+          className={cn(
+            "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition",
+            assignedToMe
+              ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          )}
+          title="Show only orders assigned to me"
+        >
+          <span className="text-[11px]">👤</span>
+          <span className="hidden sm:inline">Assigned to Me</span>
         </button>
 
         {/* Clear */}

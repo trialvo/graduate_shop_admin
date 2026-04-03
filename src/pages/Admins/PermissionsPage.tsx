@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import {
   AlertTriangle, Bell, BellRing, KeyRound, Lock,
   Mail, MessageSquare, Percent, Save, Settings2,
-  ShoppingCart, Smartphone, Zap,
+  ShoppingCart, Smartphone, Zap, ShieldCheck,
 } from "lucide-react";
 import PageMeta from "@/components/common/PageMeta";
 import { usePermissionConfig, usePatchPermissionConfig } from "@/hooks/usePermissions";
@@ -644,6 +644,7 @@ function AdminNotifPermissionsPanel() {
         personal_notification_email: row.personal_notification_email,
         personal_notification_sms: row.personal_notification_sms,
         personal_notification_firebase_push: row.personal_notification_firebase_push,
+        allow_handle_unassigned_order: row.allow_handle_unassigned_order,
       };
       await setPermsMutation.mutateAsync({ admin_id: row.admin_id, payload });
       setRows((prev) => prev.map((r) => (r.admin_id === row.admin_id ? { ...r, dirty: false } : r)));
@@ -794,6 +795,9 @@ function AdminNotifPermissionsPanel() {
             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700" colSpan={3}>
               Personal Notifications
             </th>
+            <th className="px-4 py-3 text-center text-xs font-semibold text-orange-500 dark:text-orange-400 border-l border-gray-200 dark:border-gray-700" colSpan={1}>
+              Order Assignment
+            </th>
             <th className="px-4 py-3 text-xs font-semibold text-brand-500 w-20">Save</th>
           </tr>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -806,6 +810,13 @@ function AdminNotifPermissionsPanel() {
                 </span>
               </th>
             ))}
+            {/* Order Assignment column sub-header */}
+            <th className="px-2 py-2 text-center text-xs border-l border-gray-200 dark:border-gray-700">
+              <span className="inline-flex items-center gap-1 text-orange-500">
+                <ShieldCheck size={10} />
+                Unassigned
+              </span>
+            </th>
             <th />
           </tr>
         </thead>
@@ -849,6 +860,25 @@ function AdminNotifPermissionsPanel() {
                   </button>
                 </td>
               ))}
+
+              {/* allow_handle_unassigned_order toggle */}
+              <td className="px-2 py-3 text-center border-l border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  aria-label="allow_handle_unassigned_order"
+                  title="Allow this admin to view and process orders not assigned to them"
+                  onClick={() => toggle(row.admin_id, "allow_handle_unassigned_order")}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    row.allow_handle_unassigned_order
+                      ? "bg-orange-400"
+                      : "bg-gray-200 dark:bg-gray-700"
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    row.allow_handle_unassigned_order ? "translate-x-4" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </td>
 
               <td className="px-4 py-3 text-center">
                 <button type="button" onClick={() => saveRow(row)} disabled={!row.dirty || saving[row.admin_id]}

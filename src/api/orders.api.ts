@@ -18,6 +18,11 @@ export type OrdersListParams = {
   date_from?: string;
   date_to?: string;
 
+  /** Filter to only orders assigned to the current admin */
+  assigned_to_me?: boolean;
+  /** Filter to orders assigned to a specific admin */
+  assigned_to_admin_id?: number;
+
   limit?: number;
   offset?: number;
 };
@@ -181,6 +186,13 @@ export type ApiOrder = {
   lm_city_name: string | null;
   location_mapping_id: number | null;
   zip_code: string;
+
+  /** Order assignment fields (V2-017) */
+  assigned_to_admin_id: number | null;
+  assigned_by_admin_id: number | null;
+  assignment_method: "auto" | "manual" | "redistribute" | null;
+  assigned_at: string | null;
+  assigned_admin_name: string | null;
 
   items: ApiOrderItem[];
   payments: ApiOrderPayment[];

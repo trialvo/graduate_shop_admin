@@ -9,6 +9,8 @@ export type AdminNotificationPermission = {
   personal_notification_email: boolean;
   personal_notification_sms: boolean;
   personal_notification_firebase_push: boolean;
+  /** V2-017: Allow admin to handle orders not assigned to them */
+  allow_handle_unassigned_order: boolean;
   updated_by_admin: number | null;
   created_at: string;
   updated_at: string;
@@ -26,6 +28,8 @@ export type SetNotificationPermissionsPayload = {
   personal_notification_email: boolean;
   personal_notification_sms: boolean;
   personal_notification_firebase_push: boolean;
+  /** V2-017: Allow admin to handle unassigned orders */
+  allow_handle_unassigned_order?: boolean;
 };
 
 export async function getAllAdminNotificationPermissions(): Promise<{

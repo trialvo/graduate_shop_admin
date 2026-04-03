@@ -3,6 +3,8 @@ import { RefreshCw } from "lucide-react";
 import { keepPreviousData, useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/AuthProvider";
+
 
 import OrdersTable from "./OrdersTable";
 import OrderFiltersBar from "./OrderFiltersBar";
@@ -237,6 +239,12 @@ export default function AllOrdersView() {
   const [limit, setLimit] = useState<number>(20);
   const [offset, setOffset] = useState<number>(0);
 
+  // V2-017: Assigned to Me filter
+  const [assignedToMe, setAssignedToMe] = useState<boolean>(false);
+
+  const { admin } = useAuth();
+  const currentAdminId = admin?.id ?? null;
+
   const [refreshedAt, setRefreshedAt] = useState(nowLabel());
 
   useEffect(() => {
@@ -273,6 +281,8 @@ export default function AllOrdersView() {
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
 
+      assigned_to_me: assignedToMe || undefined,
+
       limit,
       offset,
     };
@@ -289,6 +299,7 @@ export default function AllOrdersView() {
     maxTotal,
     dateFrom,
     dateTo,
+    assignedToMe,
     limit,
     offset,
   ]);
@@ -463,18 +474,21 @@ export default function AllOrdersView() {
               ? `${o.lm_city_name || o.city} — ${o.area_name}`
               : (`${o.city ?? ""}`.trim() || "—"),
             codAmount: o.payment_type === "cod" ? Number(o.grand_total ?? 0) : 0,
-            // Prefer the weight that was last dispatched to a courier (order_couriers.weight).
-            // Fall back to the order's computed item weight (weight_kg_total) so the
-            // field pre-fills with a sensible default even before first dispatch.
             weightKg:
               (mainCourier?.weight != null && Number(mainCourier.weight) > 0)
                 ? Number(mainCourier.weight)
                 : Number(o.weight_kg_total ?? 0) || 0,
           },
         },
+
+        // V2-017: Assignment fields
+        assignedToAdminId: o.assigned_to_admin_id ?? null,
+        assignedAdminName: o.assigned_admin_name ?? null,
+        assignmentMethod: o.assignment_method ?? null,
+        isAssignedToMe: currentAdminId !== null && o.assigned_to_admin_id === currentAdminId,
       };
     });
-  }, [ordersQuery.data, ordersQuery.data?.courierOption]);
+  }, [ordersQuery.data, ordersQuery.data?.courierOption, currentAdminId]);
 
   const pagination = ordersQuery.data?.pagination;
   const total = pagination?.total ?? 0;
@@ -498,6 +512,7 @@ export default function AllOrdersView() {
     setMaxTotal("");
     setDateFrom("");
     setDateTo("");
+    setAssignedToMe(false);
     setLimit(20);
     setOffset(0);
     setSelectedIds(new Set());
@@ -691,6 +706,11 @@ export default function AllOrdersView() {
           fraud: FRAUD_OPTIONS,
         }}
         loading={ordersQuery.isFetching}
+        assignedToMe={assignedToMe}
+        setAssignedToMe={(v) => {
+          setAssignedToMe(v);
+          setOffset(0);
+        }}
       />
 
       {/* Table */}
