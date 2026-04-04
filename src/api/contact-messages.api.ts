@@ -6,6 +6,7 @@ export type ContactMessageCounts = {
   unread: number;
   unreplied: number;
   read_but_not_replied: number;
+  archived: number; // V2-037
 };
 
 export type ContactMessage = {
@@ -160,5 +161,14 @@ export async function replyContactMessage(
   payload: ReplyContactMessagePayload
 ): Promise<{ success: boolean; message: string } & Record<string, unknown>> {
   const res = await api.post("/admin/contact-message/reply", payload);
+  return res.data;
+}
+
+// V2-036: Assign a contact message to an admin
+export async function assignContactMessage(
+  id: number,
+  admin_id: number
+): Promise<{ success: boolean; message: string }> {
+  const res = await api.patch(`/admin/contact-message/${id}/assign`, { admin_id });
   return res.data;
 }

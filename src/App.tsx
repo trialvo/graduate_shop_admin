@@ -63,6 +63,7 @@ import AdminAuditLogsPage from "./pages/Admins/AdminAuditLogsPage";
 import UserAuditLogsPage from "./pages/Admins/UserAuditLogsPage";
 import AnnouncementsListPage from "./pages/Announcements/AnnouncementsListPage";
 import CreateAnnouncementPage from "./pages/Announcements/CreateAnnouncementPage";
+import ReportsPage from "./pages/SupportMessages/ReportsPage";
 
 export default function App() {
   return (
@@ -111,7 +112,8 @@ export default function App() {
                 path="/banner-video-settings"
                 element={<BannerVideoSettings />}
               />
-              <Route path="/contact-page" element={<ContactPage />} />
+              <Route path="/contact-page"      element={<ContactPage />} />
+              <Route path="/contact-messages"  element={<ContactPage />} />
               <Route path="/footer-settings" element={<FooterSettings />} />
 
               {/* Reports */}
@@ -168,6 +170,9 @@ export default function App() {
               <Route path="/announcements" element={<AnnouncementsListPage />} />
               <Route path="/create-announcement" element={<CreateAnnouncementPage />} />
               <Route path="/edit-announcement/:id" element={<CreateAnnouncementPage edit />} />
+
+              {/* ✅ V2-036: Support Reports */}
+              <Route path="/support-reports" element={<ReportsPage />} />
             </Route>
           </Route>
 

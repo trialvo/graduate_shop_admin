@@ -1,18 +1,24 @@
-// src/components/contact-messages/ContactMessagesPage.tsx
+// src/components/website-settings/contact-messages/ContactMessagesPage.tsx — V2-037
+// Inbox tab + Distribution Pool tab for Contact Messages.
+
 "use client";
 
 import React from "react";
-import { Inbox, MessageSquareText } from "lucide-react";
+import {
+  Archive, Inbox, Mail, MessageSquare, MessageSquareText,
+  RefreshCw, Search, Shuffle, SlidersHorizontal, Users,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 
 import { Pagination } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthProvider";
 
-import ContactMessagesFiltersBar from "./ContactMessagesFiltersBar";
 import ContactMessagesList from "./ContactMessagesList";
 import ContactMessageDetailsPanel from "./ContactMessageDetailsPanel";
 import ReplyModal, { type ReplyType } from "./ReplyModal";
-import type { ContactMessageFilters, ContactMessagePageState } from "./types";
+import type { ContactMessageFilters, ContactMessagePageState, ContactTabKey } from "./types";
 import {
   useContactMessage,
   useContactMessageCounts,
@@ -21,238 +27,455 @@ import {
   useReplyContactMessage,
   useToggleContactMessageStatus,
 } from "./useContactMessages";
+import SupportDistributionPoolTab from "@/components/support/SupportDistributionPoolTab";
+import SupportAssignTab from "@/components/support/SupportAssignTab";
+import {
+  useContactDistributionSettings,
+  useContactEligibleAdmins,
+  useUpdateContactDistributionSettings,
+  useUpsertContactAgent,
+  useRemoveContactAgent,
+  useRedistributeContactMessages,
+  // V2-038
+  useContactAssignmentLogs,
+  useManualAssignContactMessage,
+} from "@/hooks/useContactDistribution";
+
+// ─── Stat Tab Config ─────────────────────────────────────────────────────── //
+
+type StatTabDef = { key: ContactTabKey; label: string; countKey: string; color: string; activeClass: string; icon: React.ReactNode };
+
+const STAT_TABS: StatTabDef[] = [
+  {
+    key: "all",                 label: "Total",               countKey: "total",                color: "text-gray-600 dark:text-gray-400",
+    activeClass: "border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800",
+    icon: <MessageSquare size={13} />,
+  },
+  {
+    key: "unread",              label: "Unread",              countKey: "unread",               color: "text-sky-600 dark:text-sky-400",
+    activeClass: "border-sky-200 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/10",
+    icon: <Mail size={13} />,
+  },
+  {
+    key: "unreplied",          label: "Unreplied",            countKey: "unreplied",            color: "text-amber-600 dark:text-amber-400",
+    activeClass: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
+    icon: <MessageSquare size={13} />,
+  },
+  {
+    key: "read_but_not_replied", label: "Read · Unreplied", countKey: "read_but_not_replied",  color: "text-orange-600 dark:text-orange-400",
+    activeClass: "border-orange-200 bg-orange-50 dark:border-orange-500/30 dark:bg-orange-500/10",
+    icon: <MessageSquare size={13} />,
+  },
+  {
+    key: "archived",           label: "Archived",             countKey: "archived",             color: "text-gray-500 dark:text-gray-500",
+    activeClass: "border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700",
+    icon: <Archive size={13} />,
+  },
+];
+
+// Map stat tab to api filters
+function tabToFilters(tab: ContactTabKey): Partial<ContactMessageFilters> {
+  if (tab === "unread")             return { status: "active", is_read: "false" };
+  if (tab === "unreplied")          return { status: "active", is_replied: "false" };
+  if (tab === "read_but_not_replied") return { status: "active", is_read: "true", is_replied: "false" };
+  if (tab === "archived")           return { status: "archived" };
+  return { status: "active" };
+}
+
+// ── Defaults ─────────────────────────────────────────────────────────────── //
 
 const DEFAULT_FILTERS: ContactMessageFilters = {
-  tab: "all",
-  status: "active",
-  is_read: "all",
-  is_replied: "all",
-  search: "",
-  subject: "",
+  tab: "all", status: "active", is_read: "all", is_replied: "all", search: "", subject: "",
 };
+const DEFAULT_STATE: ContactMessagePageState = { page: 1, pageSize: 20, selectedId: null };
 
-const DEFAULT_STATE: ContactMessagePageState = {
-  page: 1,
-  pageSize: 20,
-  selectedId: null,
-};
+type PageTab = "inbox" | "pool" | "assign";
+
+// ─── Main Component ───────────────────────────────────────────────────────── //
 
 export default function ContactMessagesPage() {
   const { t } = useTranslation();
-  const [filters, setFilters] =
-    React.useState<ContactMessageFilters>(DEFAULT_FILTERS);
-  const [state, setState] =
-    React.useState<ContactMessagePageState>(DEFAULT_STATE);
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole("SUPER_ADMIN");
+  const isAdmin      = hasRole("ADMIN");
+  const canManage    = isSuperAdmin || isAdmin; // can access Pool + Assign tabs
+
+  const [pageTab, setPageTab]   = React.useState<PageTab>("inbox");
+  const [filters, setFilters]   = React.useState<ContactMessageFilters>(DEFAULT_FILTERS);
+  const [state, setState]       = React.useState<ContactMessagePageState>(DEFAULT_STATE);
+  const [showSearch, setShowSearch] = React.useState(false);
 
   const offset = (state.page - 1) * state.pageSize;
 
-  const countsQuery = useContactMessageCounts();
+  // ── Queries ─────────────────────────────────────────────────────────────
+  const countsQ = useContactMessageCounts();
+  const counts  = countsQ.data?.data;
 
-  const listQuery = useContactMessages(
-    {
-      status: filters.status,
-      offset,
-      limit: state.pageSize,
-      subject: filters.subject,
-      search: filters.search,
-      is_read: filters.is_read,
-      is_replied: filters.is_replied,
-    },
+  const listQ = useContactMessages(
+    { status: filters.status, offset, limit: state.pageSize, subject: filters.subject, search: filters.search, is_read: filters.is_read, is_replied: filters.is_replied },
     { enabled: true }
   );
-
-  const rows = listQuery.data?.data ?? [];
-  const total = listQuery.data?.total ?? 0;
+  const rows  = listQ.data?.data ?? [];
+  const total = listQ.data?.total ?? 0;
 
   React.useEffect(() => {
     if (state.selectedId) {
-      const stillExists = rows.some((r) => r.id === state.selectedId);
-      if (!stillExists && rows.length > 0)
-        setState((s) => ({ ...s, selectedId: rows[0].id }));
-      if (!stillExists && rows.length === 0)
-        setState((s) => ({ ...s, selectedId: null }));
+      if (!rows.some(r => r.id === state.selectedId)) {
+        setState(s => ({ ...s, selectedId: rows.length > 0 ? rows[0].id : null }));
+      }
     } else if (!state.selectedId && rows.length > 0) {
-      setState((s) => ({ ...s, selectedId: rows[0].id }));
+      setState(s => ({ ...s, selectedId: rows[0].id }));
     }
   }, [rows, state.selectedId]);
 
-  const selectedId = state.selectedId;
-  const singleQuery = useContactMessage(selectedId, {
-    enabled: !!selectedId,
-  });
-  const selected = singleQuery.data?.data ?? null;
+  const singleQ  = useContactMessage(state.selectedId, { enabled: !!state.selectedId });
+  const selected = singleQ.data?.data ?? null;
 
   const toggleStatus = useToggleContactMessageStatus();
-  const deleteMsg = useDeleteContactMessage();
-  const replyMsg = useReplyContactMessage();
-
+  const deleteMsg    = useDeleteContactMessage();
+  const replyMsg     = useReplyContactMessage();
   const [replyOpen, setReplyOpen] = React.useState(false);
 
-  const applyFilters = (patch: Partial<ContactMessageFilters>) => {
-    setFilters((f) => ({ ...f, ...patch }));
-    setState((s) => ({ ...s, page: 1 }));
+  const applyTab = (tab: ContactTabKey) => {
+    const tf = tabToFilters(tab);
+    setFilters(f => ({ ...f, tab, search: "", ...tf }));
+    setState(s => ({ ...s, page: 1 }));
   };
 
-  const onSelect = (id: number) => {
-    setState((s) => ({ ...s, selectedId: id }));
+  const applySearch = (search: string) => {
+    setFilters(f => ({ ...f, search }));
+    setState(s => ({ ...s, page: 1 }));
   };
 
-  const isLoading = listQuery.isLoading;
-  const isRefetching = listQuery.isFetching && !listQuery.isLoading;
+  const isRefetching = listQ.isFetching && !listQ.isLoading;
+
+  // ── Distribution pool ────────────────────────────────────────────────────
+  const settingsQ   = useContactDistributionSettings();
+  const eligibleQ   = useContactEligibleAdmins();
+  const updSettings = useUpdateContactDistributionSettings();
+  const upsert      = useUpsertContactAgent();
+  const remove      = useRemoveContactAgent();
+  const redist      = useRedistributeContactMessages();
+
+  const distSettings   = settingsQ.data?.data;
+  const eligibleAdmins = eligibleQ.data?.data ?? [];
 
   return (
     <div className="w-full px-4 py-6 md:px-8">
       {/* ── Page Header ── */}
-      <div className="mb-6 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-          <MessageSquareText className="h-5 w-5" />
-        </span>
-        <div>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-            {t("contactMessages.title")}
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t("contactMessages.subtitle")}
-          </p>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+            <MessageSquareText className="h-5 w-5" />
+          </span>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+              {t("contactMessages.title", "Contact Messages")}
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Manage and respond to customer inquiries
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* ── Stat Cards + Filters ── */}
-      <ContactMessagesFiltersBar
-        counts={countsQuery.data?.data ?? null}
-        filters={filters}
-        onChange={applyFilters}
-        onRefetch={() => {
-          countsQuery.refetch();
-          listQuery.refetch();
-          if (selectedId) singleQuery.refetch();
-        }}
-        isRefetching={isRefetching}
-      />
-
-      {/* ── Main Content: Inbox + Detail ── */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* Left — Inbox List */}
-        <div className="flex flex-col lg:col-span-5">
-          <div
-            className={cn(
-              "flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm",
-              "dark:border-gray-800 dark:bg-gray-900"
-            )}
-          >
-            {/* Inbox Header */}
-            <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
-              <Inbox size={16} className="text-brand-500" />
-              <p className="text-sm font-bold text-gray-900 dark:text-white">
-                {t("contactMessages.inbox")}
-              </p>
-              <span className="ml-auto rounded-full bg-brand-50 px-2.5 py-0.5 text-[11px] font-bold text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-                {total}
-              </span>
-            </div>
-
-            {/* List */}
-            <div className="min-h-[320px] flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="space-y-3 p-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-white/[0.02]"
-                    >
-                      <div className="h-3 w-1/3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-                      <div className="h-3 w-2/3 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <ContactMessagesList
-                  rows={rows}
-                  selectedId={selectedId}
-                  onSelect={onSelect}
-                />
+        {/* Page-level tabs — Pool & Assign hidden from non-admins */}
+        <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-800 dark:bg-gray-900">
+          {(["inbox", "pool", "assign"] as PageTab[])
+            .filter(id => id === "inbox" || canManage)
+            .map(id => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setPageTab(id)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-semibold transition-all",
+                pageTab === id
+                  ? "bg-white text-brand-600 shadow-sm dark:bg-gray-800 dark:text-brand-400"
+                  : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               )}
-            </div>
-          </div>
-
-          {/* Pagination */}
-          <div className="mt-3">
-            <Pagination
-              totalItems={total}
-              page={state.page}
-              pageSize={state.pageSize}
-              onPageChange={(p) => setState((s) => ({ ...s, page: p }))}
-              onPageSizeChange={(n) =>
-                setState((s) => ({ ...s, page: 1, pageSize: n }))
-              }
-            />
-          </div>
-        </div>
-
-        {/* Right — Detail Panel */}
-        <div className="lg:col-span-7">
-          <div
-            className={cn(
-              "min-h-[520px] overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm",
-              "dark:border-gray-800 dark:bg-gray-900"
-            )}
-          >
-            {selected ? (
-              <ContactMessageDetailsPanel
-                data={selected}
-                onReply={() => setReplyOpen(true)}
-                onToggleArchive={() => toggleStatus.mutate(selected.id)}
-                onDelete={() => {
-                  deleteMsg.mutate(selected.id, {
-                    onSuccess: () =>
-                      setState((s) => ({ ...s, selectedId: null })),
-                  });
-                }}
-                isDeleting={deleteMsg.isPending}
-                isToggling={toggleStatus.isPending}
-              />
-            ) : (
-              <div className="flex h-full min-h-[520px] flex-col items-center justify-center gap-3 px-5 py-10">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
-                  <Inbox className="h-6 w-6 text-gray-400 dark:text-gray-500" />
-                </span>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {rows.length
-                    ? t("contactMessages.selectMessage")
-                    : t("contactMessages.noMessages")}
-                </p>
-              </div>
-            )}
-          </div>
+            >
+              {id === "pool" ? <Users size={14} /> : id === "assign" ? <Shuffle size={14} /> : <Inbox size={14} />}
+              {id === "inbox" ? "Inbox" : id === "pool" ? "Distribution Pool" : "Assign"}
+            </button>
+          ))}
         </div>
       </div>
 
-      <ReplyModal
-        open={replyOpen}
-        onClose={() => setReplyOpen(false)}
-        toLabel={
-          selected
-            ? selected.email ||
-            selected.phone ||
-            t("contactMessages.guest")
-            : undefined
-        }
-        isSubmitting={replyMsg.isPending}
-        onSubmit={({
-          replyText,
-          type,
-        }: {
-          replyText: string;
-          type: ReplyType;
-        }) => {
-          if (!selected) return;
-          replyMsg.mutate(
-            { message_id: selected.id, reply_text: replyText, type },
-            { onSuccess: () => setReplyOpen(false) }
-          );
-        }}
-      />
+      {/* ──────────────── INBOX TAB ─────────────────────── */}
+      {pageTab === "inbox" && (
+        <>
+          {/* ── Stat Pills Row ── */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="flex flex-1 flex-wrap items-center gap-1.5">
+              {STAT_TABS.map(tab => {
+                const count = counts ? (counts as Record<string, number>)[tab.countKey] ?? 0 : 0;
+                const active = filters.tab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => applyTab(tab.key)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all",
+                      tab.color,
+                      active
+                        ? tab.activeClass + " border"
+                        : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/60 hover:border-gray-300"
+                    )}
+                  >
+                    {tab.icon}
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                      active ? "bg-white/60 dark:bg-black/20" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                    )}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search + Refresh */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSearch(v => !v)}
+                className={cn("flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition",
+                  showSearch
+                    ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400"
+                    : "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800")}
+              >
+                <SlidersHorizontal size={13} />
+                <span className="hidden sm:inline">Search</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { countsQ.refetch(); listQ.refetch(); }}
+                disabled={isRefetching}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-60"
+              >
+                <RefreshCw size={13} className={isRefetching ? "animate-spin" : ""} />
+                <span className="hidden sm:inline">{isRefetching ? "…" : "Refresh"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          {showSearch && (
+            <div className="mb-4 relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search name, email, phone, subject…"
+                value={filters.search}
+                onChange={e => applySearch(e.target.value)}
+                autoFocus
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
+              />
+            </div>
+          )}
+
+          {/* Split Pane */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+            {/* Left: inbox list */}
+            <div className="flex flex-col lg:col-span-5">
+              <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
+                  <Inbox size={16} className="text-brand-500" />
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    {t("contactMessages.inbox", "Inbox")}
+                  </p>
+                  <span className="ml-auto rounded-full bg-brand-50 px-2.5 py-0.5 text-[11px] font-bold text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                    {total}
+                  </span>
+                </div>
+                <div className="min-h-[320px] flex-1 overflow-y-auto">
+                  {listQ.isLoading ? (
+                    <div className="space-y-3 p-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-white/[0.02] space-y-2">
+                          <div className="h-3 w-1/3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                          <div className="h-3 w-2/3 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <ContactMessagesList
+                      rows={rows}
+                      selectedId={state.selectedId}
+                      onSelect={id => setState(s => ({ ...s, selectedId: id }))}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="mt-3">
+                <Pagination
+                  totalItems={total}
+                  page={state.page}
+                  pageSize={state.pageSize}
+                  onPageChange={p => setState(s => ({ ...s, page: p }))}
+                  onPageSizeChange={n => setState(s => ({ ...s, page: 1, pageSize: n }))}
+                />
+              </div>
+            </div>
+
+            {/* Right: detail */}
+            <div className="lg:col-span-7">
+              <div className="min-h-[520px] overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                {selected ? (
+                  <ContactMessageDetailsPanel
+                    data={selected}
+                    onReply={() => setReplyOpen(true)}
+                    onToggleArchive={() => toggleStatus.mutate(selected.id)}
+                    onDelete={() => {
+                      deleteMsg.mutate(selected.id, {
+                        onSuccess: () => setState(s => ({ ...s, selectedId: null })),
+                      });
+                    }}
+                    isDeleting={deleteMsg.isPending}
+                    isToggling={toggleStatus.isPending}
+                  />
+                ) : (
+                  <div className="flex h-full min-h-[520px] flex-col items-center justify-center gap-3 px-5 py-10">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
+                      <Inbox className="h-6 w-6 text-gray-400 dark:text-gray-500" />
+                    </span>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      {rows.length
+                        ? t("contactMessages.selectMessage", "Select a message to view details")
+                        : t("contactMessages.noMessages", "No messages found")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <ReplyModal
+            open={replyOpen}
+            onClose={() => setReplyOpen(false)}
+            toLabel={selected ? (selected.email || selected.phone || t("contactMessages.guest", "Guest")) : undefined}
+            isSubmitting={replyMsg.isPending}
+            onSubmit={({ replyText, type }: { replyText: string; type: ReplyType }) => {
+              if (!selected) return;
+              replyMsg.mutate(
+                { message_id: selected.id, reply_text: replyText, type },
+                { onSuccess: () => setReplyOpen(false) }
+              );
+            }}
+          />
+        </>
+      )}
+
+      {/* ────────── DISTRIBUTION POOL TAB ─────────── */}
+      {pageTab === "pool" && canManage && (
+        <SupportDistributionPoolTab
+          domain="contact"
+          isSuperAdmin={isSuperAdmin}
+          settings={distSettings ? {
+            auto_assign_enabled: distSettings.auto_assign_enabled,
+            assign_on_create: distSettings.assign_on_message_create,
+            include_admin_role: distSettings.include_admin_role,
+            include_order_manager_role: distSettings.include_order_manager_role,
+          } : null}
+          settingsLoading={settingsQ.isLoading}
+          admins={eligibleAdmins}
+          adminsLoading={eligibleQ.isLoading}
+          settingsPending={updSettings.isPending}
+          redistributePending={redist.isPending}
+          onToggleSetting={(key, val) => {
+            const keyMap: Record<string, string> = {
+              auto_assign_enabled: "auto_assign_enabled",
+              assign_on_create: "assign_on_message_create",
+              include_admin_role: "include_admin_role",
+              include_order_manager_role: "include_order_manager_role",
+            };
+            updSettings.mutate(
+              { [keyMap[key]]: val } as Parameters<typeof updSettings.mutate>[0],
+              { onSuccess: () => toast.success("Setting updated"), onError: () => toast.error("Failed") }
+            );
+          }}
+          onAddToPool={async admin => {
+            await upsert.mutateAsync({ adminId: admin.id, body: { auto_assign_enabled: true, status: true } });
+            toast.success(`${admin.admin_name} added to contact pool`);
+          }}
+          onRemoveFromPool={async admin => {
+            await remove.mutateAsync(admin.id);
+            toast.success(`${admin.admin_name} removed from contact pool`);
+          }}
+          onToggleAutoAssign={async admin => {
+            await upsert.mutateAsync({ adminId: admin.id, body: { auto_assign_enabled: !admin.pool_auto_assign } });
+          }}
+          onSaveConfig={async (admin, maxVal, serialVal) => {
+            await upsert.mutateAsync({
+              adminId: admin.id,
+              body: {
+                ...(maxVal !== "" ? { max_active_messages: maxVal ? Number(maxVal) : null } : {}),
+                ...(serialVal !== "" ? { serial: Number(serialVal) || 1 } : {}),
+              },
+            });
+            toast.success("Pool settings saved");
+          }}
+          onRedistribute={async () => {
+            const res = await redist.mutateAsync();
+            toast.success(res.message);
+          }}
+        />
+      )}
+
+      {/* ────────── ASSIGN TAB ─────────── */}
+      {pageTab === "assign" && canManage && (
+        <AssignContactTab isSuperAdmin={isSuperAdmin} />
+      )}
     </div>
+  );
+}
+
+// ─── Assign Tab (Contact Messages) — V2-038 ──────────────────────────────── //
+
+function AssignContactTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+  const { admin } = useAuth();
+  const eligibleQ = useContactEligibleAdmins();
+  const assignMut = useManualAssignContactMessage();
+  const { data: logsRes, isLoading: logsLoading } = useContactAssignmentLogs({ limit: 20 });
+
+  const admins = (eligibleQ.data?.data ?? []).map(a => ({
+    id: a.id,
+    admin_name: a.admin_name,
+    role_name:  a.role_name,
+    active_count: a.active_message_count ?? 0,
+  }));
+
+  const logs = (logsRes?.data ?? []).map(l => ({
+    id: l.id,
+    entity_id: l.message_id,
+    action_type: l.action_type,
+    from_admin_name: l.from_admin_name,
+    to_admin_name:   l.to_admin_name,
+    changed_by_name: l.changed_by_name,
+    created_at: l.created_at,
+  }));
+
+  const handleAssign = async (messageId: number, adminId: number) => {
+    try {
+      const res = await assignMut.mutateAsync({ message_id: messageId, admin_id: adminId });
+      toast.success(res.message);
+    } catch (e: unknown) {
+      toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Assignment failed");
+    }
+  };
+
+  return (
+    <SupportAssignTab
+      domain="contact"
+      isSuperAdmin={isSuperAdmin}
+      currentAdminId={admin?.id ?? 0}
+      admins={admins}
+      logs={logs}
+      logsLoading={logsLoading}
+      isPending={assignMut.isPending}
+      onAssign={handleAssign}
+    />
   );
 }

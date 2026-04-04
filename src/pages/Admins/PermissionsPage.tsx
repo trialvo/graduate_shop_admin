@@ -35,6 +35,8 @@ const SECTION_ORDER = [
   "order_status_notification_user",
   "order__notification_admin",
   "personal_notification_admin",
+  "contact__notification_admin",
+  "report__notification_admin",
   "overall_cart_discount",
   "storefront_visibility",
   "announcement",
@@ -75,6 +77,16 @@ const SECTION_META: Record<string, SectionMeta> = {
     label: "Personal Notifications → Admin",
     description: "Channels for personal/account-level notifications sent to admins.",
     icon: <MessageSquare size={15} />,
+  },
+  contact__notification_admin: {
+    label: "Contact Us Notifications → Admin",
+    description: "Channels used to notify admins when a Contact Us message is assigned to them.",
+    icon: <MessageSquare size={15} />,
+  },
+  report__notification_admin: {
+    label: "Report Notifications → Admin",
+    description: "Channels used to notify admins when a customer Report is assigned to them.",
+    icon: <AlertTriangle size={15} />,
   },
   overall_cart_discount: {
     label: "Cart-Wide Discount",
@@ -635,8 +647,10 @@ function AdminNotifPermissionsPanel() {
   // Extract system-level channel on/off from permission config
   // sysConfig.data shape: { order__notification_admin: { email, sms, firebase_push_notification }, personal_notification_admin: { ... } }
   const sysData = sysConfig?.data as Record<string, Record<string, unknown>> | undefined;
-  const orderSys = (sysData?.["order__notification_admin"] ?? {}) as Record<string, unknown>;
+  const orderSys    = (sysData?.["order__notification_admin"]   ?? {}) as Record<string, unknown>;
   const personalSys = (sysData?.["personal_notification_admin"] ?? {}) as Record<string, unknown>;
+  const contactSys  = (sysData?.["contact__notification_admin"] ?? {}) as Record<string, unknown>; // V2-036
+  const reportSys   = (sysData?.["report__notification_admin"]  ?? {}) as Record<string, unknown>;  // V2-036
 
   // true = channel is globally ON (or unknown—default open)
   const sysOn = {
@@ -646,6 +660,12 @@ function AdminNotifPermissionsPanel() {
     personal_email: sysData ? !!personalSys["email"] : true,
     personal_sms:   sysData ? !!personalSys["sms"]   : true,
     personal_push:  sysData ? !!personalSys["firebase_push_notification"] : true,
+    contact_email:  sysData ? !!contactSys["email"]  : true,
+    contact_sms:    sysData ? !!contactSys["sms"]    : true,
+    contact_push:   sysData ? !!contactSys["firebase_push_notification"] : true,
+    report_email:   sysData ? !!reportSys["email"]   : true,
+    report_sms:     sysData ? !!reportSys["sms"]     : true,
+    report_push:    sysData ? !!reportSys["firebase_push_notification"]  : true,
   };
 
   // Map admin notification keys to their system channel flag
@@ -656,6 +676,12 @@ function AdminNotifPermissionsPanel() {
     personal_notification_email:          sysOn.personal_email,
     personal_notification_sms:            sysOn.personal_sms,
     personal_notification_firebase_push:  sysOn.personal_push,
+    contact_notification_email:           sysOn.contact_email,
+    contact_notification_sms:             sysOn.contact_sms,
+    contact_notification_firebase_push:   sysOn.contact_push,
+    report_notification_email:            sysOn.report_email,
+    report_notification_sms:              sysOn.report_sms,
+    report_notification_firebase_push:    sysOn.report_push,
   };
 
   const toggle = (admin_id: number, key: keyof SetNotificationPermissionsPayload) => {
@@ -672,13 +698,19 @@ function AdminNotifPermissionsPanel() {
       await Promise.all(
         dirty.map((row) => {
           const payload: SetNotificationPermissionsPayload = {
-            order_notification_email:            row.order_notification_email,
-            order_notification_sms:              row.order_notification_sms,
-            order_notification_firebase_push:    row.order_notification_firebase_push,
-            personal_notification_email:         row.personal_notification_email,
-            personal_notification_sms:           row.personal_notification_sms,
-            personal_notification_firebase_push: row.personal_notification_firebase_push,
-            allow_handle_unassigned_order:       row.allow_handle_unassigned_order,
+            order_notification_email:             row.order_notification_email,
+            order_notification_sms:               row.order_notification_sms,
+            order_notification_firebase_push:     row.order_notification_firebase_push,
+            personal_notification_email:          row.personal_notification_email,
+            personal_notification_sms:            row.personal_notification_sms,
+            personal_notification_firebase_push:  row.personal_notification_firebase_push,
+            contact_notification_email:           row.contact_notification_email,
+            contact_notification_sms:             row.contact_notification_sms,
+            contact_notification_firebase_push:   row.contact_notification_firebase_push,
+            report_notification_email:            row.report_notification_email,
+            report_notification_sms:              row.report_notification_sms,
+            report_notification_firebase_push:    row.report_notification_firebase_push,
+            allow_handle_unassigned_order:        row.allow_handle_unassigned_order,
           };
           return setPermsMutation.mutateAsync({ admin_id: row.admin_id, payload });
         })
@@ -716,22 +748,28 @@ function AdminNotifPermissionsPanel() {
   };
 
   // Column-level warning: system off OR (push and firebase off)
-  const colWarning = (label: string, i: number): boolean => {
-    if (i === 0) return !sysOn.order_email;
-    if (i === 1) return !sysOn.order_sms;
-    if (i === 2) return !sysOn.order_push || !firebaseActive;
-    if (i === 3) return !sysOn.personal_email;
-    if (i === 4) return !sysOn.personal_sms;
-    if (i === 5) return !sysOn.personal_push || !firebaseActive;
+  const colWarning = (_label: string, i: number): boolean => {
+    if (i === 0)  return !sysOn.order_email;
+    if (i === 1)  return !sysOn.order_sms;
+    if (i === 2)  return !sysOn.order_push || !firebaseActive;
+    if (i === 3)  return !sysOn.personal_email;
+    if (i === 4)  return !sysOn.personal_sms;
+    if (i === 5)  return !sysOn.personal_push || !firebaseActive;
+    if (i === 6)  return !sysOn.contact_email;
+    if (i === 7)  return !sysOn.contact_sms;
+    if (i === 8)  return !sysOn.contact_push || !firebaseActive;
+    if (i === 9)  return !sysOn.report_email;
+    if (i === 10) return !sysOn.report_sms;
+    if (i === 11) return !sysOn.report_push || !firebaseActive;
     return false;
   };
 
   // Global channel status card rows
-  type ChanStatus = { label: string; orderOn: boolean; personalOn: boolean; isPush?: boolean };
+  type ChanStatus = { label: string; orderOn: boolean; personalOn: boolean; contactOn: boolean; reportOn: boolean; isPush?: boolean };
   const channelRows: ChanStatus[] = [
-    { label: "Email",        orderOn: sysOn.order_email,  personalOn: sysOn.personal_email },
-    { label: "SMS",          orderOn: sysOn.order_sms,    personalOn: sysOn.personal_sms },
-    { label: "Firebase Push",orderOn: sysOn.order_push,   personalOn: sysOn.personal_push, isPush: true },
+    { label: "Email",        orderOn: sysOn.order_email,  personalOn: sysOn.personal_email, contactOn: sysOn.contact_email,  reportOn: sysOn.report_email },
+    { label: "SMS",          orderOn: sysOn.order_sms,    personalOn: sysOn.personal_sms,   contactOn: sysOn.contact_sms,    reportOn: sysOn.report_sms },
+    { label: "Firebase Push",orderOn: sysOn.order_push,   personalOn: sysOn.personal_push,  contactOn: sysOn.contact_push,   reportOn: sysOn.report_push,  isPush: true },
   ];
 
   return (
@@ -762,12 +800,16 @@ function AdminNotifPermissionsPanel() {
                   <th className="px-5 py-2 text-left font-medium text-gray-500 dark:text-gray-400 w-32">Channel</th>
                   <th className="px-4 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Order Notifications</th>
                   <th className="px-4 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Personal Notifications</th>
+                  <th className="px-4 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Contact Us Notifications</th>
+                  <th className="px-4 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Report Notifications</th>
                 </tr>
               </thead>
               <tbody>
-                {channelRows.map(({ label, orderOn, personalOn, isPush }) => {
-                  const effectiveOrderOn = isPush ? orderOn && firebaseActive : orderOn;
+                {channelRows.map(({ label, orderOn, personalOn, contactOn, reportOn, isPush }) => {
+                  const effectiveOrderOn    = isPush ? orderOn    && firebaseActive : orderOn;
                   const effectivePersonalOn = isPush ? personalOn && firebaseActive : personalOn;
+                  const effectiveContactOn  = isPush ? contactOn  && firebaseActive : contactOn;
+                  const effectiveReportOn   = isPush ? reportOn   && firebaseActive : reportOn;
                   const chip = (on: boolean, fbIssue?: boolean) => (
                     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                       on
@@ -793,6 +835,12 @@ function AdminNotifPermissionsPanel() {
                       </td>
                       <td className="px-4 py-2.5 text-center">
                         {chip(effectivePersonalOn, isPush && personalOn && !firebaseActive)}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {chip(effectiveContactOn, isPush && contactOn && !firebaseActive)}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {chip(effectiveReportOn, isPush && reportOn && !firebaseActive)}
                       </td>
                     </tr>
                   );
@@ -825,7 +873,7 @@ function AdminNotifPermissionsPanel() {
       )}
 
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-x-auto">
-      <table className="min-w-[820px] w-full border-collapse text-sm">
+      <table className="min-w-[1050px] w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <th className="px-4 py-3 text-left text-xs font-semibold text-brand-500 w-56">Admin</th>
@@ -835,11 +883,17 @@ function AdminNotifPermissionsPanel() {
             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700" colSpan={3}>
               Personal Notifications
             </th>
+            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700" colSpan={3}>
+              Contact Notifications
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700" colSpan={3}>
+              Report Notifications
+            </th>
           </tr>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <th />
-            {["Email", "SMS", "Push", "Email", "SMS", "Push"].map((label, i) => (
-              <th key={i} className={`px-2 py-2 text-center text-xs ${i === 3 ? "border-l border-gray-200 dark:border-gray-700" : ""}`}>
+            {["Email", "SMS", "Push", "Email", "SMS", "Push", "Email", "SMS", "Push", "Email", "SMS", "Push"].map((label, i) => (
+              <th key={i} className={`px-2 py-2 text-center text-xs ${i === 3 || i === 6 || i === 9 ? "border-l border-gray-200 dark:border-gray-700" : ""}`}>
                 <span className={`inline-flex items-center gap-1 ${colWarning(label, i) ? "text-orange-400 dark:text-orange-500" : "text-gray-400"}`}>
                   {label}
                   {colWarning(label, i) && <AlertTriangle size={10} />}
@@ -879,6 +933,30 @@ function AdminNotifPermissionsPanel() {
               ))}
 
               {(["personal_notification_email", "personal_notification_sms", "personal_notification_firebase_push"] as const).map((key, i) => (
+                <td key={key} className={`px-2 py-3 text-center ${i === 0 ? "border-l border-gray-200 dark:border-gray-700" : ""}`}>
+                  <button type="button" aria-label={key}
+                    onClick={() => toggle(row.admin_id, key)}
+                    title={toggleTitle(key)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${toggleColour(key, !!row[key])}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${row[key] ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </button>
+                </td>
+              ))}
+
+              {/* V2-036: Contact Us notification toggles */}
+              {(["contact_notification_email", "contact_notification_sms", "contact_notification_firebase_push"] as const).map((key, i) => (
+                <td key={key} className={`px-2 py-3 text-center ${i === 0 ? "border-l border-gray-200 dark:border-gray-700" : ""}`}>
+                  <button type="button" aria-label={key}
+                    onClick={() => toggle(row.admin_id, key)}
+                    title={toggleTitle(key)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${toggleColour(key, !!row[key])}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${row[key] ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </button>
+                </td>
+              ))}
+
+              {/* V2-036: Report notification toggles */}
+              {(["report_notification_email", "report_notification_sms", "report_notification_firebase_push"] as const).map((key, i) => (
                 <td key={key} className={`px-2 py-3 text-center ${i === 0 ? "border-l border-gray-200 dark:border-gray-700" : ""}`}>
                   <button type="button" aria-label={key}
                     onClick={() => toggle(row.admin_id, key)}

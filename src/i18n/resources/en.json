@@ -915,7 +915,10 @@
     "subscribers": "Subscribers",
     "announcements": "Announcements",
     "allAnnouncements": "All Announcements",
-    "createAnnouncement": "Create Announcement"
+    "createAnnouncement": "Create Announcement",
+    "supportMessages": "Support & Reports",
+    "contactMessages": "Contact Messages",
+    "supportReports": "Support Reports"
   },
   "orders": {
     "title": "Order Management",

@@ -24,6 +24,7 @@ import {
   ScrollText,
   Megaphone,
   Mail,
+  MessageCircle,
 } from "lucide-react";
 
 import { useSidebar } from "../context/SidebarContext";
@@ -132,7 +133,6 @@ const othersItems: NavItem[] = [
     subItems: [
       { nameKey: "banners", path: "/banners-settings", pro: false },
       { nameKey: "bannerVideo", path: "/banner-video-settings", pro: false },
-      { nameKey: "contactMessage", path: "/contact-page", pro: false },
       { nameKey: "policies", path: "/policies", pro: false },
       { nameKey: "subscribers", path: "/subscribers", pro: false },
     ],
@@ -143,6 +143,14 @@ const othersItems: NavItem[] = [
     subItems: [
       { nameKey: "allAnnouncements", path: "/announcements", pro: false },
       { nameKey: "createAnnouncement", path: "/create-announcement", pro: false },
+    ],
+  },
+  {
+    icon: <MessageCircle />,
+    nameKey: "supportMessages",
+    subItems: [
+      { nameKey: "contactMessages", path: "/contact-messages", pro: false },
+      { nameKey: "supportReports",  path: "/support-reports",  pro: false, new: true },
     ],
   },
   {

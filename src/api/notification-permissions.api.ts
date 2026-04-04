@@ -9,6 +9,14 @@ export type AdminNotificationPermission = {
   personal_notification_email: boolean;
   personal_notification_sms: boolean;
   personal_notification_firebase_push: boolean;
+  /** V2-036: Contact Us assignment notification */
+  contact_notification_email: boolean;
+  contact_notification_sms: boolean;
+  contact_notification_firebase_push: boolean;
+  /** V2-036: Report assignment notification */
+  report_notification_email: boolean;
+  report_notification_sms: boolean;
+  report_notification_firebase_push: boolean;
   /** V2-017: Allow admin to handle orders not assigned to them */
   allow_handle_unassigned_order: boolean;
   updated_by_admin: number | null;
@@ -22,15 +30,24 @@ export type AdminNotificationPermission = {
 };
 
 export type SetNotificationPermissionsPayload = {
-  order_notification_email: boolean;
-  order_notification_sms: boolean;
-  order_notification_firebase_push: boolean;
-  personal_notification_email: boolean;
-  personal_notification_sms: boolean;
-  personal_notification_firebase_push: boolean;
+  order_notification_email?: boolean;
+  order_notification_sms?: boolean;
+  order_notification_firebase_push?: boolean;
+  personal_notification_email?: boolean;
+  personal_notification_sms?: boolean;
+  personal_notification_firebase_push?: boolean;
+  /** V2-036: Contact Us assignment notification */
+  contact_notification_email?: boolean;
+  contact_notification_sms?: boolean;
+  contact_notification_firebase_push?: boolean;
+  /** V2-036: Report assignment notification */
+  report_notification_email?: boolean;
+  report_notification_sms?: boolean;
+  report_notification_firebase_push?: boolean;
   /** V2-017: Allow admin to handle unassigned orders */
   allow_handle_unassigned_order?: boolean;
 };
+
 
 export async function getAllAdminNotificationPermissions(): Promise<{
   success: true;
