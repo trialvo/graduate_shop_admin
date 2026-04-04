@@ -4,6 +4,8 @@ import { AuthProvider } from "./context/AuthProvider";
 import SignIn from "./pages/AuthPages/SignIn";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import PushNotificationProvider from "./providers/PushNotificationProvider";
+
 
 import Home from "./pages/Dashboard/Home";
 import NewSale from "./pages/Sales/NewSale";
@@ -67,6 +69,7 @@ export default function App() {
     <Router>
       <AuthProvider>
         <ScrollToTop />
+        <PushNotificationProvider />
 
         <Routes>
           {/* ✅ Public-only: login page (if already logged in -> redirect to /dashboard) */}

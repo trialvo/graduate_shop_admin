@@ -3,20 +3,32 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bell, MessageSquareText, X } from "lucide-react";
+import { Bell, MessageSquareText, Package, X } from "lucide-react";
 
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { cn } from "@/lib/utils";
 import { useContactMessageCounts, useContactMessages } from "../website-settings/contact-messages/useContactMessages";
 import { formatDateTime, formatName } from "../website-settings/contact-messages/utils";
+import { useAdminNotificationStore, markAllAdminNotificationsRead } from "@/hooks/useAdminNotificationStore";
 
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const countsQuery = useContactMessageCounts({ refetchIntervalMs: 30_000 });
-  const unreadCount = countsQuery.data?.data?.unread ?? 0;
+  const contactUnread = countsQuery.data?.data?.unread ?? 0;
+
+  const { items: pushItems, unreadCount: pushUnread } = useAdminNotificationStore();
+  const recentPush = pushItems.slice(0, 4); // show latest 4 push notifications
+
+  const unreadCount = contactUnread + pushUnread;
+
+  function handleOpen() {
+    setIsOpen((v) => !v);
+    // Mark push notifications as read when dropdown opens
+    if (!isOpen && pushUnread > 0) markAllAdminNotificationsRead();
+  }
 
   const unreadListQuery = useContactMessages(
     {
@@ -34,7 +46,7 @@ export default function NotificationDropdown() {
   const items = unreadListQuery.data?.data ?? [];
 
   function toggleDropdown() {
-    setIsOpen((v) => !v);
+    handleOpen();
   }
 
   function closeDropdown() {
@@ -88,6 +100,41 @@ export default function NotificationDropdown() {
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {/* Push notification events */}
+          {recentPush.length > 0 && (
+            <>
+              <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Recent Alerts</p>
+              <ul className="flex flex-col mb-2">
+                {recentPush.map((n) => (
+                  <li key={n.id}>
+                    <DropdownItem
+                      onItemClick={closeDropdown}
+                      tag="a"
+                      to={n.order_id ? `/orders/${n.order_id}` : "/orders"}
+                      className={cn(
+                        "flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3",
+                        "hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5",
+                        !n.read && "bg-brand-50 dark:bg-brand-500/5"
+                      )}
+                    >
+                      <span className="relative block h-10 w-10 shrink-0 rounded-full bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                        <span className="flex h-full w-full items-center justify-center">
+                          <Package size={18} />
+                        </span>
+                        {!n.read && <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-brand-500 border-2 border-white dark:border-gray-900" />}
+                      </span>
+                      <span className="block min-w-0">
+                        <span className="mb-0.5 block text-theme-sm font-semibold text-gray-800 dark:text-white/90 truncate">{n.title}</span>
+                        <span className="block text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{n.body}</span>
+                        <span className="mt-0.5 block text-[10px] text-gray-400">{new Date(n.receivedAt).toLocaleTimeString()}</span>
+                      </span>
+                    </DropdownItem>
+                  </li>
+                ))}
+              </ul>
+              <p className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Messages</p>
+            </>
+          )}
           {unreadListQuery.isLoading ? (
             <div className="px-3 py-8 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
           ) : items.length ? (

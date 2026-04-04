@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import {
   AlertTriangle, Bell, BellRing, KeyRound, Lock,
   Mail, MessageSquare, Percent, Save, Settings2,
-  ShoppingCart, Smartphone, Zap, ShieldCheck,
+  ShoppingCart, Smartphone, Zap,
 } from "lucide-react";
 import PageMeta from "@/components/common/PageMeta";
 import { usePermissionConfig, usePatchPermissionConfig } from "@/hooks/usePermissions";
@@ -375,7 +375,21 @@ function SystemPermissionsPanel({
   if (isLoading)
     return <p className="text-sm text-gray-500 p-4">Loading system permissions…</p>;
   if (isError || !data?.data)
-    return <p className="text-sm text-error-500 p-4">Failed to load permission config.</p>;
+    return (
+      <div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
+        <Settings2 size={16} className="mt-0.5 shrink-0 text-gray-400 dark:text-gray-500" />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            System Permissions
+          </p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            System-level permission configuration is only available to Super Admins.
+            Contact your system administrator to adjust global channel settings.
+          </p>
+        </div>
+      </div>
+    );
+
 
   const flat = flattenPermissionData(data.data);
   const groups = groupFlatRows(flat);
@@ -585,13 +599,29 @@ function AdminNotifPermissionsPanel() {
   const { data: sysConfig } = usePermissionConfig();
 
   const [rows, setRows] = useState<PermRow[]>([]);
-  const [saving, setSaving] = useState<Record<number, boolean>>({});
+  const [saving, setSaving] = useState(false);
 
-  // sync
-  useState(() => {
+  // Sync rows when data loads / changes.
+  // MERGE instead of replace: preserve any row the user has already edited
+  // (dirty=true). This prevents saving row A from resetting unsaved changes
+  // in rows B, C, D when the query refetches after the mutation.
+  useEffect(() => {
     if (!data?.data) return;
-    setRows(data.data.map((p) => ({ ...p, dirty: false })));
-  });
+    setRows((prev) => {
+      if (prev.length === 0) {
+        // Initial load — populate from server
+        return data.data.map((p) => ({ ...p, dirty: false }));
+      }
+      // Subsequent loads (e.g. after a successful save refetch) — merge
+      return data.data.map((p) => {
+        const existing = prev.find((r) => r.admin_id === p.admin_id);
+        // Keep the user's unsaved edits; only update rows that are clean
+        if (existing?.dirty) return existing;
+        return { ...p, dirty: false };
+      });
+    });
+  }, [data]);
+
 
   if (isLoading)
     return <p className="text-sm text-gray-500 p-4">Loading admin permissions…</p>;
@@ -634,25 +664,35 @@ function AdminNotifPermissionsPanel() {
     );
   };
 
-  const saveRow = async (row: PermRow) => {
-    setSaving((s) => ({ ...s, [row.admin_id]: true }));
+  const saveAll = async () => {
+    const dirty = rowsState.filter((r) => r.dirty);
+    if (!dirty.length) return;
+    setSaving(true);
     try {
-      const payload: SetNotificationPermissionsPayload = {
-        order_notification_email: row.order_notification_email,
-        order_notification_sms: row.order_notification_sms,
-        order_notification_firebase_push: row.order_notification_firebase_push,
-        personal_notification_email: row.personal_notification_email,
-        personal_notification_sms: row.personal_notification_sms,
-        personal_notification_firebase_push: row.personal_notification_firebase_push,
-        allow_handle_unassigned_order: row.allow_handle_unassigned_order,
-      };
-      await setPermsMutation.mutateAsync({ admin_id: row.admin_id, payload });
-      setRows((prev) => prev.map((r) => (r.admin_id === row.admin_id ? { ...r, dirty: false } : r)));
-      toast.success(`Permissions saved for ${row.admin_name ?? "admin"}`);
+      await Promise.all(
+        dirty.map((row) => {
+          const payload: SetNotificationPermissionsPayload = {
+            order_notification_email:            row.order_notification_email,
+            order_notification_sms:              row.order_notification_sms,
+            order_notification_firebase_push:    row.order_notification_firebase_push,
+            personal_notification_email:         row.personal_notification_email,
+            personal_notification_sms:           row.personal_notification_sms,
+            personal_notification_firebase_push: row.personal_notification_firebase_push,
+            allow_handle_unassigned_order:       row.allow_handle_unassigned_order,
+          };
+          return setPermsMutation.mutateAsync({ admin_id: row.admin_id, payload });
+        })
+      );
+      setRows((prev) => prev.map((r) => ({ ...r, dirty: false })));
+      toast.success(
+        dirty.length === 1
+          ? `Permissions saved for ${dirty[0].admin_name ?? 'admin'}`
+          : `Permissions saved for ${dirty.length} admins`
+      );
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to save."));
+      toast.error(getErrorMessage(error, 'Failed to save permissions.'));
     } finally {
-      setSaving((s) => ({ ...s, [row.admin_id]: false }));
+      setSaving(false);
     }
   };
 
@@ -785,7 +825,7 @@ function AdminNotifPermissionsPanel() {
       )}
 
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-x-auto">
-      <table className="min-w-[900px] w-full border-collapse text-sm">
+      <table className="min-w-[820px] w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <th className="px-4 py-3 text-left text-xs font-semibold text-brand-500 w-56">Admin</th>
@@ -795,10 +835,6 @@ function AdminNotifPermissionsPanel() {
             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700" colSpan={3}>
               Personal Notifications
             </th>
-            <th className="px-4 py-3 text-center text-xs font-semibold text-orange-500 dark:text-orange-400 border-l border-gray-200 dark:border-gray-700" colSpan={1}>
-              Order Assignment
-            </th>
-            <th className="px-4 py-3 text-xs font-semibold text-brand-500 w-20">Save</th>
           </tr>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <th />
@@ -810,14 +846,6 @@ function AdminNotifPermissionsPanel() {
                 </span>
               </th>
             ))}
-            {/* Order Assignment column sub-header */}
-            <th className="px-2 py-2 text-center text-xs border-l border-gray-200 dark:border-gray-700">
-              <span className="inline-flex items-center gap-1 text-orange-500">
-                <ShieldCheck size={10} />
-                Unassigned
-              </span>
-            </th>
-            <th />
           </tr>
         </thead>
         <tbody>
@@ -861,45 +889,48 @@ function AdminNotifPermissionsPanel() {
                 </td>
               ))}
 
-              {/* allow_handle_unassigned_order toggle */}
-              <td className="px-2 py-3 text-center border-l border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  aria-label="allow_handle_unassigned_order"
-                  title="Allow this admin to view and process orders not assigned to them"
-                  onClick={() => toggle(row.admin_id, "allow_handle_unassigned_order")}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    row.allow_handle_unassigned_order
-                      ? "bg-orange-400"
-                      : "bg-gray-200 dark:bg-gray-700"
-                  }`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                    row.allow_handle_unassigned_order ? "translate-x-4" : "translate-x-0.5"
-                  }`} />
-                </button>
-              </td>
-
-              <td className="px-4 py-3 text-center">
-                <button type="button" onClick={() => saveRow(row)} disabled={!row.dirty || saving[row.admin_id]}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
-                    row.dirty
-                      ? "border-brand-500 bg-brand-50 text-brand-600 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-400"
-                      : "border-gray-200 bg-white text-gray-300 cursor-not-allowed dark:border-gray-800 dark:bg-gray-900 dark:text-gray-700"
-                  }`}
-                  title={row.dirty ? "Save changes" : "No changes"}>
-                  {saving[row.admin_id] ? (
-                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-                  ) : (
-                    <Save size={14} />
-                  )}
-                </button>
-              </td>
+              {/* Unsaved indicator dot */}
+              {row.dirty && (
+                <td className="px-1 py-3 text-center">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400" title="Unsaved changes" />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
       </table>
       </div>
+
+      {/* Single Save All button */}
+      {(() => {
+        const dirtyCount = rowsState.filter((r) => r.dirty).length;
+        return (
+          <div className="flex items-center justify-end gap-3">
+            {dirtyCount > 0 && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                {dirtyCount} row{dirtyCount > 1 ? 's' : ''} with unsaved changes
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={saveAll}
+              disabled={dirtyCount === 0 || saving}
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold shadow transition-colors ${
+                dirtyCount > 0 && !saving
+                  ? 'bg-brand-500 text-white hover:bg-brand-600'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600'
+              }`}
+            >
+              {saving ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Save size={15} />
+              )}
+              {saving ? 'Saving…' : dirtyCount > 0 ? `Save Changes (${dirtyCount})` : 'Save Changes'}
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 }

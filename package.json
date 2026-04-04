@@ -34,6 +34,7 @@
     "apexcharts": "^5.3.6",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
+    "firebase": "^12.11.0",
     "flatpickr": "^4.6.13",
     "i18next": "^25.8.0",
     "i18next-browser-languagedetector": "^8.2.0",

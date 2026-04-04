@@ -2,11 +2,11 @@
 //   import.meta.env.VITE_API_ORIGIN || "https://shop-api.shoplinkbd.com";
 // export const PUBLIC_ORIGIN = import.meta.env.VITE_PUBLIC_ORIGIN || "https://shop-api.shoplinkbd.com";
 
-// export const API_ORIGIN = "http://localhost:7000";
-// export const PUBLIC_ORIGIN = "http://localhost:7000";
+export const API_ORIGIN = "http://localhost:7000";
+export const PUBLIC_ORIGIN = "http://localhost:7000";
 
-export const API_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
-export const PUBLIC_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
+// export const API_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
+// export const PUBLIC_ORIGIN = "https://xdj5cmr3-7000.inc1.devtunnels.ms";
 
 // export const API_ORIGIN = "https://shop-api.trialvo.com";
 // export const PUBLIC_ORIGIN = "https://shop-api.trialvo.com";
@@ -33,3 +33,21 @@ export function toPublicUrl(path?: string | null): string | null {
   if (/^https?:\/\//i.test(path)) return path;
   return `${PUBLIC_ORIGIN}${path}`;
 }
+
+// ── Firebase Push Notifications (V2-034) ─────────────────────────────────────
+// Values are loaded from VITE_FIREBASE_* environment variables.
+// For local dev:  set in .env.local  (not committed to git)
+// For production: set in .env.production or CI/CD environment
+export const FIREBASE_CONFIG = {
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY             || '',
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN         || '',
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID          || '',
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET      || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID              || '',
+  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID      || '',
+};
+
+// VAPID public key — Firebase Console → Project Settings → Cloud Messaging
+// → Web Push certificates → Generate key pair
+export const FIREBASE_VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
