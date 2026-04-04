@@ -43,12 +43,13 @@ function writeStore(items: AdminPushNotification[]): void {
 
 // ── Public helpers (called outside the hook) ──────────────────────────────────
 
-/** Called by PushNotificationProvider when a foreground or background push arrives. */
+/** Called by PushNotificationProvider when a foreground or background push arrives.
+ *  Returns true if the notification was stored, false if suppressed as a duplicate. */
 export function pushAdminNotification(
   title: string,
   body:  string,
   data?: Record<string, string>
-): void {
+): boolean {
   // ── Deduplication guard ───────────────────────────────────────────────────
   // Both the FCM foreground handler and the SW postMessage handler can fire
   // for the same payload.  Skip if same order_id + event_type already stored
@@ -63,7 +64,7 @@ export function pushAdminNotification(
   );
   if (isDuplicate) {
     console.debug('[AdminNotifStore] Duplicate push suppressed', data?.order_id, data?.event_type);
-    return;
+    return false;
   }
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ export function pushAdminNotification(
     receivedAt:  now,
   };
   writeStore([next, ...store]);
+  return true;
 }
 
 export function markAllAdminNotificationsRead(): void {

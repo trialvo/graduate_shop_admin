@@ -25,11 +25,18 @@ import { pushAdminNotification } from '@/hooks/useAdminNotificationStore';
 // Storage key to remember the last registered token per session
 const STORAGE_KEY = 'gf_admin_fcm_token';
 
+/**
+ * Module-level foreground listener — shared across all remounts of this component.
+ * Prevents the React StrictMode double-invoke race where two concurrent
+ * registerToken() calls both see unsubRef.current === null and both attach
+ * a separate onForegroundMessage listener, causing every push to show twice.
+ */
+let _fgUnsub: (() => void) | null = null;
+
 export default function PushNotificationProvider() {
   const { token: authToken } = useAuth();
   const [showBanner, setShowBanner] = useState(false);
   const tokenRef = useRef<string | null>(null);
-  const unsubRef = useRef<(() => void) | null>(null);
 
   // ── SW background push → bell badge (tab was hidden) ──────────────────────
   useEffect(() => {
@@ -67,8 +74,9 @@ export default function PushNotificationProvider() {
     }
 
     return () => {
-      // Cleanup foreground listener on auth change
-      unsubRef.current?.();
+      // Cleanup foreground listener on auth change / unmount
+      _fgUnsub?.();
+      _fgUnsub = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
@@ -82,11 +90,17 @@ export default function PushNotificationProvider() {
       localStorage.removeItem(STORAGE_KEY);
       tokenRef.current = null;
     }
-    unsubRef.current?.();
-    unsubRef.current = null;
+    _fgUnsub?.();
+    _fgUnsub = null;
   }, [authToken]);
 
   async function registerToken() {
+    // Synchronously remove any existing foreground listener before first await.
+    // Prevents the StrictMode race where two concurrent calls both see null
+    // and both attach a listener without removing the other.
+    _fgUnsub?.();
+    _fgUnsub = null;
+
     try {
       const fcmToken = await requestAndGetToken();
       if (!fcmToken) return;
@@ -97,15 +111,17 @@ export default function PushNotificationProvider() {
       await registerPushToken(fcmToken);
       console.info('[Push] Token registered.');
 
-      // Set up foreground message handler
-      unsubRef.current?.();
-      unsubRef.current = onForegroundMessage((payload) => {
+      // Remove any listener a concurrent call may have registered, then attach ours
+      const prevUnsub = _fgUnsub;
+      prevUnsub?.();
+      _fgUnsub = onForegroundMessage((payload) => {
         const title = payload.notification?.title || 'Graduate Fashion';
         const body  = payload.notification?.body  || 'You have a new notification.';
         const data  = payload.data || {};
 
-        // ── Update bell badge ──────────────────────────────────────────
-        pushAdminNotification(title, body, data as Record<string, string>);
+        // Update bell badge — returns false if this is a duplicate (dedup guard)
+        const wasNew = pushAdminNotification(title, body, data as Record<string, string>);
+        if (wasNew === false) return;
 
         // Show a rich toast for foreground messages
         toast.custom(

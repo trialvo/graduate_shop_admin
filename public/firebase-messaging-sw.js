@@ -57,14 +57,18 @@ try {
         });
       }
 
-      // Always postMessage so the bell badge updates in any open tab
+      // Focused tab: onForegroundMessage already handles toast + bell badge.
+      // Only postMessage to hidden/background tabs so their bell updates
+      // when they become visible again.
       clientList.forEach((client) => {
-        client.postMessage({
-          type:  'GF_PUSH_NOTIFICATION',
-          title,
-          body,
-          data,
-        });
+        if (client.visibilityState !== 'visible') {
+          client.postMessage({
+            type:  'GF_PUSH_NOTIFICATION',
+            title,
+            body,
+            data,
+          });
+        }
       });
     });
   });
