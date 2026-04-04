@@ -57,18 +57,17 @@ try {
         });
       }
 
-      // Focused tab: onForegroundMessage already handles toast + bell badge.
-      // Only postMessage to hidden/background tabs so their bell updates
-      // when they become visible again.
+      // ── Always postMessage ALL clients (visible or not) ──────────────────────
+      // The focused tab needs this to update its bell badge when onBackgroundMessage
+      // fires (some browsers fire it even for focused tabs in the compat SDK).
+      // The dedup guard in pushAdminNotification() prevents double-counting.
       clientList.forEach((client) => {
-        if (client.visibilityState !== 'visible') {
-          client.postMessage({
-            type:  'GF_PUSH_NOTIFICATION',
-            title,
-            body,
-            data,
-          });
-        }
+        client.postMessage({
+          type:  'GF_PUSH_NOTIFICATION',
+          title,
+          body,
+          data,
+        });
       });
     });
   });

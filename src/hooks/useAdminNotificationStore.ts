@@ -99,7 +99,19 @@ export function useAdminNotificationStore() {
   useEffect(() => {
     refresh();
     listeners.add(refresh);
-    return () => { listeners.delete(refresh); };
+
+    // Cross-tab sync: when another tab writes to localStorage, the 'storage'
+    // event fires in every OTHER tab. This keeps the bell badge in sync across
+    // all open admin panel windows without any server round-trip.
+    function handleStorageEvent(e: StorageEvent) {
+      if (e.key === STORAGE_KEY) refresh();
+    }
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      listeners.delete(refresh);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
   }, [refresh]);
 
   const unreadCount = items.filter((n) => !n.read).length;

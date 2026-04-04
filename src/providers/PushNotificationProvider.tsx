@@ -1,13 +1,17 @@
 /**
- * src/providers/PushNotificationProvider.tsx  — V2-034
+ * src/providers/PushNotificationProvider.tsx  — V2-035 (fix: single-mount pattern)
  *
  * Manages FCM push notification permission + token lifecycle for the admin panel:
  *  1. On first render after login, checks permission state and prompts user.
  *  2. If granted, acquires token and registers it with the backend.
- *  3. Sets up foreground message handler (shows rich toast).
+ *  3. Sets up foreground message handler (shows rich toast) — kept alive globally.
  *  4. On logout, unregisters token from backend.
  *
- * Wrapped inside AuthProvider so it can read auth state.
+ * ARCHITECTURE NOTE:
+ *  Previously used a useEffect([authToken]) whose cleanup tore down _fgUnsub on
+ *  every React re-render / StrictMode double-invoke, killing the foreground listener.
+ *  Now mirrors the shop's PushNotificationManager: single mount-only useEffect with
+ *  an isRegisteringRef guard, watching auth state changes imperatively.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -22,23 +26,30 @@ import { registerPushToken, unregisterPushToken } from '@/api/admin-push.api';
 import { useAuth } from '@/context/AuthProvider';
 import { pushAdminNotification } from '@/hooks/useAdminNotificationStore';
 
-// Storage key to remember the last registered token per session
-const STORAGE_KEY = 'gf_admin_fcm_token';
+// ── Storage keys ───────────────────────────────────────────────────────────────
+const STORAGE_KEY          = 'gf_admin_fcm_token';
+// Persists banner-dismissed state for the tab session (resets on tab close).
+const BANNER_DISMISSED_KEY = 'gf_admin_push_banner_dismissed';
 
 /**
- * Module-level foreground listener — shared across all remounts of this component.
+ * Module-level foreground listener — survives component remounts.
  * Prevents the React StrictMode double-invoke race where two concurrent
- * registerToken() calls both see unsubRef.current === null and both attach
- * a separate onForegroundMessage listener, causing every push to show twice.
+ * registerToken() calls both attach a separate onForegroundMessage listener.
  */
 let _fgUnsub: (() => void) | null = null;
 
 export default function PushNotificationProvider() {
   const { token: authToken } = useAuth();
   const [showBanner, setShowBanner] = useState(false);
-  const tokenRef = useRef<string | null>(null);
 
-  // ── SW background push → bell badge (tab was hidden) ──────────────────────
+  const tokenRef          = useRef<string | null>(null);
+  const isRegisteringRef  = useRef(false);
+  // Track previous auth token value to detect genuine login/logout transitions
+  const prevAuthTokenRef  = useRef<string | null | undefined>(undefined);
+
+  // ── Single mount-only effect ───────────────────────────────────────────────
+  // Registers the SW message listener once. Foreground listener is managed
+  // imperatively via onLogin() / onLogout() below.
   useEffect(() => {
     function handleSWMessage(event: MessageEvent) {
       if (event.data?.type === 'GF_PUSH_NOTIFICATION') {
@@ -51,54 +62,76 @@ export default function PushNotificationProvider() {
       }
     }
     navigator.serviceWorker?.addEventListener('message', handleSWMessage);
-    return () => navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
-  }, []);
-
-  // ── Register token on login ────────────────────────────────────────────────
-  useEffect(() => {
-    if (!authToken) return; // not logged in
-    if (!VAPID_KEY) return; // not configured — silently skip
-
-    // Only run in secure contexts (HTTPS or localhost)
-    if (!('Notification' in window)) return;
-
-    const alreadyDenied = Notification.permission === 'denied';
-    if (alreadyDenied) return;
-
-    // If already granted, register immediately without prompting
-    if (Notification.permission === 'granted') {
-      void registerToken();
-    } else {
-      // Show our own in-app prompt first (better UX than raw browser dialog)
-      setShowBanner(true);
-    }
 
     return () => {
-      // Cleanup foreground listener on auth change / unmount
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+      // Tear down foreground listener on true unmount (e.g. user navigates away
+      // from the entire admin app, which never happens in normal usage).
       _fgUnsub?.();
       _fgUnsub = null;
+      isRegisteringRef.current = false;
     };
+  }, []); // ← empty deps: run once on mount, cleanup on unmount only
+
+  // ── Watch authToken transitions ────────────────────────────────────────────
+  // React may re-run this block with the same authToken value (StrictMode, etc.)
+  // We only act on GENUINE transitions (undefined→token or token→null).
+  useEffect(() => {
+    const prev = prevAuthTokenRef.current;
+    prevAuthTokenRef.current = authToken;
+
+    const justLoggedIn  = !prev && !!authToken;   // undefined/null → token
+    const justLoggedOut = !!prev && !authToken;   // token → null/undefined
+
+    if (justLoggedIn) {
+      onLogin();
+    } else if (justLoggedOut) {
+      onLogout();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
 
-  // ── Unregister token on logout ─────────────────────────────────────────────
-  useEffect(() => {
-    if (authToken) return; // still logged in
+  // ── Login handler ──────────────────────────────────────────────────────────
+  function onLogin() {
+    if (!VAPID_KEY) return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'denied') return;
+
+    if (Notification.permission === 'granted') {
+      void registerToken();
+    } else {
+      const alreadyDismissed = sessionStorage.getItem(BANNER_DISMISSED_KEY) === '1';
+      if (!alreadyDismissed) setShowBanner(true);
+    }
+  }
+
+  // ── Logout handler ─────────────────────────────────────────────────────────
+  function onLogout() {
+    setShowBanner(false);
+
+    // Tear down foreground listener
+    const unsub = _fgUnsub as (() => void) | null;
+    if (unsub) unsub();
+    _fgUnsub = null;
+    isRegisteringRef.current = false;
+
     const savedToken = localStorage.getItem(STORAGE_KEY);
     if (savedToken) {
       unregisterPushToken(savedToken).catch(() => {});
       localStorage.removeItem(STORAGE_KEY);
       tokenRef.current = null;
     }
-    _fgUnsub?.();
-    _fgUnsub = null;
-  }, [authToken]);
+  }
 
+  // ── Register FCM token + attach foreground listener ────────────────────────
   async function registerToken() {
-    // Synchronously remove any existing foreground listener before first await.
-    // Prevents the StrictMode race where two concurrent calls both see null
-    // and both attach a listener without removing the other.
-    _fgUnsub?.();
+    // Guard against concurrent calls (StrictMode double-invoke, etc.)
+    if (isRegisteringRef.current) return;
+    isRegisteringRef.current = true;
+
+    // Synchronously remove any stale foreground listener BEFORE the first await
+    const staleUnsub = _fgUnsub as (() => void) | null;
+    if (staleUnsub) staleUnsub();
     _fgUnsub = null;
 
     try {
@@ -111,9 +144,10 @@ export default function PushNotificationProvider() {
       await registerPushToken(fcmToken);
       console.info('[Push] Token registered.');
 
-      // Remove any listener a concurrent call may have registered, then attach ours
-      const prevUnsub = _fgUnsub;
-      prevUnsub?.();
+      // Remove any listener a concurrent async call may have registered
+      const prevUnsub = _fgUnsub as (() => void) | null;
+      if (prevUnsub) prevUnsub();
+
       _fgUnsub = onForegroundMessage((payload) => {
         const title = payload.notification?.title || 'Graduate Fashion';
         const body  = payload.notification?.body  || 'You have a new notification.';
@@ -123,7 +157,7 @@ export default function PushNotificationProvider() {
         const wasNew = pushAdminNotification(title, body, data as Record<string, string>);
         if (wasNew === false) return;
 
-        // Show a rich toast for foreground messages
+        // Show a rich in-app toast
         toast.custom(
           (t) => (
             <div
@@ -155,6 +189,8 @@ export default function PushNotificationProvider() {
       });
     } catch (err) {
       console.error('[Push] Token registration failed:', err);
+    } finally {
+      isRegisteringRef.current = false;
     }
   }
 
@@ -165,7 +201,7 @@ export default function PushNotificationProvider() {
 
   function handleDismissBanner() {
     setShowBanner(false);
-    // Don't ask again this session — next login will prompt again
+    sessionStorage.setItem(BANNER_DISMISSED_KEY, '1');
   }
 
   if (!showBanner || !authToken) return null;
