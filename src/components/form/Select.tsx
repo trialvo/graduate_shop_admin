@@ -276,8 +276,17 @@ export default function Select({
       return;
     }
 
-    const left = clamp(rect.left, VIEWPORT_PADDING, window.innerWidth - VIEWPORT_PADDING);
     const width = clamp(rect.width, MIN_MENU_WIDTH, window.innerWidth - VIEWPORT_PADDING * 2);
+
+    let left = rect.left;
+    const rightEdge = left + width;
+    if (rightEdge > window.innerWidth - VIEWPORT_PADDING) {
+      left = rect.right - width;
+    }
+    if (left < VIEWPORT_PADDING) {
+      left = VIEWPORT_PADDING;
+    }
+
     let   top   = rect.bottom + GAP;
     if (placement === "top") top = rect.top - GAP - expectedH;
     top = clamp(top, VIEWPORT_PADDING, window.innerHeight - VIEWPORT_PADDING - 40);
