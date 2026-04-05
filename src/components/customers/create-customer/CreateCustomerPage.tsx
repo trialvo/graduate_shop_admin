@@ -1,7 +1,7 @@
 // src/components/customers/create-customer/CreateCustomerPage.tsx
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import {
   BadgeCheck,
@@ -12,18 +12,19 @@ import {
   ShieldAlert,
   UploadCloud,
   X,
-  Lock,
   Calendar,
+  UserPlus,
+  RotateCcw,
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
+import PasswordInput from "@/components/form/input/PasswordInput";
 import Select from "@/components/form/Select";
 import DatePicker from "@/components/form/date-picker";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-import StatusToggle from "@/components/ui/button/StatusToggle";
+import Switch from "@/components/form/switch/Switch";
 import SectionCard from "@/components/ui/layout/SectionCard";
 import FieldGroup from "@/components/ui/layout/FieldGroup";
 import CustomerImageCropperModal from "@/components/customers/create-customer/CustomerImageCropperModal";
@@ -63,14 +64,21 @@ const INITIAL_FORM: CreateCustomerForm = {
   is_active: "active",
 };
 
+type TouchedFields = Record<string, boolean>;
+
 export default function CreateCustomerPage() {
   const [form, setForm] = useState<CreateCustomerForm>(INITIAL_FORM);
+  const [touched, setTouched] = useState<TouchedFields>({});
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
   const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
   const [cropSourceName, setCropSourceName] = useState<string | undefined>(undefined);
+
+  const touch = useCallback((field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }, []);
 
   const fullName = useMemo(() => {
     return `${form.first_name} ${form.last_name}`.trim();
@@ -174,6 +182,7 @@ export default function CreateCustomerPage() {
         "Customer created successfully";
       toast.success(msg);
       setForm(INITIAL_FORM);
+      setTouched({});
 
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -193,6 +202,7 @@ export default function CreateCustomerPage() {
 
   const reset = () => {
     setForm(INITIAL_FORM);
+    setTouched({});
 
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
@@ -234,8 +244,9 @@ export default function CreateCustomerPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const requiredLabel =
-    "Required: email, password, first name, last name, phone.";
+  /** Helper: show error only when field is touched */
+  const fieldError = (key: string, err: string) =>
+    touched[key] ? err : "";
 
   return (
     <div className="space-y-6">
@@ -247,9 +258,10 @@ export default function CreateCustomerPage() {
             description="Basic identity & contact information."
             icon={<User2 className="h-5 w-5" />}
           >
+            <div className="space-y-8">
             {/* Profile Image + Upload + Status (RESPONSIVE GRID) */}
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-12">
                 {/* Preview */}
                 <div className="md:col-span-4 lg:col-span-3">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -281,7 +293,7 @@ export default function CreateCustomerPage() {
                 </div>
 
                 {/* Upload */}
-                <div className="md:col-span-8 lg:col-span-6">
+                <div className="md:col-span-5 lg:col-span-6">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Upload Image{" "}
                     <span className="text-xs text-gray-400">
@@ -341,131 +353,171 @@ export default function CreateCustomerPage() {
                 </div>
 
                 {/* Status */}
-                <div className="md:col-span-12 lg:col-span-3">
+                <div className="md:col-span-3 lg:col-span-3">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Status
                   </p>
 
-                  <div className="mt-2 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-                    <div className="min-w-0">
+                  <div className="mt-2 flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-4 dark:border-gray-800 dark:bg-gray-900">
+                    <Switch
+                      checked={form.is_active === "active"}
+                      onChange={(on) =>
+                        setForm((p) => ({
+                          ...p,
+                          is_active: on ? "active" : "inactive",
+                        }))
+                      }
+                      size="lg"
+                      color="brand"
+                    />
+                    <div className="text-center">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         {form.is_active === "active" ? "Active" : "Inactive"}
                       </p>
-                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        Toggle customer access
+                      <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                        Toggle access
                       </p>
                     </div>
-
-                    <StatusToggle
-                      value={form.is_active}
-                      onChange={(v) =>
-                        setForm((p) => ({
-                          ...p,
-                          is_active: v as CreateCustomerForm["is_active"],
-                        }))
-                      }
-                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Fields */}
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {/* Email */}
-              <FieldGroup label="Email" required>
-                <Input
-                  startIcon={<Mail size={16} />}
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      email: String(e.target.value),
-                    }))
-                  }
-                  placeholder="example@gmail.com"
-                  error={Boolean(errors.email)}
-                  hint={errors.email || ""}
-                />
-              </FieldGroup>
+            {/* ── Section: Credentials ────────────────────────── */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">1</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Account Credentials</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <FieldGroup label="Email" required>
+                  <Input
+                    startIcon={<Mail size={16} />}
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        email: String(e.target.value),
+                      }))
+                    }
+                    onBlur={() => touch("email")}
+                    placeholder="example@gmail.com"
+                    error={Boolean(fieldError("email", errors.email))}
+                    hint={fieldError("email", errors.email)}
+                    success={touched.email && !errors.email}
+                  />
+                </FieldGroup>
 
-              {/* Password */}
-              <FieldGroup label="Password" required>
-                <Input
-                  startIcon={<Lock size={16} />}
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      password: String(e.target.value),
-                    }))
-                  }
-                  placeholder="minimum 8 characters"
-                  type="password"
-                  error={Boolean(errors.pass)}
-                  hint={errors.pass || ""}
-                />
-              </FieldGroup>
+                <FieldGroup label="Password" required>
+                  <PasswordInput
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        password: String(e.target.value),
+                      }))
+                    }
+                    onBlur={() => touch("pass")}
+                    placeholder="minimum 8 characters"
+                    error={Boolean(fieldError("pass", errors.pass))}
+                    hint={fieldError("pass", errors.pass)}
+                    showStrengthMeter
+                    showRequirements
+                    minLength={8}
+                  />
+                </FieldGroup>
+              </div>
+            </div>
 
-              {/* First Name */}
-              <FieldGroup label="First Name" required>
-                <Input
-                  startIcon={<User2 size={16} />}
-                  value={form.first_name}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      first_name: String(e.target.value),
-                    }))
-                  }
-                  placeholder="First name"
-                  error={Boolean(errors.first)}
-                  hint={errors.first || ""}
-                />
-              </FieldGroup>
+            {/* ── Section: Personal Information ──────────────── */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">2</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Personal Information</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <FieldGroup label="First Name" required>
+                  <Input
+                    startIcon={<User2 size={16} />}
+                    value={form.first_name}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        first_name: String(e.target.value),
+                      }))
+                    }
+                    onBlur={() => touch("first")}
+                    placeholder="First name"
+                    error={Boolean(fieldError("first", errors.first))}
+                    hint={fieldError("first", errors.first)}
+                    success={touched.first && !errors.first}
+                  />
+                </FieldGroup>
 
-              {/* Last Name */}
-              <FieldGroup label="Last Name" required>
-                <Input
-                  startIcon={<User2 size={16} />}
-                  value={form.last_name}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      last_name: String(e.target.value),
-                    }))
-                  }
-                  placeholder="Last name"
-                  error={Boolean(errors.last)}
-                  hint={errors.last || ""}
-                />
-              </FieldGroup>
+                <FieldGroup label="Last Name" required>
+                  <Input
+                    startIcon={<User2 size={16} />}
+                    value={form.last_name}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        last_name: String(e.target.value),
+                      }))
+                    }
+                    onBlur={() => touch("last")}
+                    placeholder="Last name"
+                    error={Boolean(fieldError("last", errors.last))}
+                    hint={fieldError("last", errors.last)}
+                    success={touched.last && !errors.last}
+                  />
+                </FieldGroup>
+              </div>
+            </div>
 
-              {/* Phone */}
-              <FieldGroup label="Phone" required>
-                <Input
-                  startIcon={<Phone size={16} />}
-                  value={form.phone}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      phone: String(e.target.value),
-                    }))
-                  }
-                  placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
-                  error={Boolean(errors.phone)}
-                  hint={errors.phone || ""}
-                />
-              </FieldGroup>
+            {/* ── Section: Contact & Details ──────────────────── */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">3</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Contact & Details</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <FieldGroup label="Phone" required>
+                  <Input
+                    startIcon={<Phone size={16} />}
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        phone: String(e.target.value),
+                      }))
+                    }
+                    onBlur={() => touch("phone")}
+                    placeholder="01xxxxxxxxx / +8801xxxxxxxxx"
+                    error={Boolean(fieldError("phone", errors.phone))}
+                    hint={fieldError("phone", errors.phone)}
+                    success={touched.phone && !errors.phone}
+                  />
+                </FieldGroup>
 
-              {/* DOB (Optional) with DatePicker */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Date of Birth{" "}
-                  <span className="text-xs text-gray-400">(optional)</span>
-                </p>
+                <FieldGroup label="Gender">
+                  <Select
+                    key={`gender-${form.gender}`}
+                    options={GENDER_OPTIONS}
+                    placeholder="Select gender"
+                    defaultValue={form.gender}
+                    onChange={(v) =>
+                      setForm((p) => ({
+                        ...p,
+                        gender: v as CreateCustomerForm["gender"],
+                      }))
+                    }
+                  />
+                </FieldGroup>
 
-                <div className="relative">
+                <FieldGroup label="Date of Birth" hint="Optional — format: DD/MM/YYYY">
                   <DatePicker
                     value={form.dob}
                     onChange={(v) =>
@@ -482,32 +534,9 @@ export default function CreateCustomerPage() {
                       to: new Date().getFullYear(),
                     }}
                   />
-                </div>
-
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  If your DatePicker returns a date string, it will save as
-                  YYYY-MM-DD.
-                </p>
+                </FieldGroup>
               </div>
-
-              {/* Gender */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Gender
-                </p>
-                <Select
-                  key={`gender-${form.gender}`}
-                  options={GENDER_OPTIONS}
-                  placeholder="Select gender"
-                  defaultValue={form.gender}
-                  onChange={(v) =>
-                    setForm((p) => ({
-                      ...p,
-                      gender: v as CreateCustomerForm["gender"],
-                    }))
-                  }
-                />
-              </div>
+            </div>
             </div>
           </SectionCard>
 
@@ -518,6 +547,7 @@ export default function CreateCustomerPage() {
               onClick={reset}
               disabled={createMutation.isPending}
               className="w-full sm:w-auto"
+              startIcon={<RotateCcw size={15} />}
             >
               Reset
             </Button>
@@ -526,6 +556,7 @@ export default function CreateCustomerPage() {
               onClick={() => createMutation.mutate()}
               disabled={!canSubmit || createMutation.isPending}
               className="w-full sm:w-auto"
+              startIcon={!createMutation.isPending ? <UserPlus size={15} /> : undefined}
             >
               {createMutation.isPending ? "Saving..." : "Create Customer"}
             </Button>
@@ -566,6 +597,13 @@ export default function CreateCustomerPage() {
                   <span className="truncate">{form.phone || "—"}</span>
                 </p>
 
+                {form.dob && (
+                  <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <Calendar size={14} />
+                    <span className="truncate">{form.dob}</span>
+                  </p>
+                )}
+
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Badge
                     variant="solid"
@@ -603,7 +641,7 @@ export default function CreateCustomerPage() {
                     {canSubmit ? "Ready to create" : "Fix required fields"}
                   </p>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {requiredLabel}
+                    Required: email, password, first name, last name, phone.
                   </p>
                 </div>
               </div>
@@ -615,6 +653,7 @@ export default function CreateCustomerPage() {
               <li>• Phone supports BD format: 01xxxxxxxxx or +8801xxxxxxxxx</li>
               <li>• DOB is optional (you can skip it).</li>
               <li>• Image is uploaded as user_profile file (square recommended).</li>
+              <li>• Password should include upper, lower, number & special char.</li>
             </ul>
           </SectionCard>
         </div>

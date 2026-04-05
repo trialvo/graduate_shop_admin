@@ -1,6 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Calendar, ChevronLeft, ChevronRight, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const SPRING = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const EASE_IN = "cubic-bezier(0.4, 0, 1, 1)";
+const GAP = 6;
+const VIEWPORT_PAD = 8;
+const POPUP_W = 320;
 
 type BaseProps = {
   placeholder?: string;
@@ -8,19 +15,16 @@ type BaseProps = {
   error?: boolean;
   hint?: string;
   className?: string;
-
   showClear?: boolean;
   showToday?: boolean;
-
-  /** Year range for quick selection */
   yearRange?: { from: number; to: number };
 };
 
 type IsoProps = BaseProps & {
-  value?: string; // ISO: YYYY-MM-DD
+  value?: string;
   onChange: (value: string) => void;
-  min?: string; // ISO
-  max?: string; // ISO
+  min?: string;
+  max?: string;
   valueType?: "iso";
 };
 
@@ -81,18 +85,8 @@ function isAfterISO(aISO: string, bISO: string) {
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 export default function DatePicker({
@@ -107,7 +101,13 @@ export default function DatePicker({
   ...props
 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  const openRafRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number; placement: "top" | "bottom" } | null>(null);
 
   const isoValue = (props as IsoProps).value;
   const dateValue = (props as DateProps).value;
@@ -141,32 +141,92 @@ export default function DatePicker({
     setView(startOfMonth(selectedDate));
   }, [selectedDate]);
 
-  // close on outside click
+  const cancelRaf = useCallback(() => {
+    if (openRafRef.current !== null) {
+      window.cancelAnimationFrame(openRafRef.current);
+      openRafRef.current = null;
+    }
+  }, []);
+
+  const openPopup = useCallback(() => {
+    if (open) return;
+    setOpen(true);
+    setIsMounted(true);
+    cancelRaf();
+    openRafRef.current = window.requestAnimationFrame(() => {
+      openRafRef.current = window.requestAnimationFrame(() => {
+        setIsVisible(true);
+        openRafRef.current = null;
+      });
+    });
+  }, [cancelRaf, open]);
+
+  const closePopup = useCallback(() => {
+    cancelRaf();
+    setOpen(false);
+    setIsVisible(false);
+    setMonthOpen(false);
+    setYearOpen(false);
+  }, [cancelRaf]);
+
+  const handleTransitionEnd = useCallback(() => {
+    if (!open) setIsMounted(false);
+  }, [open]);
+
+  useEffect(() => () => cancelRaf(), [cancelRaf]);
+
   useEffect(() => {
+    if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setMonthOpen(false);
-        setYearOpen(false);
-      }
+      const t = e.target as Node;
+      if (triggerRef.current?.contains(t)) return;
+      if (popupRef.current?.contains(t)) return;
+      closePopup();
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
+  }, [open, closePopup]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePopup();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, closePopup]);
+
+  const computePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const popupH = popupRef.current?.getBoundingClientRect().height ?? 380;
+    const availBottom = window.innerHeight - rect.bottom - VIEWPORT_PAD;
+    const availTop = rect.top - VIEWPORT_PAD;
+    const placement = availBottom < popupH && availTop > availBottom ? "top" : "bottom";
+
+    const top = placement === "bottom"
+      ? rect.bottom + GAP
+      : rect.top - GAP - popupH;
+
+    const left = Math.max(VIEWPORT_PAD, Math.min(rect.left, window.innerWidth - POPUP_W - VIEWPORT_PAD));
+    setPopupPos({ top, left, placement });
   }, []);
 
-  // escape to close
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        setMonthOpen(false);
-        setYearOpen(false);
-      }
+  useLayoutEffect(() => {
+    if (!open) return;
+    computePosition();
+    const raf = window.requestAnimationFrame(computePosition);
+    const onScroll = () => computePosition();
+    const onResize = () => computePosition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
     };
-    if (open) document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [computePosition, open]);
 
   const minISO = useMemo(() => {
     if (isDateMode) {
@@ -201,9 +261,7 @@ export default function DatePicker({
     } else {
       (props as IsoProps).onChange(iso);
     }
-    setOpen(false);
-    setMonthOpen(false);
-    setYearOpen(false);
+    closePopup();
   };
 
   const grid = useMemo(() => {
@@ -223,17 +281,15 @@ export default function DatePicker({
     return cells;
   }, [view]);
 
-  // year list
   const years = useMemo(() => {
     const nowY = new Date().getFullYear();
     const from = yearRange?.from ?? nowY - 50;
     const to = yearRange?.to ?? nowY + 10;
     const list: number[] = [];
-    for (let y = to; y >= from; y--) list.push(y); // recent first
+    for (let y = to; y >= from; y--) list.push(y);
     return list;
   }, [yearRange]);
 
-  // scroll to current year when opening year picker
   const yearListRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!yearOpen) return;
@@ -254,33 +310,33 @@ export default function DatePicker({
   const viewYear = view.getFullYear();
 
   return (
-    <div ref={rootRef} className={cn("relative w-full", className)}>
-      {/* ── Trigger ─────────────────────────── */}
+    <div ref={rootRef} className={cn("w-full", className)}>
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setOpen((s) => !s)}
+        onClick={() => !disabled && (open ? closePopup() : openPopup())}
         className={cn(
-          "relative flex h-11 w-full items-center rounded-lg border bg-white pl-10 pr-9 text-left text-sm",
+          "relative flex h-10 w-full items-center rounded-xl border bg-white pl-10 pr-9 text-left text-sm",
           "transition-all duration-150",
           "outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 focus-visible:ring-offset-1",
           "dark:bg-gray-900",
           disabled
             ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
             : error
-              ? "border-red-400 text-gray-900 dark:border-red-500 dark:text-white/90"
-              : "border-gray-300 text-gray-900 hover:border-gray-400 dark:border-gray-700 dark:text-white/90 dark:hover:border-gray-600",
+              ? "border-error-500 text-gray-900 dark:border-error-500 dark:text-white/90"
+              : "border-gray-200 text-gray-900 hover:border-gray-300 dark:border-gray-700 dark:text-white/90 dark:hover:border-gray-600",
         )}
         aria-label={placeholder}
       >
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30">
           <Calendar size={16} />
         </span>
 
         {display ? (
           <span className="block truncate font-medium">{display}</span>
         ) : (
-          <span className="block truncate text-gray-400">{placeholder}</span>
+          <span className="block truncate text-gray-400 dark:text-white/30">{placeholder}</span>
         )}
 
         {showClear && valueISO && !disabled ? (
@@ -309,232 +365,241 @@ export default function DatePicker({
       </button>
 
       {hint ? (
-        <p className={cn("mt-1.5 text-xs", error ? "text-red-500" : "text-gray-500 dark:text-gray-400")}>
+        <p className={cn("mt-1.5 text-xs", error ? "text-error-500" : "text-gray-500 dark:text-gray-400")}>
           {hint}
         </p>
       ) : null}
 
-      {/* ── Popup ──────────────────────────── */}
-      {open ? (
-        <div
-          className={cn(
-            "absolute z-50 mt-1.5 w-[min(320px,calc(100vw-24px))] rounded-xl border border-gray-200 bg-white shadow-lg",
-            "dark:border-gray-700 dark:bg-gray-900",
-            "animate-in fade-in-0 slide-in-from-top-1",
-          )}
-        >
-          {/* Header: month/year nav */}
-          <div className="flex items-center justify-between gap-1 px-3 py-2.5">
-            <button
-              type="button"
-              onClick={() => setView((v) => addMonths(v, -1))}
+      {isMounted
+        ? createPortal(
+            <div
+              ref={popupRef}
+              onTransitionEnd={handleTransitionEnd}
               className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors",
-                "hover:bg-gray-100 hover:text-gray-700",
-                "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
+                "fixed z-[9999] w-[min(320px,calc(100vw-16px))] rounded-2xl border bg-white/95 backdrop-blur-xl",
+                "border-gray-200 dark:border-gray-700 dark:bg-gray-900/95",
+                "shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.03)]",
+                "dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.03)]",
               )}
-              aria-label="Previous month"
+              style={{
+                top: popupPos?.top ?? 0,
+                left: popupPos?.left ?? 0,
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible
+                  ? "scale(1) translateY(0)"
+                  : popupPos?.placement === "top"
+                    ? "scale(0.96) translateY(6px)"
+                    : "scale(0.96) translateY(-6px)",
+                transformOrigin: popupPos?.placement === "top" ? "bottom center" : "top center",
+                transition: isVisible
+                  ? `opacity 200ms ease, transform 320ms ${SPRING}`
+                  : `opacity 120ms ${EASE_IN}, transform 120ms ${EASE_IN}`,
+                pointerEvents: isVisible ? "auto" : "none",
+              }}
             >
-              <ChevronLeft size={16} />
-            </button>
+              <div className="flex items-center justify-between gap-1 px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => setView((v) => addMonths(v, -1))}
+                  className={cn(
+                    "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors",
+                    "hover:bg-gray-100 hover:text-gray-700",
+                    "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
+                  )}
+                  aria-label="Previous month"
+                >
+                  <ChevronLeft size={16} />
+                </button>
 
-            <div className="relative flex items-center gap-1">
-              {/* Month */}
-              <button
-                type="button"
-                onClick={() => {
-                  setMonthOpen((s) => !s);
-                  setYearOpen(false);
-                }}
-                className={cn(
-                  "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold text-gray-800 transition-colors",
-                  "hover:bg-gray-100",
-                  "dark:text-gray-200 dark:hover:bg-gray-800",
-                  monthOpen && "bg-gray-100 dark:bg-gray-800",
-                )}
-              >
-                <span className="truncate">{MONTHS[viewMonth]}</span>
-                <ChevronDown size={12} className={cn("transition-transform", monthOpen && "rotate-180")} />
-              </button>
+                <div className="relative flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMonthOpen((s) => !s);
+                      setYearOpen(false);
+                    }}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold text-gray-800 transition-colors",
+                      "hover:bg-gray-100",
+                      "dark:text-gray-200 dark:hover:bg-gray-800",
+                      monthOpen && "bg-gray-100 dark:bg-gray-800",
+                    )}
+                  >
+                    <span className="truncate">{MONTHS[viewMonth]}</span>
+                    <ChevronDown size={12} className={cn("transition-transform", monthOpen && "rotate-180")} />
+                  </button>
 
-              {/* Year */}
-              <button
-                type="button"
-                onClick={() => {
-                  setYearOpen((s) => !s);
-                  setMonthOpen(false);
-                }}
-                className={cn(
-                  "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold text-gray-800 transition-colors",
-                  "hover:bg-gray-100",
-                  "dark:text-gray-200 dark:hover:bg-gray-800",
-                  yearOpen && "bg-gray-100 dark:bg-gray-800",
-                )}
-              >
-                <span className="truncate">{viewYear}</span>
-                <ChevronDown size={12} className={cn("transition-transform", yearOpen && "rotate-180")} />
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setYearOpen((s) => !s);
+                      setMonthOpen(false);
+                    }}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold text-gray-800 transition-colors",
+                      "hover:bg-gray-100",
+                      "dark:text-gray-200 dark:hover:bg-gray-800",
+                      yearOpen && "bg-gray-100 dark:bg-gray-800",
+                    )}
+                  >
+                    <span className="truncate">{viewYear}</span>
+                    <ChevronDown size={12} className={cn("transition-transform", yearOpen && "rotate-180")} />
+                  </button>
 
-              {/* Month dropdown */}
-              {monthOpen ? (
-                <div className="absolute left-1/2 top-10 z-50 w-[min(280px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                  <div className="grid grid-cols-3 gap-1 p-2">
-                    {MONTHS.map((m, idx) => {
-                      const active = idx === viewMonth;
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => {
-                            setView(new Date(viewYear, idx, 1));
-                            setMonthOpen(false);
-                          }}
-                          className={cn(
-                            "h-8 rounded-lg text-xs font-medium transition-colors",
-                            active
-                              ? "bg-brand-500 text-white shadow-sm"
-                              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
-                          )}
-                        >
-                          {m.slice(0, 3)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Year dropdown */}
-              {yearOpen ? (
-                <div className="absolute left-1/2 top-10 z-50 w-[min(240px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                  <div ref={yearListRef} className="max-h-52 overflow-auto p-2">
-                    <div className="grid grid-cols-3 gap-1">
-                      {years.map((y) => {
-                        const active = y === viewYear;
-                        return (
-                          <button
-                            key={y}
-                            type="button"
-                            onClick={() => {
-                              setView(new Date(y, viewMonth, 1));
-                              setYearOpen(false);
-                            }}
-                            className={cn(
-                              "h-8 rounded-lg text-xs font-medium transition-colors",
-                              active
-                                ? "bg-brand-500 text-white shadow-sm"
-                                : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
-                            )}
-                          >
-                            {y}
-                          </button>
-                        );
-                      })}
+                  {monthOpen ? (
+                    <div className="absolute left-1/2 top-10 z-50 w-[min(280px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                      <div className="grid grid-cols-3 gap-1 p-2">
+                        {MONTHS.map((m, idx) => {
+                          const active = idx === viewMonth;
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => {
+                                setView(new Date(viewYear, idx, 1));
+                                setMonthOpen(false);
+                              }}
+                              className={cn(
+                                "h-8 rounded-lg text-xs font-medium transition-colors",
+                                active
+                                  ? "bg-brand-500 text-white shadow-sm"
+                                  : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                              )}
+                            >
+                              {m.slice(0, 3)}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
+
+                  {yearOpen ? (
+                    <div className="absolute left-1/2 top-10 z-50 w-[min(240px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                      <div ref={yearListRef} className="max-h-52 overflow-auto p-2">
+                        <div className="grid grid-cols-3 gap-1">
+                          {years.map((y) => {
+                            const active = y === viewYear;
+                            return (
+                              <button
+                                key={y}
+                                type="button"
+                                onClick={() => {
+                                  setView(new Date(y, viewMonth, 1));
+                                  setYearOpen(false);
+                                }}
+                                className={cn(
+                                  "h-8 rounded-lg text-xs font-medium transition-colors",
+                                  active
+                                    ? "bg-brand-500 text-white shadow-sm"
+                                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                                )}
+                              >
+                                {y}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setView((v) => addMonths(v, 1))}
+                  className={cn(
+                    "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors",
+                    "hover:bg-gray-100 hover:text-gray-700",
+                    "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
+                  )}
+                  aria-label="Next month"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              {(showToday || showClear) ? (
+                <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-2 dark:border-gray-800">
+                  {showToday ? (
+                    <button
+                      type="button"
+                      onClick={() => selectISO(toISO(new Date()))}
+                      className={cn(
+                        "h-7 rounded-lg px-2.5 text-[11px] font-semibold text-gray-600 transition-colors",
+                        "hover:bg-gray-100",
+                        "dark:text-gray-400 dark:hover:bg-gray-800",
+                      )}
+                    >
+                      Today
+                    </button>
+                  ) : null}
+
+                  {showClear && valueISO ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isDateMode) {
+                          (props as DateProps).onChange(null);
+                        } else {
+                          (props as IsoProps).onChange("");
+                        }
+                        closePopup();
+                      }}
+                      className={cn(
+                        "h-7 rounded-lg px-2.5 text-[11px] font-semibold text-gray-600 transition-colors",
+                        "hover:bg-gray-100",
+                        "dark:text-gray-400 dark:hover:bg-gray-800",
+                      )}
+                    >
+                      Clear
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
-            </div>
 
-            <button
-              type="button"
-              onClick={() => setView((v) => addMonths(v, 1))}
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors",
-                "hover:bg-gray-100 hover:text-gray-700",
-                "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
-              )}
-              aria-label="Next month"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
-          {/* Quick actions */}
-          {(showToday || showClear) ? (
-            <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-2 dark:border-gray-800">
-              {showToday ? (
-                <button
-                  type="button"
-                  onClick={() => selectISO(toISO(new Date()))}
-                  className={cn(
-                    "h-7 rounded-lg px-2.5 text-[11px] font-semibold text-gray-600 transition-colors",
-                    "hover:bg-gray-100",
-                    "dark:text-gray-400 dark:hover:bg-gray-800",
-                  )}
-                >
-                  Today
-                </button>
-              ) : null}
-
-              {showClear && valueISO ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isDateMode) {
-                      (props as DateProps).onChange(null);
-                    } else {
-                      (props as IsoProps).onChange("");
-                    }
-                    setOpen(false);
-                    setMonthOpen(false);
-                    setYearOpen(false);
-                  }}
-                  className={cn(
-                    "h-7 rounded-lg px-2.5 text-[11px] font-semibold text-gray-600 transition-colors",
-                    "hover:bg-gray-100",
-                    "dark:text-gray-400 dark:hover:bg-gray-800",
-                  )}
-                >
-                  Clear
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* Weekdays */}
-          <div className="grid grid-cols-7 px-3 pt-1">
-            {WEEKDAYS.map((d) => (
-              <div key={d} className="pb-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                {d}
+              <div className="grid grid-cols-7 px-3 pt-1">
+                {WEEKDAYS.map((d) => (
+                  <div key={d} className="pb-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    {d}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Days */}
-          <div className="grid grid-cols-7 gap-0.5 px-3 pb-3">
-            {grid.map((cell, idx) => {
-              if (!cell.date || !cell.iso) return <div key={idx} className="h-8" />;
+              <div className="grid grid-cols-7 gap-0.5 px-3 pb-3">
+                {grid.map((cell, idx) => {
+                  if (!cell.date || !cell.iso) return <div key={idx} className="h-8" />;
 
-              const iso = cell.iso;
-              const disabledDay = !withinRange(iso);
+                  const iso = cell.iso;
+                  const disabledDay = !withinRange(iso);
+                  const isSelected = selectedDate ? isSameDay(cell.date, selectedDate) : false;
+                  const isToday = isSameDay(cell.date, new Date());
 
-              const isSelected = selectedDate ? isSameDay(cell.date, selectedDate) : false;
-              const isToday = isSameDay(cell.date, new Date());
-
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  disabled={disabledDay}
-                  onClick={() => selectISO(iso)}
-                  className={cn(
-                    "h-8 rounded-lg text-sm font-medium transition-all",
-                    "outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30",
-                    disabledDay && "cursor-not-allowed opacity-30",
-                    isSelected
-                      ? "bg-brand-500 text-white shadow-sm"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
-                    !isSelected && isToday && "ring-1 ring-brand-500 ring-inset",
-                  )}
-                >
-                  {cell.date.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      disabled={disabledDay}
+                      onClick={() => selectISO(iso)}
+                      className={cn(
+                        "h-8 rounded-lg text-sm font-medium transition-all",
+                        "outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30",
+                        disabledDay && "cursor-not-allowed opacity-30",
+                        isSelected
+                          ? "bg-brand-500 text-white shadow-sm"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                        !isSelected && isToday && "ring-1 ring-brand-500 ring-inset",
+                      )}
+                    >
+                      {cell.date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
