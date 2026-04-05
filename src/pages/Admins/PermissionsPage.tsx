@@ -638,7 +638,20 @@ function AdminNotifPermissionsPanel() {
   if (isLoading)
     return <p className="text-sm text-gray-500 p-4">Loading admin permissions…</p>;
   if (isError || !data)
-    return <p className="text-sm text-error-500 p-4">Failed to load admin permissions.</p>;
+    return (
+      <div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
+        <Bell size={16} className="mt-0.5 shrink-0 text-gray-400 dark:text-gray-500" />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Admin Notification Permissions
+          </p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            Per-admin notification settings are only available to Super Admins.
+            Contact your system administrator to adjust individual notification preferences.
+          </p>
+        </div>
+      </div>
+    );
 
   const perms = data.data;
   if (perms.length === 0)
