@@ -27,20 +27,24 @@ function initials(name: string | null | undefined) {
 
 // ─── Rich metadata derived from PermissionSettingsDB.js ──────────────────── //
 
-/** Display order for sections (top → bottom) */
+/** Section keys displayed in the System Settings tab */
 const SECTION_ORDER = [
   "forgot_pass_method",
   "forget_pass_method_admin",
   "order_place_permission",
   "order_status_notification_user",
-  "order__notification_admin",
-  "personal_notification_admin",
-  "contact__notification_admin",
-  "report__notification_admin",
   "overall_cart_discount",
   "storefront_visibility",
   "announcement",
 ];
+
+/** The 4 admin-channel sections live in the Admin Notifications tab */
+const ADMIN_NOTIF_SECTIONS = new Set([
+  "order__notification_admin",
+  "personal_notification_admin",
+  "contact__notification_admin",
+  "report__notification_admin",
+]);
 
 type SectionMeta = {
   label: string;
@@ -404,7 +408,8 @@ function SystemPermissionsPanel({
 
 
   const flat = flattenPermissionData(data.data);
-  const groups = groupFlatRows(flat);
+  // Skip the 4 admin notification sections — they live in the Admin Notifications tab
+  const groups = groupFlatRows(flat).filter(g => !ADMIN_NOTIF_SECTIONS.has(g.section));
   const hasChanges = Object.keys(edits).length > 0;
   const currentVal = (r: FlatRow) => eKey(r) in edits ? edits[eKey(r)] : r.value;
 
@@ -599,6 +604,164 @@ function SystemPermissionsPanel({
   );
 }
 
+// ─── GlobalChannelSettingsBlock ─────────────────────────────────────────────
+// Renders the 4 admin-notification sections from SystemPermissions inside the
+// Admin Notifications tab so Super Admins can edit global channel flags there.
+
+function GlobalChannelSettingsBlock() {
+  const { data, isLoading } = usePermissionConfig();
+  const patchMutation = usePatchPermissionConfig();
+
+  const [edits, setEdits] = useState<Record<string, unknown>>({});
+  const [saving, setSaving] = useState(false);
+
+  const eKey = (r: FlatRow) => `${r.section}||${r.scope}||${r.key}`;
+
+  const handleChange = useCallback((r: FlatRow, val: unknown) => {
+    setEdits((e) => ({ ...e, [eKey(r)]: val }));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const payload: Record<string, Record<string, unknown>> = {};
+    for (const [k, val] of Object.entries(edits)) {
+      const [section, scope, key] = k.split("||");
+      if (!payload[section]) payload[section] = {};
+      if (scope === "default") {
+        payload[section][key] = val;
+      } else {
+        if (!payload[section][scope] || typeof payload[section][scope] !== "object") {
+          payload[section][scope] = {};
+        }
+        (payload[section][scope] as Record<string, unknown>)[key] = val;
+      }
+    }
+    try {
+      await patchMutation.mutateAsync(payload);
+      setEdits({});
+      toast.success("Channel settings saved.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to save."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (isLoading) return <p className="text-sm text-gray-500 p-4">Loading channel settings…</p>;
+  if (!data?.data) return null; // Non-super-admins: silently hidden (section title explains it)
+
+  const flat = flattenPermissionData(data.data);
+  // Only the 4 admin-notification sections
+  const ADMIN_NOTIF_ORDER = [
+    "order__notification_admin",
+    "personal_notification_admin",
+    "contact__notification_admin",
+    "report__notification_admin",
+  ];
+  const groups = groupFlatRows(flat)
+    .filter(g => ADMIN_NOTIF_SECTIONS.has(g.section))
+    .sort((a, b) => ADMIN_NOTIF_ORDER.indexOf(a.section) - ADMIN_NOTIF_ORDER.indexOf(b.section));
+
+  if (!groups.length) return null;
+
+  const hasChanges = Object.keys(edits).length > 0;
+  const currentVal = (r: FlatRow) => eKey(r) in edits ? edits[eKey(r)] : r.value;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Global Channel Settings</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Toggle which delivery channels are globally active for each notification type.
+            Per-admin toggles below only apply when the global channel is on.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!hasChanges || saving}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+            hasChanges && !saving
+              ? "bg-brand-500 text-white hover:bg-brand-600"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+          }`}
+        >
+          <Save size={14} />
+          {saving ? "Saving…" : hasChanges ? `Save (${Object.keys(edits).length})` : "Save"}
+        </button>
+      </div>
+
+      {groups.map(({ groupKey, section, sectionMeta, scopeLabel, rows }) => (
+        <div key={groupKey} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-start gap-3 border-b border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
+            {sectionMeta && (
+              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                {sectionMeta.icon}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {sectionMeta?.label ?? section.replace(/_/g, " ")}
+                {scopeLabel && (
+                  <span className="ml-2 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 dark:border-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                    {scopeLabel}
+                  </span>
+                )}
+              </p>
+              {sectionMeta?.description && (
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{sectionMeta.description}</p>
+              )}
+            </div>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            {rows.map((row) => {
+              const val = currentVal(row);
+              const isDirty = eKey(row) in edits;
+              const keyMeta = KEY_META[row.key];
+              const channelIcon = KEY_ICON[row.key];
+              return (
+                <div key={row.key} className={`flex items-center justify-between px-5 py-3.5 gap-4 transition-colors ${isDirty ? "bg-amber-50/40 dark:bg-amber-500/5" : ""}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      {channelIcon && <span className="text-gray-400 dark:text-gray-500">{channelIcon}</span>}
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                        {keyMeta?.label ?? row.key.replace(/_/g, " ")}
+                      </p>
+                      {isDirty && (
+                        <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                          unsaved
+                        </span>
+                      )}
+                    </div>
+                    {keyMeta?.description && (
+                      <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 leading-snug">{keyMeta.description}</p>
+                    )}
+                  </div>
+                  {typeof val === "boolean" && (
+                    <button type="button"
+                      onClick={() => handleChange(row, !val)}
+                      title={val ? "Enabled — click to disable" : "Disabled — click to enable"}
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                        val ? "bg-brand-500" : "bg-gray-200 dark:bg-gray-700"
+                      }`}>
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        val ? "translate-x-5" : "translate-x-0.5"
+                      }`} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      <hr className="border-gray-200 dark:border-gray-700 my-2" />
+    </div>
+  );
+}
+
 // ─── AdminNotifPermissionsPanel ───────────────────────────────────────────── //
 function AdminNotifPermissionsPanel() {
   const { data, isLoading, isError } = useAllAdminNotificationPermissions();
@@ -787,6 +950,9 @@ function AdminNotifPermissionsPanel() {
 
   return (
     <div className="space-y-3">
+      {/* Global Channel Settings editor — the 4 admin notification sections */}
+      <GlobalChannelSettingsBlock />
+
       {/* Global channel status card */}
       {sysData && (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
