@@ -61,6 +61,7 @@ const navItems: NavItem[] = [
       { nameKey: "allOrders", path: "/all-orders", pro: false },
       { nameKey: "editOrder", path: "/order-editor", pro: false },
       { nameKey: "guestOrders", path: "/guest-orders", pro: false },
+      { nameKey: "orderDistribution", path: "/order-distribution", pro: false },
     ],
   },
   {
@@ -71,6 +72,7 @@ const navItems: NavItem[] = [
       { nameKey: "createProduct", path: "/create-product", pro: false },
       { nameKey: "productCategory", path: "/product-category", pro: false },
       { nameKey: "productAttributes", path: "/product-attributes", pro: false },
+      { nameKey: "discountRules", path: "/discount-rules", pro: false },
     ],
   },
   {
@@ -122,8 +124,6 @@ const othersItems: NavItem[] = [
       { nameKey: "serviceSettings", path: "/service-settings", pro: false },
       { nameKey: "analyticsSettings", path: "/analytics-settings", pro: false },
       { nameKey: "firebaseCredential", path: "/firebase-credential", pro: false },
-      { nameKey: "discountRules", path: "/discount-rules", pro: false },
-      { nameKey: "orderDistribution", path: "/order-distribution", pro: false },
       { nameKey: "notificationHistory", path: "/notification-history", pro: false },
     ],
   },
