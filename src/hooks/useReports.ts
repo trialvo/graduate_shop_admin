@@ -94,7 +94,7 @@ export function useReportDistributionAgents() {
 export function useAdminReplyReport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: number; body: { reply_text: string; send_email?: boolean; send_sms?: boolean } }) =>
+    mutationFn: ({ id, body }: { id: number; body: { reply_text: string; via?: string } }) =>
       adminReplyReport(id, body),
     onSuccess: (_d, { id }) => {
       qc.invalidateQueries({ queryKey: reportKeys.detail(id) });

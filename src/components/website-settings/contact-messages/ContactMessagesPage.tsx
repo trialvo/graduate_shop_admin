@@ -19,6 +19,7 @@ import ContactMessagesList from "./ContactMessagesList";
 import ContactMessageDetailsPanel from "./ContactMessageDetailsPanel";
 import ReplyModal, { type ReplyType } from "./ReplyModal";
 import type { ContactMessageFilters, ContactMessagePageState, ContactTabKey } from "./types";
+import type { ContactMessage } from "@/api/contact-messages.api";
 import {
   useContactMessage,
   useContactMessageCounts,
@@ -96,9 +97,11 @@ type PageTab = "inbox" | "pool" | "assign";
 export default function ContactMessagesPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const isSuperAdmin = hasRole("SUPER_ADMIN");
-  const isAdmin      = hasRole("ADMIN");
-  const canManage    = isSuperAdmin || isAdmin; // can access Pool + Assign tabs
+  const isSuperAdmin   = hasRole("SUPER_ADMIN");
+  const isAdmin        = hasRole("ADMIN");
+  const isOrderManager = hasRole("ORDER_MANAGER");
+  const canManagePool  = isSuperAdmin || isAdmin; // Pool tab only
+  const canAssign      = isSuperAdmin || isAdmin || isOrderManager; // Assign tab
 
   const [pageTab, setPageTab]   = React.useState<PageTab>("inbox");
   const [filters, setFilters]   = React.useState<ContactMessageFilters>(DEFAULT_FILTERS);
@@ -180,22 +183,29 @@ export default function ContactMessagesPage() {
 
         {/* Page-level tabs — Pool & Assign hidden from non-admins */}
         <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-800 dark:bg-gray-900">
-          {(["inbox", "pool", "assign"] as PageTab[])
-            .filter(id => id === "inbox" || canManage)
-            .map(id => (
+          {([
+            { id: "inbox"  as const, label: "Inbox",             icon: <Inbox size={14} />,   restriction: "none"   },
+            { id: "pool"   as const, label: "Distribution Pool", icon: <Users size={14} />,   restriction: "pool"   },
+            { id: "assign" as const, label: "Assign",            icon: <Shuffle size={14} />, restriction: "assign" },
+          ] as const).filter(t => {
+            if (t.restriction === "none")   return true;
+            if (t.restriction === "pool")   return canManagePool;
+            if (t.restriction === "assign") return canAssign;
+            return false;
+          }).map(t => (
             <button
-              key={id}
+              key={t.id}
               type="button"
-              onClick={() => setPageTab(id)}
+              onClick={() => setPageTab(t.id)}
               className={cn(
                 "flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-semibold transition-all",
-                pageTab === id
+                pageTab === t.id
                   ? "bg-white text-brand-600 shadow-sm dark:bg-gray-800 dark:text-brand-400"
                   : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               )}
             >
-              {id === "pool" ? <Users size={14} /> : id === "assign" ? <Shuffle size={14} /> : <Inbox size={14} />}
-              {id === "inbox" ? "Inbox" : id === "pool" ? "Distribution Pool" : "Assign"}
+              {t.icon}
+              {t.label}
             </button>
           ))}
         </div>
@@ -368,8 +378,7 @@ export default function ContactMessagesPage() {
         </>
       )}
 
-      {/* ────────── DISTRIBUTION POOL TAB ─────────── */}
-      {pageTab === "pool" && canManage && (
+      {pageTab === "pool" && canManagePool && (
         <SupportDistributionPoolTab
           domain="contact"
           isSuperAdmin={isSuperAdmin}
@@ -425,16 +434,20 @@ export default function ContactMessagesPage() {
       )}
 
       {/* ────────── ASSIGN TAB ─────────── */}
-      {pageTab === "assign" && canManage && (
-        <AssignContactTab isSuperAdmin={isSuperAdmin} />
+      {pageTab === "assign" && canAssign && (
+        <AssignContactTab isSuperAdmin={isSuperAdmin} rows={rows} rowsLoading={listQ.isLoading} />
       )}
     </div>
   );
 }
 
-// ─── Assign Tab (Contact Messages) — V2-038 ──────────────────────────────── //
+// ─── Assign Tab (Contact Messages) — V2-039 ──────────────────────────────── //
 
-function AssignContactTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+function AssignContactTab({ isSuperAdmin, rows, rowsLoading }: {
+  isSuperAdmin: boolean;
+  rows: ContactMessage[];
+  rowsLoading: boolean;
+}) {
   const { admin } = useAuth();
   const eligibleQ = useContactEligibleAdmins();
   const assignMut = useManualAssignContactMessage();
@@ -446,6 +459,17 @@ function AssignContactTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     role_name:  a.role_name,
     active_count: a.active_message_count ?? 0,
   }));
+
+  // Convert active rows to AssignableItem[] for the searchable picker
+  // status: 1 = active, 0 = archived
+  const items = rows
+    .filter(r => r.status !== 0)
+    .map(r => ({
+      id: r.id,
+      label: [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email || r.phone || "Anonymous",
+      subject: r.subject ?? "",
+      assigned_to: null as string | null,
+    }));
 
   const logs = (logsRes?.data ?? []).map(l => ({
     id: l.id,
@@ -472,6 +496,8 @@ function AssignContactTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       isSuperAdmin={isSuperAdmin}
       currentAdminId={admin?.id ?? 0}
       admins={admins}
+      items={items}
+      itemsLoading={rowsLoading}
       logs={logs}
       logsLoading={logsLoading}
       isPending={assignMut.isPending}
@@ -479,3 +505,4 @@ function AssignContactTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     />
   );
 }
+

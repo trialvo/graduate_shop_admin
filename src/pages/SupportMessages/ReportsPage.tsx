@@ -258,11 +258,20 @@ function DetailPanel({
   const admins = adminsData?.data ?? [];
 
   const [replyText, setReplyText]     = useState("");
-  const [replyVia, setReplyVia]       = useState<"email" | "sms">("email");
+  const [replyChannels, setReplyChannels] = useState<Set<"email" | "sms">>(new Set(["email"]));
   const [showReply, setShowReply]     = useState(false);
   const [assignId, setAssignId]       = useState<number | "">("");
 
-  useEffect(() => { setReplyText(""); setShowReply(false); setAssignId(""); }, [reportId]);
+  const toggleChannel = (ch: "email" | "sms") => {
+    setReplyChannels(prev => {
+      const next = new Set(prev);
+      if (next.has(ch)) { if (next.size > 1) next.delete(ch); } // keep at least one
+      else next.add(ch);
+      return next;
+    });
+  };
+
+  useEffect(() => { setReplyText(""); setShowReply(false); setAssignId(""); setReplyChannels(new Set(["email"])); }, [reportId]);
 
   if (isLoading) return (
     <div className="flex h-full items-center justify-center py-20">
@@ -273,7 +282,7 @@ function DetailPanel({
 
   const handleReply = async () => {
     if (!replyText.trim()) return;
-    await reply.mutateAsync({ id: report.id, body: { reply_text: replyText, [replyVia === "email" ? "send_email" : "send_sms"]: true } });
+    await reply.mutateAsync({ id: report.id, body: { reply_text: replyText, via: [...replyChannels].join(",") } });
     toast.success("Reply sent");
     setReplyText(""); setShowReply(false);
   };
@@ -397,17 +406,27 @@ function DetailPanel({
             />
             <div className="flex items-center gap-2">
               <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Via:</label>
-              {(["email", "sms"] as const).map(v => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setReplyVia(v)}
-                  className={cn("rounded-lg px-3 py-1.5 text-xs font-semibold border transition",
-                    replyVia === v ? "border-brand-300 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300" : "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800")}
-                >
-                  {v.toUpperCase()}
-                </button>
-              ))}
+              {(["email", "sms"] as const).map(v => {
+                const active = replyChannels.has(v);
+                const disabled = v === "sms" && !report.reporter_phone;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    disabled={disabled}
+                    title={disabled ? "Reporter has no phone number" : undefined}
+                    onClick={() => toggleChannel(v)}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-xs font-semibold border transition",
+                      disabled ? "opacity-40 cursor-not-allowed border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-800" :
+                      active ? "border-brand-300 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300" :
+                      "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800"
+                    )}
+                  >
+                    {active && <span className="mr-1">✓</span>}{v.toUpperCase()}
+                  </button>
+                );
+              })}
               <button
                 type="button"
                 disabled={reply.isPending || !replyText.trim()}
@@ -465,9 +484,11 @@ type PageTab = "inbox" | "pool" | "assign";
 
 export default function ReportsPage() {
   const { hasRole } = useAuth();
-  const isSuperAdmin = hasRole("SUPER_ADMIN");
-  const isAdmin      = hasRole("ADMIN");
-  const canManage    = isSuperAdmin || isAdmin; // can access Pool + Assign tabs
+  const isSuperAdmin  = hasRole("SUPER_ADMIN");
+  const isAdmin       = hasRole("ADMIN");
+  const isOrderManager = hasRole("ORDER_MANAGER");
+  const canManagePool  = isSuperAdmin || isAdmin; // Pool tab: SUPER_ADMIN + ADMIN only
+  const canAssign      = isSuperAdmin || isAdmin || isOrderManager; // Assign tab
 
   // Stat tab
   const [statTab, setStatTab] = useState<TabKey>("all");
@@ -604,10 +625,15 @@ export default function ReportsPage() {
           {/* Page-level tabs — Pool & Assign hidden from non-admins */}
           <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-800 dark:bg-gray-900">
             {([
-              { id: "inbox" as const,  label: "Inbox",             restricted: false },
-              { id: "pool"  as const,  label: "Distribution Pool", restricted: true  },
-              { id: "assign" as const, label: "Assign",            restricted: true  },
-            ]).filter(t => !t.restricted || canManage).map(t => (
+              { id: "inbox"  as const, label: "Inbox",             restricted: "none"   },
+              { id: "pool"   as const, label: "Distribution Pool", restricted: "pool"   },
+              { id: "assign" as const, label: "Assign",            restricted: "assign" },
+            ] as const).filter(t => {
+              if (t.restricted === "none")   return true;
+              if (t.restricted === "pool")   return canManagePool;
+              if (t.restricted === "assign") return canAssign;
+              return false;
+            }).map(t => (
               <button
                 key={t.id}
                 type="button"
@@ -711,7 +737,7 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {pageTab === "pool" && canManage && (
+        {pageTab === "pool" && canManagePool && (
           <SupportDistributionPoolTab
             domain="reports"
             isSuperAdmin={isSuperAdmin}
@@ -769,17 +795,21 @@ export default function ReportsPage() {
           />
         )}
 
-        {pageTab === "assign" && canManage && (
-          <AssignReportsTab isSuperAdmin={isSuperAdmin} />
+        {pageTab === "assign" && canAssign && (
+          <AssignReportsTab isSuperAdmin={isSuperAdmin} rows={rows} rowsLoading={listQ.isLoading} />
         )}
       </div>
     </>
   );
 }
 
-// ─── Assign Tab (Reports) — V2-038 ────────────────────────────────────────── //
+// ─── Assign Tab (Reports) — V2-039 ────────────────────────────────────────── //
 
-function AssignReportsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+function AssignReportsTab({ isSuperAdmin, rows, rowsLoading }: {
+  isSuperAdmin: boolean;
+  rows: Report[];
+  rowsLoading: boolean;
+}) {
   const { admin } = useAuth();
   const eligibleQ = useReportEligibleAdmins();
   const assignMut = useManualAssignReport();
@@ -791,6 +821,16 @@ function AssignReportsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     role_name:  a.role_name,
     active_count: a.active_report_count ?? 0,
   }));
+
+  // Convert open/in-progress rows to AssignableItem[]
+  const items = rows
+    .filter(r => r.status === "open" || r.status === "in_progress")
+    .map(r => ({
+      id: r.id,
+      label: r.reporter_name || r.reporter_email || r.reporter_phone || "Anonymous",
+      subject: r.subject,
+      assigned_to: r.assigned_to_admin_name ?? null,
+    }));
 
   const logs = (logsRes?.data ?? []).map(l => ({
     id: l.id,
@@ -817,6 +857,8 @@ function AssignReportsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       isSuperAdmin={isSuperAdmin}
       currentAdminId={admin?.id ?? 0}
       admins={admins}
+      items={items}
+      itemsLoading={rowsLoading}
       logs={logs}
       logsLoading={logsLoading}
       isPending={assignMut.isPending}

@@ -1,13 +1,18 @@
-// src/layout/AppLayout.tsx (or wherever this file is)
+// src/layout/AppLayout.tsx
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
+import { useGlobalNotificationSync } from "@/hooks/useGlobalNotificationSync"; // V2-036
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+
+  // V2-036: auto-invalidate React Query caches when a push notification arrives.
+  // This gives every admin page real-time data refresh (cross-tab safe).
+  useGlobalNotificationSync();
 
   return (
     <div className="min-h-screen overflow-x-hidden xl:flex">

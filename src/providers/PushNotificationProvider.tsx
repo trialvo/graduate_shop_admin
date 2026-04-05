@@ -170,9 +170,20 @@ export default function PushNotificationProvider() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{body}</p>
+                {/* Context label per notification type */}
                 {data.order_id && (
                   <p className="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">
-                    Order #{data.order_id}
+                    🛒 Order #{data.order_id}
+                  </p>
+                )}
+                {data.report_id && (
+                  <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mt-1">
+                    🚩 Report #{data.report_id}
+                  </p>
+                )}
+                {data.message_id && (
+                  <p className="text-xs font-medium text-sky-600 dark:text-sky-400 mt-1">
+                    💬 Contact Message #{data.message_id}
                   </p>
                 )}
               </div>

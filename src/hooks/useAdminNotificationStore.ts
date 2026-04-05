@@ -14,7 +14,10 @@ export interface AdminPushNotification {
   title:       string;
   body:        string;
   order_id?:   string;
+  report_id?:  string;   // V2-036: report notifications
+  message_id?: string;   // V2-036: contact message notifications
   event_type?: string;
+  type?:       string;   // 'order_notification' | 'contact_notification' | 'report_notification'
   read:        boolean;
   receivedAt:  number;
 }
@@ -52,18 +55,33 @@ export function pushAdminNotification(
 ): boolean {
   // ── Deduplication guard ───────────────────────────────────────────────────
   // Both the FCM foreground handler and the SW postMessage handler can fire
-  // for the same payload.  Skip if same order_id + event_type already stored
+  // for the same payload.  Skip if same entity-id + event_type already stored
   // within the last 5 seconds.
+  //
+  // Use the most specific available ID per notification type:
+  //   order notification  → order_id
+  //   report notification → report_id
+  //   contact notification → message_id
+  // Without this, all contact/report pushes had order_id=undefined and
+  // would match each other, suppressing every 2nd push within 5s.
   const now   = Date.now();
   const store = readStore();
+  const entityId = data?.order_id || data?.report_id || data?.message_id;
   const isDuplicate = store.some(
-    (n) =>
-      n.order_id   === data?.order_id &&
-      n.event_type === data?.event_type &&
-      now - n.receivedAt < 5_000
+    (n) => {
+      const storedEntityId = n.order_id || n.report_id || n.message_id;
+      return (
+        storedEntityId  === entityId &&
+        n.event_type    === data?.event_type &&
+        // If both entity IDs are undefined (should not happen in practice),
+        // fall back to title match to avoid suppressing unrelated notifications.
+        entityId !== undefined &&
+        now - n.receivedAt < 5_000
+      );
+    }
   );
   if (isDuplicate) {
-    console.debug('[AdminNotifStore] Duplicate push suppressed', data?.order_id, data?.event_type);
+    console.debug('[AdminNotifStore] Duplicate push suppressed', entityId, data?.event_type);
     return false;
   }
   // ─────────────────────────────────────────────────────────────────────────
@@ -73,7 +91,10 @@ export function pushAdminNotification(
     title,
     body,
     order_id:   data?.order_id,
+    report_id:  data?.report_id,
+    message_id: data?.message_id,
     event_type: data?.event_type,
+    type:       data?.type,
     read:        false,
     receivedAt:  now,
   };

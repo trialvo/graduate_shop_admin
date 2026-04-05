@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bell, MessageSquareText, Package, X } from "lucide-react";
+import { Bell, FileText, MessageSquareText, Package, X } from "lucide-react";
 
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
@@ -105,21 +105,36 @@ export default function NotificationDropdown() {
             <>
               <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Recent Alerts</p>
               <ul className="flex flex-col mb-2">
-                {recentPush.map((n) => (
+              {recentPush.map((n) => {
+                // Resolve the link target and icon per notification type
+                const isReport  = !!n.report_id  || n.type?.includes("report")  || n.event_type?.includes("report");
+                const isContact = !!n.message_id || n.type?.includes("contact") || n.event_type?.includes("contact");
+                const linkTo    = isReport  ? "/support-reports"
+                                : isContact ? "/contact-page"
+                                : n.order_id ? `/orders/${n.order_id}`
+                                : "/orders";
+                const Icon      = isReport  ? FileText
+                                : isContact ? MessageSquareText
+                                : Package;
+                const iconBg    = isReport  ? "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
+                                : isContact ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+                                : "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300";
+
+                return (
                   <li key={n.id}>
                     <DropdownItem
                       onItemClick={closeDropdown}
                       tag="a"
-                      to={n.order_id ? `/orders/${n.order_id}` : "/orders"}
+                      to={linkTo}
                       className={cn(
                         "flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3",
                         "hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5",
                         !n.read && "bg-brand-50 dark:bg-brand-500/5"
                       )}
                     >
-                      <span className="relative block h-10 w-10 shrink-0 rounded-full bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                      <span className={cn("relative block h-10 w-10 shrink-0 rounded-full", iconBg)}>
                         <span className="flex h-full w-full items-center justify-center">
-                          <Package size={18} />
+                          <Icon size={18} />
                         </span>
                         {!n.read && <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-brand-500 border-2 border-white dark:border-gray-900" />}
                       </span>
@@ -130,7 +145,8 @@ export default function NotificationDropdown() {
                       </span>
                     </DropdownItem>
                   </li>
-                ))}
+                );
+              })}
               </ul>
               <p className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Messages</p>
             </>

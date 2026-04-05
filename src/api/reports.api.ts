@@ -173,7 +173,7 @@ export async function adminGetReport(id: number): Promise<{ success: boolean; da
 }
 
 // Admin: reply
-export async function adminReplyReport(id: number, body: { reply_text: string; send_email?: boolean; send_sms?: boolean }): Promise<{ success: boolean; message: string }> {
+export async function adminReplyReport(id: number, body: { reply_text: string; via?: string }): Promise<{ success: boolean; message: string }> {
   const { data } = await api.post(`/admin/reports/${id}/reply`, body);
   return data;
 }
