@@ -52,7 +52,10 @@ try {
           body,
           icon:  '/favicon.ico',
           badge: '/favicon.ico',
-          tag:   data.order_id ? `order-${data.order_id}` : 'gf-admin',
+          tag:   data.order_id   ? `order-${data.order_id}`
+               : data.report_id  ? `report-${data.report_id}`
+               : data.message_id ? `message-${data.message_id}`
+               : 'gf-admin',
           data,
         });
       }
@@ -78,18 +81,52 @@ try {
 }
 
 
-// ── notificationclick — focus or open admin tab ────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function buildTargetPath(data) {
+  if (data && data.order_id)   return '/all-orders?orderId='   + data.order_id;
+  if (data && data.report_id)  return '/support-reports?reportId=' + data.report_id;
+  if (data && data.message_id) return '/contact-page?messageId='   + data.message_id;
+  return '/dashboard';
+}
+
+// ── notificationclick — navigate to entity-specific page ──────────────────────
+//
+// WHY postMessage instead of client.navigate():
+//   client.navigate() is unreliable in Chrome when the client window is
+//   not already focused (cross-window, background tab in another Chrome window).
+//   The reliable pattern is:
+//     1. Focus the existing admin tab (brings it to front)
+//     2. Post a GF_NAVIGATE message so the React app calls React Router navigate()
+//   If no admin tab is open, open a new window with the full absolute URL.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  const data       = event.notification.data || {};
+  const targetPath = buildTargetPath(data);
+  // Build an absolute URL so openWindow() works correctly across origins/ports
+  const targetUrl  = new URL(targetPath, self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes('localhost:5173') || client.url.includes('admin')) {
-          client.focus();
-          return;
-        }
+      // Look for an existing admin panel tab
+      const adminClient = clientList.find((c) =>
+        c.url.includes('localhost:5173') || c.url.includes('/admin')
+      );
+
+      if (adminClient) {
+        // 1. Focus brings the window/tab to the front
+        return adminClient.focus().then((wc) => {
+          // 2. Tell the React app to navigate — more reliable than client.navigate()
+          const target = wc || adminClient;
+          target.postMessage({ type: 'GF_NAVIGATE', path: targetPath });
+        }).catch(() => {
+          // Focus failed (e.g. cross-origin restriction) — open new window
+          return clients.openWindow(targetUrl);
+        });
       }
-      clients.openWindow('/dashboard');
+
+      // No existing admin tab — open a new one with the full URL
+      return clients.openWindow(targetUrl);
     })
   );
 });

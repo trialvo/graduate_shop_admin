@@ -1,6 +1,6 @@
 const DEFAULT_API_ORIGIN =
   import.meta.env.DEV
-    ? "http://localhost:7010"
+    ? "http://localhost:7000"
     : "https://graduatefashion-api-641431966702.asia-south1.run.app";
 
 export const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || DEFAULT_API_ORIGIN;

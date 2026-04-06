@@ -3,7 +3,8 @@
 // Stat pills: Total | Unread | Unresolved | Open | In-Progress | Resolved
 // Two tabs: Inbox (split-pane) | Distribution Pool
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, Archive, CheckCircle2, Clock, FileText,
@@ -501,6 +502,11 @@ export default function ReportsPage() {
   const [filters, setFilters] = useState<Filters>({});
   const [showFilters, setShowFilters] = useState(false);
 
+  // ── Deep-link: auto-select report from ?reportId=X ───────────────────────
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkId = searchParams.get("reportId") ? Number(searchParams.get("reportId")) : null;
+  const deepLinkConsumedRef = useRef(false);
+
   // Counts
   const countsQ = useAdminReportCounts();
   const counts  = countsQ.data?.data;
@@ -551,6 +557,17 @@ export default function ReportsPage() {
   useEffect(() => {
     if (!selectedId && rows.length > 0) setSelectedId(rows[0].id);
   }, [rows, selectedId]);
+
+  // Auto-select deep-link report when rows arrive
+  useEffect(() => {
+    if (!deepLinkId || deepLinkConsumedRef.current || rows.length === 0) return;
+    // The target report may be on a different page; select it directly by ID
+    // even if it's not in the current page — the detail panel fetches it individually.
+    deepLinkConsumedRef.current = true;
+    setSelectedId(deepLinkId);
+    setSearchParams((prev) => { prev.delete("reportId"); return prev; }, { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkId, rows]);
 
   // Distribution pool hooks
   const settingsQ  = useReportDistributionSettings();

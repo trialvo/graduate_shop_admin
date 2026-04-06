@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Bell, BellOff, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   requestAndGetToken,
   onForegroundMessage,
@@ -26,6 +27,13 @@ import { registerPushToken, unregisterPushToken } from '@/api/admin-push.api';
 import { useAuth } from '@/context/AuthProvider';
 import { pushAdminNotification } from '@/hooks/useAdminNotificationStore';
 
+// ── Deep-link helper ───────────────────────────────────────────────────────────
+function buildDeepLinkPath(data: Record<string, string>): string {
+  if (data.order_id)   return `/all-orders?orderId=${data.order_id}`;
+  if (data.report_id)  return `/support-reports?reportId=${data.report_id}`;
+  if (data.message_id) return `/contact-page?messageId=${data.message_id}`;
+  return '/dashboard';
+}
 // ── Storage keys ───────────────────────────────────────────────────────────────
 const STORAGE_KEY          = 'gf_admin_fcm_token';
 // Persists banner-dismissed state for the tab session (resets on tab close).
@@ -40,12 +48,16 @@ let _fgUnsub: (() => void) | null = null;
 
 export default function PushNotificationProvider() {
   const { token: authToken } = useAuth();
+  const navigate = useNavigate();
   const [showBanner, setShowBanner] = useState(false);
 
   const tokenRef          = useRef<string | null>(null);
   const isRegisteringRef  = useRef(false);
   // Track previous auth token value to detect genuine login/logout transitions
   const prevAuthTokenRef  = useRef<string | null | undefined>(undefined);
+  // Always-current navigate ref so the mount-only SW listener never goes stale
+  const navigateRef       = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
 
   // ── Single mount-only effect ───────────────────────────────────────────────
   // Registers the SW message listener once. Foreground listener is managed
@@ -59,6 +71,12 @@ export default function PushNotificationProvider() {
           body  || 'You have a new notification.',
           (data || {}) as Record<string, string>
         );
+      } else if (event.data?.type === 'GF_NAVIGATE') {
+        // Sent by the service worker notificationclick handler when the admin tab
+        // is already open and has been focused. Navigate via React Router so the
+        // SPA transitions without a full page reload.
+        const path = event.data.path as string | undefined;
+        if (path) navigateRef.current(path);
       }
     }
     navigator.serviceWorker?.addEventListener('message', handleSWMessage);
@@ -157,11 +175,16 @@ export default function PushNotificationProvider() {
         const wasNew = pushAdminNotification(title, body, data as Record<string, string>);
         if (wasNew === false) return;
 
-        // Show a rich in-app toast
+        // Show a rich in-app toast — clicking it navigates to the entity page
+        const deepPath = buildDeepLinkPath(data as Record<string, string>);
         toast.custom(
           (t) => (
             <div
-              className={`flex items-start gap-3 rounded-xl border border-brand-200 bg-white px-4 py-3 shadow-lg dark:border-brand-700 dark:bg-gray-900 transition-all ${t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => { navigate(deepPath); toast.dismiss(t.id); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { navigate(deepPath); toast.dismiss(t.id); } }}
+              className={`flex items-start gap-3 rounded-xl border border-brand-200 bg-white px-4 py-3 shadow-lg dark:border-brand-700 dark:bg-gray-900 transition-all cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-500/5 ${t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
               style={{ maxWidth: 360 }}
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">

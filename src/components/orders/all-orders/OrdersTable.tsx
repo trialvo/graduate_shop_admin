@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
@@ -30,7 +30,16 @@ import {
   patchOrderStatus,
 } from "@/api/orders.api";
 
-type Props = { rows: OrderRow[] };
+type Props = {
+  rows: OrderRow[];
+  selectedIds: Set<string>;
+  onSelect: (id: string, checked: boolean) => void;
+  onSelectAll: (checked: boolean) => void;
+  /** Order ID to auto-open in modal (from ?orderId= URL param) */
+  defaultOpenOrderId?: string;
+  /** Called once the deep-link modal has been opened so the parent can clear the URL param */
+  onDeepLinkConsumed?: () => void;
+};
 
 // ─── Shell (matches AllProductsTable / SectionCard) ───────────────────────────
 
@@ -113,7 +122,7 @@ const STATUS_OPTIONS = [
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function OrdersTable({ rows }: Props) {
+export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, defaultOpenOrderId, onDeepLinkConsumed }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -133,6 +142,19 @@ export default function OrdersTable({ rows }: Props) {
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [fraudOpen, setFraudOpen]       = useState(false);
   const [fraudOrder, setFraudOrder]     = useState<OrderRow | null>(null);
+
+  // ── Deep-link: auto-open order modal when ?orderId= is present ─────────────
+  const consumedRef = useRef(false);
+  useEffect(() => {
+    if (!defaultOpenOrderId || consumedRef.current || rows.length === 0) return;
+    const targetRow = rows.find((r) => String(r.id) === String(defaultOpenOrderId));
+    if (targetRow) {
+      consumedRef.current = true;
+      setSelectedOrder(targetRow);
+      setViewOpen(true);
+      onDeepLinkConsumed?.();
+    }
+  }, [defaultOpenOrderId, rows, onDeepLinkConsumed]);
 
   const mergedRows = useMemo(() =>
     rows.map((r) => ({

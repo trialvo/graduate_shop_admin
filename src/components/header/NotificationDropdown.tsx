@@ -109,10 +109,10 @@ export default function NotificationDropdown() {
                 // Resolve the link target and icon per notification type
                 const isReport  = !!n.report_id  || n.type?.includes("report")  || n.event_type?.includes("report");
                 const isContact = !!n.message_id || n.type?.includes("contact") || n.event_type?.includes("contact");
-                const linkTo    = isReport  ? "/support-reports"
-                                : isContact ? "/contact-page"
-                                : n.order_id ? `/orders/${n.order_id}`
-                                : "/orders";
+                const linkTo    = isReport  ? `/support-reports${n.report_id  ? `?reportId=${n.report_id}`   : ""}`
+                                : isContact ? `/contact-page${n.message_id   ? `?messageId=${n.message_id}` : ""}`
+                                : n.order_id ? `/all-orders?orderId=${n.order_id}`
+                                : "/all-orders";
                 const Icon      = isReport  ? FileText
                                 : isContact ? MessageSquareText
                                 : Package;
@@ -160,7 +160,7 @@ export default function NotificationDropdown() {
                   <DropdownItem
                     onItemClick={closeDropdown}
                     tag="a"
-                    to="/contact-page"
+                    to={`/contact-page?messageId=${m.id}`}
                     className={cn(
                       "flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3",
                       "hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
@@ -203,7 +203,7 @@ export default function NotificationDropdown() {
               "dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:hover:bg-white/[0.03]"
             )}
           >
-            Open contact messages
+            View all messages
           </Link>
         </div>
       </Dropdown>

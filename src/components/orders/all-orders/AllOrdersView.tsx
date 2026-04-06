@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { keepPreviousData, useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthProvider";
 
 
@@ -244,6 +245,10 @@ export default function AllOrdersView() {
 
   const { admin } = useAuth();
   const currentAdminId = admin?.id ?? null;
+
+  // ── Deep-link: open specific order modal from ?orderId=X ──────────────────
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkOrderId = searchParams.get("orderId") ?? undefined;
 
   const [refreshedAt, setRefreshedAt] = useState(nowLabel());
 
@@ -719,6 +724,11 @@ export default function AllOrdersView() {
         selectedIds={selectedIds}
         onSelect={handleSelect}
         onSelectAll={handleSelectAll}
+        defaultOpenOrderId={deepLinkOrderId}
+        onDeepLinkConsumed={() => {
+          // Remove the orderId param so refreshing doesn't re-open the modal
+          setSearchParams((prev) => { prev.delete("orderId"); return prev; }, { replace: true });
+        }}
       />
 
       {/* Floating Action Bar */}

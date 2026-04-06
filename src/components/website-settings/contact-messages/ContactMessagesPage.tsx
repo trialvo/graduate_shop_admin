@@ -3,7 +3,8 @@
 
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Archive, Inbox, Mail, MessageSquare, MessageSquareText,
   RefreshCw, Search, Shuffle, SlidersHorizontal, Users,
@@ -108,6 +109,11 @@ export default function ContactMessagesPage() {
   const [state, setState]       = React.useState<ContactMessagePageState>(DEFAULT_STATE);
   const [showSearch, setShowSearch] = React.useState(false);
 
+  // ── Deep-link: auto-select contact message from ?messageId=X ────────────
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkMsgId = searchParams.get("messageId") ? Number(searchParams.get("messageId")) : null;
+  const deepLinkConsumedRef = useRef(false);
+
   const offset = (state.page - 1) * state.pageSize;
 
   // ── Queries ─────────────────────────────────────────────────────────────
@@ -130,6 +136,16 @@ export default function ContactMessagesPage() {
       setState(s => ({ ...s, selectedId: rows[0].id }));
     }
   }, [rows, state.selectedId]);
+
+  // Auto-select deep-link message when rows arrive
+  React.useEffect(() => {
+    if (!deepLinkMsgId || deepLinkConsumedRef.current || rows.length === 0) return;
+    // Select directly by ID — the detail panel will fetch it individually
+    deepLinkConsumedRef.current = true;
+    setState(s => ({ ...s, selectedId: deepLinkMsgId }));
+    setSearchParams((prev) => { prev.delete("messageId"); return prev; }, { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkMsgId, rows]);
 
   const singleQ  = useContactMessage(state.selectedId, { enabled: !!state.selectedId });
   const selected = singleQ.data?.data ?? null;
