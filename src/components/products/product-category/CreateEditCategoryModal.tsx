@@ -17,6 +17,11 @@ import ImagePickerSquare from "@/components/products/product-category/ImagePicke
 import Select, { type Option } from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { useTranslation } from "react-i18next";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 export type EditModalState = {
   open: boolean;
@@ -58,6 +63,7 @@ export default function CreateEditCategoryModal({
 }: Props) {
   const { t } = useTranslation();
   const { open, entity, mode, id } = state;
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   const singleQ = useCategorySingle(entity, id, open && mode === "edit");
 
@@ -156,7 +162,7 @@ export default function CreateEditCategoryModal({
     });
   }, [entity, mode, open, singleQ.data]);
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   const isBusy = singleQ.isFetching || singleQ.isLoading || isSaving;
 
@@ -176,8 +182,21 @@ export default function CreateEditCategoryModal({
   const closeDisabled = isBusy; // keep like your UI
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-[820px] overflow-hidden rounded-2xl bg-white shadow-theme-xs ring-1 ring-inset ring-gray-200 dark:bg-gray-950 dark:ring-gray-800">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      <div
+        aria-hidden="true"
+        style={getModalBackdropStyle(isVisible)}
+        className="absolute inset-0 bg-black/50"
+        onClick={() => {
+          if (closeDisabled) return;
+          onClose();
+        }}
+      />
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative w-full max-w-[820px] overflow-hidden rounded-2xl bg-white shadow-theme-xs ring-1 ring-inset ring-gray-200 dark:bg-gray-950 dark:ring-gray-800"
+      >
         {/* header */}
         <div className="flex items-start justify-between gap-3 border-b border-gray-100 p-4 dark:border-gray-800">
           <div>

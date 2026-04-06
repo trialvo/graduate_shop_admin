@@ -68,6 +68,7 @@ export type ProductsListParams = {
   status?: boolean;
   featured?: boolean;
   best_deal?: boolean;
+  in_stock?: boolean;
 
   min_price?: number;
   max_price?: number;
@@ -202,6 +203,12 @@ export type ProductSingleResponse = {
   product: ProductSingleResponseEntity;
 };
 
+export type ProductApiMutationResponse = {
+  success?: boolean;
+  message?: string;
+  error?: string;
+} & Record<string, unknown>;
+
 export type ProductVariationPayload = {
   color_id: number;
   variant_id: number;
@@ -246,7 +253,20 @@ export type CreateProductPayload = {
   variations: ProductVariationPayload[];
 };
 
-export type UpdateProductPayload = Omit<CreateProductPayload, "variations"> & {
+export type UpdateProductPayload = Omit<
+  CreateProductPayload,
+  | "variations"
+  | "main_category_id"
+  | "sub_category_id"
+  | "child_category_id"
+  | "brand_id"
+  | "attribute_id"
+> & {
+  main_category_id: number | null;
+  sub_category_id: number | null;
+  child_category_id: number | null;
+  brand_id: number | null;
+  attribute_id: number | null;
   delete_image_ids?: number[];
 };
 
@@ -314,11 +334,13 @@ function buildProductFormData(
   return fd;
 }
 
-function cleanParams<T extends Record<string, any>>(params?: T) {
+function cleanParams<T extends Record<string, unknown>>(
+  params?: T,
+): Partial<T> | undefined {
   if (!params) return undefined;
 
-  const next: Record<string, any> = {};
-  for (const [k, v] of Object.entries(params)) {
+  const next: Partial<T> = {};
+  for (const [k, v] of Object.entries(params) as Array<[keyof T, T[keyof T]]>) {
     if (v === undefined || v === null) continue;
     if (typeof v === "string" && v.trim() === "") continue;
 
@@ -373,7 +395,7 @@ export async function updateProduct(
 
 export async function deleteProduct(
   id: number,
-): Promise<{ success: true } | any> {
+): Promise<ProductApiMutationResponse> {
   const res = await api.delete(`/product/${id}`);
   return res.data;
 }
@@ -386,7 +408,7 @@ export async function deleteProduct(
 export async function updateProductStatus(
   id: number,
   status: boolean,
-): Promise<{ success: true } | any> {
+): Promise<ProductApiMutationResponse> {
   const fd = new FormData();
   fd.append("status", status ? "true" : "false");
 

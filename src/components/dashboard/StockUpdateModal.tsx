@@ -4,6 +4,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 export type StockActionType = "increase" | "decrease" | "set";
 
@@ -63,6 +68,19 @@ const StockUpdateModal: React.FC<Props> = ({
   minStockAfterUpdate = 0,
 }) => {
   const { t } = useTranslation();
+  const modalOpen = open && !!product;
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(modalOpen);
+  const [activeProduct, setActiveProduct] =
+    React.useState<StockUpdateModalProduct | null>(null);
+
+  React.useEffect(() => {
+    if (open && product) setActiveProduct(product);
+  }, [open, product]);
+
+  React.useEffect(() => {
+    if (!isMounted) setActiveProduct(null);
+  }, [isMounted]);
+
   const [type, setType] = React.useState<StockActionType>("increase");
   const [qty, setQty] = React.useState<number>(1);
   const [reason, setReason] = React.useState<string>(REASON_KEYS[0].value);
@@ -77,9 +95,9 @@ const StockUpdateModal: React.FC<Props> = ({
     setNote("");
   }, [open]);
 
-  if (!open || !product) return null;
+  if (!isMounted || !activeProduct) return null;
 
-  const current = product.currentStock;
+  const current = activeProduct.currentStock;
 
   const nextStockPreview = (() => {
     if (type === "increase") return current + Math.max(0, qty);
@@ -100,7 +118,7 @@ const StockUpdateModal: React.FC<Props> = ({
     if (!canApply) return;
 
     onApply({
-      productId: product.id,
+      productId: activeProduct.id,
       type,
       qty: Math.floor(qty),
       reason: reason.trim(),
@@ -119,13 +137,18 @@ const StockUpdateModal: React.FC<Props> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* overlay */}
       <div
+        style={getModalBackdropStyle(isVisible)}
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* modal */}
-      <div className="relative w-[94%] max-w-xl rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative w-[94%] max-w-xl rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900"
+      >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -133,7 +156,7 @@ const StockUpdateModal: React.FC<Props> = ({
                 {t("dashboard.stockUpdateModal.title")}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {product.name} • {t("dashboard.stockUpdateModal.current")}:{" "}
+                {activeProduct.name} • {t("dashboard.stockUpdateModal.current")}:{" "}
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
                   {current}
                 </span>

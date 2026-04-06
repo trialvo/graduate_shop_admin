@@ -15,6 +15,11 @@ import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Switch from "@/components/form/switch/Switch";
 import DatePicker from "@/components/form/date-picker";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 import type { CouponScope, DiscountType, Option, ProductLite, CustomerLite } from "./types";
 import {
@@ -109,6 +114,7 @@ function getResponseId(res: any): number | null {
 export default function CouponModal({ open, mode, couponId, onClose, onSaved }: Props) {
   const queryClient = useQueryClient();
   const hydratedRef = useRef(false);
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
@@ -452,18 +458,23 @@ export default function CouponModal({ open, mode, couponId, onClose, onSaved }: 
     return customerIds.map((id) => map.get(id) ?? { id, name: `User #${id}` });
   }, [customerIds]);
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   return (
     <div className="fixed inset-0 z-[1000] overflow-y-auto p-2 sm:p-4 md:p-6">
       <button
         type="button"
+        style={getModalBackdropStyle(isVisible)}
         className="absolute inset-0 bg-black/60"
         onClick={onClose}
         aria-label="Close overlay"
       />
 
-      <div className="relative mx-auto my-2 flex w-full max-w-5xl flex-col rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)]">
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative mx-auto my-2 flex w-full max-w-5xl max-h-[calc(100dvh-1rem)] flex-col rounded-xl border border-gray-200 bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] dark:border-gray-800 dark:bg-gray-900"
+      >
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-gray-800">
           <div>

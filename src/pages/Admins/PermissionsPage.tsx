@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, Bell, BellRing, KeyRound, Lock,
-  Mail, MessageSquare, Percent, Save, Settings2,
-  ShoppingCart, Smartphone, Zap,
+  Mail, MessageSquare, Package, Percent, Plus, Save, Settings2,
+  ShoppingCart, Smartphone, Trash2, X, Zap,
 } from "lucide-react";
 import PageMeta from "@/components/common/PageMeta";
 import { usePermissionConfig, usePatchPermissionConfig } from "@/hooks/usePermissions";
@@ -16,6 +16,12 @@ import {
 } from "@/hooks/useNotificationPermissions";
 import { toPublicUrl } from "@/config/env";
 import type { AdminNotificationPermission, SetNotificationPermissionsPayload } from "@/api/notification-permissions.api";
+import Switch from "@/components/form/switch/Switch";
+import Select from "@/components/form/Select";
+import DatePicker from "@/components/form/date-picker";
+import TimeSelect from "@/components/form/time-select/TimeSelect";
+import { getProducts } from "@/api/products.api";
+import { cn } from "@/lib/utils";
 
 // ─── helpers ─────────────────────────────────────────────────────────────── //
 type PermRow = AdminNotificationPermission & { dirty: boolean };
@@ -126,15 +132,15 @@ const KEY_META: Record<string, KeyMeta> = {
   discount_value: { label: "Discount Value", description: "The discount amount — flat (৳) or percentage (%) depending on Discount Type." },
   basis: { label: "Apply Based On", description: "Which threshold triggers the discount — item count or cart total price." },
   apply_with_bulk_combo: { label: "Stack With Bulk / Combo Offers", description: "When enabled, this discount applies on top of existing bulk or combo deals." },
-  show_megasale: { label: "Show Mega Sale", description: "When enabled, the storefront displays the Mega Sale page and quick links." },
-  megasale_campaign_end_at: { label: "Campaign End Time", description: "Set the main Mega Sale countdown date and time." },
-  megasale_product_end_at: { label: "Product Timer End Time", description: "Set the product card countdown date and time." },
+  show_megasale: { label: "Show Mega Sale Page", description: "Display the Mega Sale page and promotional banners on the storefront. When disabled, all Mega Sale content is hidden from customers." },
+  megasale_campaign_end_at: { label: "Campaign End Date & Time", description: "When the main Mega Sale countdown ends. This controls the global timer displayed on the storefront banner." },
+  megasale_product_end_at: { label: "Default Product Timer", description: "A default countdown shown on each product card during the sale. Products with individual timers (below) will use their own end time instead." },
   megasale_product_timers: {
     label: "Product-wise Timers",
-    description: "One per line: productId=YYYY-MM-DDTHH:mm (example: 12=2026-04-05T23:59).",
+    description: "Set individual countdown timers for specific products. Search and select a product, then choose when its sale ends.",
   },
-  megasale_product_ids: { label: "Mega Sale Product IDs (CSV)", description: "Comma-separated product IDs to prioritize/show in Mega Sale. Example: 12,45,78" },
-  megasale_product_limit: { label: "Mega Sale Product Limit", description: "Maximum number of products shown on Mega Sale page." },
+  megasale_product_ids: { label: "Featured Mega Sale Products", description: "Choose which products appear in the Mega Sale section. Enter product IDs separated by commas (e.g. 12, 45, 78)." },
+  megasale_product_limit: { label: "Maximum Products Shown", description: "Limit how many products are visible on the Mega Sale page. Must be at least 1." },
   auto_send_scheduled_announcement: { label: "Auto-Send Scheduled Announcements", description: "When enabled, the system automatically sends scheduled announcements at their configured time without manual admin action." },
 };
 
@@ -261,6 +267,335 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+
+
+// ─── DateTimeInput ────────────────────────────────────────────────────────── //
+
+function DateTimeInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const localValue = toDateTimeLocalValue(value);
+  const datePart = localValue.slice(0, 10);
+  const timePart = localValue.slice(11, 16) || "00:00";
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-[140px]">
+        <DatePicker
+          value={datePart}
+          onChange={(d) => {
+            if (!d) { onChange(""); return; }
+            onChange(toIsoWithOffset(`${d}T${timePart}`));
+          }}
+          placeholder="Select date"
+          showToday
+          showClear={false}
+        />
+      </div>
+      <TimeSelect
+        value={timePart}
+        onChange={(t) => {
+          if (!datePart) return;
+          onChange(toIsoWithOffset(`${datePart}T${t}`));
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── ProductTimerEditor ───────────────────────────────────────────────────── //
+
+function ProductTimerEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const entries = useMemo(() => {
+    if (!value.trim()) return [] as { productId: number; dateTime: string }[];
+    return value
+      .split(",")
+      .map((part) => {
+        const [idStr, ...rest] = part.trim().split("=");
+        return { productId: parseInt(idStr, 10), dateTime: rest.join("=") };
+      })
+      .filter((e) => !isNaN(e.productId) && e.dateTime);
+  }, [value]);
+
+  const [newProductId, setNewProductId] = useState<number | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("23:59");
+
+  const [productOptions, setProductOptions] = useState<{ value: string; label: string }[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingProducts(true);
+    getProducts({ limit: 200 })
+      .then((res) => {
+        if (cancelled) return;
+        setProductOptions(
+          res.products.map((p) => ({ value: String(p.id), label: `#${p.id} — ${p.name}` })),
+        );
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingProducts(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const serialize = (arr: { productId: number; dateTime: string }[]) =>
+    arr.map((e) => `${e.productId}=${e.dateTime}`).join(",");
+
+  const getDate = (dt: string) => {
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return "";
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  };
+
+  const getTime = (dt: string) => {
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return "23:59";
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  };
+
+  const productNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    productOptions.forEach((o) => map.set(Number(o.value), o.label));
+    return map;
+  }, [productOptions]);
+
+  const removeEntry = (pid: number) => {
+    onChange(serialize(entries.filter((e) => e.productId !== pid)));
+  };
+
+  const updateDate = (pid: number, newD: string) => {
+    const updated = entries.map((e) => {
+      if (e.productId !== pid) return e;
+      const t = getTime(e.dateTime);
+      return { ...e, dateTime: toIsoWithOffset(`${newD}T${t}`) };
+    });
+    onChange(serialize(updated));
+  };
+
+  const updateTime = (pid: number, newT: string) => {
+    const updated = entries.map((e) => {
+      if (e.productId !== pid) return e;
+      const d = getDate(e.dateTime);
+      if (!d) return e;
+      return { ...e, dateTime: toIsoWithOffset(`${d}T${newT}`) };
+    });
+    onChange(serialize(updated));
+  };
+
+  const addEntry = () => {
+    if (!newProductId || !newDate) return;
+    if (entries.some((e) => e.productId === newProductId)) {
+      toast.error("This product already has a timer.");
+      return;
+    }
+    const iso = toIsoWithOffset(`${newDate}T${newTime || "23:59"}`);
+    onChange(serialize([...entries, { productId: newProductId, dateTime: iso }]));
+    setNewProductId(null);
+    setNewDate("");
+    setNewTime("23:59");
+  };
+
+  return (
+    <div className="w-full space-y-2.5">
+      {entries.map((entry) => (
+        <div
+          key={entry.productId}
+          className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2.5 dark:border-gray-800 dark:bg-gray-800/30"
+        >
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 shrink-0">
+            <Package size={12} />
+            {productNameMap.get(entry.productId) ?? `Product #${entry.productId}`}
+          </span>
+
+          <div className="ml-auto flex items-center gap-2">
+            <div className="w-[130px]">
+              <DatePicker
+                value={getDate(entry.dateTime)}
+                onChange={(v) => updateDate(entry.productId, v)}
+                placeholder="Date"
+                showToday={false}
+                showClear={false}
+              />
+            </div>
+            <TimeSelect
+              value={getTime(entry.dateTime)}
+              onChange={(t) => updateTime(entry.productId, t)}
+              size="sm"
+            />
+            <button
+              type="button"
+              onClick={() => removeEntry(entry.productId)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 dark:hover:bg-error-500/10"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-xl border border-dashed border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+          Add Product Timer
+        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="min-w-[220px] flex-1">
+            <Select
+              options={productOptions}
+              value={newProductId ? String(newProductId) : ""}
+              onChange={(v) => setNewProductId(v ? Number(v) : null)}
+              placeholder="Search product..."
+              searchable
+              isLoading={loadingProducts}
+            />
+          </div>
+          <div className="w-[130px]">
+            <DatePicker
+              value={newDate}
+              onChange={setNewDate}
+              placeholder="End date"
+              showToday
+              showClear={false}
+            />
+          </div>
+          <TimeSelect
+            value={newTime}
+            onChange={setNewTime}
+          />
+          <button
+            type="button"
+            onClick={addEntry}
+            disabled={!newProductId || !newDate}
+            className={cn(
+              "inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition-colors",
+              newProductId && newDate
+                ? "bg-brand-500 text-white hover:bg-brand-600"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600",
+            )}
+          >
+            <Plus size={14} />
+            Add
+          </button>
+        </div>
+      </div>
+
+      {entries.length === 0 && (
+        <p className="text-center text-xs text-gray-400 py-2 italic">
+          No product timers set. Use the form above to add one.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── ProductIdsEditor ─────────────────────────────────────────────────────── //
+
+function ProductIdsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const ids = useMemo(() => {
+    if (!value.trim()) return [] as number[];
+    return value
+      .split(",")
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+  }, [value]);
+
+  const [productOptions, setProductOptions] = useState<{ value: string; label: string }[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingProducts(true);
+    getProducts({ limit: 200 })
+      .then((res) => {
+        if (cancelled) return;
+        setProductOptions(
+          res.products.map((p) => ({ value: String(p.id), label: `#${p.id} — ${p.name}` })),
+        );
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingProducts(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const productNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    productOptions.forEach((o) => map.set(Number(o.value), o.label));
+    return map;
+  }, [productOptions]);
+
+  const removeId = (id: number) => {
+    onChange(ids.filter((i) => i !== id).join(","));
+  };
+
+  const addId = (idStr: string) => {
+    const id = parseInt(idStr, 10);
+    if (!id || ids.includes(id)) return;
+    onChange([...ids, id].join(","));
+  };
+
+  const availableOptions = useMemo(
+    () => productOptions.filter((o) => !ids.includes(Number(o.value))),
+    [productOptions, ids],
+  );
+
+  return (
+    <div className="w-full space-y-2.5">
+      {ids.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {ids.map((id) => (
+            <span
+              key={id}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 pl-2.5 pr-1 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
+            >
+              <Package size={11} />
+              {productNameMap.get(id) ?? `Product #${id}`}
+              <button
+                type="button"
+                onClick={() => removeId(id)}
+                className="ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md text-brand-400 transition-colors hover:bg-brand-100 hover:text-brand-600 dark:hover:bg-brand-500/20"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="max-w-sm">
+        <Select
+          options={availableOptions}
+          value=""
+          onChange={addId}
+          placeholder="Search and add a product..."
+          searchable
+          isLoading={loadingProducts}
+        />
+      </div>
+
+      {ids.length === 0 && (
+        <p className="text-xs text-gray-400 italic">
+          No products selected. Use the dropdown above to add products.
+        </p>
+      )}
+    </div>
+  );
+}
 
 // ─── SystemPermissionsPanel ───────────────────────────────────────────────── //
 
@@ -449,42 +784,75 @@ function SystemPermissionsPanel({
               const keyMeta = KEY_META[row.key];
               const channelIcon = KEY_ICON[row.key];
 
-              return (
-                <div key={row.key} className={`flex items-center justify-between px-5 py-3.5 gap-4 transition-colors ${isDirty ? "bg-amber-50/40 dark:bg-amber-500/5" : ""}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      {channelIcon && <span className="text-gray-400 dark:text-gray-500">{channelIcon}</span>}
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                        {keyMeta?.label ?? row.key.replace(/_/g, " ")}
-                      </p>
-                      {isDirty && (
-                        <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                          unsaved
-                        </span>
-                      )}
-                    </div>
-                    {keyMeta?.description && (
-                      <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 leading-snug">
-                        {keyMeta.description}
-                      </p>
+              const isMegaSaleDateKey = MEGASALE_DATE_KEYS.has(row.key);
+              const isMegaSaleIdsKey = row.key === MEGASALE_IDS_KEY;
+              const isMegaSaleTimersKey = row.key === MEGASALE_TIMERS_KEY;
+              const isFullWidth = isMegaSaleTimersKey || isMegaSaleIdsKey;
+
+              const KNOWN_ENUMS: Record<string, string[]> = {
+                phone_verified_mode: ["address_phone_verified", "default_phone_verified", "both", "no_phone_verification_needed"],
+                discount_type: ["flat", "percentage"],
+                basis: ["item_count", "total_selling_price"],
+              };
+              const enumOpts = KNOWN_ENUMS[row.key];
+
+              const labelBlock = (
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    {channelIcon && <span className="text-gray-400 dark:text-gray-500">{channelIcon}</span>}
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                      {keyMeta?.label ?? row.key.replace(/_/g, " ")}
+                    </p>
+                    {isDirty && (
+                      <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                        unsaved
+                      </span>
                     )}
                   </div>
+                  {keyMeta?.description && (
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 leading-snug max-w-lg">
+                      {keyMeta.description}
+                    </p>
+                  )}
+                </div>
+              );
 
-                  {/* Bool toggle */}
+              if (isFullWidth) {
+                return (
+                  <div key={row.key} className={cn("px-5 py-4 transition-colors", isDirty && "bg-amber-50/40 dark:bg-amber-500/5")}>
+                    <div className="mb-3">{labelBlock}</div>
+                    {isMegaSaleTimersKey && (
+                      <ProductTimerEditor
+                        value={typeof val === "string" ? val : String(val ?? "")}
+                        onChange={(v) => handleChange(row, v)}
+                      />
+                    )}
+                    {isMegaSaleIdsKey && (
+                      <ProductIdsEditor
+                        value={typeof val === "string" ? val : String(val ?? "")}
+                        onChange={(v) => handleChange(row, v)}
+                      />
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div key={row.key} className={cn(
+                  "flex items-center justify-between px-5 py-3.5 gap-4 transition-colors",
+                  isDirty && "bg-amber-50/40 dark:bg-amber-500/5",
+                )}>
+                  <div className="flex-1">{labelBlock}</div>
+
                   {valType === "bool" && (
-                    <button type="button"
-                      onClick={() => handleChange(row, !val)}
-                      title={val ? "Enabled — click to disable" : "Disabled — click to enable"}
-                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                        val ? "bg-brand-500" : "bg-gray-200 dark:bg-gray-700"
-                      }`}>
-                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                        val ? "translate-x-5" : "translate-x-0.5"
-                      }`} />
-                    </button>
+                    <Switch
+                      checked={!!val}
+                      onChange={(checked) => handleChange(row, checked)}
+                      size="md"
+                      color="brand"
+                    />
                   )}
 
-                  {/* Number input */}
                   {valType === "number" && (
                     <input
                       type="number"
@@ -492,93 +860,44 @@ function SystemPermissionsPanel({
                       max={row.key === MEGASALE_LIMIT_KEY ? 24 : undefined}
                       value={String(val)}
                       onChange={(e) => handleChange(row, Number(e.target.value))}
-                      className="w-28 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-right dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+                      className="w-28 shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-right outline-none transition-colors focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
                   )}
 
-                  {/* String / enum — rendered as select if we know the enum values from the DB */}
                   {valType === "string" && (() => {
-                    // Known enum options derived from PermissionSettingsDB
-                    const KNOWN_ENUMS: Record<string, string[]> = {
-                      phone_verified_mode: ["address_phone_verified", "default_phone_verified", "both", "no_phone_verification_needed"],
-                      discount_type: ["flat", "percentage"],
-                      basis: ["item_count", "total_selling_price"],
-                    };
-                    const opts = KNOWN_ENUMS[row.key];
-                    if (opts) {
+                    if (enumOpts) {
+                      const selectOptions = enumOpts.map((o) => ({
+                        value: o,
+                        label: ENUM_OPTION_LABELS[o] ?? o.replace(/_/g, " "),
+                      }));
                       return (
-                        <select value={String(val)}
-                          onChange={(e) => handleChange(row, e.target.value)}
-                          className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-                          {opts.map((o) => (
-                            <option key={o} value={o}>
-                              {ENUM_OPTION_LABELS[o] ?? o.replace(/_/g, " ")}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="w-56 shrink-0">
+                          <Select
+                            options={selectOptions}
+                            value={String(val)}
+                            onChange={(v) => handleChange(row, v)}
+                          />
+                        </div>
                       );
                     }
-
-                    const isMegaSaleDateKey = MEGASALE_DATE_KEYS.has(row.key);
-                    const isMegaSaleIdsKey = row.key === MEGASALE_IDS_KEY;
-                    const isMegaSaleTimersKey = row.key === MEGASALE_TIMERS_KEY;
-
-                    const inputValue = typeof val === "string" ? val : String(val ?? "");
-                    const dateValue = isMegaSaleDateKey ? toDateTimeLocalValue(inputValue) : "";
-                    const placeholder = isMegaSaleDateKey
-                      ? "Select date and time"
-                      : isMegaSaleIdsKey
-                        ? "12,45,78"
-                        : isMegaSaleTimersKey
-                          ? "12=2026-04-05T23:59"
-                        : undefined;
 
                     if (isMegaSaleDateKey) {
+                      const inputValue = typeof val === "string" ? val : String(val ?? "");
                       return (
-                        <input
-                          type="datetime-local"
-                          value={dateValue}
-                          onChange={(e) => {
-                            const normalized = toIsoWithOffset(e.target.value);
-                            handleChange(row, normalized);
-                          }}
-                          className="w-56 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        <DateTimeInput
+                          value={inputValue}
+                          onChange={(v) => handleChange(row, v)}
                         />
                       );
                     }
 
-                    if (isMegaSaleTimersKey) {
-                      return (
-                        <textarea
-                          rows={3}
-                          value={toMegaSaleTimersTextAreaValue(inputValue)}
-                          placeholder={placeholder}
-                          onChange={(e) => handleChange(row, e.target.value)}
-                          onBlur={(e) => {
-                            handleChange(row, normalizeMegaSaleProductTimers(e.target.value));
-                          }}
-                          className="w-72 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                        />
-                      );
-                    }
-
+                    const inputValue = typeof val === "string" ? val : String(val ?? "");
                     return (
                       <input
                         type="text"
                         value={inputValue}
-                        placeholder={placeholder}
-                        onChange={(e) => {
-                          const next = isMegaSaleIdsKey
-                            ? e.target.value.replace(/[^\d,\s]/g, "")
-                            : e.target.value;
-                          handleChange(row, next);
-                        }}
-                        onBlur={(e) => {
-                          if (isMegaSaleIdsKey) {
-                            handleChange(row, normalizeMegaSaleIds(e.target.value));
-                            return;
-                          }
-                        }}
-                        className="w-56 shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        onChange={(e) => handleChange(row, e.target.value)}
+                        className="w-56 shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       />
                     );
                   })()}

@@ -1,11 +1,16 @@
 // src/components/orders/all-orders/OrderFiltersBar.tsx
 
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
+import Select from "@/components/form/Select";
 import type { OrderStatus } from "./types";
 import { cn } from "@/lib/utils";
+
+type PaymentStatusValue  = "all" | "unpaid" | "partial_paid" | "paid";
+type PaymentProviderValue = "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket";
+type FraudValue          = "all" | "0" | "1";
 
 type Props = {
   status: OrderStatus;
@@ -19,25 +24,17 @@ type Props = {
   orderType: "all" | "regular";
   setOrderType: (v: "all" | "regular") => void;
 
-  paymentStatus: "all" | "unpaid" | "partial_paid" | "paid";
-  setPaymentStatus: (v: "all" | "unpaid" | "partial_paid" | "paid") => void;
+  paymentStatus: PaymentStatusValue;
+  setPaymentStatus: (v: PaymentStatusValue) => void;
 
   paymentType: "all" | "gateway" | "cod" | "mixed";
   setPaymentType: (v: "all" | "gateway" | "cod" | "mixed") => void;
 
-  paymentProvider:
-  | "all"
-  | "sslcommerz"
-  | "bkash"
-  | "nagad"
-  | "shurjopay"
-  | "rocket";
-  setPaymentProvider: (
-    v: "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket"
-  ) => void;
+  paymentProvider: PaymentProviderValue;
+  setPaymentProvider: (v: PaymentProviderValue) => void;
 
-  fraud: "all" | "0" | "1";
-  setFraud: (v: "all" | "0" | "1") => void;
+  fraud: FraudValue;
+  setFraud: (v: FraudValue) => void;
 
   minTotal: string;
   setMinTotal: (v: string) => void;
@@ -69,12 +66,6 @@ type Props = {
 
   loading?: boolean;
 };
-
-const selectCls = cn(
-  "h-9 w-full rounded-lg border border-gray-200 bg-white px-3 text-[13px] text-gray-600 outline-none transition",
-  "focus:border-brand-400 focus:ring-2 focus:ring-brand-500/10",
-  "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-brand-500/20"
-);
 
 export default function OrderFiltersBar({
   status,
@@ -109,8 +100,35 @@ export default function OrderFiltersBar({
   const { t } = useTranslation();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const paymentStatusOptions = useMemo(
+    () =>
+      uiOptions.paymentStatus.map((x) => ({
+        value: x.id,
+        label: `${t("orders.filters.payPrefix")}: ${x.label}`,
+      })),
+    [uiOptions.paymentStatus, t]
+  );
+
+  const paymentProviderOptions = useMemo(
+    () =>
+      uiOptions.paymentProvider.map((x) => ({
+        value: x.id,
+        label: `${t("orders.filters.providerPrefix")}: ${x.label}`,
+      })),
+    [uiOptions.paymentProvider, t]
+  );
+
+  const fraudOptions = useMemo(
+    () =>
+      uiOptions.fraud.map((x) => ({
+        value: x.id,
+        label: `${t("orders.filters.fraudPrefix")}: ${x.label}`,
+      })),
+    [uiOptions.fraud, t]
+  );
+
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="overflow-hidden rounded-xl bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
       {/* ─── Status tabs ─── */}
       <div className="border-b border-gray-200 bg-gray-50/60 px-4 py-2.5 dark:border-gray-800 dark:bg-gray-900/60">
         <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
@@ -209,41 +227,26 @@ export default function OrderFiltersBar({
       {filtersOpen && (
         <div className="border-t border-gray-200 bg-gray-50/40 px-4 py-3 dark:border-gray-800 dark:bg-gray-900/40">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            <select
+            <Select
+              options={paymentStatusOptions}
               value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value as any)}
-              className={selectCls}
-            >
-              {uiOptions.paymentStatus.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {t("orders.filters.payPrefix")}: {x.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setPaymentStatus(val as PaymentStatusValue)}
+              searchable={false}
+            />
 
-            <select
+            <Select
+              options={paymentProviderOptions}
               value={paymentProvider}
-              onChange={(e) => setPaymentProvider(e.target.value as any)}
-              className={selectCls}
-            >
-              {uiOptions.paymentProvider.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {t("orders.filters.providerPrefix")}: {x.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setPaymentProvider(val as PaymentProviderValue)}
+              searchable={false}
+            />
 
-            <select
+            <Select
+              options={fraudOptions}
               value={fraud}
-              onChange={(e) => setFraud(e.target.value as any)}
-              className={selectCls}
-            >
-              {uiOptions.fraud.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {t("orders.filters.fraudPrefix")}: {x.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setFraud(val as FraudValue)}
+              searchable={false}
+            />
           </div>
         </div>
       )}

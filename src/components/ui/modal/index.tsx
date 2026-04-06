@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal/useModalTransition";
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,6 +10,10 @@ interface ModalProps {
   isFullscreen?: boolean;
   titleId?: string;
 }
+
+const OPEN_EASE = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const CLOSE_EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const EASE_STD = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
@@ -29,13 +34,22 @@ export const Modal: React.FC<ModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setMounted(true);
-      requestAnimationFrame(() => setVisible(true));
-    } else {
-      setVisible(false);
-      const t = window.setTimeout(() => setMounted(false), 180);
-      return () => window.clearTimeout(t);
+      const id = window.requestAnimationFrame(() =>
+        window.requestAnimationFrame(() => setVisible(true)),
+      );
+      return () => window.cancelAnimationFrame(id);
     }
+
+    setVisible(false);
   }, [isOpen]);
+
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget) return;
+      if (!isOpen) setMounted(false);
+    },
+    [isOpen],
+  );
 
   /* ---------------- ESC key close ---------------- */
   useEffect(() => {
@@ -49,28 +63,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   /* ---------------- BODY SCROLL LOCK (NO LAYOUT SHIFT) ---------------- */
   useEffect(() => {
-    if (!isOpen) return;
-
-    const body = document.body;
-    const html = document.documentElement;
-
-    const scrollbarWidth = window.innerWidth - html.clientWidth;
-
-    const prevOverflow = body.style.overflow;
-    const prevPaddingRight = body.style.paddingRight;
-
-    body.style.overflow = "hidden";
-
-    // scrollbar compensation
-    if (scrollbarWidth > 0) {
-      body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      body.style.overflow = prevOverflow;
-      body.style.paddingRight = prevPaddingRight;
-    };
-  }, [isOpen]);
+    if (!mounted) return;
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, [mounted]);
 
   /* ---------------- Focus management ---------------- */
   useEffect(() => {
@@ -109,25 +105,36 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-6">
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
-          visible ? "opacity-100" : "opacity-0"
-        }`}
+        style={{
+          opacity: visible ? 1 : 0,
+          transition: visible
+            ? `opacity 220ms ${EASE_STD}`
+            : `opacity 180ms ${CLOSE_EASE}`,
+        }}
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         ref={modalRef}
+        onTransitionEnd={handleTransitionEnd}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`${contentClasses} ${className} transform transition-all duration-200 ${
-          visible
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-[0.98] translate-y-1"
-        }`}
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible
+            ? "translateY(0) scale(1)"
+            : "translateY(20px) scale(0.96)",
+          transition: visible
+            ? `opacity 260ms ${OPEN_EASE}, transform 320ms ${OPEN_EASE}`
+            : `opacity 180ms ${CLOSE_EASE}, transform 180ms ${CLOSE_EASE}`,
+          willChange: "opacity, transform",
+        }}
+        className={`${contentClasses} ${className}`}
       >
         {showCloseButton && !isFullscreen && (
           <button

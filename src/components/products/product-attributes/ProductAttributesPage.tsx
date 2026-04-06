@@ -1,13 +1,13 @@
 // src/components/products/product-attributes/ProductAttributesPage.tsx
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 
+import AttributeTab from "./tabs/AttributeTab";
 import BrandTab from "./tabs/BrandTab";
 import ColorTab from "./tabs/ColorTab";
-import AttributeTab from "./tabs/AttributeTab";
 
 const TABS = ["brand", "color", "attribute"] as const;
 type TabType = (typeof TABS)[number];

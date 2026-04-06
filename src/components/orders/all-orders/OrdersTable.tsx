@@ -6,11 +6,9 @@ import {
   ShieldAlert,
   HelpCircle,
   Eye,
+  PackageSearch,
   Pencil,
   Printer,
-  XCircle,
-  MoreVertical,
-  UserCheck,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -21,6 +19,7 @@ import SendCourierCell from "./SendCourierCell";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
 import FraudCheckModal from "@/components/ui/modal/FraudCheckModal";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
@@ -31,61 +30,90 @@ import {
   patchOrderStatus,
 } from "@/api/orders.api";
 
-type Props = { 
-  rows: OrderRow[];
-  selectedIds?: Set<string>;
-  onSelect?: (id: string, checked: boolean) => void;
-  onSelectAll?: (checked: boolean) => void;
-};
+type Props = { rows: OrderRow[] };
+
+// ─── Shell (matches AllProductsTable / SectionCard) ───────────────────────────
+
+const tableShellClass = cn(
+  "w-full max-w-full min-w-0 overflow-hidden rounded-2xl bg-white",
+  "border border-gray-100",
+  "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)]",
+  "transition-shadow duration-300 ease-out",
+  "dark:border-gray-800 dark:bg-gray-900",
+  "dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]",
+);
+
+const headerCellBaseClass =
+  "px-4 py-3.5 text-left text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400";
+
+const stickyActionHeaderClass = cn(
+  "sticky right-0 z-40",
+  "w-[1%] whitespace-nowrap",
+  "border-l border-gray-200 bg-gray-100",
+  "shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.08)]",
+  "dark:border-gray-700 dark:bg-gray-800",
+  "dark:shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.4)]",
+);
+
+const stickyActionCellClass = cn(
+  "sticky right-0 z-20",
+  "w-[1%] whitespace-nowrap",
+  "border-l border-gray-100 bg-white",
+  "group-hover:bg-gray-50",
+  "transition-colors duration-150",
+  "dark:border-gray-800 dark:bg-gray-900 dark:group-hover:bg-gray-800/80",
+);
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fraudIcon(level: OrderRow["fraudLevel"]) {
-  if (level === "safe")
-    return <CheckCircle2 size={16} className="text-success-500" />;
-  if (level === "medium")
-    return <AlertTriangle size={16} className="text-orange-500" />;
-  if (level === "not_found")
-    return <HelpCircle size={16} className="text-gray-400" />;
-  return <ShieldAlert size={16} className="text-error-500" />;
+  if (level === "safe")     return <CheckCircle2 size={14} className="text-success-500" />;
+  if (level === "medium")   return <AlertTriangle size={14} className="text-orange-500" />;
+  if (level === "not_found") return <HelpCircle size={14} className="text-gray-400" />;
+  return <ShieldAlert size={14} className="text-error-500" />;
 }
 
 function fraudLabel(level: OrderRow["fraudLevel"]) {
-  if (level === "safe") return "Safe";
-  if (level === "medium") return "Medium";
+  if (level === "safe")      return "Safe";
+  if (level === "medium")    return "Medium";
   if (level === "not_found") return "Not Found";
   return "Fraud";
 }
 
-const PAYMENT_OPTIONS = [
-  { id: "paid", label: "paid" },
-  { id: "partial_paid", label: "Partial Paid" },
-  { id: "unpaid", label: "unpaid" },
-] as const;
-
-const STATUS_OPTIONS = [
-  { id: "new", label: "new" },
-  { id: "approved", label: "approved" },
-  { id: "processing", label: "processing" },
-  { id: "packaging", label: "packaging" },
-  { id: "shipped", label: "shipped" },
-  { id: "out_for_delivery", label: "Out For Delivery" },
-  { id: "delivered", label: "delivered" },
-  { id: "returned", label: "returned" },
-  { id: "cancelled", label: "cancelled" },
-  { id: "on_hold", label: "On Hold" },
-  { id: "trash", label: "trash" },
-] as const;
-
 function getErrorMessage(err: unknown, fallback: string) {
-  const anyErr = err as any;
+  const e = err as Record<string, unknown>;
+  const data = e?.response as Record<string, unknown> | undefined;
   return (
-    anyErr?.response?.data?.error ??
-    anyErr?.response?.data?.message ??
-    anyErr?.message ??
+    (data?.data as Record<string, unknown>)?.error as string ??
+    (data?.data as Record<string, unknown>)?.message as string ??
+    e?.message as string ??
     fallback
   );
 }
 
-export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }: Props) {
+const PAYMENT_OPTIONS = [
+  { id: "paid",         label: "Paid" },
+  { id: "partial_paid", label: "Partial Paid" },
+  { id: "unpaid",       label: "Unpaid" },
+] as const;
+
+const STATUS_OPTIONS = [
+  { id: "new",             label: "New" },
+  { id: "approved",        label: "Approved" },
+  { id: "processing",      label: "Processing" },
+  { id: "packaging",       label: "Packaging" },
+  { id: "shipped",         label: "Shipped" },
+  { id: "out_for_delivery", label: "Out For Delivery" },
+  { id: "delivered",       label: "Delivered" },
+  { id: "returned",        label: "Returned" },
+  { id: "cancelled",       label: "Cancelled" },
+  { id: "on_hold",         label: "On Hold" },
+  { id: "trash",           label: "Trash" },
+] as const;
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function OrdersTable({ rows }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -101,60 +129,44 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
     Record<string, { providerId?: CourierProviderId; memoNo?: string }>
   >({});
 
-  const [viewOpen, setViewOpen] = useState(false);
+  const [viewOpen, setViewOpen]         = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
-  const [fraudOpen, setFraudOpen] = useState(false);
-  const [fraudOrder, setFraudOrder] = useState<OrderRow | null>(null);
+  const [fraudOpen, setFraudOpen]       = useState(false);
+  const [fraudOrder, setFraudOrder]     = useState<OrderRow | null>(null);
 
-  const mergedRows = useMemo(() => {
-    return rows.map((r) => ({
+  const mergedRows = useMemo(() =>
+    rows.map((r) => ({
       ...r,
       paymentStatus: paymentOverride[r.id] ?? r.paymentStatus,
-      status: statusOverride[r.id] ?? r.status,
-    }));
-  }, [rows, paymentOverride, statusOverride]);
+      status:        statusOverride[r.id]  ?? r.status,
+    })),
+    [rows, paymentOverride, statusOverride]
+  );
 
-  const openView = (order: OrderRow) => {
-    setSelectedOrder(order);
-    setViewOpen(true);
-  };
+  const openView  = (order: OrderRow) => { setSelectedOrder(order); setViewOpen(true); };
+  const openFraud = (order: OrderRow) => { setFraudOrder(order);    setFraudOpen(true); };
 
-  const openFraud = (order: OrderRow) => {
-    setFraudOrder(order);
-    setFraudOpen(true);
-  };
-
-  const updateCourier = (
-    orderId: string,
-    providerId: CourierProviderId,
-    memoNo: string
-  ) => {
-    setCourierOverride((prev) => ({
-      ...prev,
-      [orderId]: { providerId, memoNo },
-    }));
+  const updateCourier = (orderId: string, providerId: CourierProviderId, memoNo: string) => {
+    setCourierOverride((prev) => ({ ...prev, [orderId]: { providerId, memoNo } }));
   };
 
   const requestCourier = async (
     orderId: string,
     providerId: Exclude<CourierProviderId, "select">
   ) => {
-    // TODO: no endpoint provided yet
     // eslint-disable-next-line no-console
     console.log("Request courier for:", orderId, "provider:", providerId);
   };
 
   const paymentMutation = useMutation({
-    mutationFn: async (payload: {
-      orderId: number;
-      newStatus: "unpaid" | "partial_paid" | "paid";
-    }) => patchOrderPaymentStatus(payload.orderId, payload.newStatus),
+    mutationFn: async (payload: { orderId: number; newStatus: "unpaid" | "partial_paid" | "paid" }) =>
+      patchOrderPaymentStatus(payload.orderId, payload.newStatus),
     onSuccess: async () => {
       toast.success(t("orders.paymentStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Failed to update payment status"));
     },
   });
@@ -167,29 +179,19 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
     }) => patchOrderStatus(payload.orderId, payload.newStatus),
     onMutate: (payload) => {
       const key = String(payload.orderId);
-      setStatusOverride((prev) => ({
-        ...prev,
-        [key]: payload.newStatus,
-      }));
+      setStatusOverride((prev) => ({ ...prev, [key]: payload.newStatus }));
       return { key, previousStatus: payload.previousStatus };
     },
     onSuccess: async (_data, variables) => {
       const key = String(variables.orderId);
-      setStatusOverride((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
+      setStatusOverride((prev) => { const next = { ...prev }; delete next[key]; return next; });
       toast.success(t("orders.orderStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
     },
-    onError: (err, _variables, context) => {
+    onError: (err: unknown, _variables, context) => {
       if (context?.key) {
-        setStatusOverride((prev) => ({
-          ...prev,
-          [context.key]: context.previousStatus,
-        }));
+        setStatusOverride((prev) => ({ ...prev, [context.key]: context.previousStatus }));
       }
       toast.error(getErrorMessage(err, "Failed to update order status"));
     },
@@ -197,416 +199,267 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll }
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        {/* ✅ Key fix:
-            - table-layout: fixed => columns don't expand and force height
-            - truncate everywhere => single line
-            - fixed widths for "small" columns + flexible "Customer/Order info"
-            - horizontal scroll for many columns
-            - vertical scroll with max height
-        */}
+      <div className={tableShellClass}>
         <div
-          className={cn("relative overflow-auto", "min-h-[500px] max-h-[calc(100vh-350px)]")}
+          className={cn("relative w-full max-w-full min-w-0 overflow-x-auto overflow-auto", "min-h-[500px] max-h-[calc(100vh-350px)]")}
         >
-          <table className="min-w-[1200px] w-full table-fixed border-collapse">
-            <colgroup>
-              <col className="w-[40px]" />
-              <col className="w-[220px]" />
-              <col className="w-[240px]" />
-              <col className="w-[160px]" />
-              <col className="w-[150px]" />
-              <col className="w-[170px]" />
-              <col className="w-[150px]" />
-              <col className="w-[180px]" />
-              <col className="w-[220px]" />
-              <col className="w-[220px]" />
-              <col className="w-[220px]" />
-              <col className="w-[80px]" />
-            </colgroup>
-
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th
-                  className={cn(
-                    "px-4 py-4 text-left text-xs font-semibold text-brand-500",
-                    "sticky top-0 z-20 bg-white dark:bg-gray-900"
-                  )}
-                >
-                  {selectedIds && onSelectAll && (
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                      checked={mergedRows.length > 0 && selectedIds.size === mergedRows.length}
-                      onChange={(e) => onSelectAll(e.target.checked)}
-                    />
-                  )}
-                </th>
-
-                {[
-                  "Customer",
-                  "Order Info",
-                  "Product",
-                  "Payment",
-                  "Status",
-                  "Date Time",
-                  "Send Currier",
-                  "Assigned",
-                  "Order Note",
-                  "Shipping Location",
-                ].map((label) => (
-                  <th
-                    key={label}
-                    className={cn(
-                      "px-4 py-4 text-left text-xs font-semibold text-brand-500",
-                      "sticky top-0 z-20 bg-white dark:bg-gray-900"
-                    )}
-                  >
-                    {label}
-                  </th>
-                ))}
-
-                <th
-                  className={cn(
-                    "px-4 py-4 text-left text-xs font-semibold text-brand-500",
-                    "sticky top-0 right-0 z-30",
-                    "bg-white dark:bg-gray-900",
-                    "border-l border-gray-200 dark:border-gray-800"
-                  )}
+          <Table className="min-w-[1400px] border-collapse">
+            {/* ── Header ── */}
+            <TableHeader>
+              <TableRow className="border-b-2 border-gray-200 bg-gray-100 shadow-[0_2px_8px_-2px_rgba(16,24,40,0.10)] dark:border-gray-700 dark:bg-gray-800 dark:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)]">
+                <TableCell isHeader className={cn(headerCellBaseClass, "w-[52px] text-center")}>#</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>Customer</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>Order Info</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[160px]")}>Amount</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[150px]")}>Payment</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[160px]")}>Status</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[140px]")}>Date & Time</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[220px]")}>Send Courier</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[180px]")}>Order Note</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>Shipping Location</TableCell>
+                <TableCell
+                  isHeader
+                  className={cn(stickyActionHeaderClass, headerCellBaseClass, "min-w-[100px] text-right")}
                 >
                   Action
-                </th>
-              </tr>
-            </thead>
+                </TableCell>
+              </TableRow>
+            </TableHeader>
 
-            <tbody>
-              {mergedRows.map((r, i) => (
-                <tr
-                  key={r.id}
-                  className="group border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/[0.03]"
-                >
-                  {/* ✅ checkbox + index */}
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      {selectedIds && onSelect && (
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                          checked={selectedIds.has(r.id)}
-                          onChange={(e) => onSelect(r.id, e.target.checked)}
-                        />
-                      )}
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                        {i + 1}
-                      </span>
+            {/* ── Body ── */}
+            <TableBody>
+              {mergedRows.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={11} className="px-4 py-20">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <div className={cn(
+                        "flex h-16 w-16 items-center justify-center rounded-2xl",
+                        "bg-gray-100 dark:bg-gray-800",
+                      )}>
+                        <PackageSearch className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">No orders found</p>
+                        <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">Try adjusting your filters.</p>
+                      </div>
                     </div>
-                  </td>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                mergedRows.map((r, i) => {
+                  const fallback = imageFallbackSvgDataUri(r.customerName);
+                  const imageSrc = r.customerImage ? toPublicUrl(r.customerImage) : fallback;
 
-                  {/* Customer (single-line content to prevent height growth) */}
-                  <td className="px-4 py-4">
-                    {(() => {
-                      const fallback = imageFallbackSvgDataUri(r.customerName);
-                      const imageSrc = r.customerImage ? toPublicUrl(r.customerImage) : fallback;
-                      return (
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                  return (
+                    <TableRow
+                      key={r.id}
+                      className={cn(
+                        "group border-b border-gray-100/80",
+                        "transition-colors duration-150",
+                        "hover:bg-gray-50/60",
+                        "dark:border-gray-800/80 dark:hover:bg-white/[0.02]",
+                      )}
+                    >
+                      {/* Serial */}
+                      <TableCell className="px-4 py-3.5 text-center">
+                        <span className={cn(
+                          "inline-flex h-6 w-6 items-center justify-center rounded-md",
+                          "text-xs font-semibold",
+                          "bg-gray-100 text-gray-500",
+                          "dark:bg-gray-800 dark:text-gray-400",
+                        )}>
+                          {i + 1}
+                        </span>
+                      </TableCell>
+
+                      {/* Customer */}
+                      <TableCell className="px-4 py-3.5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className={cn(
+                            "relative flex h-10 w-10 shrink-0 items-center justify-center",
+                            "overflow-hidden rounded-full",
+                            "border border-gray-200/80 bg-gray-100",
+                            "dark:border-gray-700/60 dark:bg-gray-800",
+                          )}>
                             <img
                               src={imageSrc}
                               alt={r.customerName}
                               className="h-full w-full object-cover"
                               loading="lazy"
-                              onError={(event) => {
-                                const target = event.currentTarget;
-                                if (target.src !== fallback) {
-                                  target.src = fallback;
-                                }
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (target.src !== fallback) target.src = fallback;
                               }}
                             />
                           </div>
-
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-brand-500">
-                              {r.customerName}
-                            </p>
-                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                              {r.customerPhone}
-                            </p>
-
-                            <div className="mt-1 flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openFraud(r)}
-                                className="inline-flex max-w-full items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-300 dark:ring-gray-800 dark:hover:bg-white/[0.03]"
-                              >
-                                {fraudIcon(r.fraudLevel)}
-                                <span className="truncate">Fraud: {fraudLabel(r.fraudLevel)}</span>
-                              </button>
-                            </div>
+                            <p className="max-w-[160px] truncate text-sm font-semibold text-brand-500">{r.customerName}</p>
+                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">{r.customerPhone}</p>
+                            <button
+                              type="button"
+                              onClick={() => openFraud(r)}
+                              className={cn(
+                                "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5",
+                                "text-[11px] font-semibold",
+                                "bg-white ring-1 ring-gray-200 text-gray-600",
+                                "hover:bg-gray-50 transition-colors duration-150",
+                                "dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-white/[0.03]",
+                              )}
+                            >
+                              {fraudIcon(r.fraudLevel)}
+                              <span className="truncate">Fraud: {fraudLabel(r.fraudLevel)}</span>
+                            </button>
                           </div>
                         </div>
-                      );
-                    })()}
-                  </td>
+                      </TableCell>
 
-                  {/* Order Info */}
-                  <td className="px-4 py-4">
-                    <div className="min-w-0 space-y-1 flex items-center gap-2">
-                      <div>
-                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                          #{r.id}
-                        </p>
-
-                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                          {r.orderDateLabel} • {r.orderTimeLabel}
-                        </p>
-
-                        <p className="truncate text-[14px] font-bold text-gray-500 dark:text-gray-400">
-                          {r.relativeTimeLabel}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                          aria-label="View"
-                          onClick={() => openView(r)}
-                        >
-                          <Eye size={16} />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                          aria-label="Edit"
-                          onClick={() =>
-                            navigate(
-                              `/order-editor?orderId=${encodeURIComponent(
-                                r.id
-                              )}`
-                            )
-                          }
-                        >
-                          <Pencil size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Product */}
-                  <td className="px-4 py-4">
-                    <div className="min-w-0 space-y-1 flex items-center gap-4">
-                      <div>
-                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                          {r.currencySymbol}
-                          {r.total}
-                        </p>
-                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                          Items: {r.itemsAmount} • Qty: {r.totalItems}
-                        </p>
-                      </div>
-                      <p className="truncate text-xs font-semibold text-brand-500">
-                        {r.paymentMethod}
-                      </p>
-                    </div>
-                  </td>
-
-                  {/* Payment */}
-                  <td className="px-4 py-4">
-                    <div className="min-w-0">
-                      <OrderSelectDropdown
-                        value={r.paymentStatus}
-                        onChange={(v) => {
-                          const next = v as OrderRow["paymentStatus"];
-                          setPaymentOverride((prev) => ({
-                            ...prev,
-                            [r.id]: next,
-                          }));
-                          paymentMutation.mutate({
-                            orderId: Number(r.id),
-                            newStatus: next,
-                          });
-                        }}
-                        options={PAYMENT_OPTIONS as any}
-                        variant="pill"
-                      />
-                    </div>
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-4 py-4">
-                    <div className="min-w-0">
-                      <OrderSelectDropdown
-                        value={r.status}
-                        onChange={(v) => {
-                          const next = v as OrderRow["status"];
-                          statusMutation.mutate({
-                            orderId: Number(r.id),
-                            newStatus: next,
-                            previousStatus: r.status,
-                          });
-                        }}
-                        options={STATUS_OPTIONS as any}
-                        variant="pill"
-                      />
-                    </div>
-                  </td>
-
-                  {/* Date Time */}
-                  <td className="px-4 py-4">
-                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                      {r.orderDateLabel}
-                    </p>
-                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                      {r.orderTimeLabel}
-                    </p>
-                  </td>
-
-                  {/* Send Currier */}
-                  <td className="px-4 py-4">
-                    <div className="min-w-0">
-                      <SendCourierCell
-                        order={r}
-                        courierOverride={courierOverride[r.id]}
-                        onUpdateCourier={updateCourier}
-                        onRequestCourier={requestCourier}
-                      />
-                    </div>
-                  </td>
-
-                  {/* Assigned */}
-                  <td className="px-4 py-4">
-                    {r.assignedToAdminId ? (
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <UserCheck size={13} className="shrink-0 text-brand-500" />
-                          <p className="truncate text-xs font-semibold text-gray-800 dark:text-white">
-                            {r.assignedAdminName ?? `#${r.assignedToAdminId}`}
-                          </p>
+                      {/* Order Info */}
+                      <TableCell className="px-4 py-3.5">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">#{r.id}</p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">{r.orderDateLabel} · {r.orderTimeLabel}</p>
+                          <p className="truncate text-xs font-medium text-gray-400 dark:text-gray-500">{r.relativeTimeLabel}</p>
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openView(r)}
+                              aria-label="View order"
+                              className={cn(
+                                "flex h-7 w-7 items-center justify-center rounded-lg",
+                                "border border-gray-200 bg-gray-50 text-gray-600",
+                                "hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600",
+                                "active:scale-95 transition-all duration-150",
+                                "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                                "dark:hover:border-brand-500/50 dark:hover:bg-brand-500/15 dark:hover:text-brand-300",
+                              )}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/order-editor?orderId=${encodeURIComponent(r.id)}`)}
+                              aria-label="Edit order"
+                              className={cn(
+                                "flex h-7 w-7 items-center justify-center rounded-lg",
+                                "border border-gray-200 bg-gray-50 text-gray-600",
+                                "hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600",
+                                "active:scale-95 transition-all duration-150",
+                                "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                                "dark:hover:border-brand-500/50 dark:hover:bg-brand-500/15 dark:hover:text-brand-300",
+                              )}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        {r.isAssignedToMe && (
-                          <span className="inline-flex items-center rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
-                            Me
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">&mdash;</span>
-                    )}
-                  </td>
+                      </TableCell>
 
-                  {/* Order Note */}
-                  <td className="px-4 py-4">
-                    <p className="truncate text-sm text-gray-600 dark:text-gray-300">
-                      {r.orderNote || "—"}
-                    </p>
-                  </td>
-                  {/* Shipping Location */}
-                  <td className="px-4 py-4">
-                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                      {r.shippingArea}
-                    </p>
-                    <p className="truncate text-sm text-gray-600 dark:text-gray-300">
-                      {r.shippingAddress}
-                    </p>
-                  </td>
+                      {/* Amount */}
+                      <TableCell className="px-4 py-3.5">
+                        <div className="leading-snug">
+                          <p className="whitespace-nowrap text-sm font-semibold tabular-nums text-gray-900 dark:text-white">
+                            {r.currencySymbol}{r.total}
+                          </p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                            Items: {r.itemsAmount} · Qty: {r.totalItems}
+                          </p>
+                          <p className="truncate text-xs font-semibold text-brand-500">{r.paymentMethod}</p>
+                        </div>
+                      </TableCell>
 
-                  {/* Sticky Action */}
-                  <td
-                    className={cn(
-                      "px-4 py-4",
-                      "sticky right-0 z-10",
-                      "bg-white dark:bg-gray-900",
-                      "border-l border-gray-200 dark:border-gray-800",
-                      "group-hover:bg-gray-50 dark:group-hover:bg-white/[0.03]"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-white/[0.03]"
-                        aria-label="Print"
-                        onClick={() => {
-                          const url = `/order-invoice/${encodeURIComponent(
-                            r.id
-                          )}?print=1`;
-                          window.open(url, "_blank", "noopener,noreferrer");
-                        }}
-                      >
-                        <Printer size={16} />
-                      </button>
-
-                      {/* Quick cancel — only for active (non-terminal) orders */}
-                      {!["cancelled", "delivered", "returned", "trash"].includes(r.status) && (
-                        <button
-                          type="button"
-                          title="Cancel this order"
-                          disabled={statusMutation.isPending}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 hover:bg-red-50 disabled:opacity-40 dark:border-red-900/40 dark:bg-gray-950 dark:text-red-400 dark:hover:bg-red-500/10"
-                          aria-label="Cancel order"
-                          onClick={() => {
-                            const tid = toast(
-                              (tt) => (
-                                <span className="flex items-center gap-3 text-sm">
-                                  Cancel order <strong>#{r.id}</strong>?
-                                  <button
-                                    className="rounded bg-red-500 px-2 py-0.5 text-xs font-semibold text-white hover:bg-red-600"
-                                    onClick={() => {
-                                      toast.dismiss(tt.id);
-                                      statusMutation.mutate({
-                                        orderId: Number(r.id),
-                                        newStatus: "cancelled",
-                                        previousStatus: r.status,
-                                      });
-                                    }}
-                                  >
-                                    Confirm
-                                  </button>
-                                  <button
-                                    className="text-xs text-gray-500 hover:text-gray-700"
-                                    onClick={() => toast.dismiss(tt.id)}
-                                  >
-                                    Dismiss
-                                  </button>
-                                </span>
-                              ),
-                              { duration: 6000 }
-                            );
-                            void tid;
+                      {/* Payment Status */}
+                      <TableCell className="px-4 py-3.5">
+                        <OrderSelectDropdown
+                          value={r.paymentStatus}
+                          onChange={(v) => {
+                            const next = v as OrderRow["paymentStatus"];
+                            setPaymentOverride((prev) => ({ ...prev, [r.id]: next }));
+                            paymentMutation.mutate({ orderId: Number(r.id), newStatus: next });
                           }}
-                        >
-                          <XCircle size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          options={PAYMENT_OPTIONS as unknown as { id: string; label: string }[]}
+                          variant="pill"
+                        />
+                      </TableCell>
 
-              {!mergedRows.length ? (
-                <tr>
-                  <td
-                    colSpan={12}
-                    className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
-                  >
-                    No orders found.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+                      {/* Order Status */}
+                      <TableCell className="px-4 py-3.5">
+                        <OrderSelectDropdown
+                          value={r.status}
+                          onChange={(v) => {
+                            const next = v as OrderRow["status"];
+                            statusMutation.mutate({ orderId: Number(r.id), newStatus: next, previousStatus: r.status });
+                          }}
+                          options={STATUS_OPTIONS as unknown as { id: string; label: string }[]}
+                          variant="pill"
+                        />
+                      </TableCell>
+
+                      {/* Date & Time */}
+                      <TableCell className="px-4 py-3.5">
+                        <p className="whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{r.orderDateLabel}</p>
+                        <p className="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">{r.orderTimeLabel}</p>
+                      </TableCell>
+
+                      {/* Send Courier */}
+                      <TableCell className="px-4 py-3.5">
+                        <SendCourierCell
+                          order={r}
+                          courierOverride={courierOverride[r.id]}
+                          onUpdateCourier={updateCourier}
+                          onRequestCourier={requestCourier}
+                        />
+                      </TableCell>
+
+                      {/* Order Note */}
+                      <TableCell className="px-4 py-3.5">
+                        <p className="max-w-[160px] truncate text-sm text-gray-600 dark:text-gray-300">
+                          {r.orderNote || "—"}
+                        </p>
+                      </TableCell>
+
+                      {/* Shipping */}
+                      <TableCell className="px-4 py-3.5">
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{r.shippingArea}</p>
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">{r.shippingAddress}</p>
+                      </TableCell>
+
+                      {/* Sticky Action */}
+                      <TableCell className={cn(stickyActionCellClass, "px-4 py-3.5")}>
+                        <div className="inline-flex items-center justify-end">
+                          <button
+                            type="button"
+                            aria-label="Print invoice"
+                            onClick={() =>
+                              window.open(
+                                `/order-invoice/${encodeURIComponent(r.id)}?print=1`,
+                                "_blank",
+                                "noopener,noreferrer"
+                              )
+                            }
+                            className={cn(
+                              "flex h-8 w-8 items-center justify-center rounded-lg",
+                              "border border-gray-200 bg-gray-50 text-gray-600",
+                              "hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600",
+                              "active:scale-95 transition-all duration-150",
+                              "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                              "dark:hover:border-brand-500/50 dark:hover:bg-brand-500/15 dark:hover:text-brand-300",
+                            )}
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      <OrderInfoModal
-        open={viewOpen}
-        onClose={() => setViewOpen(false)}
-        order={selectedOrder}
-      />
-
-      <FraudCheckModal
-        open={fraudOpen}
-        onClose={() => setFraudOpen(false)}
-        order={fraudOrder}
-      />
+      <OrderInfoModal open={viewOpen} onClose={() => setViewOpen(false)} order={selectedOrder} />
+      <FraudCheckModal open={fraudOpen} onClose={() => setFraudOpen(false)} order={fraudOrder} />
     </>
   );
 }

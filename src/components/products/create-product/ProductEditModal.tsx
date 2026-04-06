@@ -9,6 +9,11 @@ import { useTranslation } from "react-i18next";
 
 import ProductForm from "./ProductForm";
 import { assignImageSku, getProduct, type ProductEntity, type ProductSingleResponseEntity, type ProductSingleVariation } from "@/api/products.api";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 type Props = {
   open: boolean;
@@ -53,6 +58,7 @@ const toProductEntity = (product: ProductSingleResponseEntity) => {
 export default function ProductEditModal({ open, productId, onClose, onUpdated }: Props) {
   const { t } = useTranslation();
   const enabled = open && Boolean(productId);
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   const { data, isLoading } = useQuery({
     queryKey: ["product", productId],
@@ -62,11 +68,21 @@ export default function ProductEditModal({ open, productId, onClose, onUpdated }
     retry: 1,
   });
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[1100px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+      <div
+        aria-hidden="true"
+        style={getModalBackdropStyle(isVisible)}
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+      />
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative w-full max-w-[1100px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900"
+      >
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <p className="text-base font-semibold text-gray-900 dark:text-white">{t("products.categories.editProductTitle")}</p>

@@ -3,12 +3,12 @@
 
 import React from "react";
 import toast from "react-hot-toast";
-import { Download, Search } from "lucide-react";
+import { Download } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { isAxiosError } from "axios";
 
-import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
 import Pagination from "@/components/ui/pagination/Pagination";
@@ -16,21 +16,37 @@ import SectionCard from "@/components/ui/layout/SectionCard";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
 import AllProductsTable from "./AllProductsTable";
+import AllProductsSearchBar from "./AllProductsSearchBar";
 import type { Product, ProductListFilters } from "./types";
 import { toUiProduct } from "./utils";
 
-import { deleteProduct, getProducts, updateProductStatus } from "@/api/products.api";
+import {
+  deleteProduct,
+  getProducts,
+  updateProductStatus,
+  type ProductsListParams,
+  type ProductsListResponse,
+} from "@/api/products.api";
 import { getChildCategories, getMainCategories, getSubCategories } from "@/api/categories.api";
+import type { ChildCategory, MainCategory, SubCategory } from "@/components/products/product-category/types";
 
 import EditProductModal from "./EditProductModal";
 import StockVariantsModal from "./StockVariantsModal";
 
 type Option = { value: string; label: string };
+type ApiErrorResponse = { error?: string; message?: string };
 
-function unwrapList<T>(payload: any): T[] {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.rows)) return payload.rows;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function unwrapList<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) return payload as T[];
+  if (!isRecord(payload)) return [];
+
+  if (Array.isArray(payload.data)) return payload.data as T[];
+  if (Array.isArray(payload.rows)) return payload.rows as T[];
+
   return [];
 }
 
@@ -41,6 +57,21 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
     return () => clearTimeout(t);
   }, [value, delayMs]);
   return debounced;
+}
+
+function parseProductId(productId: string): number | null {
+  const parsed = Number(productId);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  if (isAxiosError<ApiErrorResponse>(err)) {
+    const msg = err.response?.data?.error ?? err.response?.data?.message;
+    if (typeof msg === "string" && msg.trim().length > 0) return msg;
+  }
+
+  if (err instanceof Error && err.message.trim().length > 0) return err.message;
+  return fallback;
 }
 
 const AllProductsPage: React.FC = () => {
@@ -86,45 +117,45 @@ const AllProductsPage: React.FC = () => {
     staleTime: 60_000,
   });
 
-  const mains = React.useMemo(() => unwrapList<any>(mainRes), [mainRes]);
-  const subs = React.useMemo(() => unwrapList<any>(subRes), [subRes]);
-  const childs = React.useMemo(() => unwrapList<any>(childRes), [childRes]);
+  const mains = React.useMemo(() => unwrapList<MainCategory>(mainRes), [mainRes]);
+  const subs = React.useMemo(() => unwrapList<SubCategory>(subRes), [subRes]);
+  const childs = React.useMemo(() => unwrapList<ChildCategory>(childRes), [childRes]);
 
   const mainNameById = React.useMemo(
-    () => new Map(mains.map((c: any) => [Number(c.id), String(c.name)])),
+    () => new Map(mains.map((c) => [c.id, c.name])),
     [mains],
   );
   const subNameById = React.useMemo(
-    () => new Map(subs.map((c: any) => [Number(c.id), String(c.name)])),
+    () => new Map(subs.map((c) => [c.id, c.name])),
     [subs],
   );
   const childNameById = React.useMemo(
-    () => new Map(childs.map((c: any) => [Number(c.id), String(c.name)])),
+    () => new Map(childs.map((c) => [c.id, c.name])),
     [childs],
   );
 
   const mainOptions: Option[] = React.useMemo(
-    () => [{ value: "", label: "All Categories" }, ...mains.map((c: any) => ({ value: String(c.id), label: String(c.name) }))],
+    () => [{ value: "", label: "All Categories" }, ...mains.map((c) => ({ value: String(c.id), label: c.name }))],
     [mains],
   );
 
   const availableSubs = React.useMemo(() => {
     if (!filters.mainCategoryId) return subs;
-    return subs.filter((s: any) => Number(s.main_category_id) === Number(filters.mainCategoryId));
+    return subs.filter((s) => s.main_category_id === filters.mainCategoryId);
   }, [subs, filters.mainCategoryId]);
 
   const subOptions: Option[] = React.useMemo(
-    () => [{ value: "", label: "All Sub Categories" }, ...availableSubs.map((c: any) => ({ value: String(c.id), label: String(c.name) }))],
+    () => [{ value: "", label: "All Sub Categories" }, ...availableSubs.map((c) => ({ value: String(c.id), label: c.name }))],
     [availableSubs],
   );
 
   const availableChild = React.useMemo(() => {
     if (!filters.subCategoryId) return childs;
-    return childs.filter((c: any) => Number(c.sub_category_id) === Number(filters.subCategoryId));
+    return childs.filter((c) => c.sub_category_id === filters.subCategoryId);
   }, [childs, filters.subCategoryId]);
 
   const childOptions: Option[] = React.useMemo(
-    () => [{ value: "", label: "All Child Categories" }, ...availableChild.map((c: any) => ({ value: String(c.id), label: String(c.name) }))],
+    () => [{ value: "", label: "All Child Categories" }, ...availableChild.map((c) => ({ value: String(c.id), label: c.name }))],
     [availableChild],
   );
 
@@ -132,15 +163,16 @@ const AllProductsPage: React.FC = () => {
   const productsQuery = useQuery({
     queryKey: ["products", { ...filters, q: debouncedQ, showLowStock }],
     queryFn: () => {
-      const params: any = { limit: filters.limit };
+      const params: ProductsListParams = { limit: filters.limit };
+      const search = debouncedQ.trim();
 
       if (filters.offset > 0) params.offset = filters.offset;
-      if (debouncedQ.trim()) params.search = debouncedQ.trim();
+      if (search.length > 0) params.search = search;
 
-      if (filters.mainCategoryId) params.main_category_id = filters.mainCategoryId;
-      if (filters.subCategoryId) params.sub_category_id = filters.subCategoryId;
-      if (filters.childCategoryId) params.child_category_id = filters.childCategoryId;
-      if (filters.brandId) params.brand_id = filters.brandId;
+      if (filters.mainCategoryId !== undefined) params.main_category_id = filters.mainCategoryId;
+      if (filters.subCategoryId !== undefined) params.sub_category_id = filters.subCategoryId;
+      if (filters.childCategoryId !== undefined) params.child_category_id = filters.childCategoryId;
+      if (filters.brandId !== undefined) params.brand_id = filters.brandId;
 
       if (filters.status !== undefined) params.status = filters.status;
       if (filters.featured !== undefined) params.featured = filters.featured;
@@ -169,13 +201,15 @@ const AllProductsPage: React.FC = () => {
   const [stockOpen, setStockOpen] = React.useState(false);
   const [stockProductId, setStockProductId] = React.useState<number | null>(null);
   const stockProductName = React.useMemo(() => {
-    if (!stockProductId) return undefined;
+    if (stockProductId === null) return undefined;
     const p = productsQuery.data?.products?.find((x) => x.id === stockProductId);
     return p?.name;
   }, [productsQuery.data, stockProductId]);
 
   const onStockPlus = (productId: string) => {
-    setStockProductId(Number(productId));
+    const id = parseProductId(productId);
+    if (id === null) return;
+    setStockProductId(id);
     setStockOpen(true);
   };
 
@@ -201,19 +235,22 @@ const AllProductsPage: React.FC = () => {
       setDeleteId(null);
       qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? t("products.failedDeleteProduct");
-      toast.error(msg);
+    onError: (err) => {
+      toast.error(getApiErrorMessage(err, t("products.failedDeleteProduct")));
     },
   });
 
   const onEdit = (productId: string) => {
-    setEditId(Number(productId));
+    const id = parseProductId(productId);
+    if (id === null) return;
+    setEditId(id);
     setEditOpen(true);
   };
 
   const onDelete = (productId: string) => {
-    setDeleteId(Number(productId));
+    const id = parseProductId(productId);
+    if (id === null) return;
+    setDeleteId(id);
     setDeleteOpen(true);
   };
 
@@ -226,23 +263,23 @@ const AllProductsPage: React.FC = () => {
       toast.success(t("products.statusUpdated"));
       qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? t("products.failedUpdateStatus");
-      toast.error(msg);
+    onError: (err) => {
+      toast.error(getApiErrorMessage(err, t("products.failedUpdateStatus")));
       qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
     },
   });
 
   const onToggleStatus = (id: string, next: Product["status"]) => {
-    const pid = Number(id);
+    const pid = parseProductId(id);
+    if (pid === null) return;
     const nextBool = next === "active";
 
     // optimistic cache update
-    qc.setQueriesData({ queryKey: ["products"] }, (old: any) => {
+    qc.setQueriesData<ProductsListResponse>({ queryKey: ["products"] }, (old) => {
       if (!old?.products) return old;
       return {
         ...old,
-        products: old.products.map((p: any) => (Number(p.id) === pid ? { ...p, status: nextBool } : p)),
+        products: old.products.map((p) => (p.id === pid ? { ...p, status: nextBool } : p)),
       };
     });
 
@@ -255,8 +292,6 @@ const AllProductsPage: React.FC = () => {
   const limit = filters.limit;
   const offset = filters.offset;
 
-  const currentPage = Math.floor(offset / Math.max(1, limit)) + 1;
-
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* Toolbar */}
@@ -264,27 +299,15 @@ const AllProductsPage: React.FC = () => {
         <div className="flex flex-col gap-3 p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Search */}
-            <div className="flex w-full lg:w-[420px] min-w-0">
-              <div className="relative w-full min-w-0">
-                <Input
-                  value={filters.q}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFilters((p) => ({ ...p, q: e.target.value, offset: 0 }))
-                  }
-                  placeholder={t("products.searchPlaceholder")}
-                  className="h-11 rounded-l-xl rounded-r-none border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
-                />
-              </div>
-
-              <Button
-                variant="primary"
-                className="h-11 rounded-l-none rounded-r-xl px-4 bg-brand-500 hover:bg-brand-600"
-                startIcon={<Search className="h-4 w-4" />}
-                onClick={() => productsQuery.refetch()}
-                type="button"
-                ariaLabel="Search"
-              />
-            </div>
+            <AllProductsSearchBar
+              value={filters.q}
+              placeholder={t("products.searchPlaceholder")}
+              onValueChange={(value) => setFilters((p) => ({ ...p, q: value, offset: 0 }))}
+              onSearch={() => productsQuery.refetch()}
+              onClear={() => setFilters((p) => ({ ...p, q: "", offset: 0 }))}
+              searchAriaLabel={t("common.search", "Search")}
+              clearAriaLabel={t("common.clear", "Clear search")}
+            />
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
               <Button
@@ -425,12 +448,19 @@ const AllProductsPage: React.FC = () => {
           setDeleteId(null);
         }}
         onConfirm={() => {
-          if (!deleteId) return;
+          if (deleteId === null) return;
           deleteMutation.mutate(deleteId);
         }}
         loading={deleteMutation.isPending}
-        title={t("products.deleteProduct")}
+        title={t("products.confirmDelete.title")}
+        subtitle={t("products.confirmDelete.subtitle")}
         message={deleteName ? `"${deleteName}"` : undefined}
+        consequenceLines={[
+          t("products.confirmDelete.effects.productRemoved"),
+          t("products.confirmDelete.effects.variantsRemoved"),
+          t("products.confirmDelete.effects.cannotRecover"),
+        ]}
+        confirmLabel={t("products.confirmDelete.confirm")}
       />
     </div>
   );

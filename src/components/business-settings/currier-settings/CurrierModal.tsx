@@ -268,7 +268,6 @@ export default function CurrierModal({ open, provider, initial, onClose, onSaved
   const isSteadfast = currentProvider === "steadfast";
   const isPathao    = currentProvider === "pathao";
   const showWebhookPanel = isSteadfast || isPathao;
-
   return (
     <Modal
       open={open}

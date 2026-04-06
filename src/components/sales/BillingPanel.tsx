@@ -24,7 +24,7 @@ import Button from "@/components/ui/button/Button";
 import AddCustomerModal from "./AddCustomerModal";
 import type { CartItem } from "./types";
 import { cn } from "@/lib/utils";
-import AdminZonePicker, { type ZoneSelection } from "@/components/shared/AdminZonePicker";
+import SlidingTabFilter from "@/components/ui/SlidingTabFilter";
 
 import { getDeliveryCharges } from "@/api/delivery-charges.api";
 import {
@@ -286,7 +286,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   const [manualAddressPhone, setManualAddressPhone] = useState("");
   const [manualAddressFull, setManualAddressFull] = useState("");
   const [manualAddressCity, setManualAddressCity] = useState("");
-  const [manualAddressZone, setManualAddressZone] = useState<ZoneSelection | null>(null);
   const [manualAddressZip, setManualAddressZip] = useState("");
   const [manualAddressType, setManualAddressType] = useState<
     "home" | "office" | "n/a"
@@ -300,7 +299,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
     setManualAddressPhone(firstVerifiedPhone(selectedUser));
     setManualAddressFull("");
     setManualAddressCity("");
-    setManualAddressZone(null);
     setManualAddressZip("");
     setManualAddressType("n/a");
   }, [manualAddressOpen, selectedUser]);
@@ -328,7 +326,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   const [strangerEmail, setStrangerEmail] = useState("");
   const [strangerFullAddress, setStrangerFullAddress] = useState("");
   const [strangerCity, setStrangerCity] = useState("");
-  const [strangerZone, setStrangerZone] = useState<ZoneSelection | null>(null);
   const [strangerZip, setStrangerZip] = useState("");
 
   // ---------- DELIVERY ----------
@@ -471,8 +468,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         phone: strangerPhone.trim(),
         email: strangerEmail.trim() || undefined,
         full_address: strangerFullAddress.trim(),
-        city: strangerZone?.city_name?.trim() || strangerCity.trim() || undefined,
-        location_mapping_id: strangerZone?.location_mapping_id ?? undefined,
+        city: strangerCity.trim() || undefined,
         zip_code: strangerZip.trim() || undefined,
         payment_type: payBy === "bkash" ? "bkash" : "cod",
         trx_id: payBy === "bkash" ? trx.trim() : undefined,
@@ -494,7 +490,6 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         setStrangerEmail("");
         setStrangerFullAddress("");
         setStrangerCity("");
-        setStrangerZone(null);
         setStrangerZip("");
         return;
       }
@@ -510,8 +505,9 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm",
-        "dark:border-gray-800 dark:bg-gray-900"
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white",
+        "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out",
+        "dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]"
       )}
     >
       {/* ── Panel Header ── */}
@@ -526,33 +522,14 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
           </div>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
-          <button
-            type="button"
-            onClick={() => setMode("existing")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-              mode === "existing"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            )}
-          >
-            {t("sales.existing")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("stranger")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-              mode === "stranger"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            )}
-          >
-            {t("sales.stranger")}
-          </button>
-        </div>
+        <SlidingTabFilter
+          options={[
+            { label: t("sales.existing"), value: "existing" as CustomerMode },
+            { label: t("sales.stranger"), value: "stranger" as CustomerMode },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
       </div>
 
       {/* ── Scroll container ── */}
@@ -818,14 +795,12 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     />
                   </div>
 
-                  <div className="col-span-12 md:col-span-8">
-                    <SectionLabel>{t("sales.zone")}</SectionLabel>
-                    <AdminZonePicker
-                      value={strangerZone}
-                      onChange={(sel) => {
-                        setStrangerZone(sel);
-                        setStrangerCity(sel?.city_name ?? "");
-                      }}
+                  <div className="col-span-12 md:col-span-4">
+                    <SectionLabel>{t("sales.city")}</SectionLabel>
+                    <input
+                      value={strangerCity}
+                      onChange={(e) => setStrangerCity(e.target.value)}
+                      className={inputClass}
                     />
                   </div>
 
@@ -1100,14 +1075,12 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                   />
                 </div>
 
-                <div className="col-span-12 md:col-span-8">
-                  <SectionLabel>{t("sales.zone")}</SectionLabel>
-                  <AdminZonePicker
-                    value={manualAddressZone}
-                    onChange={(sel) => {
-                      setManualAddressZone(sel);
-                      setManualAddressCity(sel?.city_name ?? "");
-                    }}
+                <div className="col-span-12 md:col-span-4">
+                  <SectionLabel>{t("sales.city")}</SectionLabel>
+                  <input
+                    value={manualAddressCity}
+                    onChange={(e) => setManualAddressCity(e.target.value)}
+                    className={inputClass}
                   />
                 </div>
 
@@ -1171,8 +1144,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                       name: manualAddressName.trim(),
                       phone: manualAddressPhone.trim(),
                       full_address: manualAddressFull.trim(),
-                      city: manualAddressZone?.city_name?.trim() || manualAddressCity.trim() || undefined,
-        location_mapping_id: manualAddressZone?.location_mapping_id ?? undefined,
+                      city: manualAddressCity.trim() || undefined,
                       zip_code: manualAddressZip.trim() || undefined,
                       type: manualAddressType,
                     });

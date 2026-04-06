@@ -9,6 +9,11 @@ import { useTranslation } from "react-i18next";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import { cn } from "@/lib/utils";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 import { getProduct, type ProductSingleVariation } from "@/api/products.api";
 import { updateProductVariation, type ProductVariationPayload } from "@/api/product-variations.api";
@@ -42,6 +47,7 @@ function getFirstImage(product: any) {
 export default function StockAlertUpdateModal({ open, productId, productName, onClose, onUpdated }: Props) {
   const { t } = useTranslation();
   const enabled = open && !!productId;
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   const productQuery = useQuery({
     queryKey: ["stock-alert-product", productId],
@@ -122,7 +128,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
     },
   });
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   const image = product ? getFirstImage(product) : null;
 
@@ -131,6 +137,7 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
       {/* overlay */}
       <button
         type="button"
+        style={getModalBackdropStyle(isVisible)}
         className="absolute inset-0 bg-black/40"
         onClick={() => {
           if (updateMutation.isPending) return;
@@ -140,7 +147,11 @@ export default function StockAlertUpdateModal({ open, productId, productName, on
       />
 
       {/* modal */}
-      <div className="relative w-[94%] max-w-[980px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative w-[94%] max-w-[980px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900"
+      >
         {/* header */}
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="min-w-0">

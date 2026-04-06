@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Download, Pencil, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
 import { Pagination } from "@/components/ui";
 import Button from "@/components/ui/button/Button";
@@ -51,6 +52,14 @@ function priorityLabel(p: number): string {
   if (p === 3) return "Medium";
   if (p === 4) return "High";
   return String(p);
+}
+
+function priorityColorClass(p: number): string {
+  if (p === 1) return "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
+  if (p === 2) return "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400";
+  if (p === 3) return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400";
+  if (p === 4) return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400";
+  return "bg-gray-100 text-gray-600";
 }
 
 function toRow(b: Brand): BrandRow {
@@ -140,15 +149,53 @@ function BrandModal({
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  if (!state.open) return null;
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (state.open) {
+      setIsMounted(true);
+      const id = window.requestAnimationFrame(() =>
+        window.requestAnimationFrame(() => setIsVisible(true))
+      );
+      return () => window.cancelAnimationFrame(id);
+    } else {
+      setIsVisible(false);
+    }
+  }, [state.open]);
+
+  if (!isMounted) return null;
+
+  const handleDialogEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    if (!state.open) setIsMounted(false);
+  };
 
   const isCreate = state.mode === "create";
   const existingUrl = toPublicUrl(state.existingImgPath);
   const preview = state.previewUrl ?? existingUrl;
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transition: isVisible ? "opacity 220ms ease" : "opacity 180ms ease-out",
+        }}
+      />
+      <div
+        onTransitionEnd={handleDialogEnd}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.96)",
+          transition: isVisible
+            ? "opacity 260ms cubic-bezier(0.34,1.56,0.64,1), transform 320ms cubic-bezier(0.34,1.56,0.64,1)"
+            : "opacity 180ms ease-out, transform 180ms ease-out",
+          willChange: "opacity, transform",
+        }}
+        className="relative z-10 w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900">
 
         {/* ── Header ─────────────────────────────────── */}
         <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-brand-50 via-white to-brand-50/40 px-6 py-5 dark:border-gray-800 dark:from-brand-900/20 dark:via-gray-900 dark:to-brand-900/10">
@@ -447,6 +494,11 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
     existingImgPath: null,
   });
 
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; row: BrandRow | null }>({
+    open: false,
+    row: null,
+  });
+
   // single brand load on edit modal open
   const {
     data: singleBrand,
@@ -624,7 +676,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
         {/* Header + Actions */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -715,7 +767,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
         {isLoading ? (
           <TableSkeleton />
         ) : (
@@ -776,7 +828,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                         </td>
 
                         <td className="px-4 py-4">
-                          <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                          <span className={cn("inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold", priorityColorClass(row.priority))}>
                             {priorityLabel(row.priority)}
                           </span>
                         </td>
@@ -794,11 +846,7 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
                             <Button
                               variant="danger"
                               size="icon"
-                              onClick={() => {
-                                const ok = window.confirm(`Delete brand "${row.name}"?`);
-                                if (!ok) return;
-                                deleteMutation.mutate(row.id);
-                              }}
+                              onClick={() => setDeleteConfirm({ open: true, row })}
                               ariaLabel="Delete"
                               disabled={deleteMutation.isPending}
                               startIcon={<Trash2 size={16} />}
@@ -843,6 +891,35 @@ export default function BrandTab({ tabsHeader }: { tabsHeader?: React.ReactNode 
         onSubmit={submitModal}
         submitting={createMutation.isPending || updateMutation.isPending}
         loadingSingle={singleLoading}
+      />
+
+      <ConfirmModal
+        open={deleteConfirm.open}
+        onClose={() => {
+          if (deleteMutation.isPending) return;
+          setDeleteConfirm({ open: false, row: null });
+        }}
+        onConfirm={() => {
+          if (deleteConfirm.row) deleteMutation.mutate(deleteConfirm.row.id);
+          setDeleteConfirm({ open: false, row: null });
+        }}
+        loading={deleteMutation.isPending}
+        title="Delete Brand?"
+        subtitle="This action is permanent and cannot be undone."
+        message={
+          deleteConfirm.row ? (
+            <span>
+              <span className="font-normal text-gray-500 dark:text-gray-400">Brand&nbsp;·&nbsp;</span>
+              <span className="font-semibold">{deleteConfirm.row.name}</span>
+            </span>
+          ) : undefined
+        }
+        consequenceLines={[
+          "This brand will be permanently removed",
+          "Products linked to this brand may be affected",
+          "This action cannot be recovered or reversed",
+        ]}
+        confirmLabel="Delete Brand"
       />
     </div>
   );

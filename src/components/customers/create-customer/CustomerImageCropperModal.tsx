@@ -4,6 +4,11 @@ import { X } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 type Props = {
   open: boolean;
@@ -74,6 +79,7 @@ export default function CustomerImageCropperModal({
   const [zoom, setZoom] = useState(1);
   const [croppedPixels, setCroppedPixels] = useState<Area | null>(null);
   const [saving, setSaving] = useState(false);
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   const prettyAspect = useMemo(() => `${aspect.toFixed(2)}:1`, [aspect]);
 
@@ -105,18 +111,23 @@ export default function CustomerImageCropperModal({
     }
   }, [croppedPixels, fileName, imageUrl, onApply]);
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center">
       <button
         type="button"
+        style={getModalBackdropStyle(isVisible)}
         className="absolute inset-0 bg-black/70"
         onClick={() => !saving && onClose()}
         aria-label="Close overlay"
       />
 
-      <div className="relative w-[96vw] max-w-3xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative w-[96vw] max-w-3xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900"
+      >
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

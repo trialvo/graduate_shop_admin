@@ -1,6 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2, Search, X, Loader2 } from "lucide-react";
+import {
+  Plus, Pencil, Trash2, Search, X, Loader2,
+  Layers, PackagePlus, Tag, Percent, DollarSign,
+  Truck, Hash, SquarePen,
+} from "lucide-react";
 import {
   useBulkRules, useCreateBulkRule, useEditBulkRule, useDeleteBulkRule,
   useComboRules, useCreateComboRule, useEditComboRule, useDeleteComboRule,
@@ -9,9 +14,19 @@ import type { BulkRule, BulkRulePayload, ComboRule, ComboRulePayload } from "@/a
 import { api } from "@/api/client";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
-import Modal from "@/components/ui/modal/Modal";
-import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import Input from "@/components/form/input/InputField";
+import Select from "@/components/form/Select";
+import Switch from "@/components/form/switch/Switch";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
+import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal/useModalTransition";
+
+// ─── Easings ─────────────────────────────────────────────────────────────────
+
+const OPEN_EASE  = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const CLOSE_EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const EASE_STD   = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 // ─── SKU types ───────────────────────────────────────────────────────────────
 
@@ -247,6 +262,125 @@ function NumInput({
   );
 }
 
+// ─── Premium Edit Modal with spring transition ───────────────────────────────
+
+type EditModalProps = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+};
+
+function EditModal({ open, onClose, title, subtitle, icon, children }: EditModalProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsMounted(true);
+      const id = window.requestAnimationFrame(() =>
+        window.requestAnimationFrame(() => setIsVisible(true))
+      );
+      return () => window.cancelAnimationFrame(id);
+    } else {
+      setIsVisible(false);
+    }
+  }, [open]);
+
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget) return;
+      if (!open) setIsMounted(false);
+    },
+    [open],
+  );
+
+  useEffect(() => {
+    if (!isMounted) return;
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, onClose]);
+
+  if (!isMounted) return null;
+
+  const modalNode = (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transition: isVisible ? `opacity 220ms ${EASE_STD}` : `opacity 180ms ${CLOSE_EASE}`,
+        }}
+      />
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.96)",
+          transition: isVisible
+            ? `opacity 260ms ${OPEN_EASE}, transform 320ms ${OPEN_EASE}`
+            : `opacity 180ms ${CLOSE_EASE}, transform 180ms ${CLOSE_EASE}`,
+          willChange: "opacity, transform",
+        }}
+        className="relative z-10 w-full max-w-[720px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700/60 dark:bg-gray-900"
+      >
+        {/* ── Header ── */}
+        <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-brand-50 via-white to-brand-50/40 px-6 py-5 dark:border-gray-800 dark:from-brand-900/20 dark:via-gray-900 dark:to-brand-900/10">
+          <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-brand-100/40 dark:bg-brand-500/5" />
+          <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-brand-100/30 dark:bg-brand-500/5" />
+
+          <div className="relative flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25">
+                {icon ?? <SquarePen size={18} />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {title}
+                </h3>
+                {subtitle && (
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-gray-200 bg-white/80 p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Body ── */}
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (typeof document === "undefined") return modalNode;
+  return createPortal(modalNode, document.body);
+}
+
 // ─── Bulk Rules Tab ───────────────────────────────────────────────────────────
 
 function BulkRulesManager() {
@@ -261,7 +395,7 @@ function BulkRulesManager() {
   const [editTarget, setEditTarget] = useState<BulkRule | null>(null);
   const [form, setForm] = useState<BulkRulePayload>(EMPTY);
   const [saving, setSaving] = useState(false);
-  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; rule: BulkRule | null }>({ open: false, rule: null });
 
   // ── Multi-tier state (create mode only) ──────────────────────────────────
   type Tier = { id: number; name: string; min_quantity: number; discount_value: number };
@@ -351,8 +485,8 @@ function BulkRulesManager() {
   };
 
   const handleDelete = async () => {
-    if (!confirmId) return;
-    try { await deleteM.mutateAsync(confirmId); toast.success("Deleted."); setConfirmId(null); }
+    if (!deleteConfirm.rule) return;
+    try { await deleteM.mutateAsync(deleteConfirm.rule.id); toast.success("Deleted."); setDeleteConfirm({ open: false, rule: null }); }
     catch (err: any) { toast.error(err?.response?.data?.error || "Failed."); }
   };
 
@@ -386,14 +520,14 @@ function BulkRulesManager() {
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.discount_value}</td>
                 <td className="px-4 py-3">
                   {r.free_delivery
-                    ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-full">🚚 Free</span>
-                    : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-2 py-0.5 rounded-full">💸 Paid</span>}
+                    ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-full"><Truck size={11} /> Free</span>
+                    : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-2 py-0.5 rounded-full"><X size={11} /> Paid</span>}
                 </td>
                 <td className="px-4 py-3"><StatusBadge on={r.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(r)} className="h-7 w-7 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300"><Pencil size={13} /></button>
-                    <button onClick={() => setConfirmId(r.id)} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50"><Trash2 size={13} /></button>
+                    <button onClick={() => setDeleteConfirm({ open: true, rule: r })} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50"><Trash2 size={13} /></button>
                   </div>
                 </td>
               </tr>
@@ -402,55 +536,116 @@ function BulkRulesManager() {
         </table>
       </div>
 
-      {/* ── Modal ── */}
-      <Modal open={modalOpen} title={editTarget ? "Edit Bulk Rule" : "Add Bulk Rules"} onClose={() => setModalOpen(false)} size="md">
+      {/* ── Edit Modal with spring transition ── */}
+      <EditModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editTarget ? "Edit Bulk Rule" : "Add Bulk Rules"}
+        subtitle={editTarget ? `Editing rule "${editTarget.name}"` : "Create one or multiple bulk discount tiers"}
+        icon={editTarget ? <Pencil size={18} /> : <Layers size={18} />}
+      >
         {editTarget ? (
-          /* ── Edit: single-tier form (unchanged) ── */
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name *</Label>
-              <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Buy 3 Get 10% Off"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>SKU *</Label>
-              <SkuDropdown
-                value={form.product_sku_id || null}
-                onSelect={(id) => setForm(f => ({ ...f, product_sku_id: id }))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Min Quantity *</Label>
-                <NumInput value={form.min_quantity} onChange={n => setForm(f => ({ ...f, min_quantity: Math.max(1, Math.floor(n)) }))} placeholder="e.g. 3" min={1} />
+          /* ── Edit: single-tier form ── */
+          <div className="space-y-6">
+            {/* Section 1: Basic Info */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">1</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Basic Information</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
               </div>
-              <div className="space-y-2">
-                <Label>Discount Value *</Label>
-                <NumInput value={form.discount_value} onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))} placeholder="e.g. 10" min={0} />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Tag size={13} className="text-gray-400" /> Rule Name <span className="text-error-500">*</span>
+                  </label>
+                  <Input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Buy 3 Get 10% Off"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Search size={13} className="text-gray-400" /> Product SKU <span className="text-error-500">*</span>
+                  </label>
+                  <SkuDropdown
+                    value={form.product_sku_id || null}
+                    onSelect={(id) => setForm(f => ({ ...f, product_sku_id: id }))}
+                  />
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Discount Type</Label>
-              <select value={form.discount_type} onChange={e => setForm(f => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                <option value={0}>Flat Amount (৳)</option>
-                <option value={1}>Percentage (%)</option>
-              </select>
+
+            {/* Section 2: Discount Config */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">2</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Discount Configuration</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Hash size={13} className="text-gray-400" /> Min Quantity <span className="text-error-500">*</span>
+                  </label>
+                  <NumInput value={form.min_quantity} onChange={n => setForm(f => ({ ...f, min_quantity: Math.max(1, Math.floor(n)) }))} placeholder="e.g. 3" min={1} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {form.discount_type === 1 ? <Percent size={13} className="text-gray-400" /> : <DollarSign size={13} className="text-gray-400" />} Discount Value <span className="text-error-500">*</span>
+                  </label>
+                  <NumInput value={form.discount_value} onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))} placeholder="e.g. 10" min={0} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Percent size={13} className="text-gray-400" /> Discount Type
+                  </label>
+                  <Select
+                    options={[
+                      { value: "0", label: "Flat Amount (৳)" },
+                      { value: "1", label: "Percentage (%)" },
+                    ]}
+                    value={String(form.discount_type)}
+                    onChange={(v) => setForm(f => ({ ...f, discount_type: Number(v) as 0 | 1 }))}
+                    searchable={false}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <input type="checkbox" id="bulk-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
-              <Label htmlFor="bulk-status">Active</Label>
+
+            {/* Section 3: Options */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">3</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Options</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-800/40">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", form.status ? "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400")}>{form.status ? "Active" : "Inactive"}</span>
+                  </div>
+                  <Switch key={`bs-${form.status}`} label="" defaultChecked={form.status} onChange={(checked) => setForm(f => ({ ...f, status: checked }))} />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-800/40">
+                  <div className="flex items-center gap-2">
+                    <Truck size={14} className="text-emerald-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Free Delivery</span>
+                  </div>
+                  <Switch key={`bfd-${form.free_delivery}`} label="" defaultChecked={!!form.free_delivery} onChange={(checked) => setForm(f => ({ ...f, free_delivery: checked }))} />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <input type="checkbox" id="bulk-fd" checked={!!form.free_delivery} onChange={e => setForm(f => ({ ...f, free_delivery: e.target.checked }))} className="rounded" />
-              <Label htmlFor="bulk-fd">🚚 Free Delivery (whole cart ships free when rule triggered)</Label>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-800">
+              <p className="text-[10px] text-gray-400 dark:text-gray-500">Editing bulk rule #{editTarget.id}</p>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+                <Button onClick={handleSave} disabled={saving} startIcon={saving ? undefined : <Pencil size={14} />}>{saving ? "Saving..." : "Save Changes"}</Button>
+              </div>
             </div>
           </div>
         ) : (
@@ -464,22 +659,29 @@ function BulkRulesManager() {
 
             {/* Discount type (shared) */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Discount Type</Label>
-                <select value={discountType} onChange={e => setDiscountType(Number(e.target.value) as 0 | 1)} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                  <option value={1}>Percentage (%)</option>
-                  <option value={0}>Flat Amount (৳)</option>
-                </select>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Percent size={13} className="text-gray-400" /> Discount Type
+                </label>
+                <Select
+                  options={[
+                    { value: "1", label: "Percentage (%)" },
+                    { value: "0", label: "Flat Amount (৳)" },
+                  ]}
+                  value={String(discountType)}
+                  onChange={(v) => setDiscountType(Number(v) as 0 | 1)}
+                  searchable={false}
+                />
               </div>
-              <div className="flex flex-col gap-2 items-start justify-end pb-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input type="checkbox" checked={status} onChange={e => setStatus(e.target.checked)} className="rounded" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input type="checkbox" checked={bulkFreeDelivery} onChange={e => setBulkFreeDelivery(e.target.checked)} className="rounded" />
-                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">🚚 Free Delivery</span>
-                </label>
+              <div className="flex flex-col gap-3 items-start justify-end pb-1">
+                <div className="flex items-center gap-2">
+                  <Switch key={`cs-${status}`} label="" defaultChecked={status} onChange={(checked) => setStatus(checked)} />
+                  <span className={cn("text-sm font-medium", status ? "text-gray-700 dark:text-gray-300" : "text-gray-400")}>Active</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch key={`cfd-${bulkFreeDelivery}`} label="" defaultChecked={bulkFreeDelivery} onChange={(checked) => setBulkFreeDelivery(checked)} />
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400"><Truck size={13} /> Free Delivery</span>
+                </div>
               </div>
             </div>
 
@@ -552,9 +754,34 @@ function BulkRulesManager() {
             </div>
           </div>
         )}
-      </Modal>
+      </EditModal>
 
-      <ConfirmDialog open={Boolean(confirmId)} title="Delete Bulk Rule" message="Delete this bulk rule?" confirmText="Delete" cancelText="Cancel" tone="danger" onClose={() => setConfirmId(null)} onConfirm={handleDelete} />
+      {/* ── Premium Delete Modal ── */}
+      <ConfirmModal
+        open={deleteConfirm.open}
+        onClose={() => {
+          if (deleteM.isPending) return;
+          setDeleteConfirm({ open: false, rule: null });
+        }}
+        onConfirm={handleDelete}
+        loading={deleteM.isPending}
+        title="Delete Bulk Rule?"
+        subtitle="This action is permanent and cannot be undone."
+        message={
+          deleteConfirm.rule ? (
+            <span>
+              <span className="font-normal text-gray-500 dark:text-gray-400">Bulk Rule&nbsp;·&nbsp;</span>
+              <span className="font-semibold">{deleteConfirm.rule.name}</span>
+            </span>
+          ) : undefined
+        }
+        consequenceLines={[
+          "This bulk discount rule will be permanently removed",
+          "Customers will no longer receive this discount",
+          "This action cannot be recovered or reversed",
+        ]}
+        confirmLabel="Delete Rule"
+      />
     </div>
   );
 }
@@ -571,7 +798,7 @@ function ComboRulesManager() {
   const [editTarget, setEditTarget] = useState<ComboRule | null>(null);
   const [form, setForm] = useState<ComboRulePayload>({ name: "", discount_type: 0, discount_value: 0, status: true, free_delivery: false, items: [] });
   const [saving, setSaving] = useState(false);
-  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; rule: ComboRule | null }>({ open: false, rule: null });
 
   // selected SKU for adding to combo
   const [pendingSku, setPendingSku] = useState<{ id: number; sku: string } | null>(null);
@@ -615,8 +842,8 @@ function ComboRulesManager() {
   };
 
   const handleDelete = async () => {
-    if (!confirmId) return;
-    try { await deleteM.mutateAsync(confirmId); toast.success("Deleted."); setConfirmId(null); }
+    if (!deleteConfirm.rule) return;
+    try { await deleteM.mutateAsync(deleteConfirm.rule.id); toast.success("Deleted."); setDeleteConfirm({ open: false, rule: null }); }
     catch (err: any) { toast.error(err?.response?.data?.error || "Failed."); }
   };
 
@@ -645,14 +872,14 @@ function ComboRulesManager() {
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{r.items.map(i => i.product_sku_id).join(", ")}</td>
                     <td className="px-4 py-3">
                       {r.free_delivery
-                        ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-full">🚚 Free</span>
-                        : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-2 py-0.5 rounded-full">💸 Paid</span>}
+                        ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-full"><Truck size={11} /> Free</span>
+                        : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-2 py-0.5 rounded-full"><X size={11} /> Paid</span>}
                     </td>
                     <td className="px-4 py-3"><StatusBadge on={r.status} /></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button onClick={() => openEdit(r)} className="h-7 w-7 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300"><Pencil size={13} /></button>
-                        <button onClick={() => setConfirmId(r.id)} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50"><Trash2 size={13} /></button>
+                        <button onClick={() => setDeleteConfirm({ open: true, rule: r })} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50"><Trash2 size={13} /></button>
                       </div>
                     </td>
                   </tr>
@@ -661,44 +888,78 @@ function ComboRulesManager() {
         </table>
       </div>
 
-      <Modal open={modalOpen} title={editTarget ? "Edit Combo Rule" : "Create Combo Rule"} onClose={() => setModalOpen(false)} size="md">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Name *</Label>
-            <input
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Shirt + Pant Bundle"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Discount Type</Label>
-              <select
-                value={form.discount_type}
-                onChange={e => setForm(f => ({ ...f, discount_type: Number(e.target.value) as 0 | 1 }))}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              >
-                <option value={0}>Flat Amount (৳)</option>
-                <option value={1}>Percentage (%)</option>
-              </select>
+      {/* ── Edit Modal with spring transition ── */}
+      <EditModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editTarget ? "Edit Combo Rule" : "Create Combo Rule"}
+        subtitle={editTarget ? `Editing rule "${editTarget.name}"` : "Create a combo discount for buying products together"}
+        icon={editTarget ? <Pencil size={18} /> : <PackagePlus size={18} />}
+      >
+        <div className="space-y-6">
+          {/* Section 1: Basic Info */}
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">1</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Basic Information</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
             </div>
-            <div className="space-y-2">
-              <Label>Discount Value *</Label>
-              <NumInput
-                value={form.discount_value}
-                onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))}
-                placeholder="e.g. 200"
-                min={0}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Tag size={13} className="text-gray-400" /> Rule Name <span className="text-error-500">*</span>
+              </label>
+              <Input
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Shirt + Pant Bundle"
               />
             </div>
           </div>
 
-          {/* SKU picker for combo items */}
-          <div className="space-y-2">
-            <Label>Add SKU Items (min 2 required)</Label>
+          {/* Section 2: Discount Config */}
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">2</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Discount Configuration</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Percent size={13} className="text-gray-400" /> Discount Type
+                </label>
+                <Select
+                  options={[
+                    { value: "0", label: "Flat Amount (৳)" },
+                    { value: "1", label: "Percentage (%)" },
+                  ]}
+                  value={String(form.discount_type)}
+                  onChange={(v) => setForm(f => ({ ...f, discount_type: Number(v) as 0 | 1 }))}
+                  searchable={false}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {form.discount_type === 1 ? <Percent size={13} className="text-gray-400" /> : <DollarSign size={13} className="text-gray-400" />} Discount Value <span className="text-error-500">*</span>
+                </label>
+                <NumInput
+                  value={form.discount_value}
+                  onChange={n => setForm(f => ({ ...f, discount_value: Math.max(0, n) }))}
+                  placeholder="e.g. 200"
+                  min={0}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: SKU picker */}
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">3</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Combo Items</span>
+              <span className="rounded-full bg-gray-100 px-1.5 py-px text-[9px] font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">Min 2</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+            </div>
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <SkuDropdown
@@ -708,7 +969,7 @@ function ComboRulesManager() {
                 />
               </div>
               <div className="w-24 shrink-0">
-                <Label className="text-xs mb-1 block">Qty</Label>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Qty</label>
                 <NumInput
                   key={`pending-qty-${modalOpen}`}
                   value={pendingQty}
@@ -717,9 +978,9 @@ function ComboRulesManager() {
                   min={1}
                 />
               </div>
-              <Button variant="outline" onClick={addSku} disabled={!pendingSku}>Add</Button>
+              <Button variant="outline" onClick={addSku} disabled={!pendingSku} startIcon={<Plus size={14} />}>Add</Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-1">
+            <div className="flex flex-wrap gap-2 mt-2">
               {form.items.map(i => (
                 <span key={i.product_sku_id} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400">
                   SKU {i.product_sku_id} <span className="opacity-70">(qty×{i.required_qty})</span>
@@ -730,43 +991,151 @@ function ComboRulesManager() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="combo-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} className="rounded" />
-            <Label htmlFor="combo-status">Active</Label>
+          {/* Section 4: Options */}
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">4</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Options</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700/60" />
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-800/40">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", form.status ? "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400")}>{form.status ? "Active" : "Inactive"}</span>
+                </div>
+                <Switch key={`cos-${form.status}`} label="" defaultChecked={form.status} onChange={(checked) => setForm(f => ({ ...f, status: checked }))} />
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-800/40">
+                <div className="flex items-center gap-2">
+                  <Truck size={14} className="text-emerald-500" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Free Delivery</span>
+                </div>
+                <Switch key={`cofd-${form.free_delivery}`} label="" defaultChecked={!!form.free_delivery} onChange={(checked) => setForm(f => ({ ...f, free_delivery: checked }))} />
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="combo-fd" checked={!!form.free_delivery} onChange={e => setForm(f => ({ ...f, free_delivery: e.target.checked }))} className="rounded" />
-            <Label htmlFor="combo-fd">🚚 Free Delivery (whole cart ships free when combo triggered)</Label>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-800">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">
+              {editTarget ? `Editing combo rule #${editTarget.id}` : "Fill in the details to create a new combo rule"}
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving} startIcon={saving ? undefined : (editTarget ? <Pencil size={14} /> : <Plus size={14} />)}>{saving ? "Saving..." : "Save"}</Button>
+            </div>
           </div>
         </div>
-      </Modal>
+      </EditModal>
 
-      <ConfirmDialog open={Boolean(confirmId)} title="Delete Combo Rule" message="Delete this combo rule?" confirmText="Delete" cancelText="Cancel" tone="danger" onClose={() => setConfirmId(null)} onConfirm={handleDelete} />
+      {/* ── Premium Delete Modal ── */}
+      <ConfirmModal
+        open={deleteConfirm.open}
+        onClose={() => {
+          if (deleteM.isPending) return;
+          setDeleteConfirm({ open: false, rule: null });
+        }}
+        onConfirm={handleDelete}
+        loading={deleteM.isPending}
+        title="Delete Combo Rule?"
+        subtitle="This action is permanent and cannot be undone."
+        message={
+          deleteConfirm.rule ? (
+            <span>
+              <span className="font-normal text-gray-500 dark:text-gray-400">Combo Rule&nbsp;·&nbsp;</span>
+              <span className="font-semibold">{deleteConfirm.rule.name}</span>
+            </span>
+          ) : undefined
+        }
+        consequenceLines={[
+          "This combo discount rule will be permanently removed",
+          "Customers will no longer receive this bundle discount",
+          "This action cannot be recovered or reversed",
+        ]}
+        confirmLabel="Delete Rule"
+      />
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+const TAB_OPTIONS: { label: string; value: "bulk" | "combo"; icon: React.ReactNode }[] = [
+  { label: "Bulk Rules", value: "bulk", icon: <Layers size={14} /> },
+  { label: "Combo Rules", value: "combo", icon: <PackagePlus size={14} /> },
+];
+
 export default function DiscountRulesPage() {
   const [tab, setTab] = useState<"bulk" | "combo">("bulk");
+
+  // ── Sliding indicator ──
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const activeIndex = TAB_OPTIONS.findIndex((o) => o.value === tab);
+    const btn = buttonRefs.current[activeIndex];
+    const container = containerRef.current;
+    if (!btn || !container) return;
+
+    const btnRect = btn.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    setPillStyle({
+      left: btnRect.left - containerRect.left,
+      width: btnRect.width,
+    });
+  }, [tab]);
+
   return (
     <>
       <div className="space-y-1 mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Discount Rules</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Manage bulk and combo discount rules.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Manage bulk and combo discount rules for your store.</p>
       </div>
-      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
-        {(["bulk", "combo"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`px-5 py-2.5 text-sm font-medium capitalize border-b-2 -mb-px transition-colors ${tab === t ? "border-brand-500 text-brand-600 dark:text-brand-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"}`}>
-            {t === "bulk" ? "Bulk Rules (Buy N Get Discount)" : "Combo Rules (Buy A+B Together)"}
-          </button>
-        ))}
+
+      {/* ── Sliding tab indicator ── */}
+      <div className="mb-6">
+        <div
+          ref={containerRef}
+          className="relative inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800"
+        >
+          {/* Sliding pill */}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute top-1 bottom-1 rounded-lg",
+              "bg-white shadow-sm ring-1 ring-gray-200",
+              "dark:bg-gray-700 dark:ring-white/10",
+              "transition-[left,width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            )}
+            style={{ left: pillStyle.left, width: pillStyle.width }}
+          />
+
+          {TAB_OPTIONS.map((opt, i) => (
+            <button
+              key={opt.value}
+              ref={(el) => { buttonRefs.current[i] = el; }}
+              type="button"
+              onClick={() => setTab(opt.value)}
+              className={cn(
+                "relative z-10 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold",
+                "transition-colors duration-200",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40",
+                tab === opt.value
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+              )}
+            >
+              {opt.icon}
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
+
       {tab === "bulk" ? <BulkRulesManager /> : <ComboRulesManager />}
     </>
   );

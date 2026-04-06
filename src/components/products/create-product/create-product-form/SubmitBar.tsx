@@ -11,7 +11,7 @@ function SubmitBar({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white px-6 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
       <p className="hidden text-xs text-gray-400 sm:block dark:text-gray-500">
         {t("products.createProduct.reviewSections")}
       </p>

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal/useModalTransition";
 
 type ModalProps = {
   open: boolean;
@@ -16,6 +17,10 @@ type ModalProps = {
   contentClassName?: string;
 };
 
+const OPEN_EASE = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const CLOSE_EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const EASE_STD = "cubic-bezier(0.4, 0, 0.2, 1)";
+
 export default function Modal({
   open,
   title,
@@ -27,7 +32,45 @@ export default function Modal({
   bodyClassName,
   contentClassName,
 }: ModalProps) {
-  if (!open) return null;
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsMounted(true);
+      const id = window.requestAnimationFrame(() =>
+        window.requestAnimationFrame(() => setIsVisible(true)),
+      );
+      return () => window.cancelAnimationFrame(id);
+    }
+
+    setIsVisible(false);
+  }, [open]);
+
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget) return;
+      if (!open) setIsMounted(false);
+    },
+    [open],
+  );
+
+  useEffect(() => {
+    if (!isMounted) return;
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!isMounted) return null;
 
   const sizeClass =
     size === "sm"
@@ -44,12 +87,29 @@ export default function Modal({
       <button
         type="button"
         onClick={onClose}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transition: isVisible
+            ? `opacity 220ms ${EASE_STD}`
+            : `opacity 180ms ${CLOSE_EASE}`,
+        }}
         className="absolute inset-0 bg-black/40"
         aria-label="Close modal"
       />
 
       {/* Modal */}
       <div
+        onTransitionEnd={handleTransitionEnd}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible
+            ? "translateY(0) scale(1)"
+            : "translateY(20px) scale(0.96)",
+          transition: isVisible
+            ? `opacity 260ms ${OPEN_EASE}, transform 320ms ${OPEN_EASE}`
+            : `opacity 180ms ${CLOSE_EASE}, transform 180ms ${CLOSE_EASE}`,
+          willChange: "opacity, transform",
+        }}
         className={cn(
           "relative z-[10000] my-2 sm:my-0 w-full max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] bg-white shadow-theme-xs dark:bg-gray-900",
           "overflow-hidden", // ✅ IMPORTANT: clip header/footer so rounded corners show

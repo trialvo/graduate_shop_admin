@@ -5,6 +5,7 @@ import React from "react";
 import { AlertTriangle, X } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
+import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal/useModalTransition";
 
 type Props = {
   open: boolean;
@@ -17,6 +18,10 @@ type Props = {
   onClose: () => void;
 };
 
+const OPEN_EASE = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const CLOSE_EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const EASE_STD = "cubic-bezier(0.4, 0, 0.2, 1)";
+
 export default function ConfirmDeleteModal({
   open,
   title = "Delete item?",
@@ -27,11 +32,75 @@ export default function ConfirmDeleteModal({
   onConfirm,
   onClose,
 }: Props) {
-  if (!open) return null;
+  const [isMounted, setIsMounted] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setIsMounted(true);
+      const id = window.requestAnimationFrame(() =>
+        window.requestAnimationFrame(() => setIsVisible(true)),
+      );
+      return () => window.cancelAnimationFrame(id);
+    }
+
+    setIsVisible(false);
+  }, [open]);
+
+  const handleTransitionEnd = React.useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget) return;
+      if (!open) setIsMounted(false);
+    },
+    [open],
+  );
+
+  React.useEffect(() => {
+    if (!isMounted) return;
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, [isMounted]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading) onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [loading, onClose, open]);
+
+  if (!isMounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[520px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      <div
+        aria-hidden="true"
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transition: isVisible
+            ? `opacity 220ms ${EASE_STD}`
+            : `opacity 180ms ${CLOSE_EASE}`,
+        }}
+        className="absolute inset-0 bg-black/40"
+        onClick={() => {
+          if (!loading) onClose();
+        }}
+      />
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible
+            ? "translateY(0) scale(1)"
+            : "translateY(20px) scale(0.96)",
+          transition: isVisible
+            ? `opacity 260ms ${OPEN_EASE}, transform 320ms ${OPEN_EASE}`
+            : `opacity 180ms ${CLOSE_EASE}, transform 180ms ${CLOSE_EASE}`,
+          willChange: "opacity, transform",
+        }}
+        className="relative w-full max-w-[520px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900"
+      >
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400">
@@ -45,7 +114,10 @@ export default function ConfirmDeleteModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              if (!loading) onClose();
+            }}
+            disabled={loading}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.03]"
             aria-label="Close"
           >

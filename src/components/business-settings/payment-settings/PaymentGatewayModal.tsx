@@ -15,6 +15,11 @@ import { PAYMENT_PROVIDER_DEFS } from "./providerDefs";
 import type { Option, PaymentProvider, PaymentProviderConfigCard } from "./types";
 import { updatePaymentProviderConfig } from "@/api/payment-config.api";
 import { cn } from "@/lib/utils";
+import {
+  getModalBackdropStyle,
+  getModalDialogStyle,
+  useModalTransition,
+} from "@/components/ui/modal/useModalTransition";
 
 type Props = {
   open: boolean;
@@ -69,6 +74,7 @@ export default function PaymentGatewayModal({
   const autoType = !isCod
     ? AUTO_TYPE[currentProvider as Exclude<PaymentProvider, "cod">]
     : "cod";
+  const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   useEffect(() => {
     if (!open) return;
@@ -220,18 +226,23 @@ export default function PaymentGatewayModal({
     mutation.mutate(payload);
   };
 
-  if (!open) return null;
+  if (!isMounted) return null;
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center">
       <button
         type="button"
+        style={getModalBackdropStyle(isVisible)}
         className="absolute inset-0 bg-black/60"
         onClick={onClose}
         aria-label="Close overlay"
       />
 
-      <div className="relative w-[95vw] max-w-2xl rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+      <div
+        onTransitionEnd={handleTransitionEnd}
+        style={getModalDialogStyle(isVisible)}
+        className="relative w-[95vw] max-w-2xl rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>

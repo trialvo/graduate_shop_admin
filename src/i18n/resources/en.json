@@ -1522,6 +1522,12 @@
     "confirmDelete": {
       "title": "Delete Product?",
       "description": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "subtitle": "This action is permanent and cannot be undone.",
+      "effects": {
+        "productRemoved": "Product data will be permanently removed",
+        "variantsRemoved": "All associated variants and stock will be lost",
+        "cannotRecover": "This cannot be recovered"
+      },
       "confirm": "Yes, Delete",
       "deleting": "Deleting..."
     },
@@ -1769,6 +1775,11 @@
       "deleteVarTitle": "Delete Variation",
       "deleteVarDesc": "This action cannot be undone.",
       "deleteVarConfirm": "Are you sure you want to delete this variation?",
+      "deleteVarEffects": {
+        "variationRemoved": "Variation data will be permanently removed",
+        "skuStockRemoved": "Related SKU, stock and pricing data will be lost",
+        "cannotRecover": "This cannot be recovered"
+      },
       "delete": "Delete",
       "variationAdded": "Variation added",
       "failedAddVariation": "Failed to add variation",
