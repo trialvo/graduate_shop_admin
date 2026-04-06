@@ -72,12 +72,13 @@ export function useReportDistributionSettings() {
   });
 }
 
-/** V2-037: Eligible admins for report pool UI (includes SUPER_ADMIN self) */
+/** V2-037: Eligible admins for report pool UI — refetches every 30 s so counts stay live */
 export function useReportEligibleAdmins() {
   return useQuery({
     queryKey: reportKeys.eligibleAdmins,
     queryFn:  getReportEligibleAdmins,
-    staleTime: 15_000,
+    staleTime:       15_000,
+    refetchInterval: 30_000,
   });
 }
 
@@ -99,6 +100,8 @@ export function useAdminReplyReport() {
     onSuccess: (_d, { id }) => {
       qc.invalidateQueries({ queryKey: reportKeys.detail(id) });
       qc.invalidateQueries({ queryKey: reportKeys.counts });
+      // A reply may change read/replied state which affects active_report_count
+      qc.invalidateQueries({ queryKey: reportKeys.eligibleAdmins });
     },
   });
 }
@@ -124,6 +127,9 @@ export function useAdminUpdateReportStatus() {
       qc.invalidateQueries({ queryKey: reportKeys.detail(id) });
       qc.invalidateQueries({ queryKey: reportKeys.all });
       qc.invalidateQueries({ queryKey: reportKeys.counts });
+      // Status change (resolved/closed) removes report from active count in pool tab
+      qc.invalidateQueries({ queryKey: reportKeys.eligibleAdmins });
+      qc.invalidateQueries({ queryKey: reportKeys.distAgents });
     },
   });
 }
@@ -135,6 +141,8 @@ export function useAdminDeleteReport() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: reportKeys.all });
       qc.invalidateQueries({ queryKey: reportKeys.counts });
+      // Deleting a report removes it from active count in pool tab
+      qc.invalidateQueries({ queryKey: reportKeys.eligibleAdmins });
     },
   });
 }

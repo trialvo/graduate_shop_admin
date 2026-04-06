@@ -77,6 +77,8 @@ export function useToggleContactMessageStatus() {
         qc.invalidateQueries({ queryKey: contactMessageKeys.counts() }),
         qc.invalidateQueries({ queryKey: contactMessageKeys.all() }),
       ]);
+      // Archiving a message removes it from active count in the distribution pool tab
+      qc.invalidateQueries({ queryKey: ["contact-dist-eligible"] });
     },
     onError: (e: any) => {
       toast.error(e?.message || "Failed to update status");
@@ -95,6 +97,8 @@ export function useDeleteContactMessage() {
         qc.invalidateQueries({ queryKey: contactMessageKeys.counts() }),
         qc.invalidateQueries({ queryKey: contactMessageKeys.all() }),
       ]);
+      // Deleting a message removes it from active count in the distribution pool tab
+      qc.invalidateQueries({ queryKey: ["contact-dist-eligible"] });
     },
     onError: (e: any) => {
       toast.error(e?.message || "Failed to delete message");
@@ -113,6 +117,8 @@ export function useReplyContactMessage() {
         qc.invalidateQueries({ queryKey: contactMessageKeys.counts() }),
         qc.invalidateQueries({ queryKey: contactMessageKeys.all() }),
       ]);
+      // A reply marks the message as replied — may affect active_message_count
+      qc.invalidateQueries({ queryKey: ["contact-dist-eligible"] });
     },
     onError: (e: any) => {
       toast.error(e?.message || "Failed to send reply");

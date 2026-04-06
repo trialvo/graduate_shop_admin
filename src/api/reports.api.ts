@@ -113,7 +113,14 @@ export type ReportDistributionAgent = {
   max_active_reports: number | null;
   auto_assign_enabled: boolean;
   status: boolean;
+  /** Reports admin still has open (not resolved/closed) */
   active_report_count: number;
+  /** Reports assigned to queue today */
+  today_assigned_count: number;
+  /** Reports this admin resolved or closed today */
+  today_completed_count: number;
+  /** Lifetime total reports ever assigned to this admin */
+  total_assigned_count: number;
   created_at: string;
 };
 
@@ -131,8 +138,14 @@ export type ReportEligibleAdmin = {
   max_active_reports: number | null;
   pool_auto_assign: boolean | null;
   pool_status: boolean | null;
+  /** Reports admin still has open (not resolved/closed) */
   active_report_count: number;
-  today_report_count: number;
+  /** Reports assigned to queue today */
+  today_assigned_count: number;
+  /** Reports this admin resolved or closed today */
+  today_completed_count: number;
+  /** Lifetime total reports ever assigned to this admin */
+  total_assigned_count: number;
 };
 
 export type ReportAgentPayload = {

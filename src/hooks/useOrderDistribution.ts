@@ -49,11 +49,13 @@ export function useUpdateDistributionSettings() {
 
 // ─── Eligible Admins (for pool management UI) ────────────────────────────── //
 
+/** Eligible admins for pool UI — refetches every 30 s so counts stay live */
 export function useEligibleAdmins() {
   return useQuery({
     queryKey: distKeys.eligibleAdmins,
     queryFn: getEligibleAdmins,
-    staleTime: 15_000,
+    staleTime:      15_000,
+    refetchInterval: 30_000,
   });
 }
 

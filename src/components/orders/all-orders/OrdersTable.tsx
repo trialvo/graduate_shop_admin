@@ -187,6 +187,9 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
       toast.success(t("orders.paymentStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      // Payment status affects settlement; refresh pool counts too
+      queryClient.invalidateQueries({ queryKey: ["distribution-eligible-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["distribution-agents"] });
     },
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Failed to update payment status"));
@@ -210,6 +213,10 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
       toast.success(t("orders.orderStatusUpdated"));
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
+      // When order status becomes terminal (delivered/cancelled/returned) the active_order_count
+      // in the distribution pool must decrease — invalidate those caches immediately.
+      queryClient.invalidateQueries({ queryKey: ["distribution-eligible-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["distribution-agents"] });
     },
     onError: (err: unknown, _variables, context) => {
       if (context?.key) {

@@ -292,7 +292,7 @@ function PoolSettingsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                     {admin.profile_img_path ? (
                       <img
-                        src={toPublicUrl(admin.profile_img_path ?? undefined)}
+                        src={toPublicUrl(admin.profile_img_path || undefined)}
                         alt={admin.admin_name}
                         className="h-full w-full object-cover"
                         onError={(e) => {
@@ -321,16 +321,26 @@ function PoolSettingsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 </div>
 
                 {/* Load Pills */}
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-1.5 flex-wrap">
                   <LoadPill
                     count={admin.active_order_count}
                     label="active"
                     colour="bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300"
                   />
                   <LoadPill
-                    count={admin.today_handled_count}
-                    label="today"
+                    count={admin.today_assigned_count}
+                    label="assigned today"
                     colour="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                  />
+                  <LoadPill
+                    count={admin.today_completed_count}
+                    label="shipped today"
+                    colour="bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
+                  />
+                  <LoadPill
+                    count={admin.total_assigned_count}
+                    label="total"
+                    colour="bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400"
                   />
                 </div>
 
@@ -564,7 +574,7 @@ function AssignOrdersTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
               <option value="">-- Select Admin --</option>
               {eligibleForAssign.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.admin_name} ({a.role_name.replace("_", " ")}) — {a.active_order_count} active
+                  {a.admin_name} ({a.role_name.replace("_", " ")}) — {a.active_order_count} active · {a.today_completed_count} done today
                 </option>
               ))}
             </select>

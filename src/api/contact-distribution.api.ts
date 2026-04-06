@@ -27,8 +27,14 @@ export type ContactEligibleAdmin = {
   max_active_messages: number | null;
   pool_auto_assign: boolean | null;
   pool_status: boolean | null;
+  /** Unreplied messages admin still has open */
   active_message_count: number;
-  today_message_count: number;
+  /** Messages assigned to queue today */
+  today_assigned_count: number;
+  /** Messages this admin replied to or archived today */
+  today_completed_count: number;
+  /** Lifetime total messages ever assigned to this admin */
+  total_assigned_count: number;
 };
 
 export type ContactAgentPayload = {

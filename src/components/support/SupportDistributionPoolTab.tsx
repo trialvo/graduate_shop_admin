@@ -26,11 +26,13 @@ export type PoolEligibleAdmin = {
   // "max" column differs by domain — we unify as maxActive
   max_active_reports?: number | null;
   max_active_messages?: number | null;
-  // load counts
+  // active load count (domain-specific column name)
   active_report_count?: number;
   active_message_count?: number;
-  today_report_count?: number;
-  today_message_count?: number;
+  // unified meaningful counts (new backend columns)
+  today_assigned_count?: number;
+  today_completed_count?: number;
+  total_assigned_count?: number;
 };
 
 export type PoolSettingsShape = {
@@ -109,6 +111,8 @@ export default function SupportDistributionPoolTab({
 
   const isReport  = domain === "reports";
   const entityLabel = isReport ? "Report" : "Message";
+  const completedLabel = domain === "reports" ? "resolved today" : "replied today";
+  const activeLabel    = domain === "reports" ? "open"            : "unreplied";
 
   const settingRows = [
     {
@@ -257,7 +261,6 @@ export default function SupportDistributionPoolTab({
             const inPool    = !!admin.pool_id;
             const isEditing = editingId === admin.id;
             const activeCount  = admin.active_report_count ?? admin.active_message_count ?? 0;
-            const todayCount   = admin.today_report_count  ?? admin.today_message_count  ?? 0;
             const maxCurrent   = admin.max_active_reports  ?? admin.max_active_messages  ?? null;
 
             return (
@@ -273,7 +276,7 @@ export default function SupportDistributionPoolTab({
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                     {admin.profile_img_path ? (
                       <img
-                        src={toPublicUrl(admin.profile_img_path ?? undefined)}
+                        src={toPublicUrl(admin.profile_img_path || undefined)}
                         alt={admin.admin_name}
                         className="h-full w-full object-cover"
                         onError={e => { (e.currentTarget as HTMLImageElement).src = imageFallbackSvgDataUri(admin.admin_name); }}
@@ -295,9 +298,11 @@ export default function SupportDistributionPoolTab({
                 </div>
 
                 {/* Load pills */}
-                <div className="flex shrink-0 items-center gap-2">
-                  <LoadPill count={activeCount} label="active" colour="bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300" />
-                  <LoadPill count={todayCount}  label="today"  colour="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300" />
+                <div className="flex shrink-0 items-center gap-1.5 flex-wrap">
+                  <LoadPill count={activeCount}                          label={activeLabel}      colour="bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300" />
+                  <LoadPill count={admin.today_assigned_count  ?? 0}    label="assigned today"   colour="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300" />
+                  <LoadPill count={admin.today_completed_count ?? 0}    label={completedLabel}   colour="bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300" />
+                  <LoadPill count={admin.total_assigned_count  ?? 0}    label="total"            colour="bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400" />
                 </div>
 
                 {/* Controls (SUPER_ADMIN only) */}

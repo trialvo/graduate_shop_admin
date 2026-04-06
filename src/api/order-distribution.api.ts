@@ -29,8 +29,14 @@ export type EligibleAdmin = {
   max_active_orders: number | null;
   pool_auto_assign: boolean | null;
   pool_status: boolean | null;
+  /** Orders currently in-flight (non-terminal) */
   active_order_count: number;
-  today_handled_count: number;
+  /** Orders assigned into this admin's queue today */
+  today_assigned_count: number;
+  /** Orders this admin moved to a terminal state today (delivered/cancelled/etc.) */
+  today_completed_count: number;
+  /** All orders ever assigned to this admin */
+  total_assigned_count: number;
 };
 
 /** An agent row from the pool table (for existing pool management) */
@@ -44,7 +50,9 @@ export type DistributionAgent = {
   auto_assign_enabled: boolean;
   status: boolean;
   active_order_count: number;
-  today_handled_count: number;
+  today_assigned_count: number;
+  today_completed_count: number;
+  total_assigned_count: number;
   created_at: string;
 };
 

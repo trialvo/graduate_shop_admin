@@ -32,7 +32,8 @@ export function useContactEligibleAdmins() {
   return useQuery({
     queryKey: keys.eligible,
     queryFn:  getContactEligibleAdmins,
-    staleTime: 15_000,
+    staleTime:       15_000,
+    refetchInterval: 30_000,
   });
 }
 
