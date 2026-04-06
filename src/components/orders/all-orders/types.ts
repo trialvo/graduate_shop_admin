@@ -155,6 +155,8 @@ export type OrderRow = {
   /** V2-017: Order Assignment fields */
   assignedToAdminId: number | null;
   assignedAdminName: string | null;
+  assignedAdminEmail: string | null;
+  assignedAdminImg: string | null;
   assignmentMethod: "auto" | "manual" | "redistribute" | null;
   isAssignedToMe: boolean;
 };

@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 import type { CourierProviderId, OrderRow } from "./types";
 import SendCourierCell from "./SendCourierCell";
+import StatusHistoryPopover from "./StatusHistoryPopover";
 import OrderSelectDropdown from "@/components/ui/dropdown/OrderSelectDropdown";
 import OrderInfoModal from "@/components/ui/modal/OrderInfoModal";
 import FraudCheckModal from "@/components/ui/modal/FraudCheckModal";
@@ -242,10 +243,12 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
                 <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[160px]")}>Amount</TableCell>
                 <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[150px]")}>Payment</TableCell>
                 <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[160px]")}>Status</TableCell>
-                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[140px]")}>Date & Time</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[140px]")}>Date &amp; Time</TableCell>
                 <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[220px]")}>Send Courier</TableCell>
                 <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[180px]")}>Order Note</TableCell>
                 <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>Shipping Location</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[180px]")}>Assigned Admin</TableCell>
+                <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[120px]")}>Status History</TableCell>
                 <TableCell
                   isHeader
                   className={cn(stickyActionHeaderClass, headerCellBaseClass, "min-w-[100px] text-right")}
@@ -259,7 +262,7 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
             <TableBody>
               {mergedRows.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={11} className="px-4 py-20">
+                  <TableCell colSpan={13} className="px-4 py-20">
                     <div className="flex flex-col items-center gap-3 text-center">
                       <div className={cn(
                         "flex h-16 w-16 items-center justify-center rounded-2xl",
@@ -450,6 +453,77 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
                       <TableCell className="px-4 py-3.5">
                         <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{r.shippingArea}</p>
                         <p className="truncate text-xs text-gray-500 dark:text-gray-400">{r.shippingAddress}</p>
+                      </TableCell>
+
+                      {/* ── Assigned Admin ──────────────────────────── */}
+                      <TableCell className="px-4 py-3.5">
+                        {r.assignedToAdminId ? (
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            {/* Avatar */}
+                            <div className={cn(
+                              "relative h-8 w-8 shrink-0 overflow-hidden rounded-full",
+                              "border-2 ring-1 ring-white dark:ring-gray-900",
+                              r.isAssignedToMe
+                                ? "border-brand-400"
+                                : "border-gray-200 dark:border-gray-700",
+                            )}>
+                              <img
+                                src={r.assignedAdminImg ?? imageFallbackSvgDataUri(r.assignedAdminName ?? "A")}
+                                alt={r.assignedAdminName ?? "Admin"}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                onError={e => {
+                                  const t = e.currentTarget;
+                                  t.src = imageFallbackSvgDataUri(r.assignedAdminName ?? "A");
+                                }}
+                              />
+                              {/* 'Me' badge */}
+                              {r.isAssignedToMe && (
+                                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-brand-500 dark:border-gray-900" />
+                              )}
+                            </div>
+                            {/* Info */}
+                            <div className="min-w-0">
+                              <p className={cn(
+                                "max-w-[120px] truncate text-xs font-semibold",
+                                r.isAssignedToMe
+                                  ? "text-brand-600 dark:text-brand-400"
+                                  : "text-gray-800 dark:text-white",
+                              )}>
+                                {r.assignedAdminName ?? "—"}
+                                {r.isAssignedToMe && (
+                                  <span className="ml-1 inline-flex items-center rounded-sm bg-brand-100 px-1 py-px text-[9px] font-bold text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
+                                    Me
+                                  </span>
+                                )}
+                              </p>
+                              {r.assignedAdminEmail && (
+                                <p className="max-w-[120px] truncate text-[10px] text-gray-400 dark:text-gray-500">
+                                  {r.assignedAdminEmail}
+                                </p>
+                              )}
+                              {r.assignmentMethod && (
+                                <span className={cn(
+                                  "mt-0.5 inline-block rounded-full px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide",
+                                  r.assignmentMethod === "auto"
+                                    ? "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300"
+                                    : r.assignmentMethod === "redistribute"
+                                    ? "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
+                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+                                )}>
+                                  {r.assignmentMethod}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 dark:text-gray-600">Unassigned</span>
+                        )}
+                      </TableCell>
+
+                      {/* ── Status History ─────────────────────────── */}
+                      <TableCell className="px-4 py-3.5">
+                        <StatusHistoryPopover orderId={r.id} alignRight={false} />
                       </TableCell>
 
                       {/* Sticky Action */}

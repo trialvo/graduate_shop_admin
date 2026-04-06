@@ -1,5 +1,3 @@
-// src/components/orders/all-orders/OrderFiltersBar.tsx
-
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -7,6 +5,7 @@ import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
 import type { OrderStatus } from "./types";
 import { cn } from "@/lib/utils";
+import AdminFilterCombobox from "./AdminFilterCombobox";
 
 type PaymentStatusValue  = "all" | "unpaid" | "partial_paid" | "paid";
 type PaymentProviderValue = "all" | "sslcommerz" | "bkash" | "nagad" | "shurjopay" | "rocket";
@@ -56,6 +55,9 @@ type Props = {
   assignedToMe: boolean;
   setAssignedToMe: (v: boolean) => void;
 
+  assignedAdminId: number | null;
+  setAssignedAdminId: (v: number | null) => void;
+
   uiOptions: {
     orderType: readonly { id: string; label: string }[];
     paymentStatus: readonly { id: string; label: string }[];
@@ -96,6 +98,8 @@ export default function OrderFiltersBar({
   loading,
   assignedToMe,
   setAssignedToMe,
+  assignedAdminId,
+  setAssignedAdminId,
 }: Props) {
   const { t } = useTranslation();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -164,9 +168,9 @@ export default function OrderFiltersBar({
       </div>
 
       {/* ─── Search + Controls row ─── */}
-      <div className="flex items-center gap-2 px-4 py-3">
-        {/* Search */}
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 px-4 py-3">
+        {/* Row 1: Search (always full width) */}
+        <div className="relative w-full">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
@@ -181,47 +185,63 @@ export default function OrderFiltersBar({
           />
         </div>
 
-        {/* Filter toggle */}
-        <button
-          type="button"
-          onClick={() => setFiltersOpen((v) => !v)}
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition",
-            filtersOpen
-              ? "border-brand-200 bg-brand-50 text-brand-600 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
-              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          )}
-        >
-          <SlidersHorizontal size={14} />
-          <span className="hidden sm:inline">Filters</span>
-        </button>
+        {/* Row 2: Filter toggles — wrap on narrow screens */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Filter panel toggle */}
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition",
+              filtersOpen
+                ? "border-brand-200 bg-brand-50 text-brand-600 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
+                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            )}
+          >
+            <SlidersHorizontal size={14} />
+            <span>Filters</span>
+          </button>
 
-        {/* Assigned to Me toggle */}
-        <button
-          type="button"
-          onClick={() => setAssignedToMe(!assignedToMe)}
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition",
-            assignedToMe
-              ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          )}
-          title="Show only orders assigned to me"
-        >
-          <span className="text-[11px]">👤</span>
-          <span className="hidden sm:inline">Assigned to Me</span>
-        </button>
+          {/* Separator */}
+          <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
 
-        {/* Clear */}
-        <Button
-          variant="outline"
-          onClick={onClear}
-          className="h-9 px-3 text-[13px]"
-          disabled={loading}
-        >
-          {loading ? t("orders.filters.loading") : t("orders.filters.clear")}
-        </Button>
+          {/* Assigned to Me toggle */}
+          <button
+            type="button"
+            onClick={() => { setAssignedToMe(!assignedToMe); if (!assignedToMe) setAssignedAdminId(null); }}
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold transition",
+              assignedToMe
+                ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            )}
+            title="Show only orders assigned to me"
+          >
+            <span className="text-[11px]">👤</span>
+            <span>Mine</span>
+          </button>
+
+          {/* Assigned Admin combobox */}
+          <AdminFilterCombobox
+            value={assignedAdminId}
+            onChange={(id) => { setAssignedAdminId(id); if (id !== null) setAssignedToMe(false); }}
+          />
+
+          {/* Spacer to push Clear to the right */}
+          <div className="flex-1" />
+
+          {/* Clear */}
+          <Button
+            variant="outline"
+            onClick={onClear}
+            className="h-9 px-3 text-[13px]"
+            disabled={loading}
+          >
+            {loading ? t("orders.filters.loading") : t("orders.filters.clear")}
+          </Button>
+        </div>
       </div>
+
 
       {/* ─── Collapsible advanced filters ─── */}
       {filtersOpen && (

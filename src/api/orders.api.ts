@@ -193,6 +193,8 @@ export type ApiOrder = {
   assignment_method: "auto" | "manual" | "redistribute" | null;
   assigned_at: string | null;
   assigned_admin_name: string | null;
+  assigned_admin_email: string | null;
+  assigned_admin_img: string | null;
 
   items: ApiOrderItem[];
   payments: ApiOrderPayment[];
@@ -576,4 +578,38 @@ export async function bulkSyncCourierStatus(): Promise<{
 }> {
   const res = await api.post(`/admin/orders/bulk-sync-courier-status`);
   return res.data;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Order Status History — GET /admin/orders/status-history?orderId=X
+   ────────────────────────────────────────────────────────────────────── */
+
+export type OrderStatusHistoryEntry = {
+  id: number;
+  order_id: number;
+  status_change: { from: string | null; to: string };
+  note: string | null;
+  created_at: string;
+  admin: { id: number; name: string; email: string } | null;
+};
+
+export type OrderStatusHistoryResponse = {
+  success: boolean;
+  meta: { total_count: number; limit: number; offset: number };
+  data: OrderStatusHistoryEntry[];
+};
+
+export async function getOrderStatusHistory(
+  orderId: number | string,
+  limit = 20,
+): Promise<OrderStatusHistoryResponse> {
+  try {
+    const res = await api.get<OrderStatusHistoryResponse>(
+      `/admin/orders/status-history`,
+      { params: { orderId, limit, offset: 0 } },
+    );
+    return res.data;
+  } catch (err: any) {
+    throw new Error(getErrMessage(err, "Failed to load status history"));
+  }
 }

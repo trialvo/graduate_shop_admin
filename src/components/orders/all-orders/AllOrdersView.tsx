@@ -242,6 +242,8 @@ export default function AllOrdersView() {
 
   // V2-017: Assigned to Me filter
   const [assignedToMe, setAssignedToMe] = useState<boolean>(false);
+  // Filter by a specific admin
+  const [assignedAdminId, setAssignedAdminId] = useState<number | null>(null);
 
   const { admin } = useAuth();
   const currentAdminId = admin?.id ?? null;
@@ -287,6 +289,7 @@ export default function AllOrdersView() {
       date_to: dateTo || undefined,
 
       assigned_to_me: assignedToMe || undefined,
+      assigned_to_admin_id: assignedAdminId ?? undefined,
 
       limit,
       offset,
@@ -305,6 +308,7 @@ export default function AllOrdersView() {
     dateFrom,
     dateTo,
     assignedToMe,
+    assignedAdminId,
     limit,
     offset,
   ]);
@@ -489,6 +493,8 @@ export default function AllOrdersView() {
         // V2-017: Assignment fields
         assignedToAdminId: o.assigned_to_admin_id ?? null,
         assignedAdminName: o.assigned_admin_name ?? null,
+        assignedAdminEmail: o.assigned_admin_email ?? null,
+        assignedAdminImg: o.assigned_admin_img ? toPublicUrl(o.assigned_admin_img) ?? null : null,
         assignmentMethod: o.assignment_method ?? null,
         isAssignedToMe: currentAdminId !== null && o.assigned_to_admin_id === currentAdminId,
       };
@@ -518,6 +524,7 @@ export default function AllOrdersView() {
     setDateFrom("");
     setDateTo("");
     setAssignedToMe(false);
+    setAssignedAdminId(null);
     setLimit(20);
     setOffset(0);
     setSelectedIds(new Set());
@@ -714,6 +721,13 @@ export default function AllOrdersView() {
         assignedToMe={assignedToMe}
         setAssignedToMe={(v) => {
           setAssignedToMe(v);
+          if (v) setAssignedAdminId(null);
+          setOffset(0);
+        }}
+        assignedAdminId={assignedAdminId}
+        setAssignedAdminId={(v) => {
+          setAssignedAdminId(v);
+          if (v !== null) setAssignedToMe(false);
           setOffset(0);
         }}
       />
