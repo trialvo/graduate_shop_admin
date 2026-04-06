@@ -907,6 +907,7 @@
     "permissions": "অনুমতি সেটিংস",
     "adminAuditLogs": "অ্যাডমিন অডিট লগ",
     "userAuditLogs": "ইউজার অডিট লগ",
+    "auditLogs": "অডিট লগ",
     "firebaseCredential": "ফায়ারবেস ক্রেডেনশিয়াল",
     "discountRules": "ডিসকাউন্ট নিয়ম",
     "orderDistribution": "অর্ডার বিতরণ",

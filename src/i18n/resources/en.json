@@ -907,6 +907,7 @@
     "permissions": "Permissions",
     "adminAuditLogs": "Admin Audit Logs",
     "userAuditLogs": "User Audit Logs",
+    "auditLogs": "Audit Logs",
     "firebaseCredential": "Firebase Credentials",
     "discountRules": "Discount Rules",
     "orderDistribution": "Order Distribution",

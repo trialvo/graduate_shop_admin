@@ -25,6 +25,7 @@ import {
   Megaphone,
   Mail,
   MessageCircle,
+  ClipboardCheck,
 } from "lucide-react";
 
 import { useSidebar } from "../context/SidebarContext";
@@ -109,8 +110,6 @@ const othersItems: NavItem[] = [
       { nameKey: "adminsList", path: "/admins-list", pro: false },
       { nameKey: "createAdmin", path: "/create-admin", pro: false },
       { nameKey: "permissions", path: "/permissions", pro: false },
-      { nameKey: "adminAuditLogs", path: "/admin-audit-logs", pro: false },
-      { nameKey: "userAuditLogs", path: "/user-audit-logs", pro: false },
     ],
   },
   {
@@ -151,6 +150,14 @@ const othersItems: NavItem[] = [
     subItems: [
       { nameKey: "contactMessages", path: "/contact-messages", pro: false },
       { nameKey: "supportReports",  path: "/support-reports",  pro: false, new: true },
+    ],
+  },
+  {
+    icon: <ClipboardCheck />,
+    nameKey: "auditLogs",
+    subItems: [
+      { nameKey: "adminAuditLogs", path: "/admin-audit-logs", pro: false },
+      { nameKey: "userAuditLogs",  path: "/user-audit-logs",  pro: false },
     ],
   },
   {
