@@ -18,6 +18,7 @@ import {
   FileText,
   Hash,
   Info,
+  Lock,
   Search,
   Shield,
   User,
@@ -310,7 +311,8 @@ export default function AdminAuditLogsPage() {
     [search, action, dateFrom, dateTo, page]
   );
 
-  const { data, isLoading, isError } = useAdminAuditLogs(params);
+  const { data, isLoading, isError, error } = useAdminAuditLogs(params);
+  const is403 = isError && (error as any)?.response?.status === 403;
   const logs = data?.data ?? [];
   const hasMore = data?.has_more ?? false;
   const count = data?.count ?? 0;
@@ -437,9 +439,25 @@ export default function AdminAuditLogsPage() {
                 ) : isError ? (
                   <tr>
                     <td colSpan={5} className="px-5 py-16 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <Shield size={24} className="text-error-400" />
-                        <span className="text-sm text-error-500">Failed to load audit logs.</span>
+                      <div className="flex flex-col items-center gap-3 max-w-sm mx-auto">
+                        {is403 ? (
+                          <>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-500/10">
+                              <Lock size={22} className="text-amber-500" />
+                            </div>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Access Restricted</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                              You don't have permission to view admin audit logs.
+                              Please contact a Super Admin if you need access.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Shield size={24} className="text-error-400" />
+                            <p className="text-sm text-error-500">Something went wrong while loading audit logs.</p>
+                            <p className="text-xs text-gray-400">Please try refreshing the page.</p>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -125,13 +125,16 @@ export default function App() {
               {/* Profile */}
               <Route path="/my-profile" element={<MyProfile />} />
 
-              {/* ✅ Admin & Permission (example: SUPER_ADMIN + admin.manage permission) */}
+              {/* ✅ Admin & Permission — SUPER_ADMIN + admin.manage */}
               <Route
                 element={
                   <ProtectedRoute
                     roles={["SUPER_ADMIN"]}
                     permissions={["admin.manage"]}
-                    redirectTo="/"
+                    inPageDenied
+                    deniedTitle="Admin Management Restricted"
+                    deniedDescription="Only Super Admins can manage admin accounts and create new administrators."
+                    deniedHint="Contact your Super Admin to request access or role elevation."
                   />
                 }
               >
