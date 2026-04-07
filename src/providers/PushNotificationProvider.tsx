@@ -66,11 +66,62 @@ export default function PushNotificationProvider() {
     function handleSWMessage(event: MessageEvent) {
       if (event.data?.type === 'GF_PUSH_NOTIFICATION') {
         const { title, body, data } = event.data;
-        pushAdminNotification(
+
+        // Update bell badge — returns false if this is a duplicate (dedup guard)
+        const wasNew = pushAdminNotification(
           title || 'Graduate Fashion',
           body  || 'You have a new notification.',
           (data || {}) as Record<string, string>
         );
+
+        // Also show an in-app toast so the notification is visible even when
+        // the tab is open but not focused (OS notifications may not appear in
+        // that state depending on the browser's visibilityState check in the SW).
+        if (wasNew) {
+          const deepPath = buildDeepLinkPath((data || {}) as Record<string, string>);
+          toast.custom(
+            (t) => (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => { navigate(deepPath); toast.dismiss(t.id); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { navigate(deepPath); toast.dismiss(t.id); } }}
+                className={`flex items-start gap-3 rounded-xl border border-brand-200 bg-white px-4 py-3 shadow-lg dark:border-brand-700 dark:bg-gray-900 transition-all cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-500/5 ${t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+                style={{ maxWidth: 360 }}
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                  <Bell size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{title || 'Graduate Fashion'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{body || 'You have a new notification.'}</p>
+                  {data?.order_id && (
+                    <p className="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">
+                      🛒 Order #{data.order_id}
+                    </p>
+                  )}
+                  {data?.report_id && (
+                    <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mt-1">
+                      🚩 Report #{data.report_id}
+                    </p>
+                  )}
+                  {data?.message_id && (
+                    <p className="text-xs font-medium text-sky-600 dark:text-sky-400 mt-1">
+                      💬 Contact Message #{data.message_id}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
+                  className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ),
+            { duration: 8000, position: 'top-right' }
+          );
+        }
       } else if (event.data?.type === 'GF_NAVIGATE') {
         // Sent by the service worker notificationclick handler when the admin tab
         // is already open and has been focused. Navigate via React Router so the
@@ -80,6 +131,7 @@ export default function PushNotificationProvider() {
       }
     }
     navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+
 
     return () => {
       navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
@@ -122,6 +174,7 @@ export default function PushNotificationProvider() {
       if (!alreadyDismissed) setShowBanner(true);
     }
   }
+
 
   // ── Logout handler ─────────────────────────────────────────────────────────
   function onLogout() {
