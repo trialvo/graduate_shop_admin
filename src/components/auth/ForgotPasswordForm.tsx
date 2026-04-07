@@ -364,8 +364,22 @@ export default function ForgotPasswordForm() {
           <div className="h-11 w-full animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800" />
         )}
 
-        {/* Input form */}
-        {methodsReady && (
+        {/* Both channels disabled — show notice instead of form */}
+        {methodsReady && !methods.email && !methods.sms && (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-6 text-center dark:border-gray-700 dark:bg-gray-800/50">
+            <p className="text-3xl">🔒</p>
+            <p className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Password reset is temporarily unavailable
+            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Self-service password reset has been disabled by your administrator.
+              Please contact support for assistance.
+            </p>
+          </div>
+        )}
+
+        {/* Input form — only when at least one channel is enabled */}
+        {methodsReady && (methods.email || methods.sms) && (
           <div className="space-y-5">
             {channel === "email" ? (
               <div>
