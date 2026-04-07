@@ -114,7 +114,6 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     if (!otp.trim())            { toast.error("OTP is required.");                       return; }
     if (newPassword.length < 8) { toast.error("Password must be at least 8 characters."); return; }
-    if (newPassword.length > 12){ toast.error("Password must be at most 12 characters."); return; }
     if (newPassword !== confirmPassword) { toast.error("Passwords do not match.");         return; }
 
     setSaving(true);
