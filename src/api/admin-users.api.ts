@@ -39,9 +39,9 @@ export type AdminUserEntity = {
 export type AdminUsersListParams = {
   limit: number;
   offset?: number;
-
-  // ✅ added (your API supports /admin/users?search=...)
   search?: string;
+  status?: string;
+  is_deleted?: boolean;
 };
 
 export type AdminUsersListResponse = {

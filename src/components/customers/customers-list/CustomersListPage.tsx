@@ -1,7 +1,7 @@
 // src/components/customers/customers-list/CustomersListPage.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -185,6 +185,18 @@ export default function CustomersListPage() {
 
   const [activeTab, setActiveTab] = useState<UserStatusTab>("ALL");
   const [search, setSearch] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce: wait 350ms after the user stops typing before querying
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(val.trim());
+      setPage(1);
+    }, 350);
+  };
 
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
@@ -203,11 +215,23 @@ export default function CustomersListPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
+
+  // Map tab to API params
+  const statusParam = activeTab === "ALL" || activeTab === "DELETED" ? undefined : activeTab.toLowerCase();
+  const isDeletedParam = activeTab === "DELETED" ? true : undefined;
+
   const offset = useMemo(() => (page - 1) * pageSize, [page, pageSize]);
 
   const usersQuery = useQuery({
-    queryKey: ["adminUsers", { limit: pageSize, offset }],
-    queryFn: () => getAdminUsers({ limit: pageSize, offset }),
+    queryKey: ["adminUsers", { limit: pageSize, offset, search: debouncedSearch, status: statusParam, is_deleted: isDeletedParam }],
+    queryFn: () =>
+      getAdminUsers({
+        limit: pageSize,
+        offset,
+        search: debouncedSearch || undefined,
+        status: statusParam,
+        is_deleted: isDeletedParam,
+      }),
     retry: 1,
   });
 
@@ -216,15 +240,15 @@ export default function CustomersListPage() {
     return list.map(toCustomerRow);
   }, [usersQuery.data]);
 
+  // Tab counts: use the meta total for ALL; others rely on what the server returns for that filter
   const counts = useMemo(() => {
     const map: Record<UserStatusTab, number> = {
-      ALL: rows.length,
+      ALL: usersQuery.data?.meta?.total ?? rows.length,
       ACTIVE: 0,
       INACTIVE: 0,
       SUSPENDED: 0,
       DELETED: 0,
     };
-
     for (const r of rows) {
       const s = String(r.status).toLowerCase();
       if (s === "active") map.ACTIVE += 1;
@@ -233,33 +257,14 @@ export default function CustomersListPage() {
       if (r.isDeleted) map.DELETED += 1;
     }
     return map;
-  }, [rows]);
+  }, [rows, usersQuery.data]);
 
-  const filtered: CustomerRow[] = useMemo(() => {
-    const q = search.trim().toLowerCase();
-
-    return rows.filter((r) => {
-      const s = String(r.status).toLowerCase();
-
-      if (activeTab === "ACTIVE" && s !== "active") return false;
-      if (activeTab === "INACTIVE" && s !== "inactive") return false;
-      if (activeTab === "SUSPENDED" && s !== "suspended") return false;
-      if (activeTab === "DELETED" && !r.isDeleted) return false;
-
-      if (!q) return true;
-
-      return (
-        r.name.toLowerCase().includes(q) ||
-        r.email.toLowerCase().includes(q) ||
-        (r.phone ?? "").toLowerCase().includes(q) ||
-        String(r.id).includes(q)
-      );
-    });
-  }, [rows, activeTab, search]);
+  // No client-side filtering — backend does it all; just use rows directly
+  const filtered = rows;
 
   useEffect(() => {
     setPage(1);
-  }, [activeTab, pageSize, search]);
+  }, [activeTab, pageSize]);
 
   const headerTime = useMemo(() => {
     const d = refreshedAt;
@@ -361,7 +366,7 @@ export default function CustomersListPage() {
                 className="h-11 rounded-[6px] border border-gray-200 bg-white pl-9 dark:border-gray-800 dark:bg-gray-950"
                 placeholder="Search name, email, phone, id..."
                 value={search}
-                onChange={(e) => setSearch(String(e.target.value))}
+                onChange={(e) => handleSearchChange(String(e.target.value))}
               />
             </div>
           </div>
@@ -453,6 +458,9 @@ export default function CustomersListPage() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-brand-500">
                               {row.name}
+                            </p>
+                            <p className="mt-0.5 text-[10px] font-mono text-gray-400 dark:text-gray-500">
+                              #{row.id}
                             </p>
 
                             <p className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
