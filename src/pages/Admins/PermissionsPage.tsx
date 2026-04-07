@@ -123,7 +123,6 @@ const KEY_META: Record<string, KeyMeta> = {
   email_verified: { label: "Require Email Verified", description: "Customer must have a verified email address before placing an order." },
   phone_verified_mode: { label: "Phone Verification Mode", description: "Which phone number(s) must be verified to complete an order." },
   is_email_required: { label: "Email Required", description: "Guest must provide an email address at checkout." },
-  is_email_verification_required: { label: "Email Verification Required", description: "Guest must verify their email before the order is accepted. Requires 'Email Required' to be on." },
   is_phone_verification_required: { label: "Phone Verification Required", description: "Guest must verify their phone number before placing an order." },
   is_enabled: { label: "Enable Discount", description: "Turn the cart-wide discount on or off globally." },
   min_item_count: { label: "Min Item Count", description: "Minimum number of cart items required for the discount to apply. Set to 0 to disable." },
