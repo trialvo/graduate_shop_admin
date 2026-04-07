@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 
 import SignIn from "./pages/AuthPages/SignIn";
+import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import PushNotificationProvider from "./providers/PushNotificationProvider";
@@ -76,6 +77,7 @@ export default function App() {
           {/* ✅ Public-only: login page (if already logged in -> redirect to /dashboard) */}
           <Route element={<PublicOnlyRoute />}>
             <Route path="/" element={<SignIn />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Route>
           <Route path="/support" element={<SupportPage />} />
 
