@@ -1,35 +1,80 @@
-const DEFAULT_API_ORIGIN =
-  import.meta.env.DEV
-    ? "http://localhost:9000"
-    : "https://graduatefashion-api-641431966702.asia-south1.run.app";
+/**
+ * src/config/env.ts — Centralized environment configuration
+ *
+ * Two objects: `dev` and `production` — same properties.
+ * Automatically selects based on Vite's import.meta.env.DEV.
+ *
+ * `import.meta.env.DEV` is set automatically by Vite:
+ *   - `vite` (dev server)  → true
+ *   - `vite build`         → false
+ */
 
-export const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || DEFAULT_API_ORIGIN;
-export const PUBLIC_ORIGIN = import.meta.env.VITE_ASSET_ORIGIN || API_ORIGIN;
+// ── Dev Environment ──────────────────────────────────────────────────────────
+const dev = {
+  API_ORIGIN: "http://localhost:9000",
+  PUBLIC_ORIGIN: "http://localhost:9000",
+  API_PREFIX: "/api/v1",
 
-export const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api/v1";
+  FIREBASE_CONFIG: {
+    apiKey: "AIzaSyC4fJZkFkNELDlaRDpnGgKCVEPRHiJqxio",
+    authDomain: "ecom-cf845.firebaseapp.com",
+    projectId: "ecom-cf845",
+    storageBucket: "ecom-cf845.firebasestorage.app",
+    messagingSenderId: "1083282032252",
+    appId: "1:1083282032252:web:a735a6ec3fe0fc733aebf9",
+    measurementId: "G-V8X1WY30JC",
+  },
+  FIREBASE_VAPID_KEY: "BKBNywW3bD6z0GNXtR6g2-C5Kqyb5MYq2AWiRV4AK8Ru5R9xrfSSejy3kV2zZjnHlpmgYn_1KQDW7bjyHo_JLJM",
+};
 
-export const API_BASE_URL = `${API_ORIGIN}${API_PREFIX}`;
+// ── Live Dev Environment ──────────────────────────────────────────────────────────
+const live_dev = {
+  API_ORIGIN: "https://shop-api.shoplinkbd.com",
+  PUBLIC_ORIGIN: "https://shop.shoplinkbd.com",
+  API_PREFIX: "/api/v1",
+
+  FIREBASE_CONFIG: {
+    apiKey: "AIzaSyC4fJZkFkNELDlaRDpnGgKCVEPRHiJqxio",
+    authDomain: "ecom-cf845.firebaseapp.com",
+    projectId: "ecom-cf845",
+    storageBucket: "ecom-cf845.firebasestorage.app",
+    messagingSenderId: "1083282032252",
+    appId: "1:1083282032252:web:a735a6ec3fe0fc733aebf9",
+    measurementId: "G-V8X1WY30JC",
+  },
+  FIREBASE_VAPID_KEY: "BKBNywW3bD6z0GNXtR6g2-C5Kqyb5MYq2AWiRV4AK8Ru5R9xrfSSejy3kV2zZjnHlpmgYn_1KQDW7bjyHo_JLJM",
+};
+
+// ── Production Environment ───────────────────────────────────────────────────
+const production = {
+  API_ORIGIN: "https://graduatefashion-api-641431966702.asia-south1.run.app",
+  PUBLIC_ORIGIN: "https://graduatefashion-api-641431966702.asia-south1.run.app",
+  API_PREFIX: "/api/v1",
+
+  FIREBASE_CONFIG: {
+    apiKey: "AIzaSyC4fJZkFkNELDlaRDpnGgKCVEPRHiJqxio",
+    authDomain: "ecom-cf845.firebaseapp.com",
+    projectId: "ecom-cf845",
+    storageBucket: "ecom-cf845.firebasestorage.app",
+    messagingSenderId: "1083282032252",
+    appId: "1:1083282032252:web:a735a6ec3fe0fc733aebf9",
+    measurementId: "G-V8X1WY30JC",
+  },
+  FIREBASE_VAPID_KEY: "BKBNywW3bD6z0GNXtR6g2-C5Kqyb5MYq2AWiRV4AK8Ru5R9xrfSSejy3kV2zZjnHlpmgYn_1KQDW7bjyHo_JLJM",
+};
+
+// ── Auto-select ──────────────────────────────────────────────────────────────
+const env = import.meta.env.DEV ? live_dev : production;
+
+export const API_ORIGIN = env.API_ORIGIN;
+export const PUBLIC_ORIGIN = env.PUBLIC_ORIGIN;
+export const API_PREFIX = env.API_PREFIX;
+export const API_BASE_URL = `${env.API_ORIGIN}${env.API_PREFIX}`;
+export const FIREBASE_CONFIG = env.FIREBASE_CONFIG;
+export const FIREBASE_VAPID_KEY = env.FIREBASE_VAPID_KEY;
 
 export function toPublicUrl(path?: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   return `${PUBLIC_ORIGIN}${path}`;
 }
-
-// ── Firebase Push Notifications (V2-034) ─────────────────────────────────────
-// Values are loaded from VITE_FIREBASE_* environment variables.
-// For local dev:  set in .env.local  (not committed to git)
-// For production: set in .env.production or CI/CD environment
-export const FIREBASE_CONFIG = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY             || '',
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN         || '',
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID          || '',
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET      || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID              || '',
-  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID      || '',
-};
-
-// VAPID public key — Firebase Console → Project Settings → Cloud Messaging
-// → Web Push certificates → Generate key pair
-export const FIREBASE_VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';

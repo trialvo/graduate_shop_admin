@@ -35,15 +35,14 @@ export type ResetPasswordPayload = {
   new_password: string;
 };
 
-// If backend returns "/uploads/..." use VITE_IMAGE_ORIGIN (or fallback to VITE_API_ORIGIN)
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "";
-const IMAGE_ORIGIN = import.meta.env.VITE_IMAGE_ORIGIN || API_ORIGIN;
+// If backend returns "/uploads/..." use the centralized config origin
+import { API_ORIGIN, PUBLIC_ORIGIN } from "@/config/env";
 
 export function toMediaUrl(path?: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  if (!IMAGE_ORIGIN) return path;
-  return `${IMAGE_ORIGIN}${path}`;
+  if (!PUBLIC_ORIGIN) return path;
+  return `${PUBLIC_ORIGIN}${path}`;
 }
 
 export async function getAdminProfile(): Promise<AdminProfileApiResponse> {
