@@ -747,11 +747,41 @@ function SystemPermissionsPanel({
   const hasChanges = Object.keys(edits).length > 0;
   const currentVal = (r: FlatRow) => eKey(r) in edits ? edits[eKey(r)] : r.value;
 
+  // Sections locked behind a "Coming Soon" overlay
+  const COMING_SOON_SECTIONS = new Set(["storefront_visibility", "announcement"]);
+  const isComingSoon = (section: string, scope: string) =>
+    COMING_SOON_SECTIONS.has(section) || (section === "order_place_permission" && scope === "single_page");
+
 
   return (
     <div className="space-y-5">
-      {groups.map(({ groupKey, section, sectionMeta, scopeLabel, rows }) => (
-        <div key={groupKey} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      {groups.map(({ groupKey, section, sectionMeta, scopeLabel, rows }) => {
+        const locked = isComingSoon(section, rows[0]?.scope ?? "default");
+
+        return (
+        <div key={groupKey} className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          {/* Coming Soon overlay */}
+          {locked && (
+            <div className="absolute inset-0 z-20 flex cursor-not-allowed select-none items-center justify-center animate-in fade-in duration-300" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.75) 0%, rgba(249,250,251,0.85) 50%, rgba(255,255,255,0.75) 100%)" }}>
+              {/* Dot grid pattern */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)", backgroundSize: "16px 16px" }} />
+
+              <div className="relative flex flex-col items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 ring-4 ring-gray-100/50 dark:bg-gray-800 dark:ring-gray-800/50">
+                  <Lock size={18} className="text-gray-400 animate-pulse" style={{ animationDuration: "3s" }} />
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-[13px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400">
+                    Coming Soon
+                  </span>
+                  <p className="text-[11px] font-medium text-gray-400/80 dark:text-gray-500">
+                    This feature is currently under development
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Section header */}
           <div className="flex items-start gap-3 border-b border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
             {sectionMeta && (
@@ -905,7 +935,8 @@ function SystemPermissionsPanel({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       <div className="sticky bottom-4 flex justify-end">
         <button type="button" onClick={() => handleSave()} disabled={!hasChanges || saving}
