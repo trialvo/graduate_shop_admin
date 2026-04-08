@@ -9,6 +9,18 @@ export type AdminUserPhone = {
   is_verified: boolean | 0 | 1;
 };
 
+export type AdminUserAddress = {
+  id: number;
+  phone_id: number | null;
+  name: string | null;
+  address_type: string;
+  full_address: string;
+  city: string | null;
+  zip_code: string | null;
+  /** true = verified, false = not verified, null = address has no linked phone */
+  phone_verified: boolean | null;
+};
+
 export type AdminUserEntity = {
   id: number;
   email: string;
@@ -21,16 +33,19 @@ export type AdminUserEntity = {
   dob: string | null;
 
   is_email_verified: boolean;
+  /** true = default phone is verified (is_fully_verified in DB) */
   is_fully_verified: boolean;
   has_password: boolean;
 
   total_spent: number;
 
-  default_phone: any;
+  /** ID of the default phone row (null = none set) */
+  default_phone: number | null;
   phones: AdminUserPhone[];
 
-  default_address: any;
-  addresses: any[];
+  /** ID of the default address row */
+  default_address: number | null;
+  addresses: AdminUserAddress[];
 
   created_at: string;
   deleted_at: string | null;

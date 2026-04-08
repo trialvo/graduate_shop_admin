@@ -16,9 +16,14 @@ import {
   Ticket,
   CheckCircle2,
   Plus,
+  ShieldCheck,
+  AlertTriangle,
+  ShieldAlert,
+  ExternalLink,
 } from "lucide-react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 import Button from "@/components/ui/button/Button";
 import AddCustomerModal from "./AddCustomerModal";
@@ -37,9 +42,11 @@ import {
   getAdminUser,
   getAdminUsers,
   type AdminUserEntity,
+  type AdminUserAddress,
 } from "@/api/admin-users.api";
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
+import { usePermissionConfig } from "@/hooks/usePermissions";
 
 type Props = {
   cart: CartItem[];
@@ -98,6 +105,268 @@ const inputClass =
 
 const selectClass =
   "h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10";
+
+// ─── Verification Info & Rules Panel ───────────────────────────────────────────
+// Shows the selected customer's live verification status (Email, Address Phone, Default Phone).
+// Reads admin_manual permission config and highlights failures with actionable
+// guidance linking to /permissions when a required check fails.
+
+type VerificationStatus = "verified" | "unverified" | "no_data";
+
+function VerificationRow({
+  label,
+  status,
+  isRequired,
+  failMessage,
+}: {
+  label: string;
+  status: VerificationStatus;
+  isRequired: boolean;
+  failMessage?: React.ReactNode;
+}) {
+  const iconMap: Record<VerificationStatus, React.ReactNode> = {
+    verified: <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />,
+    unverified: isRequired ? (
+      <AlertTriangle size={14} className="text-rose-500 shrink-0" />
+    ) : (
+      <ShieldAlert size={14} className="text-amber-500 shrink-0" />
+    ),
+    no_data: <ShieldAlert size={14} className="text-gray-400 shrink-0" />,
+  };
+
+  const labelClass: Record<VerificationStatus, string> = {
+    verified: "text-gray-700 dark:text-gray-300",
+    unverified: isRequired
+      ? "text-rose-700 dark:text-rose-300 font-semibold"
+      : "text-amber-700 dark:text-amber-400 font-medium",
+    no_data: "text-gray-500 dark:text-gray-400",
+  };
+
+  const statusText = {
+    verified: "Verified",
+    unverified: "Unverified",
+    no_data: "No data",
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5">{iconMap[status]}</span>
+        <span className={cn("text-xs", labelClass[status])}>{label}</span>
+        
+        <span className="ml-auto flex items-center gap-2 shrink-0">
+          <span
+            className={cn(
+              "text-[10px] rounded-full px-2 py-0.5 font-medium",
+              status === "verified"
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                : status === "unverified"
+                ? isRequired
+                  ? "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+            )}
+          >
+            {statusText[status]}
+          </span>
+          {isRequired && (
+            <span className="text-[10px] rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              required
+            </span>
+          )}
+        </span>
+      </div>
+
+      {status === "unverified" && isRequired && failMessage && (
+        <div className="ml-6 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/5 dark:text-rose-300 leading-relaxed">
+          {failMessage}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminManualVerificationPanel({
+  customer,
+  address,
+}: {
+  customer: AdminUserEntity | null;
+  address: AdminUserAddress | null;
+}) {
+  const { data: permData, isLoading: permLoading } = usePermissionConfig();
+
+  // Extract admin_manual config block
+  const adminManualCfg = useMemo(() => {
+    const raw = permData?.data as Record<string, Record<string, unknown>> | undefined;
+    if (!raw) return null;
+    const section = raw["order_place_permission"];
+    if (!section) return null;
+    return (section["admin_manual"] as Record<string, unknown>) ?? null;
+  }, [permData]);
+
+  const requireEmailVerified = adminManualCfg?.email_verified === true;
+  const phoneMode = (adminManualCfg?.phone_verified_mode as string) ?? "no_phone_verification_needed";
+  const requireAddressPhone = phoneMode === "address_phone_verified" || phoneMode === "both";
+  const requireDefaultPhone = phoneMode === "default_phone_verified" || phoneMode === "both";
+
+  // 1. Email Status
+  let emailStatus: VerificationStatus = "no_data";
+  if (customer) {
+    emailStatus = customer.is_email_verified ? "verified" : "unverified";
+  }
+
+  // 2. Default Phone Status
+  let defaultPhoneStatus: VerificationStatus = "no_data";
+  if (customer) {
+    defaultPhoneStatus = customer.is_fully_verified ? "verified" : "unverified";
+  }
+
+  // 3. Address Phone Status
+  let addressPhoneStatus: VerificationStatus = "no_data";
+  if (customer && address) {
+    if (!address.phone_id) addressPhoneStatus = "unverified";
+    else addressPhoneStatus = address.phone_verified ? "verified" : "unverified";
+  }
+
+  // Determine if there's any blocking requirement failure
+  const emailFails = emailStatus === "unverified" && requireEmailVerified;
+  const addressPhoneFails = addressPhoneStatus === "unverified" && requireAddressPhone;
+  const defaultPhoneFails = defaultPhoneStatus === "unverified" && requireDefaultPhone;
+
+  const anyFail = emailFails || addressPhoneFails || defaultPhoneFails;
+
+  if (permLoading) {
+    return (
+      <div className="rounded-xl border border-gray-200/80 bg-white p-3 dark:border-gray-800 dark:bg-gray-800/40">
+        <p className="text-xs text-gray-400 animate-pulse">Loading placement requirements…</p>
+      </div>
+    );
+  }
+
+  const customerName = customer
+    ? `${customer.first_name ?? ""} ${customer.last_name ?? ""}`.trim() || customer.email || `Customer #${customer.id}`
+    : "the selected customer";
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-4 space-y-3",
+        anyFail
+          ? "border-rose-200 bg-rose-50/40 dark:border-rose-500/20 dark:bg-rose-500/5"
+          : "border-gray-200 bg-gray-50/40 dark:border-gray-700 dark:bg-white/[0.02]"
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        {anyFail ? (
+          <ShieldAlert size={15} className="text-rose-500 shrink-0" />
+        ) : (
+          <ShieldCheck size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
+        )}
+        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+          Customer Verification Info
+        </p>
+      </div>
+
+      {/* Rows */}
+      <div className="space-y-2.5">
+        <VerificationRow
+          label="Email Account"
+          status={emailStatus}
+          isRequired={requireEmailVerified}
+          failMessage={
+            <>
+              <strong>{customerName}</strong>'s email (<em>{customer?.email}</em>) is not
+              verified. Ask the customer to verify their email, or{" "}
+              <Link
+                to="/permissions"
+                className="inline-flex items-center gap-0.5 underline font-semibold hover:opacity-80"
+              >
+                turn off <em>Email Verified</em>
+                <ExternalLink size={10} className="ml-0.5" />
+              </Link>
+              {" "}in Permissions.
+            </>
+          }
+        />
+
+        <VerificationRow
+          label="Default Account Phone"
+          status={defaultPhoneStatus}
+          isRequired={requireDefaultPhone}
+          failMessage={
+            <>
+              <strong>{customerName}</strong> has no verified default phone on their account.
+              Ask the customer to add and verify their account phone, or{" "}
+              <Link
+                to="/permissions"
+                className="inline-flex items-center gap-0.5 underline font-semibold hover:opacity-80"
+              >
+                adjust the <em>Phone Verification Mode</em>
+                <ExternalLink size={10} className="ml-0.5" />
+              </Link>
+              {" "}in Permissions.
+            </>
+          }
+        />
+
+        <VerificationRow
+          label="Selected Address Phone"
+          status={addressPhoneStatus}
+          isRequired={requireAddressPhone}
+          failMessage={
+            !address?.phone_id ? (
+              <>
+                The selected address has <strong>no linked phone number</strong>. Add a phone
+                number to this address, pick a different address, or{" "}
+                <Link
+                  to="/permissions"
+                  className="inline-flex items-center gap-0.5 underline font-semibold hover:opacity-80"
+                >
+                  adjust <em>Phone Verification Mode</em>
+                  <ExternalLink size={10} className="ml-0.5" />
+                </Link>
+                {" "}in Permissions.
+              </>
+            ) : (
+              <>
+                The phone number on the selected address is <strong>not verified</strong>.
+                Ask <strong>{customerName}</strong> to verify their address phone number, or{" "}
+                <Link
+                  to="/permissions"
+                  className="inline-flex items-center gap-0.5 underline font-semibold hover:opacity-80"
+                >
+                  adjust <em>Phone Verification Mode</em>
+                  <ExternalLink size={10} className="ml-0.5" />
+                </Link>
+                {" "}in Permissions.
+              </>
+            )
+          }
+        />
+      </div>
+
+      {/* Blocking summary warning */}
+      {anyFail && (
+        <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2.5 dark:border-rose-500/20 dark:bg-gray-900">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0 text-rose-500" />
+          <p className="text-xs text-rose-700 dark:text-rose-300">
+            This order will be <strong>rejected by the server</strong> if submitted as-is.
+            Resolve the issues above, or{" "}
+            <Link
+              to="/permissions"
+              className="inline-flex items-center gap-0.5 underline font-semibold hover:opacity-80"
+            >
+              adjust Admin Manual Order requirements
+              <ExternalLink size={10} className="ml-0.5" />
+            </Link>
+            {" "}in Permissions.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CustomerRow({
   u,
@@ -453,7 +722,10 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       }
       toast.error(data?.error || data?.message || "Failed to place order");
     },
-    onError: (err: any) => toast.error(err?.message || "Failed to place order"),
+    onError: (err: any) => {
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      toast.error(serverMsg || err?.message || "Failed to place order");
+    },
   });
 
   const placeStrangerMutation = useMutation({
@@ -495,7 +767,10 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       }
       toast.error(data?.error || data?.message || "Failed to place order");
     },
-    onError: (err: any) => toast.error(err?.message || "Failed to place order"),
+    onError: (err: any) => {
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      toast.error(serverMsg || err?.message || "Failed to place order");
+    },
   });
 
   const placing =
@@ -765,6 +1040,19 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                       ))}
                     </select>
                   </div>
+
+                  {/* ── Admin Manual Verification Panel ── */}
+                  {selectedUser && (() => {
+                    const selAddr = addresses.find((a) => Number(a.id) === Number(addressId)) ?? null;
+                    return (
+                      <div className="mt-3">
+                        <AdminManualVerificationPanel
+                          customer={selectedUser}
+                          address={selAddr}
+                        />
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <div className="grid grid-cols-12 gap-3">
