@@ -112,6 +112,9 @@ export type OrderRow = {
   couponDiscount: number;
   dueAmount?: number;
 
+  weightKgTotal: number;     // o.weight_kg_total (paid-delivery items only)
+  weightExtraCharge: number; // o.weight_extra_charge
+
   paymentType: "gateway" | "cod" | "mixed";
   paymentProvider?: string;
 

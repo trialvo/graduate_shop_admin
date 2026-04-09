@@ -69,6 +69,8 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
   const discount = Number(order.discount ?? 0);
   const paid = Number(order.paidAmount ?? 0);
   const shippingCost = Number(order.shippingCost ?? 0);
+  const weightExtraCharge = Number(order.weightExtraCharge ?? 0);
+  const weightKgTotal = Number(order.weightKgTotal ?? 0);
 
   const amountDue = useMemo(() => {
     if (Number.isFinite(Number(order.dueAmount))) {
@@ -465,6 +467,23 @@ export default function OrderInfoModal({ open, onClose, order }: Props) {
                       {shippingCost.toLocaleString()}
                     </td>
                   </tr>
+
+                  {weightExtraCharge > 0 && (
+                    <tr className="border-t border-gray-100 dark:border-gray-900">
+                      <td className="px-5 py-3" colSpan={6} />
+                      <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-200">
+                        +Weight Surcharge
+                        {weightKgTotal > 0 && (
+                          <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">
+                            ({weightKgTotal.toFixed(2)} kg)
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-right text-sm text-orange-500 dark:text-orange-400">
+                        +{order.currencySymbol}{weightExtraCharge.toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
 
                   <tr className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
                     <td className="px-5 py-4" colSpan={6} />

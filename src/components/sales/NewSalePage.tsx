@@ -18,9 +18,12 @@ const NewSalePage: React.FC = () => {
   const addToCart = React.useCallback((item: CartItem) => {
     setCart((prev) => {
       const found = prev.find((x) => x.key === item.key);
-      if (!found) return [...prev, item];
+      if (!found) return item.qty > 0 ? [...prev, item] : prev;
+      const newQty = found.qty + item.qty;
+      // If result is 0 or negative, remove the item from the cart entirely
+      if (newQty <= 0) return prev.filter((x) => x.key !== item.key);
       return prev.map((x) =>
-        x.key === item.key ? { ...x, qty: x.qty + item.qty } : x
+        x.key === item.key ? { ...x, qty: newQty } : x
       );
     });
   }, []);
@@ -46,7 +49,7 @@ const NewSalePage: React.FC = () => {
     <div className={containerClass}>
       {/* Left — Product Selection */}
       <div className="col-span-12 xl:col-span-6 h-full min-h-0">
-        <ProductSelectionPanel onAddToCart={addToCart} />
+        <ProductSelectionPanel cart={cart} onAddToCart={addToCart} />
       </div>
 
       {/* Right — Billing */}

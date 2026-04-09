@@ -2513,7 +2513,9 @@
     "selectCustomerDropdown": "Select customer",
     "searchByNameEmailPhoneShort": "Search by name / email / phone",
     "noCustomersFoundShort": "No customers found",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "noBulkRules": "No active bulk discount rules",
+    "noComboRules": "No active combo deals"
   },
   "ecommerce": {
     "customers": "Customers",

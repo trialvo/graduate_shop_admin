@@ -461,6 +461,8 @@ export default function AllOrdersView() {
         couponDiscount: Number(o.coupon_discount ?? 0),
         skuDiscount: Number(o.sku_discount_total ?? 0),
         dueAmount: Number(o.due_amount ?? 0),
+        weightKgTotal: Number(o.weight_kg_total ?? 0),
+        weightExtraCharge: Number(o.weight_extra_charge ?? 0),
 
         paymentType: o.payment_type,
         paymentProvider: providerGuess,

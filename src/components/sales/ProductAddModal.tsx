@@ -529,6 +529,13 @@ export default function ProductAddModal({
                         const img =
                           getCoverImage(single) ?? images[0]?.path ?? "";
 
+                        // Compute per-unit SKU discount amount
+                        const sellingP = Number(selectedVariation.selling_price ?? 0);
+                        const discountAmt =
+                          selectedVariation.discount_type === 1
+                            ? Math.round((sellingP * Number(selectedVariation.discount ?? 0)) / 100)
+                            : Number(selectedVariation.discount ?? 0);
+
                         const item: CartItem = {
                           key,
                           productId: single.id,
@@ -536,9 +543,20 @@ export default function ProductAddModal({
                           title: single.name,
                           sku: selectedVariation.sku,
                           image: img || "",
+                          // unitPrice = final price already (selling_price - discount)
                           unitPrice,
+                          originalPrice: sellingP,
+                          discount: discountAmt,
+                          // COALESCE: SKU-level free_delivery overrides product-level (mirrors backend SQL)
+                          freeDelivery: selectedVariation.free_delivery != null
+                            ? Boolean(selectedVariation.free_delivery)
+                            : Boolean(single.free_delivery),
                           qty,
                           weight_kg: Number(selectedVariation.weight_kg ?? 0),
+
+                          // display
+                          colorName: selectedVariation.color.name,
+                          variantName: selectedVariation.variant.name,
 
                           // legacy optional fields
                           variant: selectedVariation.color.name,

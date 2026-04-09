@@ -1,5 +1,5 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { LayoutGrid, Layers, Minus, Package, Plus, Search, ShoppingBag, ShoppingCart, Zap } from "lucide-react";
+﻿import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { LayoutGrid, Layers, Package, Search, ShoppingBag, ShoppingCart, Zap } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -53,9 +53,9 @@ type Props = {
 
 const DEFAULT_LIMIT = 9;
 
-// -- Bulk Deals Tab -------------------------------------------------------
+// ── Bulk Deals Tab ────────────────────────────────────────────────────────────
 
-function BulkDealsTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (item: CartItem) => void }) {
+function BulkDealsTab({ cart }: { cart: CartItem[]; onAddToCart: (item: CartItem) => void }) {
   const { t } = useTranslation();
 
   const { data: bulkRules = [], isLoading } = useQuery({
@@ -66,23 +66,6 @@ function BulkDealsTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (i
 
   const activeRules = bulkRules.filter(r => r.status);
 
-  // Group rules by SKU + free_delivery so that tiers for the same product are
-  // separated when they differ in delivery type (e.g. tier-A = Free, tier-B = Paid).
-  // This prevents mixing delivery types within a single card which would be misleading.
-  const ruleGroups = React.useMemo(() => {
-    const groups: Record<string, typeof activeRules> = {};
-    for (const rule of activeRules) {
-      // Composite key: skuId|freeDelivery  (e.g. "1859|true" vs "1859|false")
-      const key = `${rule.product_sku_id}|${!!rule.free_delivery}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(rule);
-    }
-    // Sort tiers within each group by ascending min_quantity
-    return Object.values(groups).map(g =>
-      [...g].sort((a, b) => a.min_quantity - b.min_quantity)
-    );
-  }, [activeRules]);
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -92,7 +75,7 @@ function BulkDealsTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (i
     );
   }
 
-  if (!ruleGroups.length) {
+  if (!activeRules.length) {
     return (
       <div className="flex flex-col items-center justify-center py-14 text-center">
         <Zap className="mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" />
@@ -103,57 +86,29 @@ function BulkDealsTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (i
 
   return (
     <div className="space-y-2.5 p-3">
-      {ruleGroups.map((group) => {
-        const rep = group[0]; // representative rule for product metadata
-        const skuId = rep.product_sku_id;
-        const groupFreeDelivery = !!rep.free_delivery; // consistent across this group
-        const cardKey = `${skuId}|${groupFreeDelivery}`; // unique per card
-        const currentQty = cart.find(c => c.key === cardKey)?.qty ?? 0;
-
-        // Which tier is currently qualified (highest matching)
-        const qualifyingTier = [...group].reverse().find(r => currentQty >= r.min_quantity);
-        // Is any tier qualified?
-        const anyQualifies = !!qualifyingTier;
-
-        // Stock checks (use the shared stock from the representative rule)
-        const stock = rep.stock ?? 0;
-        const inStock = stock > 0;
-        // Highest tier whose min_quantity is met by current stock
-        const highestAvailableTier = [...group].reverse().find(r => stock >= r.min_quantity);
-        const anyTierAvailable = inStock && !!highestAvailableTier;
-        const lowestMinQty = group[0].min_quantity; // smallest tier threshold
-        const stockIssue = !inStock || stock < lowestMinQty;
-
-        // Per-unit SKU discount for the product (from product_skus.discount / discount_type).
-        // This is separate from the bulk deal's own discount_value.
-        const sellingPrice = rep.selling_price ?? 0;
-        const rawSkuDisc = rep.sku_discount ?? 0;
-        const skuDiscAmt = (rep.sku_discount_type === 1)
-          ? (sellingPrice * rawSkuDisc) / 100   // percentage
-          : rawSkuDisc;                           // flat
-        // unitPrice shown to user = selling_price - sku discount (like ProductAddModal)
-        const bulkUnitPrice = Math.max(0, sellingPrice - skuDiscAmt);
+      {activeRules.map((rule) => {
+        const currentQty = cart.find(c => c.productVariationId === rule.product_sku_id)?.qty ?? 0;
+        const qualifies = currentQty >= rule.min_quantity;
+        const progress = rule.min_quantity > 0 ? Math.min(1, currentQty / rule.min_quantity) : 1;
 
         return (
           <div
-            key={cardKey}
+            key={rule.id}
             className={cn(
-              "rounded-xl border transition-all overflow-hidden",
-              anyQualifies
+              "rounded-xl border p-3 transition-all",
+              qualifies
                 ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-500/20 dark:bg-emerald-500/5"
-                : stockIssue
-                  ? "border-red-200 bg-red-50/30 dark:border-red-500/20 dark:bg-red-500/5"
-                  : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/40"
+                : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/40"
             )}
           >
-            {/* Product info + stepper */}
-            <div className="flex items-start gap-3 p-3">
-              {/* Thumbnail */}
+            {/* Top row: image + info */}
+            <div className="flex items-start gap-3">
+              {/* Product thumbnail */}
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-                {rep.product_image ? (
+                {rule.product_image ? (
                   <img
-                    src={toPublicUrl(rep.product_image)}
-                    alt={rep.product_name ?? rep.name}
+                    src={toPublicUrl(rule.product_image)}
+                    alt={rule.product_name ?? rule.name}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -163,169 +118,75 @@ function BulkDealsTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (i
                 )}
               </div>
 
-              {/* Product info */}
+              {/* Rule info */}
               <div className="min-w-0 flex-1">
-                {rep.product_name && (
-                  <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{rep.product_name}</p>
-                )}
-                {(rep.color_name || rep.variant_name) && (
+                <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
+                  {rule.name}
+                </p>
+                {rule.product_name && (
                   <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {[rep.color_name, rep.variant_name].filter(Boolean).join(" / ")}
+                    {rule.product_name}
+                    {(rule.color_name || rule.variant_name) && (
+                      <span className="ml-1 text-gray-400">
+                        · {[rule.color_name, rule.variant_name].filter(Boolean).join(" / ")}
+                      </span>
+                    )}
                   </p>
                 )}
                 <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                  SKU: <span className="font-semibold text-gray-600 dark:text-gray-300">{rep.sku ?? skuId}</span>
+                  SKU: <span className="font-semibold text-gray-600 dark:text-gray-300">{rule.sku ?? rule.product_sku_id}</span>
+                  <span className="mx-1">·</span>
+                  Min qty: <span className="font-semibold text-gray-600 dark:text-gray-300">{rule.min_quantity}</span>
                 </p>
-                {/* Stock issue warning */}
-                {stockIssue && (
-                  <p className="mt-1 text-[10px] font-medium text-red-600 dark:text-red-400">
-                    {!inStock ? "Out of stock" : `Only ${stock} in stock — need ${lowestMinQty} for lowest tier`}
+
+                {/* Badges */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                    {rule.discount_type === 1
+                      ? `${rule.discount_value}% OFF`
+                      : `৳${rule.discount_value} off/unit`}
+                  </span>
+                  {rule.free_delivery && (
+                    <span className="rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-500/10 dark:text-green-300">
+                      🚚 Free Delivery
+                    </span>
+                  )}
+                  {qualifies && (
+                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                      ✓ Qualifying
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Cart counter badge */}
+              {currentQty > 0 && (
+                <div className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1.5 text-center dark:bg-brand-500/10">
+                  <p className="text-[9px] font-medium uppercase tracking-wide text-brand-500 dark:text-brand-400">Cart</p>
+                  <p className="text-sm font-bold leading-tight text-brand-700 dark:text-brand-300">
+                    {currentQty}<span className="text-[10px] font-medium text-brand-400">/{rule.min_quantity}</span>
                   </p>
-                )}
-                {/* Active tier badge */}
-                {anyQualifies && qualifyingTier && (
-                  <span className="mt-1 inline-flex rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-                    Active: {qualifyingTier.discount_type === 1 ? `${qualifyingTier.discount_value}% OFF` : `tk${qualifyingTier.discount_value} off/unit`}
-                    {qualifyingTier.free_delivery && " + Free Delivery"}
-                  </span>
-                )}
-                {/* Stock Issue badge */}
-                {stockIssue && !anyQualifies && (
-                  <span className="mt-1 inline-flex rounded-md bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                    Stock Issue
-                  </span>
-                )}
-              </div>
-
-              {/* Qty stepper */}
-              <div className="shrink-0 flex flex-col items-center gap-1">
-                {stockIssue ? (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700" title="Insufficient stock">
-                    <ShoppingBag className="h-4 w-4 text-gray-400" />
-                  </div>
-                ) : currentQty > 0 ? (
-                  <>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-brand-200 bg-brand-50 dark:border-brand-500/30 dark:bg-brand-500/10">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const existing = cart.find(c => c.productVariationId === skuId && c.key === cardKey);
-                          if (existing) onAddToCart({ ...existing, qty: -lowestMinQty });
-                        }}
-                        disabled={currentQty <= 0}
-                        className="flex h-7 w-7 items-center justify-center rounded-l-lg text-brand-600 hover:bg-brand-100 disabled:opacity-40 dark:text-brand-400"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="min-w-[2rem] text-center text-xs font-bold text-brand-700 dark:text-brand-300">{currentQty}</span>
-                      <button
-                        type="button"
-                        disabled={currentQty + lowestMinQty > stock}
-                        onClick={() => onAddToCart({
-                          key: cardKey,
-                          productId: skuId,
-                          productVariationId: skuId,
-                          title: rep.product_name ?? rep.name,
-                          sku: rep.sku ?? String(skuId),
-                          image: rep.product_image ?? "",
-                          unitPrice: bulkUnitPrice,
-                          originalPrice: sellingPrice,
-                          discount: skuDiscAmt || undefined,
-                          freeDelivery: groupFreeDelivery,
-                          colorName: rep.color_name,
-                          variantName: rep.variant_name,
-                          qty: lowestMinQty,
-                        })}
-                        className="flex h-7 w-7 items-center justify-center rounded-r-lg text-brand-600 hover:bg-brand-100 disabled:opacity-40 dark:text-brand-400"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                    <p className="text-[9px] text-gray-400">{currentQty}/{stock} stock</p>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onAddToCart({
-                      key: cardKey,
-                      productId: skuId,
-                      productVariationId: skuId,
-                      title: rep.product_name ?? rep.name,
-                      sku: rep.sku ?? String(skuId),
-                      image: rep.product_image ?? "",
-                      unitPrice: bulkUnitPrice,
-                      originalPrice: sellingPrice,
-                      discount: skuDiscAmt || undefined,
-                      freeDelivery: groupFreeDelivery,
-                      colorName: rep.color_name,
-                      variantName: rep.variant_name,
-                      qty: lowestMinQty,
-                    })}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors"
-                    title={`Add ${lowestMinQty} to cart`}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Discount tiers — one row per rule */}
-            <div className="border-t border-gray-100 divide-y divide-gray-100 dark:border-gray-700/60 dark:divide-gray-700/40">
-              {group.map((rule) => {
-                const qualifies = currentQty >= rule.min_quantity;
-                const isActive = qualifyingTier?.id === rule.id;
-                const tierHasStock = stock >= rule.min_quantity;
-                const progress = rule.min_quantity > 0 ? Math.min(1, currentQty / rule.min_quantity) : 1;
-                const tierUnavailable = !inStock || !tierHasStock;
-
-                return (
+            {/* Progress bar */}
+            {rule.min_quantity > 0 && (
+              <div className="mt-2.5">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                   <div
-                    key={rule.id}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 text-xs",
-                      isActive ? "bg-emerald-50/60 dark:bg-emerald-500/5" : "",
-                      tierUnavailable ? "opacity-60" : ""
+                      "h-full rounded-full transition-all duration-500",
+                      qualifies ? "bg-emerald-500" : "bg-brand-400"
                     )}
-                  >
-                    <span className={cn("shrink-0 font-bold text-sm",
-                      qualifies ? "text-emerald-500" : tierUnavailable ? "text-red-400" : "text-gray-300 dark:text-gray-600")}>
-                      {qualifies ? "✓" : tierUnavailable ? "✗" : "○"}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400 shrink-0">
-                      Buy <span className="font-semibold text-gray-700 dark:text-gray-300">{rule.min_quantity}</span>
-                    </span>
-                    <span className={cn(
-                      "rounded-md px-1.5 py-0.5 text-[10px] font-bold shrink-0",
-                      tierUnavailable
-                        ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
-                        : "bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
-                    )}>
-                      {rule.discount_type === 1 ? `${rule.discount_value}% OFF` : `tk${rule.discount_value} off/unit`}
-                    </span>
-                    {rule.free_delivery && (
-                      <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-500/10 dark:text-green-300 shrink-0">
-                        Free Del.
-                      </span>
-                    )}
-                    {tierUnavailable && (
-                      <span className="text-[10px] text-red-500 shrink-0">Insufficient Stock</span>
-                    )}
-                    {!tierUnavailable && (
-                      <div className="flex-1 min-w-0">
-                        <div className="h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                          <div
-                            className={cn("h-full rounded-full transition-all duration-500", qualifies ? "bg-emerald-500" : "bg-brand-400")}
-                            style={{ width: `${Math.round(progress * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    <span className="shrink-0 text-[10px] text-gray-400">{currentQty}/{rule.min_quantity}</span>
-                  </div>
-                );
-              })}
-            </div>
+                    style={{ width: `${Math.round(progress * 100)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-right text-[10px] text-gray-400">
+                  {currentQty} / {rule.min_quantity} needed
+                </p>
+              </div>
+            )}
           </div>
         );
       })}
@@ -333,10 +194,9 @@ function BulkDealsTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (i
   );
 }
 
-
 // ── Combos Tab ────────────────────────────────────────────────────────────────
 
-function CombosTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (item: CartItem) => void }) {
+function CombosTab({ cart }: { cart: CartItem[]; onAddToCart: (item: CartItem) => void }) {
   const { t } = useTranslation();
 
   const { data: comboRules = [], isLoading } = useQuery({
@@ -384,63 +244,14 @@ function CombosTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (item
         const totalNeeded = topTier?.items.reduce((s, i) => s + i.required_qty, 0) ?? 0;
         const totalHave = topTier?.items.reduce((s, i) => s + Math.min(qtyMap[i.product_sku_id] ?? 0, i.required_qty), 0) ?? 0;
 
-        // How many complete sets are currently in the cart
-        const completeSets =
-          topTier?.items.length
-            ? Math.min(...topTier.items.map(i => Math.floor((qtyMap[i.product_sku_id] ?? 0) / i.required_qty)))
-            : 0;
-
-        const addOneRound = () => {
-          if (!topTier) return;
-          topTier.items.forEach(item => {
-            const itemSellingPrice = item.selling_price ?? 0;
-            const itemRawDisc = (item as any).sku_discount ?? 0;
-            const itemDiscAmt = ((item as any).sku_discount_type === 1)
-              ? (itemSellingPrice * itemRawDisc) / 100
-              : itemRawDisc;
-            const itemUnitPrice = Math.max(0, itemSellingPrice - itemDiscAmt);
-
-            onAddToCart({
-              key: `sku-${item.product_sku_id}`,
-              productId: item.product_sku_id,
-              productVariationId: item.product_sku_id,
-              title: item.product_name ?? `SKU #${item.product_sku_id}`,
-              sku: item.sku ?? String(item.product_sku_id),
-              image: item.product_image ?? "",
-              unitPrice: itemUnitPrice,
-              originalPrice: itemSellingPrice,
-              discount: itemDiscAmt || undefined,
-              freeDelivery: rule.free_delivery,
-              colorName: item.color_name,
-              variantName: item.variant_name,
-              qty: item.required_qty,
-            });
-          });
-        };
-
-        const removeOneRound = () => {
-          if (!topTier || completeSets <= 0) return;
-          topTier.items.forEach(item => {
-            const existing = cart.find(c => c.productVariationId === item.product_sku_id);
-            if (existing) onAddToCart({ ...existing, qty: -item.required_qty });
-          });
-        };
-
-        // Stock checks for combo
-        const insufficientItems = topTier?.items.filter(i => (i.stock ?? Infinity) < i.required_qty) ?? [];
-        const comboAvailable = insufficientItems.length === 0;
-
-
         return (
           <div
             key={rule.id}
             className={cn(
               "rounded-xl border transition-all",
-              satisfied && comboAvailable
+              satisfied
                 ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-500/20 dark:bg-emerald-500/5"
-                : !comboAvailable
-                  ? "border-red-200 bg-red-50/30 dark:border-red-500/20 dark:bg-red-500/5"
-                  : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/40"
+                : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/40"
             )}
           >
             {/* Card header */}
@@ -541,7 +352,7 @@ function CombosTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (item
                   <span>{totalHave} / {totalNeeded} items in cart</span>
                   {topTier && topTier.discount_value > 0 && (
                     <span className="font-semibold text-brand-600 dark:text-brand-400">
-                      Save {topTier.discount_type === 1 ? `%` : formatBdt(topTier.discount_value)}
+                      Save {topTier.discount_type === 1 ? `${topTier.discount_value}%` : `৳${topTier.discount_value}`}
                     </span>
                   )}
                 </div>
@@ -549,56 +360,17 @@ function CombosTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (item
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-500",
-                      satisfied ? "bg-emerald-500" : "bg-brand-400"
-                    )}
-                    style={{ width: `${totalNeeded > 0 ? Math.round((totalHave / totalNeeded) * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-            )}
-            {/* Combo rounds stepper */}
-            <div className="border-t border-gray-100 px-3 py-2.5 dark:border-gray-700/60">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  {!comboAvailable && (
-                    <p className="text-[10px] font-medium text-red-600 dark:text-red-400">
-                      Unavailable — insufficient stock on {insufficientItems.length} item{insufficientItems.length !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {completeSets > 0 && comboAvailable ? (
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      {completeSets} set{completeSets !== 1 ? "s" : ""} in cart
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400">Add to cart</p>
-                  )}
-                  {topTier && topTier.discount_value > 0 && completeSets > 0 && (
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                      Saving {topTier.discount_type === 1 ? `${topTier.discount_value}%` : formatBdt(topTier.discount_value)} per set
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-                  <button
-                    type="button"
-                    onClick={removeOneRound}
-                    disabled={completeSets <= 0}
-                    className="flex h-8 w-8 items-center justify-center rounded-l-lg text-gray-600 hover:bg-gray-200 disabled:opacity-30 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="min-w-[2rem] text-center text-sm font-bold text-gray-900 dark:text-white">
-                    {completeSets}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={addOneRound}
-                    disabled={!comboAvailable}
-                    className="flex h-8 w-8 items-center justify-center rounded-r-lg bg-brand-500 text-white hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-600 transition-colors"
-                    title={!comboAvailable ? "Insufficient stock for this combo" : undefined}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
+                      satisfied ? "bg-emerald-500" : "bg-brand-4
+// ── Main ProductSelectionPanel ────────────────────────────────────────────────
+�{item.required_qty}</span>
+                            {has > 0 && (
+                              <span className="text-gray-400">({has} in cart)</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -609,7 +381,7 @@ function CombosTab({ cart, onAddToCart }: { cart: CartItem[]; onAddToCart: (item
   );
 }
 
-// -- Main ProductSelectionPanel ------------------------------------------
+// ── Main ProductSelectionPanel ────────────────────────────────────────────────
 
 const ProductSelectionPanel: React.FC<Props> = ({ cart, onAddToCart }) => {
   const { t } = useTranslation();

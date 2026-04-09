@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   ShieldAlert,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -47,6 +48,12 @@ import {
 import { imageFallbackSvgDataUri } from "@/utils/imageFallback";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import { usePermissionConfig } from "@/hooks/usePermissions";
+import { adminValidateCoupon, fetchSkuPrices } from "@/api/cart-discounts.api";
+import { useAdminCartDiscounts } from "@/hooks/useAdminCartDiscounts";
+import {
+  calculateAdminCartTotals,
+  type AdminCartItem,
+} from "@/lib/discounts/calculateAdminCartTotals";
 
 type Props = {
   cart: CartItem[];
@@ -628,31 +635,140 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
   // ---------- NOTE / COUPON ----------
   const [note, setNote] = useState("");
-  const [couponCode, setCouponCode] = useState("");
+  const [couponInputVal, setCouponInputVal] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponValidating, setCouponValidating] = useState(false);
+  const couponCode = appliedCoupon?.code ?? "";
+
+  // ---------- DISCOUNT RULES ----------
+  const { bulkRules, comboRules, cartDiscountConfig } = useAdminCartDiscounts();
+
+  // ---------- SKU DISCOUNT MAP (via /user/cart/sync) ----------
+  // The admin dev panel hits the LIVE API (shop-api.shoplinkbd.com). Instead of
+  // relying on sku_discount fields in bulk/combo rules (needs backend deploy), we
+  // call /user/cart/sync which ALREADY computes discount = selling_price - final_price
+  // for every SKU. This is exactly the same per-unit discount the shop uses.
+  const cartSkuIds = useMemo(() => {
+    const ids = cart
+      .map((i) => i.productVariationId)
+      .filter((v): v is number => v != null);
+    return [...new Set(ids)];
+  }, [cart]);
+
+  const { data: syncedPrices = [] } = useQuery({
+    queryKey: ["admin-cart-sku-sync", cartSkuIds],
+    queryFn: () => fetchSkuPrices(cartSkuIds),
+    enabled: cartSkuIds.length > 0,
+    staleTime: 30_000,
+  });
+
+  const skuDiscMap = useMemo<Record<number, number>>(() => {
+    const map: Record<number, number> = {};
+    for (const s of syncedPrices) {
+      if (s.id != null && s.discount > 0) {
+        map[s.id] = s.discount;
+      }
+    }
+    return map;
+  }, [syncedPrices]);
 
   // ---------- TOTALS ----------
-  const subtotal = useMemo(
-    () => cart.reduce((sum, i) => sum + i.unitPrice * i.qty, 0),
-    [cart]
-  );
-  const deliveryFee = useMemo(
-    () => Number(deliveryCharge?.customer_charge ?? 0),
-    [deliveryCharge]
+  const adminCartItems = useMemo<AdminCartItem[]>(
+    () =>
+      cart.map((i) => {
+        const vid = i.productVariationId;
+        let { discount, originalPrice, unitPrice } = i;
+        // Patch: if this cart item has no discount set, look it up from the rule data map
+        if ((discount == null || discount === 0) && vid != null) {
+          const ruleDisc = skuDiscMap[vid];
+          if (ruleDisc != null && ruleDisc > 0) {
+            const sellingP = originalPrice ?? unitPrice;
+            discount = ruleDisc;
+            originalPrice = sellingP;
+            unitPrice = Math.max(0, sellingP - ruleDisc);
+          }
+        }
+        return {
+          key: i.key,
+          productVariationId: vid,
+          unitPrice,
+          originalPrice,
+          discount,
+          freeDelivery: i.freeDelivery,
+          qty: i.qty,
+          weight_kg: i.weight_kg,
+        };
+      }),
+    [cart, skuDiscMap]
   );
 
-  // Weight surcharge
-  const weightSurcharge = useMemo(() => {
-    const weightFreeKg = Number(deliveryCharge?.default_weight_kg ?? 0);
-    const extraPerKg = Number(deliveryCharge?.extra_charge_per_kg ?? 0);
-    if (extraPerKg <= 0) return 0;
-    const totalWeightKg = cart.reduce((sum, i) => sum + (Number(i.weight_kg ?? 0) * i.qty), 0);
-    const excessKg = weightFreeKg > 0 ? Math.max(0, totalWeightKg - weightFreeKg) : totalWeightKg;
-    return Math.round(excessKg * extraPerKg);
-  }, [cart, deliveryCharge]);
+  const totals = useMemo(
+    () =>
+      calculateAdminCartTotals({
+        cart: adminCartItems,
+        deliveryCharge,
+        bulkRules,
+        comboRules,
+        cartDiscountConfig,
+        couponDiscount: appliedCoupon?.discount ?? 0,
+      }),
+    [adminCartItems, deliveryCharge, bulkRules, comboRules, cartDiscountConfig, appliedCoupon]
+  );
 
-  const discount = 0;
-  const tax = 0;
-  const total = subtotal - discount + deliveryFee + weightSurcharge + tax;
+  const { subtotal, total, hasMixedDelivery } = totals;
+
+  // ---------- COUPON VALIDATE ----------
+  const handleApplyCoupon = async () => {
+    const code = couponInputVal.trim();
+    if (!code || cart.length === 0) return;
+
+    // Guard: in existing-customer mode the coupon API requires a customer_id
+    // (coupons with per-user limits will fail with a confusing "Please log in" error
+    // if no customer_id is supplied).
+    if (mode === "existing" && !customerId) {
+      setCouponError("Please select a customer first before applying a coupon.");
+      return;
+    }
+
+    const orderItems = cart
+      .filter((i) => i.productVariationId)
+      .map((i) => ({ product_variation_id: i.productVariationId!, quantity: i.qty }));
+    if (!orderItems.length) return;
+    setCouponError(null);
+    setCouponValidating(true);
+    try {
+      const res = await adminValidateCoupon({
+        coupon: code,
+        order_items: orderItems,
+        ...(customerId ? { customer_id: customerId } : {}),
+      });
+      const disc = Number(
+        res?.data?.totals?.total_coupon_discount ??
+        res?.totals?.total_coupon_discount ??
+        0
+      );
+      setAppliedCoupon({ code, discount: disc });
+      setCouponInputVal("");
+      toast.success(`Coupon applied! -৳${disc}`);
+    } catch (err: any) {
+      const raw: string =
+        err?.response?.data?.error || err?.message || "Invalid coupon";
+      // Rephrase the cryptic backend message for admin context
+      const msg = raw.toLowerCase().includes("log in")
+        ? "This coupon has a per-user limit. Please select a customer first."
+        : raw;
+      setCouponError(msg);
+    } finally {
+      setCouponValidating(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    setCouponInputVal("");
+  };
 
   // ---------- PLACE ORDER ----------
   const canPlaceExisting = useMemo(() => {
@@ -707,7 +823,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         trx_id: payBy === "bkash" ? trx.trim() : undefined,
         delivery_charge_id: Number(deliveryChargeId),
         note: note.trim() || undefined,
-        coupon_code: couponCode.trim() || undefined,
+        coupon_code: appliedCoupon?.code || undefined,
         order_items,
       } as any);
     },
@@ -716,7 +832,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         toast.success(data?.message || "Order created");
         window.dispatchEvent(new CustomEvent("new-sale-clear-cart"));
         setNote("");
-        setCouponCode("");
+        setAppliedCoupon(null);
+        setCouponInputVal("");
         setTrx("");
         return;
       }
@@ -755,7 +872,8 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         toast.success(data?.message || "Order created");
         window.dispatchEvent(new CustomEvent("new-sale-clear-cart"));
         setNote("");
-        setCouponCode("");
+        setAppliedCoupon(null);
+        setCouponInputVal("");
         setTrx("");
         setStrangerName("");
         setStrangerPhone("");
@@ -1142,48 +1260,76 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                 </select>
               </div>
 
+              {/* Mixed Delivery Alert */}
+              {hasMixedDelivery && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/5">
+                  <span className="mt-0.5 shrink-0">🚚</span>
+                  <p className="text-xs text-amber-800 dark:text-amber-300">
+                    Your cart has <strong>mixed delivery</strong>: some items ship free, others don't. A delivery charge applies, but free-delivery items are <strong>excluded from weight surcharge</strong>.
+                  </p>
+                </div>
+              )}
+
               {/* Totals */}
               <div className="rounded-xl border border-gray-200/80 bg-gradient-to-b from-gray-50 to-white p-4 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
                 <div className="space-y-2.5 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500 dark:text-gray-400">{t("sales.subtotal")}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {formatCurrencyBDT(subtotal)}
-                    </span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{formatCurrencyBDT(totals.subtotal)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">{t("sales.delivery")}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {formatCurrencyBDT(deliveryFee)}
-                    </span>
+                    <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400"><Truck size={13} /> {t("sales.delivery")}</span>
+                    {totals.delivery === 0 ? (
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">🚚 FREE</span>
+                    ) : (
+                      <span className="font-semibold text-gray-900 dark:text-white">{formatCurrencyBDT(totals.delivery)}</span>
+                    )}
                   </div>
-                  {weightSurcharge > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500 dark:text-gray-400">⚖ Weight Surcharge</span>
-                      <span className="font-semibold text-orange-500">
-                        +{formatCurrencyBDT(weightSurcharge)}
-                      </span>
+                  {totals.weightSurcharge > 0 && (
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">⚖ Weight Surcharge ({totals.weightKgTotal.toFixed(2)} kg)</span>
+                        <span className="font-semibold text-orange-500">+{formatCurrencyBDT(totals.weightSurcharge)}</span>
+                      </div>
+                      {hasMixedDelivery && (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400">⚠️ Surcharge applies to paid-delivery items only</p>
+                      )}
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">{t("sales.discount")}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {formatCurrencyBDT(0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">{t("sales.tax")}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {formatCurrencyBDT(0)}
-                    </span>
-                  </div>
-
+                  {totals.bulkDiscount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">⚡ Bulk Discount</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatCurrencyBDT(totals.bulkDiscount)}</span>
+                    </div>
+                  )}
+                  {totals.comboDiscount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">🎁 Combo Discount</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatCurrencyBDT(totals.comboDiscount)}</span>
+                    </div>
+                  )}
+                  {totals.cartWideDiscount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">🏷️ Cart Discount</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatCurrencyBDT(totals.cartWideDiscount)}</span>
+                    </div>
+                  )}
+                  {totals.skuDiscount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">% Item Discount</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatCurrencyBDT(totals.skuDiscount)}</span>
+                    </div>
+                  )}
+                  {appliedCoupon && appliedCoupon.discount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">🎟️ Coupon Discount</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatCurrencyBDT(appliedCoupon.discount)}</span>
+                    </div>
+                  )}
                   <div className="border-t border-gray-200 pt-3 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">{t("sales.total")}</span>
-                      <span className="text-lg font-extrabold text-brand-600 dark:text-brand-400">
-                        {formatCurrencyBDT(total)}
-                      </span>
+                      <span className="text-lg font-extrabold text-brand-600 dark:text-brand-400">{formatCurrencyBDT(totals.total)}</span>
                     </div>
                   </div>
                 </div>
@@ -1192,12 +1338,39 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               {/* Coupon */}
               <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
                 <SectionLabel icon={<Ticket size={14} />}>{t("sales.coupon")}</SectionLabel>
-                <input
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder={t("sales.optionalCouponCode")}
-                  className={cn(inputClass, "mt-2")}
-                />
+                {appliedCoupon ? (
+                  <div className="mt-2 flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Applied:</span>
+                      <span className="text-xs font-bold text-emerald-800 dark:text-emerald-200">{appliedCoupon.code}</span>
+                    </div>
+                    <button type="button" onClick={handleRemoveCoupon} className="text-gray-400 hover:text-red-500 transition-colors">
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      value={couponInputVal}
+                      onChange={(e) => { setCouponInputVal(e.target.value); setCouponError(null); }}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                      placeholder={t("sales.optionalCouponCode")}
+                      className={cn(inputClass, "flex-1")}
+                      disabled={couponValidating}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={couponValidating || !couponInputVal.trim()}
+                      className="shrink-0 rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+                    >
+                      {couponValidating ? "..." : "Apply"}
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="mt-1.5 text-[11px] text-red-500">{couponError}</p>
+                )}
               </div>
 
               {/* Note */}

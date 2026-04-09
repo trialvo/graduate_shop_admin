@@ -70,15 +70,20 @@ export type CartItem = {
   title: string;
   sku: string;
   image: string;
-  unitPrice: number;
+  unitPrice: number;      // final price after per-unit discount (used for display)
+  originalPrice?: number; // selling_price before discount (for discount calc base)
+  discount?: number;      // per-unit SKU discount amount
+  freeDelivery?: boolean; // true when the product ships free
   qty: number;
   weight_kg?: number; // variation weight in kg
+
+  // display fields
+  colorName?: string;
+  variantName?: string;
 
   // legacy fields (optional)
   variant?: string;
   size?: string;
-  colorName?: string;
-  variantName?: string;
 };
 
 export type CustomerAddress = {

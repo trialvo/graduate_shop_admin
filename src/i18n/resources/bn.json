@@ -2504,7 +2504,9 @@
     "selectCustomerDropdown": "কাস্টমার নির্বাচন",
     "searchByNameEmailPhoneShort": "নাম / ইমেইল / ফোনে খুঁজুন",
     "noCustomersFoundShort": "কোনো কাস্টমার পাওয়া যায়নি",
-    "loadMore": "আরও লোড করুন"
+    "loadMore": "আরও লোড করুন",
+    "noBulkRules": "কোনো সক্রিয় বাল্ক ছাড়ের নিয়ম নেই",
+    "noComboRules": "কোনো সক্রিয় কম্বো ডিল নেই"
   },
   "ecommerce": {
     "customers": "কাস্টমার",
