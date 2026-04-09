@@ -27,6 +27,7 @@ type CityGroup = {
 
 export default function AdminZonePicker({ value, onChange, placeholder = "Select delivery zone…", disabled = false }: Props) {
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCity, setActiveCity] = useState<string | null>(value?.city_name ?? null);
   const ref = useRef<HTMLDivElement>(null);
@@ -76,6 +77,16 @@ export default function AdminZonePicker({ value, onChange, placeholder = "Select
     if (value?.city_name) setActiveCity(value.city_name);
   }, [value?.city_name]);
 
+  // Flip dropdown upward if there is not enough viewport space below.
+  useEffect(() => {
+    if (!open || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const estimatedDropdownHeight = 320;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    setOpenUpward(spaceBelow < estimatedDropdownHeight && spaceAbove > spaceBelow);
+  }, [open, search]);
+
   const displayLabel = value
     ? `${value.city_name} — ${value.area_name}`
     : null;
@@ -117,7 +128,12 @@ export default function AdminZonePicker({ value, onChange, placeholder = "Select
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
+        <div
+          className={[
+            "absolute left-0 z-50 w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950",
+            openUpward ? "bottom-full mb-1" : "top-full mt-1",
+          ].join(" ")}
+        >
           {/* Search */}
           <div className="border-b border-gray-100 p-2 dark:border-gray-800">
             <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1.5 dark:bg-gray-900">
@@ -192,3 +208,5 @@ export default function AdminZonePicker({ value, onChange, placeholder = "Select
     </div>
   );
 }
+
+
