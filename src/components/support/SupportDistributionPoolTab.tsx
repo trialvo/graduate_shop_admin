@@ -213,21 +213,21 @@ export default function SupportDistributionPoolTab({
           </div>
 
           {/* Redistribute button */}
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="mt-4 flex items-center gap-3">
             <button
               type="button"
               disabled={redistributePending}
               onClick={onRedistribute}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-brand-600 hover:to-brand-700 disabled:opacity-60 transition-all sm:w-auto"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-brand-600 hover:to-brand-700 disabled:opacity-60 transition-all"
             >
               {redistributePending
                 ? <Loader2 size={15} className="animate-spin" />
                 : <Shuffle size={15} />
               }
-              <span className="truncate">Redistribute Unassigned {isReport ? "Reports" : "Messages"}</span>
+              Redistribute Unassigned {isReport ? "Reports" : "Messages"}
             </button>
             <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Info size={12} className="shrink-0" /> Bulk assigns all unassigned active {isReport ? "reports" : "messages"} using current pool
+              <Info size={12} /> Bulk assigns all unassigned active {isReport ? "reports" : "messages"} using current pool
             </span>
           </div>
         </div>
