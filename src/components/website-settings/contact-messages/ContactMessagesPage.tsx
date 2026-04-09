@@ -242,11 +242,11 @@ export default function ContactMessagesPage() {
                     type="button"
                     onClick={() => applyTab(tab.key)}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all",
+                      "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all duration-200",
                       tab.color,
                       active
-                        ? tab.activeClass + " border"
-                        : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/60 hover:border-gray-300"
+                        ? tab.activeClass + " border shadow-sm"
+                        : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/60 hover:border-gray-300 hover:shadow-sm"
                     )}
                   >
                     {tab.icon}
@@ -297,7 +297,7 @@ export default function ContactMessagesPage() {
                 value={filters.search}
                 onChange={e => applySearch(e.target.value)}
                 autoFocus
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm shadow-sm transition-shadow duration-200 focus:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
               />
             </div>
           )}
@@ -306,7 +306,7 @@ export default function ContactMessagesPage() {
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
             {/* Left: inbox list */}
             <div className="flex flex-col lg:col-span-5">
-              <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                 <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
                   <Inbox size={16} className="text-brand-500" />
                   <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -348,7 +348,7 @@ export default function ContactMessagesPage() {
 
             {/* Right: detail */}
             <div className="lg:col-span-7">
-              <div className="min-h-[520px] overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <div className="min-h-[520px] overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                 {selected ? (
                   <ContactMessageDetailsPanel
                     data={selected}

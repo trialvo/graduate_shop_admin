@@ -3,43 +3,47 @@
 // Stat pills: Total | Unread | Unresolved | Open | In-Progress | Resolved
 // Two tabs: Inbox (split-pane) | Distribution Pool
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import toast from "react-hot-toast";
+import type {
+  GetReportsParams,
+  Report,
+  ReportCategory,
+  ReportPriority,
+  ReportStatus,
+} from "@/api/reports.api";
+import Select from "@/components/form/Select";
+import PageMeta from "@/components/common/PageMeta";
+import SupportAssignTab from "@/components/support/SupportAssignTab";
+import SupportDistributionPoolTab from "@/components/support/SupportDistributionPoolTab";
+import { Pagination } from "@/components/ui";
+import { useAuth } from "@/context/AuthProvider";
+import { useAdmins } from "@/hooks/useAdmins";
+import {
+  useAdminAssignReport,
+  useAdminDeleteReport,
+  useAdminReplyReport,
+  useAdminReport,
+  useAdminReportCounts,
+  useAdminReports,
+  useAdminUpdateReportStatus,
+  // V2-038
+  useManualAssignReport,
+  useRedistributeReports,
+  useRemoveReportAgent,
+  useReportAssignmentLogs,
+  useReportDistributionSettings,
+  useReportEligibleAdmins,
+  useUpdateReportDistributionSettings,
+  useUpsertReportAgent,
+} from "@/hooks/useReports";
+import { cn } from "@/lib/utils";
 import {
   AlertTriangle, Archive, CheckCircle2, Clock, FileText,
   Filter, Inbox, Loader2, Mail, MessageSquare, RefreshCw,
   Search, SlidersHorizontal, Trash2, UserCheck, X, XCircle, Zap,
 } from "lucide-react";
-import PageMeta from "@/components/common/PageMeta";
-import { toPublicUrl } from "@/utils/toPublicUrl";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/AuthProvider";
-import { Pagination } from "@/components/ui";
-import {
-  useAdminReports,
-  useAdminReportCounts,
-  useAdminReport,
-  useAdminReplyReport,
-  useAdminAssignReport,
-  useAdminUpdateReportStatus,
-  useAdminDeleteReport,
-  useReportDistributionSettings,
-  useReportEligibleAdmins,
-  useUpdateReportDistributionSettings,
-  useUpsertReportAgent,
-  useRemoveReportAgent,
-  useRedistributeReports,
-  // V2-038
-  useManualAssignReport,
-  useReportAssignmentLogs,
-} from "@/hooks/useReports";
-import { useAdmins } from "@/hooks/useAdmins";
-import SupportDistributionPoolTab from "@/components/support/SupportDistributionPoolTab";
-import SupportAssignTab from "@/components/support/SupportAssignTab";
-import type {
-  Report, ReportStatus, ReportPriority, ReportCategory, GetReportsParams,
-} from "@/api/reports.api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useSearchParams } from "react-router-dom";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────── //
 
@@ -62,16 +66,16 @@ function fmtDate(iso: string) {
 // ─── Status / Priority config ─────────────────────────────────────────────── //
 
 const STATUS_CONFIG: Record<ReportStatus, { label: string; cls: string; icon: React.ReactNode }> = {
-  open:        { label: "Open",        cls: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",   icon: <Inbox size={11} /> },
+  open: { label: "Open", cls: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400", icon: <Inbox size={11} /> },
   in_progress: { label: "In Progress", cls: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", icon: <Clock size={11} /> },
-  resolved:    { label: "Resolved",    cls: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400", icon: <CheckCircle2 size={11} /> },
-  closed:      { label: "Closed",      cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",       icon: <XCircle size={11} /> },
+  resolved: { label: "Resolved", cls: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400", icon: <CheckCircle2 size={11} /> },
+  closed: { label: "Closed", cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400", icon: <XCircle size={11} /> },
 };
 
 const PRIORITY_CONFIG: Record<ReportPriority, { label: string; cls: string }> = {
-  low:    { label: "Low",    cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" },
+  low: { label: "Low", cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" },
   normal: { label: "Normal", cls: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" },
-  high:   { label: "High",   cls: "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400" },
+  high: { label: "High", cls: "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400" },
   urgent: { label: "Urgent", cls: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" },
 };
 
@@ -94,30 +98,30 @@ function PriorityBadge({ priority }: { priority: ReportPriority }) {
 type TabKey = "all" | "unread" | "unresolved" | "open" | "in_progress" | "resolved";
 
 const STAT_COLORS: Record<TabKey, string> = {
-  all:         "text-gray-600 dark:text-gray-400",
-  unread:      "text-violet-600 dark:text-violet-400",
-  unresolved:  "text-orange-600 dark:text-orange-400",
-  open:        "text-blue-600 dark:text-blue-400",
+  all: "text-gray-600 dark:text-gray-400",
+  unread: "text-violet-600 dark:text-violet-400",
+  unresolved: "text-orange-600 dark:text-orange-400",
+  open: "text-blue-600 dark:text-blue-400",
   in_progress: "text-amber-600 dark:text-amber-400",
-  resolved:    "text-green-600 dark:text-green-400",
+  resolved: "text-green-600 dark:text-green-400",
 };
 
 const STAT_ACTIVE_BG: Record<TabKey, string> = {
-  all:         "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600",
-  unread:      "bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30",
-  unresolved:  "bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/30",
-  open:        "bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30",
+  all: "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600",
+  unread: "bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30",
+  unresolved: "bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/30",
+  open: "bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30",
   in_progress: "bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30",
-  resolved:    "bg-green-50 border-green-200 dark:bg-green-500/10 dark:border-green-500/30",
+  resolved: "bg-green-50 border-green-200 dark:bg-green-500/10 dark:border-green-500/30",
 };
 
 const STAT_ICONS: Record<TabKey, React.ReactNode> = {
-  all:         <FileText size={13} />,
-  unread:      <Mail size={13} />,
-  unresolved:  <AlertTriangle size={13} />,
-  open:        <Inbox size={13} />,
+  all: <FileText size={13} />,
+  unread: <Mail size={13} />,
+  unresolved: <AlertTriangle size={13} />,
+  open: <Inbox size={13} />,
   in_progress: <Clock size={13} />,
-  resolved:    <CheckCircle2 size={13} />,
+  resolved: <CheckCircle2 size={13} />,
 };
 
 // ─── Filters Bar ──────────────────────────────────────────────────────────── //
@@ -162,7 +166,7 @@ function FiltersBar({ filters, onChange, onRefresh, isRefetching }: {
       </div>
 
       {showAdv && (
-        <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
           <div className="flex items-center gap-2 pb-3">
             <Filter size={14} className="text-gray-400" />
             <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Advanced Filters</p>
@@ -174,14 +178,13 @@ function FiltersBar({ filters, onChange, onRefresh, isRefetching }: {
               { key: "assigned" as const, opts: [["all", "All Assignments"], ["mine", "Assigned to Me"], ["unassigned", "Unassigned"]] },
               { key: "is_replied" as const, opts: [["all", "Any Reply Status"], ["false", "Unreplied"], ["true", "Replied"]] },
             ] as const).map(({ key, opts }) => (
-              <select
+              <Select
                 key={key}
+                options={opts.map(([v, l]) => ({ value: v, label: l }))}
                 value={(filters as Record<string, string | undefined>)[key] ?? "all"}
-                onChange={e => onChange({ [key]: e.target.value as never })}
-                className="h-9 w-full rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
-              >
-                {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
+                onChange={v => onChange({ [key]: v as never })}
+                searchable={false}
+              />
             ))}
           </div>
         </div>
@@ -251,17 +254,17 @@ function DetailPanel({
 }: { reportId: number; isSuperAdmin: boolean }) {
   const { data, isLoading } = useAdminReport(reportId);
   const report = data?.data;
-  const reply  = useAdminReplyReport();
+  const reply = useAdminReplyReport();
   const assign = useAdminAssignReport();
   const status = useAdminUpdateReportStatus();
-  const del    = useAdminDeleteReport();
+  const del = useAdminDeleteReport();
   const { data: adminsData } = useAdmins({ limit: 100 });
   const admins = adminsData?.data ?? [];
 
-  const [replyText, setReplyText]     = useState("");
+  const [replyText, setReplyText] = useState("");
   const [replyChannels, setReplyChannels] = useState<Set<"email" | "sms">>(new Set(["email"]));
-  const [showReply, setShowReply]     = useState(false);
-  const [assignId, setAssignId]       = useState<number | "">("");
+  const [showReply, setShowReply] = useState(false);
+  const [assignId, setAssignId] = useState<number | "">("");
 
   const toggleChannel = (ch: "email" | "sms") => {
     setReplyChannels(prev => {
@@ -303,7 +306,7 @@ function DetailPanel({
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       {/* Header */}
-      <div className="border-b border-gray-100 dark:border-gray-800 px-5 py-4 bg-gradient-to-r from-gray-50 to-white dark:from-white/[0.03] dark:to-transparent">
+      <div className="border-b border-gray-100 dark:border-gray-800 px-5 py-4 bg-gradient-to-r from-gray-50 to-white dark:from-white/[0.03] dark:to-transparent shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-gray-900 dark:text-white leading-snug">{report.subject}</h2>
@@ -322,12 +325,12 @@ function DetailPanel({
         {/* Reporter Info */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Name",  value: report.reporter_name  },
+            { label: "Name", value: report.reporter_name },
             { label: "Email", value: report.reporter_email },
             { label: "Phone", value: report.reporter_phone },
             { label: "Assigned To", value: report.assigned_to_admin_name },
           ].map(({ label, value }) => value ? (
-            <div key={label} className="rounded-lg bg-gray-50 dark:bg-white/[0.03] p-3">
+            <div key={label} className="rounded-lg bg-gray-50 dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-shadow duration-200 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{value}</p>
             </div>
@@ -335,7 +338,7 @@ function DetailPanel({
         </div>
 
         {/* Description */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">Description</p>
           <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{report.description}</p>
         </div>
@@ -397,7 +400,7 @@ function DetailPanel({
 
         {/* Reply form */}
         {showReply && (
-          <div className="rounded-xl border border-brand-200 bg-brand-50/60 dark:border-brand-500/20 dark:bg-brand-500/5 p-4 space-y-3">
+          <div className="rounded-xl border border-brand-200 bg-brand-50/60 dark:border-brand-500/20 dark:bg-brand-500/5 p-4 space-y-3 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
             <textarea
               rows={4}
               placeholder="Type your reply…"
@@ -420,8 +423,8 @@ function DetailPanel({
                     className={cn(
                       "rounded-lg px-3 py-1.5 text-xs font-semibold border transition",
                       disabled ? "opacity-40 cursor-not-allowed border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-800" :
-                      active ? "border-brand-300 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300" :
-                      "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800"
+                        active ? "border-brand-300 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300" :
+                          "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800"
                     )}
                   >
                     {active && <span className="mr-1">✓</span>}{v.toUpperCase()}
@@ -446,23 +449,23 @@ function DetailPanel({
 
         {/* Assign panel */}
         {(isSuperAdmin || true) && admins.length > 0 && (
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-1">
               <UserCheck size={12} /> Assign / Reassign
             </p>
             <div className="flex gap-2">
-              <select
-                value={assignId}
-                onChange={e => setAssignId(Number(e.target.value) || "")}
-                className="flex-1 h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
-              >
-                <option value="">-- Select Admin --</option>
-                {admins.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {`${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || `Admin #${a.id}`}
-                  </option>
-                ))}
-              </select>
+              <div className="flex-1">
+                <Select
+                  options={admins.map((a) => ({
+                    value: String(a.id),
+                    label: `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || `Admin #${a.id}`,
+                  }))}
+                  value={assignId ? String(assignId) : ""}
+                  placeholder="-- Select Admin --"
+                  onChange={v => setAssignId(Number(v) || "")}
+                  searchable
+                />
+              </div>
               <button
                 type="button"
                 disabled={!assignId || assign.isPending}
@@ -485,18 +488,18 @@ type PageTab = "inbox" | "pool" | "assign";
 
 export default function ReportsPage() {
   const { hasRole } = useAuth();
-  const isSuperAdmin  = hasRole("SUPER_ADMIN");
-  const isAdmin       = hasRole("ADMIN");
+  const isSuperAdmin = hasRole("SUPER_ADMIN");
+  const isAdmin = hasRole("ADMIN");
   const isOrderManager = hasRole("ORDER_MANAGER");
-  const canManagePool  = isSuperAdmin || isAdmin; // Pool tab: SUPER_ADMIN + ADMIN only
-  const canAssign      = isSuperAdmin || isAdmin || isOrderManager; // Assign tab
+  const canManagePool = isSuperAdmin || isAdmin; // Pool tab: SUPER_ADMIN + ADMIN only
+  const canAssign = isSuperAdmin || isAdmin || isOrderManager; // Assign tab
 
   // Stat tab
   const [statTab, setStatTab] = useState<TabKey>("all");
   // Page-level tabs
   const [pageTab, setPageTab] = useState<PageTab>("inbox");
   // List state
-  const [page, setPage]     = useState(1);
+  const [page, setPage] = useState(1);
   const pageSize = 20;
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filters, setFilters] = useState<Filters>({});
@@ -509,25 +512,25 @@ export default function ReportsPage() {
 
   // Counts
   const countsQ = useAdminReportCounts();
-  const counts  = countsQ.data?.data;
+  const counts = countsQ.data?.data;
 
   // Stat tabs
   const statTabs: { key: TabKey; label: string; count: number }[] = [
-    { key: "all",         label: "Total",       count: counts?.total       ?? 0 },
-    { key: "unread",      label: "Unread",       count: counts?.unread      ?? 0 },
-    { key: "unresolved",  label: "Unresolved",   count: counts?.unresolved  ?? 0 },
-    { key: "open",        label: "Open",         count: counts?.open        ?? 0 },
-    { key: "in_progress", label: "In Progress",  count: counts?.in_progress ?? 0 },
-    { key: "resolved",    label: "Resolved",     count: counts?.resolved    ?? 0 },
+    { key: "all", label: "Total", count: counts?.total ?? 0 },
+    { key: "unread", label: "Unread", count: counts?.unread ?? 0 },
+    { key: "unresolved", label: "Unresolved", count: counts?.unresolved ?? 0 },
+    { key: "open", label: "Open", count: counts?.open ?? 0 },
+    { key: "in_progress", label: "In Progress", count: counts?.in_progress ?? 0 },
+    { key: "resolved", label: "Resolved", count: counts?.resolved ?? 0 },
   ];
 
   // Map stat tab → filter params
   const tabFilters = useCallback((): Partial<Filters> => {
-    if (statTab === "unread")      return { is_read: "false" };
-    if (statTab === "unresolved")  return {}; // special: status open+in_progress handled below
-    if (statTab === "open")        return { status: "open" };
+    if (statTab === "unread") return { is_read: "false" };
+    if (statTab === "unresolved") return {}; // special: status open+in_progress handled below
+    if (statTab === "open") return { status: "open" };
     if (statTab === "in_progress") return { status: "in_progress" };
-    if (statTab === "resolved")    return { status: "resolved" };
+    if (statTab === "resolved") return { status: "resolved" };
     return {};
   }, [statTab]);
 
@@ -550,7 +553,7 @@ export default function ReportsPage() {
   };
 
   const listQ = useAdminReports(listParams);
-  const rows  = listQ.data?.data ?? [];
+  const rows = listQ.data?.data ?? [];
   const total = listQ.data?.total ?? 0;
 
   // Auto-select first row
@@ -566,16 +569,16 @@ export default function ReportsPage() {
     deepLinkConsumedRef.current = true;
     setSelectedId(deepLinkId);
     setSearchParams((prev) => { prev.delete("reportId"); return prev; }, { replace: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkId, rows]);
 
   // Distribution pool hooks
-  const settingsQ  = useReportDistributionSettings();
-  const eligibleQ  = useReportEligibleAdmins();
+  const settingsQ = useReportDistributionSettings();
+  const eligibleQ = useReportEligibleAdmins();
   const updSettings = useUpdateReportDistributionSettings();
-  const upsert     = useUpsertReportAgent();
-  const remove     = useRemoveReportAgent();
-  const redist     = useRedistributeReports();
+  const upsert = useUpsertReportAgent();
+  const remove = useRemoveReportAgent();
+  const redist = useRedistributeReports();
 
   const settings = settingsQ.data?.data;
   const eligibleAdmins = (eligibleQ.data?.data ?? []).map(a => ({
@@ -642,12 +645,12 @@ export default function ReportsPage() {
           {/* Page-level tabs — Pool & Assign hidden from non-admins */}
           <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-800 dark:bg-gray-900">
             {([
-              { id: "inbox"  as const, label: "Inbox",             restricted: "none"   },
-              { id: "pool"   as const, label: "Distribution Pool", restricted: "pool"   },
-              { id: "assign" as const, label: "Assign",            restricted: "assign" },
+              { id: "inbox" as const, label: "Inbox", restricted: "none" },
+              { id: "pool" as const, label: "Distribution Pool", restricted: "pool" },
+              { id: "assign" as const, label: "Assign", restricted: "assign" },
             ] as const).filter(t => {
-              if (t.restricted === "none")   return true;
-              if (t.restricted === "pool")   return canManagePool;
+              if (t.restricted === "none") return true;
+              if (t.restricted === "pool") return canManagePool;
               if (t.restricted === "assign") return canAssign;
               return false;
             }).map(t => (
@@ -683,7 +686,7 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
               {/* Left: Inbox list */}
               <div className="flex flex-col lg:col-span-5">
-                <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                   {/* Inbox header */}
                   <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]">
                     <Inbox size={16} className="text-brand-500" />
@@ -728,14 +731,14 @@ export default function ReportsPage() {
                     page={page}
                     pageSize={pageSize}
                     onPageChange={setPage}
-                    onPageSizeChange={() => {}}
+                    onPageSizeChange={() => { }}
                   />
                 </div>
               </div>
 
               {/* Right: Detail panel */}
               <div className="lg:col-span-7">
-                <div className="min-h-[500px] overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div className="min-h-[500px] overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                   {selectedId ? (
                     <DetailPanel reportId={selectedId} isSuperAdmin={isSuperAdmin} />
                   ) : (
@@ -835,7 +838,7 @@ function AssignReportsTab({ isSuperAdmin, rows, rowsLoading }: {
   const admins = (eligibleQ.data?.data ?? []).map(a => ({
     id: a.id,
     admin_name: a.admin_name,
-    role_name:  a.role_name,
+    role_name: a.role_name,
     active_count: a.active_report_count ?? 0,
   }));
 
@@ -854,7 +857,7 @@ function AssignReportsTab({ isSuperAdmin, rows, rowsLoading }: {
     entity_id: l.report_id,
     action_type: l.action_type,
     from_admin_name: l.from_admin_name,
-    to_admin_name:   l.to_admin_name,
+    to_admin_name: l.to_admin_name,
     changed_by_name: l.changed_by_name,
     created_at: l.created_at,
   }));
