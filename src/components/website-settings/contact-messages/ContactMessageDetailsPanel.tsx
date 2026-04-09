@@ -57,7 +57,8 @@ export default function ContactMessageDetailsPanel({
       <div
         className={cn(
           "flex flex-col gap-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between",
-          "dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]"
+          "dark:border-gray-800 dark:from-white/[0.03] dark:to-white/[0.01]",
+          "shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]"
         )}
       >
         <div className="flex items-center gap-3">
@@ -130,7 +131,7 @@ export default function ContactMessageDetailsPanel({
         {/* Contact + Status Cards */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* Contact Info */}
-          <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-900">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               <User size={13} />
               {t("contactMessages.details.contact")}
@@ -189,7 +190,7 @@ export default function ContactMessageDetailsPanel({
           </div>
 
           {/* Status Card */}
-          <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-900">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               <Archive size={13} />
               {t("contactMessages.details.status")}
@@ -260,7 +261,7 @@ export default function ContactMessageDetailsPanel({
         </div>
 
         {/* Subject & Message */}
-        <div className="mt-5 rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mt-5 rounded-xl border border-gray-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-900">
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             {t("contactMessages.details.subject")}
           </p>
@@ -279,7 +280,7 @@ export default function ContactMessageDetailsPanel({
         </div>
 
         {/* Replies */}
-        <div className="mt-5 rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mt-5 rounded-xl border border-gray-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-900">
           <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             <MessageCircle size={13} />
             {t("contactMessages.details.replies")}
@@ -295,7 +296,7 @@ export default function ContactMessageDetailsPanel({
               {data.replies.map((r) => (
                 <div
                   key={r.id}
-                  className="rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-white/[0.02]"
+                  className="rounded-lg border border-gray-100 bg-gray-50/50 p-4 transition-all duration-200 hover:shadow-sm dark:border-gray-800 dark:bg-white/[0.02]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span
