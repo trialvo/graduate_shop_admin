@@ -6,8 +6,11 @@ export type AnnouncementZoneScope = "all" | "selected";
 export type AnnouncementChannel = "email" | "sms" | "both";
 
 export type AnnouncementZone = {
-  city_name: string;
-  city_name_normalized: string;
+  location_mapping_id: number | null;
+  city_name: string | null;
+  area_name: string | null;
+  city_name_normalized: string | null;
+  area_name_normalized: string | null;
 };
 
 export type AnnouncementSummary = {
