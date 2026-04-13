@@ -36,7 +36,8 @@ export type ManualOrderStrangerPayload = {
   city?: string;
   zip_code?: string;
   location_mapping_id?: number;
-  payment_type: "gateway" | "cod" | "mixed";
+  payment_type: "gateway" | "cod" | "mixed" | "bkash";
+  trx_id?: string;
   delivery_charge_id: number;
   coupon_code?: string;
   note?: string;

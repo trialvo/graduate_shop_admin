@@ -11,8 +11,8 @@
 
 // ── Dev Environment ──────────────────────────────────────────────────────────
 const dev = {
-  API_ORIGIN: "http://localhost:9000",
-  PUBLIC_ORIGIN: "http://localhost:9000",
+  API_ORIGIN: "https://shop-api.shoplinkbd.com",
+  PUBLIC_ORIGIN: "https://shop-api.shoplinkbd.com",
   API_PREFIX: "/api/v1",
 
   FIREBASE_CONFIG: {
@@ -64,7 +64,8 @@ const production = {
 };
 
 // ── Auto-select ──────────────────────────────────────────────────────────────
-const env = import.meta.env.DEV ? live_dev : production;
+// const env = import.meta.env.DEV ? live_dev : production;
+const env = dev;
 
 export const API_ORIGIN = env.API_ORIGIN;
 export const PUBLIC_ORIGIN = env.PUBLIC_ORIGIN;
