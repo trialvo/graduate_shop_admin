@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { MapPin } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -115,7 +115,7 @@ const TopSellingDistrictModal: React.FC<Props> = ({ open, onClose, timeRange, on
               const percent = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
 
               return (
-                <div key={d.city} className="flex items-center gap-4 py-4">
+                <div key={d.zone} className="flex items-center gap-4 py-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full ring-1 ring-gray-200 dark:ring-gray-800">
                     <MapPin className="text-brand-600 dark:text-brand-400" size={18} />
                   </div>
@@ -123,7 +123,7 @@ const TopSellingDistrictModal: React.FC<Props> = ({ open, onClose, timeRange, on
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-3">
                       <p className="truncate text-sm font-semibold text-gray-900 dark:text-white/90">
-                        {titleCase(d.city)}
+                        {titleCase(d.zone)}
                       </p>
 
                       <p className="shrink-0 text-xs text-gray-500 dark:text-gray-400">

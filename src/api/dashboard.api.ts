@@ -110,10 +110,10 @@ export type DashboardTopSellingResponse = {
 };
 
 /** =========================
- *  Top Selling Area (District/City)
+ *  Top Selling Zones (level-1 location_mappings)
  *  ========================= */
 export type DashboardTopSellingAreaItem = {
-  city: string;
+  zone: string;
   total_orders: number;
   total_items_sold: number;
   total_revenue: string; // "18880.00"
