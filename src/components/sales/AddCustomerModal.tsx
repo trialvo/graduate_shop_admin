@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { cn } from "@/lib/utils";
+import Select from "@/components/form/Select";
 
 import { createAdminUser, type AdminUserGender, type CreateAdminUserPayload } from "@/api/admin-users.api";
 import DatePicker from "../form/date-picker";
@@ -110,8 +111,9 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
       toast.success(res?.message ?? t("sales.orderPlaced"));
       onCreated({ id, email: createdEmail });
       onClose();
-    } catch (e: any) {
-      toast.error(e?.message ? String(e.message) : t("sales.failedOrder"));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t("sales.failedOrder");
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -258,16 +260,17 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
             {/* Gender */}
             <div className="col-span-12 md:col-span-6">
               <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.genderLabel")}</label>
-              <select
+              <Select
+                options={[
+                  { value: "unspecified", label: t("sales.unspecified") },
+                  { value: "male", label: t("sales.male") },
+                  { value: "female", label: t("sales.female") },
+                  { value: "other", label: t("sales.other") },
+                ]}
                 value={gender}
-                onChange={(e) => setGender(e.target.value as AdminUserGender)}
-                className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="unspecified">{t("sales.unspecified")}</option>
-                <option value="male">{t("sales.male")}</option>
-                <option value="female">{t("sales.female")}</option>
-                <option value="other">{t("sales.other")}</option>
-              </select>
+                onChange={(v) => setGender(v as AdminUserGender)}
+                placeholder={t("sales.genderLabel")}
+              />
             </div>
 
             {/* ✅ DOB: DatePicker */}
@@ -294,14 +297,15 @@ export default function AddCustomerModal({ open, onClose, onCreated }: Props) {
             {/* Status */}
             <div className="col-span-12 md:col-span-6">
               <label className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">{t("sales.status")}</label>
-              <select
+              <Select
+                options={[
+                  { value: "active", label: t("sales.active") },
+                  { value: "inactive", label: t("sales.inactive") },
+                ]}
                 value={isActive}
-                onChange={(e) => setIsActive(e.target.value as "active" | "inactive")}
-                className="h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="active">{t("sales.active")}</option>
-                <option value="inactive">{t("sales.inactive")}</option>
-              </select>
+                onChange={(v) => setIsActive(v as "active" | "inactive")}
+                placeholder={t("sales.status")}
+              />
             </div>
           </div>
         </div>

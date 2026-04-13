@@ -5,7 +5,6 @@
 import { useState, useMemo } from "react";
 import { ClipboardList, ChevronRight, UserCheck, Loader2, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Select from "@/components/form/Select";
 
 // ─── Types ────────────────────────────────────────────────────────────────── //
 
@@ -135,17 +134,14 @@ export default function SupportAssignTab({
               <div className="relative">
                 {/* Selected item display or search trigger */}
                 {selectedItem ? (
-                  <div
-                    className="flex h-10 items-center gap-2 rounded-xl border border-brand-400 bg-brand-50 pl-3 pr-2 dark:border-brand-500/50 dark:bg-brand-500/10"
-                    style={{ animation: "assignFadeScaleIn 200ms cubic-bezier(0.34,1.56,0.64,1) both" }}
-                  >
+                  <div className="flex h-10 items-center gap-2 rounded-xl border border-brand-400 bg-brand-50 pl-3 pr-2 dark:border-brand-500/50 dark:bg-brand-500/10">
                     <span className="flex-1 truncate text-sm font-medium text-brand-700 dark:text-brand-300">
                       #{selectedItem.id} — {selectedItem.label}
                     </span>
                     <button
                       type="button"
                       onClick={() => { setSelectedItem(null); setSearch(""); }}
-                      className="shrink-0 rounded-full p-0.5 text-brand-500 transition-colors hover:bg-brand-100 dark:hover:bg-brand-500/20"
+                      className="shrink-0 rounded-full p-0.5 text-brand-500 hover:bg-brand-100 dark:hover:bg-brand-500/20"
                     >
                       <X size={14} />
                     </button>
@@ -154,7 +150,7 @@ export default function SupportAssignTab({
                   <button
                     type="button"
                     onClick={() => setShowPicker(v => !v)}
-                    className="flex h-10 w-full items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-500 transition-all hover:border-brand-400 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                    className="flex h-10 w-full items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-500 hover:border-brand-400 transition dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                   >
                     <Search size={14} className="shrink-0 text-gray-400" />
                     <span className="flex-1 text-left">
@@ -165,10 +161,7 @@ export default function SupportAssignTab({
 
                 {/* Dropdown picker */}
                 {showPicker && !selectedItem && (
-                  <div
-                    className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95"
-                    style={{ animation: "assignDropIn 220ms cubic-bezier(0.34,1.56,0.64,1) both" }}
-                  >
+                  <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
                     {/* Search input */}
                     <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
                       <div className="relative">
@@ -179,7 +172,7 @@ export default function SupportAssignTab({
                           value={search}
                           onChange={e => setSearch(e.target.value)}
                           placeholder={`Search by name, subject, or #ID…`}
-                          className="h-8 w-full rounded-lg bg-gray-50 pl-8 pr-3 text-xs text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-brand-200 dark:bg-gray-800 dark:text-gray-200"
+                          className="h-8 w-full rounded-lg bg-gray-50 pl-8 pr-3 text-xs text-gray-700 outline-none dark:bg-gray-800 dark:text-gray-200"
                         />
                       </div>
                     </div>
@@ -191,13 +184,12 @@ export default function SupportAssignTab({
                           {itemsLoading ? "Loading…" : `No open ${entityLabel.toLowerCase()}s found`}
                         </p>
                       ) : (
-                        filteredItems.map((item, idx) => (
+                        filteredItems.map(item => (
                           <button
                             key={item.id}
                             type="button"
                             onClick={() => { setSelectedItem(item); setShowPicker(false); setSearch(""); }}
-                            className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.04]"
-                            style={{ animation: `assignItemIn 200ms cubic-bezier(0.34,1.56,0.64,1) ${Math.min(idx * 20 + 30, 200)}ms both` }}
+                            className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
                           >
                             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand-100 text-[10px] font-bold text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
                               #{item.id}
@@ -221,22 +213,6 @@ export default function SupportAssignTab({
                     </div>
                   </div>
                 )}
-
-                {/* Keyframe animations */}
-                <style>{`
-                  @keyframes assignDropIn {
-                    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-                    to   { opacity: 1; transform: translateY(0) scale(1); }
-                  }
-                  @keyframes assignItemIn {
-                    from { opacity: 0; transform: translateY(4px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                  }
-                  @keyframes assignFadeScaleIn {
-                    from { opacity: 0; transform: scale(0.96); }
-                    to   { opacity: 1; transform: scale(1); }
-                  }
-                `}</style>
               </div>
             ) : (
               // Fallback: raw ID input (when items list is not provided)
@@ -259,16 +235,19 @@ export default function SupportAssignTab({
             <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
               Assign To
             </label>
-            <Select
-              options={eligibleForAssign.map(a => ({
-                value: String(a.id),
-                label: `${a.admin_name} (${a.role_name.replace("_", " ")}) — ${a.active_count} active${a.id === currentAdminId ? " (you)" : ""}`,
-              }))}
-              value={targetAdmin ? String(targetAdmin) : ""}
-              placeholder="-- Select Admin --"
-              onChange={v => setTargetAdmin(Number(v) || null)}
-              searchable
-            />
+            <select
+              value={targetAdmin ?? ""}
+              onChange={e => setTargetAdmin(Number(e.target.value) || null)}
+              className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            >
+              <option value="">-- Select Admin --</option>
+              {eligibleForAssign.map(a => (
+                <option key={a.id} value={a.id}>
+                  {a.admin_name} ({a.role_name.replace("_", " ")}) — {a.active_count} active
+                  {a.id === currentAdminId ? " (you)" : ""}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button

@@ -84,17 +84,17 @@ export default function ContactMessagesList({
             type="button"
             onClick={() => onSelect(r.id)}
             className={cn(
-              "group flex w-full items-start gap-3 px-4 py-3.5 text-left transition-all duration-200 ease-out",
+              "group flex w-full items-start gap-3 px-4 py-3.5 text-left transition-all duration-150",
               isActive
-                ? "bg-brand-50/60 shadow-[inset_3px_0_0_0] shadow-brand-400 dark:bg-brand-500/[0.08] dark:shadow-brand-500"
-                : "hover:bg-gray-50/80 dark:hover:bg-white/[0.02]",
+                ? "bg-brand-50/60 dark:bg-brand-500/[0.08]"
+                : "hover:bg-gray-50 dark:hover:bg-white/[0.02]",
               unread && !isActive && "bg-sky-50/30 dark:bg-sky-500/[0.03]"
             )}
           >
             {/* Avatar */}
             <span
               className={cn(
-                "mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 group-hover:scale-105",
+                "mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold",
                 isActive
                   ? "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300"
                   : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"

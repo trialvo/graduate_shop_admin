@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 
 import Button from "@/components/ui/button/Button";
+import Select from "@/components/form/Select";
 import AddCustomerModal from "./AddCustomerModal";
 import type { CartItem } from "./types";
 import { cn } from "@/lib/utils";
@@ -111,8 +112,8 @@ function SectionLabel({ icon, children }: { icon?: React.ReactNode; children: Re
 const inputClass =
   "h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10";
 
-const selectClass =
-  "h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-500/10";
+/** Typed error shape for Axios-like rejections */
+type ApiError = Error & { response?: { data?: { error?: string; message?: string } }; message?: string };
 
 // ─── Verification Info & Rules Panel ───────────────────────────────────────────
 // Shows the selected customer's live verification status (Email, Address Phone, Default Phone).
@@ -592,7 +593,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
       toast.error(data?.error || data?.message || "Failed to create address");
     },
-    onError: (err: any) => {
+    onError: (err: ApiError) => {
       toast.error(err?.message || "Failed to create address");
     },
   });
@@ -752,9 +753,10 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       setAppliedCoupon({ code, discount: disc });
       setCouponInputVal("");
       toast.success(`Coupon applied! -৳${disc}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as ApiError;
       const raw: string =
-        err?.response?.data?.error || err?.message || "Invalid coupon";
+        e?.response?.data?.error || e?.message || "Invalid coupon";
       // Rephrase the cryptic backend message for admin context
       const msg = raw.toLowerCase().includes("log in")
         ? "This coupon has a per-user limit. Please select a customer first."
@@ -840,7 +842,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       }
       toast.error(data?.error || data?.message || "Failed to place order");
     },
-    onError: (err: any) => {
+    onError: (err: ApiError) => {
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
       toast.error(serverMsg || err?.message || "Failed to place order");
     },
@@ -867,7 +869,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
         note: note.trim() || undefined,
         coupon_code: couponCode.trim() || undefined,
         order_items,
-      } as any);
+      });
     },
     onSuccess: (data) => {
       if (data?.success === true) {
@@ -887,7 +889,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
       }
       toast.error(data?.error || data?.message || "Failed to place order");
     },
-    onError: (err: any) => {
+    onError: (err: ApiError) => {
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
       toast.error(serverMsg || err?.message || "Failed to place order");
     },
@@ -1137,28 +1139,20 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                       </Button>
                     </div>
 
-                    <select
-                      value={addressId ?? ""}
-                      onChange={(e) =>
-                        setAddressId(
-                          e.target.value ? Number(e.target.value) : null
-                        )
-                      }
-                      className={selectClass}
-                      disabled={!selectedUser}
-                    >
-                      <option value="">
-                        {selectedUser
+                    <Select
+                      options={addresses.map((a: AdminUserAddress) => ({
+                        value: String(a.id),
+                        label: `${a.name ? `${a.name} — ` : ""}${a.full_address ?? ""}`,
+                      }))}
+                      value={addressId ? String(addressId) : ""}
+                      onChange={(v) => setAddressId(v ? Number(v) : null)}
+                      placeholder={
+                        selectedUser
                           ? t("sales.chooseAddress")
-                          : t("sales.selectCustomerFirst")}
-                      </option>
-                      {addresses.map((a: any) => (
-                        <option key={a.id} value={a.id}>
-                          {a?.name ? `${a.name} - ` : ""}
-                          {String(a?.full_address ?? "")}
-                        </option>
-                      ))}
-                    </select>
+                          : t("sales.selectCustomerFirst")
+                      }
+                      searchable
+                    />
                   </div>
 
                   {/* ── Admin Manual Verification Panel ── */}
@@ -1237,28 +1231,23 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
           <div className="col-span-12 lg:col-span-5">
             <div className="space-y-4">
               {/* Delivery */}
-              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-800/40 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                 <SectionLabel icon={<Truck size={14} />}>{t("sales.deliveryChargeLabel")}</SectionLabel>
-                <select
-                  value={deliveryChargeId ?? ""}
-                  onChange={(e) =>
-                    setDeliveryChargeId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className={cn(selectClass, "mt-2")}
-                >
-                  <option value="">
-                    {deliveryChargesQuery.isLoading
-                      ? t("sales.loading")
-                      : t("sales.chooseDeliveryCharge")}
-                  </option>
-                  {deliveryCharges.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.title} — {formatCurrencyBDT(d.customer_charge)}
-                    </option>
-                  ))}
-                </select>
+                <div className="mt-2">
+                  <Select
+                    options={deliveryCharges.map((d) => ({
+                      value: String(d.id),
+                      label: `${d.title} — ${formatCurrencyBDT(d.customer_charge)}`,
+                    }))}
+                    value={deliveryChargeId ? String(deliveryChargeId) : ""}
+                    onChange={(v) => setDeliveryChargeId(v ? Number(v) : null)}
+                    placeholder={
+                      deliveryChargesQuery.isLoading
+                        ? t("sales.loading")
+                        : t("sales.chooseDeliveryCharge")
+                    }
+                  />
+                </div>
               </div>
 
               {/* Mixed Delivery Alert */}
@@ -1337,7 +1326,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </div>
 
               {/* Coupon */}
-              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-800/40 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                 <SectionLabel icon={<Ticket size={14} />}>{t("sales.coupon")}</SectionLabel>
                 {appliedCoupon ? (
                   <div className="mt-2 flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
@@ -1375,7 +1364,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </div>
 
               {/* Note */}
-              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-800/40 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                 <SectionLabel icon={<StickyNote size={14} />}>{t("sales.note")}</SectionLabel>
                 <textarea
                   value={note}
@@ -1386,7 +1375,7 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
               </div>
 
               {/* Payment */}
-              <div className="rounded-xl border border-gray-200/80 bg-white p-4 dark:border-gray-800 dark:bg-gray-800/40">
+              <div className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_20px_-14px_rgba(16,24,40,0.14)] transition-shadow duration-300 ease-out dark:border-gray-800 dark:bg-gray-800/40 dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_10px_24px_-14px_rgba(0,0,0,0.45)]">
                 <SectionLabel icon={<CreditCard size={14} />}>{t("sales.payment")}</SectionLabel>
                 <div className="mt-2.5 flex items-center gap-2">
                   <button
@@ -1556,17 +1545,16 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
 
                 <div className="col-span-12 md:col-span-4">
                   <SectionLabel>{t("sales.type")}</SectionLabel>
-                  <select
+                  <Select
+                    options={[
+                      { value: "n/a", label: "N/A" },
+                      { value: "home", label: "Home" },
+                      { value: "office", label: "Office" },
+                    ]}
                     value={manualAddressType}
-                    onChange={(e) =>
-                      setManualAddressType(e.target.value as any)
-                    }
-                    className={selectClass}
-                  >
-                    <option value="n/a">n/a</option>
-                    <option value="home">home</option>
-                    <option value="office">office</option>
-                  </select>
+                    onChange={(v) => setManualAddressType(v as "home" | "office" | "n/a")}
+                    placeholder="Select type"
+                  />
                 </div>
               </div>
             </div>
