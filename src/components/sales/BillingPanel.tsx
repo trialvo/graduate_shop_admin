@@ -1197,7 +1197,16 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     />
                   </div>
 
-                  <div className="col-span-12 md:col-span-4 relative z-20">
+                  <div className="col-span-12">
+                    <SectionLabel>{t("sales.email")}</SectionLabel>
+                    <input
+                      value={strangerEmail}
+                      onChange={(e) => setStrangerEmail(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div className="col-span-12 md:col-span-6 relative z-20">
                     <SectionLabel>{t("sales.zone")}</SectionLabel>
                     <AdminZonePicker
                       value={strangerZone}
@@ -1205,20 +1214,11 @@ export default function BillingPanel({ cart, onUpdateQty, onRemove }: Props) {
                     />
                   </div>
 
-                  <div className="col-span-12 md:col-span-4">
+                  <div className="col-span-12 md:col-span-6">
                     <SectionLabel>{t("sales.zip")}</SectionLabel>
                     <input
                       value={strangerZip}
                       onChange={(e) => setStrangerZip(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-
-                  <div className="col-span-12 md:col-span-4">
-                    <SectionLabel>{t("sales.email")}</SectionLabel>
-                    <input
-                      value={strangerEmail}
-                      onChange={(e) => setStrangerEmail(e.target.value)}
                       className={inputClass}
                     />
                   </div>
