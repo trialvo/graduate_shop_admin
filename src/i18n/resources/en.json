@@ -124,9 +124,9 @@
       "totalItems": "Total {{count}} items"
     },
     "topSellingDistrict": {
-      "title": "Top Selling by District",
+      "title": "Top Selling Zones",
       "failed": "Failed to load data.",
-      "showingTop": "Showing top {{count}} areas by revenue.",
+      "showingTop": "Showing top {{count}} zones by revenue.",
       "viewMore": "View More",
       "orders": "Orders",
       "items": "Items",
