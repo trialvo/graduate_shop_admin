@@ -523,7 +523,7 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
 
                       {/* ── Status History ─────────────────────────── */}
                       <TableCell className="px-4 py-3.5">
-                        <StatusHistoryPopover orderId={r.id} alignRight={false} />
+                        <StatusHistoryPopover orderId={r.id} />
                       </TableCell>
 
                       {/* Sticky Action */}

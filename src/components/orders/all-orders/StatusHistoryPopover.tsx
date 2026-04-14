@@ -114,13 +114,15 @@ function HistoryEntry({ entry }: { entry: OrderStatusHistoryEntry }) {
 // ── Main export ───────────────────────────────────────────────────────────────
 type Props = {
   orderId: string | number;
-  /** If true, the popover will grow leftwards (for rightmost columns) */
-  alignRight?: boolean;
 };
 
-export default function StatusHistoryPopover({ orderId, alignRight = false }: Props) {
+const POPOVER_WIDTH = 288; // w-72 = 18rem = 288px
+
+export default function StatusHistoryPopover({ orderId }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [align, setAlign] = useState<"left" | "right">("left");
 
   // Fetch lazily — only starts when popover first opens
   const { data, isLoading, isError } = useQuery({
@@ -131,6 +133,16 @@ export default function StatusHistoryPopover({ orderId, alignRight = false }: Pr
   });
 
   const entries = data?.data ?? [];
+
+  // Dynamically compute alignment when popover opens
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    // Check if there's enough room to the right of the trigger
+    const spaceRight = window.innerWidth - rect.left;
+    // If there isn't enough room to fit the popover on the right, anchor right
+    setAlign(spaceRight < POPOVER_WIDTH + 16 ? "right" : "left");
+  }, [open]);
 
   // Click-outside to close
   useEffect(() => {
@@ -167,11 +179,12 @@ export default function StatusHistoryPopover({ orderId, alignRight = false }: Pr
       {/* Popover panel */}
       {open && (
         <div
+          ref={panelRef}
           className={cn(
-            "absolute top-full z-50 mt-2 w-72",
+            "absolute top-full z-20 mt-2 w-72",
             "rounded-xl border border-gray-200 bg-white shadow-xl",
             "dark:border-gray-800 dark:bg-gray-900",
-            alignRight ? "right-0" : "left-0",
+            align === "right" ? "right-0" : "left-0",
             // Ensure it stays above the table
             "animate-in fade-in slide-in-from-top-1 duration-150",
           )}
