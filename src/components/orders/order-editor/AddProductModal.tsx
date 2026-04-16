@@ -210,7 +210,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       discount: selectedVariation.discount ?? 0,
       unitPrice: selectedVariation.selling_price,
       quantity: qty,
-      taxPercent: 0,
       productId: detail.id,
       productSkuId: selectedVariation.id,
       colorId: selectedVariation.color?.id ?? null,

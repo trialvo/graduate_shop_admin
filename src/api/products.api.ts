@@ -123,6 +123,7 @@ export type ProductSingleVariation = {
 
   status: boolean;
   in_stock: boolean;
+  free_delivery?: boolean | null;
 };
 
 export type ProductSingleResponseEntity = {

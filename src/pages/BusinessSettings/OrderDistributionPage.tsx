@@ -295,7 +295,7 @@ function PoolSettingsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                     {admin.profile_img_path ? (
                       <img
-                        src={toPublicUrl(admin.profile_img_path ?? undefined)}
+                        src={toPublicUrl(admin.profile_img_path ?? undefined) ?? undefined}
                         alt={admin.admin_name}
                         className="h-full w-full object-cover"
                         onError={(e) => {
