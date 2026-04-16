@@ -12,7 +12,7 @@
 // ── Dev Environment ──────────────────────────────────────────────────────────
 const dev = {
   API_ORIGIN: "https://shop-api.shoplinkbd.com",
-  PUBLIC_ORIGIN: "https://shop-api.shoplinkbd.com",
+  IMAGE_URL: "https://shop-api.shoplinkbd.com",
   API_PREFIX: "/api/v1",
 
   FIREBASE_CONFIG: {
@@ -30,7 +30,7 @@ const dev = {
 // ── Live Dev Environment ──────────────────────────────────────────────────────────
 const live_dev = {
   API_ORIGIN: "https://shop-api.shoplinkbd.com",
-  PUBLIC_ORIGIN: "https://shop.shoplinkbd.com",
+  IMAGE_URL: "https://shop.shoplinkbd.com",
   API_PREFIX: "/api/v1",
 
   FIREBASE_CONFIG: {
@@ -48,7 +48,7 @@ const live_dev = {
 // ── Production Environment ───────────────────────────────────────────────────
 const production = {
   API_ORIGIN: "https://graduatefashion-api-641431966702.asia-south1.run.app",
-  PUBLIC_ORIGIN: "https://graduatefashion-api-641431966702.asia-south1.run.app",
+  IMAGE_URL: "https://storage.googleapis.com/graduate-ecom-mumbai-641431966702",
   API_PREFIX: "/api/v1",
 
   FIREBASE_CONFIG: {
@@ -64,11 +64,12 @@ const production = {
 };
 
 // ── Auto-select ──────────────────────────────────────────────────────────────
-// const env = import.meta.env.DEV ? live_dev : production;
-const env = dev;
+// `import.meta.env.DEV` → true on `vite`, false on `vite build`
+// const env = import.meta.env.DEV ? dev : production;÷
+const env = production;
 
 export const API_ORIGIN = env.API_ORIGIN;
-export const PUBLIC_ORIGIN = env.PUBLIC_ORIGIN;
+export const IMAGE_URL = env.IMAGE_URL;
 export const API_PREFIX = env.API_PREFIX;
 export const API_BASE_URL = `${env.API_ORIGIN}${env.API_PREFIX}`;
 export const FIREBASE_CONFIG = env.FIREBASE_CONFIG;
@@ -77,5 +78,5 @@ export const FIREBASE_VAPID_KEY = env.FIREBASE_VAPID_KEY;
 export function toPublicUrl(path?: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  return `${PUBLIC_ORIGIN}${path}`;
+  return `${IMAGE_URL}${path}`;
 }

@@ -36,13 +36,13 @@ export type ResetPasswordPayload = {
 };
 
 // If backend returns "/uploads/..." use the centralized config origin
-import { API_ORIGIN, PUBLIC_ORIGIN } from "@/config/env";
+import { API_ORIGIN, IMAGE_URL } from "@/config/env";
 
 export function toMediaUrl(path?: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  if (!PUBLIC_ORIGIN) return path;
-  return `${PUBLIC_ORIGIN}${path}`;
+  if (!IMAGE_URL) return path;
+  return `${IMAGE_URL}${path}`;
 }
 
 export async function getAdminProfile(): Promise<AdminProfileApiResponse> {
