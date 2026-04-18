@@ -1059,17 +1059,583 @@ function ComboRulesManager() {
   );
 }
 
+// ─── Mega Sale Tab ────────────────────────────────────────────────────────────
+
+import { Flame, Clock, Power, ChevronDown, ChevronRight, Eye, Calendar, ShieldCheck, ShieldX } from "lucide-react";
+import { toPublicUrl } from "@/config/env";
+import {
+  useMegaSaleSettings,
+  useUpdateMegaSaleSettings,
+  useMegaSaleProductsList,
+  useAddMegaSaleProduct,
+  useUpdateMegaSaleProduct,
+  useDeleteMegaSaleProduct,
+  useMegaSaleProductSkus,
+  useUpdateSkuOverride,
+  useDeleteSkuOverride,
+} from "@/hooks/useMegaSale";
+import type { MegaSaleListProduct, MegaSaleSkuInfo } from "@/api/megasale.api";
+import Pagination from "@/components/ui/pagination/Pagination";
+
+/** Convert a datetime string from the API → `YYYY-MM-DDTHH:mm` for datetime-local input */
+function toBDDatetimeStr(val: string | null): string {
+  if (!val) return "";
+  // If the value already has +06:00 (Bangladesh), just extract the date/time portion
+  const bdMatch = val.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2})?(?:\+06:00)?$/);
+  if (bdMatch) return `${bdMatch[1]}T${bdMatch[2]}`;
+  // Fallback for other formats: parse and format in Asia/Dhaka
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+/**
+ * Return the datetime-local value as-is for the server.
+ * Backend stores naive datetimes (no TZ) in Bangladesh time,
+ * so no UTC conversion is needed.
+ */
+function fromBDDatetimeStr(localStr: string): string | null {
+  if (!localStr) return null;
+  return localStr;
+}
+
+// Keep alias for existing usages
+const toLocalDatetimeStr = toBDDatetimeStr;
+
+// ─── SKU Overrides Panel ──────────────────────────────────────────────────────
+
+function SkuOverridesPanel({ megaSaleProductId, productEndAt, campaignEndAt }: {
+  megaSaleProductId: number;
+  productEndAt: string | null;
+  campaignEndAt: string | null;
+}) {
+  const { data, isLoading } = useMegaSaleProductSkus(megaSaleProductId);
+  const updateOverride = useUpdateSkuOverride();
+
+  // Track which SKU is being timer-edited
+  const [editingSkuId, setEditingSkuId] = useState<number | null>(null);
+  const [editTimerVal, setEditTimerVal] = useState("");
+
+  if (isLoading) return <div className="px-6 py-3 text-xs text-gray-400">Loading variations…</div>;
+  if (!data?.skus?.length) return <div className="px-6 py-3 text-xs text-gray-400">No variations found</div>;
+
+  const inheritedTimer = productEndAt || campaignEndAt;
+
+  const handleTimerSave = (skuId: number) => {
+    updateOverride.mutate({ megaSaleProductId, skuId, end_at: fromBDDatetimeStr(editTimerVal) });
+    setEditingSkuId(null);
+  };
+
+  const handleTimerClear = (skuId: number) => {
+    updateOverride.mutate({ megaSaleProductId, skuId, end_at: null });
+    setEditingSkuId(null);
+  };
+
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+            <th className="px-6 py-2 text-left font-semibold">Variation</th>
+            <th className="px-3 py-2 text-left font-semibold">SKU</th>
+            <th className="px-3 py-2 text-left font-semibold">Price</th>
+            <th className="px-3 py-2 text-left font-semibold">Stock</th>
+            <th className="px-3 py-2 text-left font-semibold">Timer</th>
+            <th className="px-3 py-2 text-center font-semibold">In Sale</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.skus.map((sku: MegaSaleSkuInfo) => {
+            const variation = [sku.color_name, sku.variant_name].filter(Boolean).join(" / ") || "Default";
+            const effectiveTimer = sku.override_end_at || inheritedTimer;
+            return (
+              <tr key={sku.sku_id} className={cn(
+                "border-b border-gray-100 dark:border-gray-700/50",
+                sku.is_excluded && "opacity-50"
+              )}>
+                <td className="px-6 py-2">
+                  <div className="flex items-center gap-2">
+                    {sku.color_hex && (
+                      <span className="h-3 w-3 rounded-full border border-gray-300 dark:border-gray-600" style={{ backgroundColor: sku.color_hex }} />
+                    )}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{variation}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2 font-mono text-gray-500 dark:text-gray-400">{sku.sku}</td>
+                <td className="px-3 py-2">
+                  <span className="font-semibold text-brand-600 dark:text-brand-400">৳{sku.final_price}</span>
+                  {sku.final_price < sku.selling_price && (
+                    <span className="ml-1 text-gray-400 line-through">৳{sku.selling_price}</span>
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold",
+                    sku.stock > 0
+                      ? "bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400"
+                      : "bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400"
+                  )}>{sku.stock > 0 ? sku.stock : "OOS"}</span>
+                </td>
+                <td className="px-3 py-2 text-gray-500 dark:text-gray-400">
+                  {editingSkuId === sku.sku_id ? (
+                    <div className="flex items-center gap-1.5">
+                      <input type="datetime-local" className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500" value={editTimerVal} onChange={(e) => setEditTimerVal(e.target.value)} autoFocus />
+                      <button onClick={() => handleTimerSave(sku.sku_id)} className="h-5 w-5 flex items-center justify-center rounded border border-success-300 text-success-600 hover:bg-success-50" title="Save timer">✓</button>
+                      {sku.override_end_at && (
+                        <button onClick={() => handleTimerClear(sku.sku_id)} className="h-5 w-5 flex items-center justify-center rounded border border-amber-300 text-amber-600 hover:bg-amber-50 text-[9px]" title="Clear override (inherit)">↺</button>
+                      )}
+                      <button onClick={() => setEditingSkuId(null)} className="h-5 w-5 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-50" title="Cancel"><X size={9} /></button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => { setEditTimerVal(toBDDatetimeStr(sku.override_end_at)); setEditingSkuId(sku.sku_id); }} className="flex items-center gap-1 text-gray-500 hover:text-brand-600 transition-colors">
+                      <Clock size={10} />
+                      {sku.override_end_at ? (
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          {new Date(sku.override_end_at).toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      ) : (
+                        <span className="italic text-gray-400">
+                          {effectiveTimer ? `Inherits (${new Date(effectiveTimer).toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", day: "2-digit", month: "short" })})` : "No timer"}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateOverride.mutate({
+                        megaSaleProductId,
+                        skuId: sku.sku_id,
+                        is_excluded: !sku.is_excluded,
+                      });
+                    }}
+                    className={cn(
+                      "inline-flex h-6 w-6 items-center justify-center rounded-md transition-colors",
+                      sku.is_excluded
+                        ? "border border-error-200 text-error-500 hover:bg-error-50 dark:border-error-500/30 dark:text-error-400"
+                        : "border border-success-200 text-success-600 hover:bg-success-50 dark:border-success-500/30 dark:text-success-400"
+                    )}
+                    title={sku.is_excluded ? "Include in sale" : "Exclude from sale"}
+                  >
+                    {sku.is_excluded ? <ShieldX size={12} /> : <ShieldCheck size={12} />}
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Product Row ──────────────────────────────────────────────────────────────
+
+function ProductRow({ product, campaignEndAt, onAdd, onRemove, onUpdate }: {
+  product: MegaSaleListProduct;
+  campaignEndAt: string | null;
+  onAdd: (productId: number) => void;
+  onRemove: (entryId: number) => void;
+  onUpdate: (entryId: number, body: { is_active?: boolean; end_at?: string | null }) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [editTimer, setEditTimer] = useState(false);
+  const [timerVal, setTimerVal] = useState("");
+  const enrolled = product.mega_sale !== null;
+  const fallback = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect fill="#e5e7eb" width="40" height="40"/><text x="20" y="24" font-family="system-ui" font-size="14" fill="#9ca3af" text-anchor="middle">${product.name.charAt(0)}</text></svg>`)}`;
+
+  return (
+    <>
+      <tr className={cn(
+        "group border-b border-gray-100 dark:border-gray-800/80 transition-colors",
+        enrolled ? "hover:bg-brand-50/30 dark:hover:bg-brand-500/5" : "hover:bg-gray-50/60 dark:hover:bg-white/[0.02]"
+      )}>
+        {/* Expand toggle */}
+        <td className="px-3 py-3 w-8">
+          {enrolled && (
+            <button type="button" onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors">
+              {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+          )}
+        </td>
+        {/* Product info */}
+        <td className="px-3 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-gray-200/80 bg-gray-100 dark:border-gray-700/60 dark:bg-gray-800">
+              <img
+                src={product.thumbnail ? toPublicUrl(product.thumbnail) : fallback}
+                alt={product.name}
+                className="h-full w-full object-cover"
+                loading="lazy"
+                onError={(e) => { e.currentTarget.src = fallback; }}
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-gray-900 dark:text-white max-w-[250px]">{product.name}</div>
+              {product.name_bd && <div className="truncate text-xs text-brand-500 dark:text-brand-400 max-w-[250px]">{product.name_bd}</div>}
+            </div>
+          </div>
+        </td>
+        {/* Price */}
+        <td className="px-3 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+          {product.min_price === product.max_price
+            ? `৳${product.min_price}`
+            : `৳${product.min_price} - ৳${product.max_price}`}
+        </td>
+        {/* Stock & Variations */}
+        <td className="px-3 py-3">
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">{product.total_stock}</div>
+          <div className="text-[11px] text-gray-400">{product.variation_count} var.</div>
+        </td>
+        {/* Mega Sale Status */}
+        <td className="px-3 py-3">
+          {enrolled ? (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <span className={cn("h-2 w-2 rounded-full", product.mega_sale!.is_active ? "bg-success-500" : "bg-gray-400")} />
+                <span className={cn("text-xs font-semibold", product.mega_sale!.is_active ? "text-success-600 dark:text-success-400" : "text-gray-500")}>
+                  {product.mega_sale!.is_active ? "Active" : "Paused"}
+                </span>
+              </div>
+              {(product.mega_sale!.excluded_sku_count > 0) && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400">{product.mega_sale!.excluded_sku_count} SKU excluded</span>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-gray-400 italic">Not enrolled</span>
+          )}
+        </td>
+        {/* Timer */}
+        <td className="px-3 py-3 text-xs">
+          {enrolled ? (
+            editTimer ? (
+              <div className="flex items-center gap-1.5">
+                <input type="datetime-local" className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500" value={timerVal} onChange={(e) => setTimerVal(e.target.value)} />
+                <button onClick={() => { onUpdate(product.mega_sale!.entry_id, { end_at: fromBDDatetimeStr(timerVal) }); setEditTimer(false); }} className="h-6 w-6 flex items-center justify-center rounded border border-success-300 text-success-600 hover:bg-success-50" title="Save">✓</button>
+                <button onClick={() => setEditTimer(false)} className="h-6 w-6 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-50" title="Cancel"><X size={10} /></button>
+              </div>
+            ) : (
+              <button onClick={() => { setTimerVal(toLocalDatetimeStr(product.mega_sale!.end_at)); setEditTimer(true); }} className="flex items-center gap-1 text-gray-500 hover:text-brand-600 transition-colors">
+                <Clock size={11} />
+                {product.mega_sale!.end_at ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">{new Date(product.mega_sale!.end_at).toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                ) : (
+                  <span className="text-gray-400 italic">Campaign timer</span>
+                )}
+              </button>
+            )
+          ) : (
+            <span className="text-gray-300 dark:text-gray-600">—</span>
+          )}
+        </td>
+        {/* Actions */}
+        <td className="px-3 py-3">
+          <div className="flex items-center gap-1.5 justify-end">
+            {enrolled ? (
+              <>
+                <Switch
+                  key={`ms-toggle-${product.mega_sale!.entry_id}-${product.mega_sale!.is_active}`}
+                  label=""
+                  defaultChecked={product.mega_sale!.is_active}
+                  onChange={() => onUpdate(product.mega_sale!.entry_id, { is_active: !product.mega_sale!.is_active })}
+                />
+                <button onClick={() => setExpanded(!expanded)} className="h-7 w-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-brand-600 dark:border-gray-700 dark:hover:bg-gray-800" title="View variations">
+                  <Eye size={13} />
+                </button>
+                <button onClick={() => onRemove(product.mega_sale!.entry_id)} className="h-7 w-7 flex items-center justify-center rounded border border-error-200 text-error-600 hover:bg-error-50 dark:border-error-500/30" title="Remove from sale">
+                  <Trash2 size={13} />
+                </button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => onAdd(product.id)} className="h-7 text-xs gap-1 border-brand-300 text-brand-600 hover:bg-brand-50 dark:border-brand-500/40 dark:text-brand-400">
+                <Plus size={12} /> Add to Sale
+              </Button>
+            )}
+          </div>
+        </td>
+      </tr>
+      {/* Expanded variations */}
+      {expanded && enrolled && (
+        <tr>
+          <td colSpan={7} className="p-0">
+            <SkuOverridesPanel
+              megaSaleProductId={product.mega_sale!.entry_id}
+              productEndAt={product.mega_sale!.end_at}
+              campaignEndAt={campaignEndAt}
+            />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ─── Main MegaSaleManager ─────────────────────────────────────────────────────
+
+function MegaSaleManager() {
+  const { data, isLoading } = useMegaSaleSettings();
+  const updateSettings = useUpdateMegaSaleSettings();
+  const addProduct = useAddMegaSaleProduct();
+  const updateProduct = useUpdateMegaSaleProduct();
+  const deleteProduct = useDeleteMegaSaleProduct();
+
+  const [localActive, setLocalActive] = useState<boolean | null>(null);
+  const [localCampaignEnd, setLocalCampaignEnd] = useState("");
+  const [settingsDirty, setSettingsDirty] = useState(false);
+
+  useEffect(() => {
+    if (data?.settings) {
+      setLocalActive(data.settings.is_active);
+      setLocalCampaignEnd(toLocalDatetimeStr(data.settings.campaign_end_at));
+      setSettingsDirty(false);
+    }
+  }, [data?.settings]);
+
+  // Products list state
+  const [productTab, setProductTab] = useState<"all" | "enrolled">("enrolled");
+  const [searchQ, setSearchQ] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 15;
+
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(searchQ.trim()); setPage(0); }, 350);
+    return () => clearTimeout(t);
+  }, [searchQ]);
+
+  const productsQuery = useMegaSaleProductsList({
+    page: Math.floor(page / PAGE_SIZE) + 1,
+    limit: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    enrolled: productTab === "enrolled" ? "yes" : productTab === "all" ? "" : "",
+  });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; entryId: number | null; name: string }>({ open: false, entryId: null, name: "" });
+
+  const handleSaveSettings = async () => {
+    await updateSettings.mutateAsync({
+      is_active: localActive ?? false,
+      campaign_end_at: fromBDDatetimeStr(localCampaignEnd),
+    });
+    setSettingsDirty(false);
+  };
+
+  const enrolledCount = data?.products?.length ?? 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+      </div>
+    );
+  }
+
+  const isLive = localActive ?? data?.settings?.is_active ?? false;
+  const campaignEndAt = data?.settings?.campaign_end_at ?? null;
+
+  return (
+    <div className="space-y-6">
+      {/* Settings Card */}
+      <div className={cn(
+        "rounded-2xl border overflow-hidden transition-shadow",
+        isLive
+          ? "border-brand-200 bg-gradient-to-r from-brand-50 to-orange-50/30 shadow-[0_2px_12px_rgba(249,115,22,0.08)] dark:border-brand-500/30 dark:from-brand-500/5 dark:to-orange-500/5"
+          : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+      )}>
+        <div className="px-5 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-xl",
+              isLive
+                ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md"
+                : "bg-gray-100 text-gray-400 dark:bg-gray-800"
+            )}>
+              <Flame size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Campaign Settings</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{enrolledCount} product{enrolledCount !== 1 ? "s" : ""} enrolled</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={cn("text-xs font-bold uppercase tracking-wider", isLive ? "text-success-600 dark:text-success-400" : "text-gray-400")}>
+              {isLive ? "LIVE" : "OFF"}
+            </span>
+            <Switch
+              key={`ms-master-${localActive}`}
+              label=""
+              defaultChecked={isLive}
+              onChange={() => { setLocalActive(!isLive); setSettingsDirty(true); }}
+            />
+          </div>
+        </div>
+        <div className="px-5 pb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+          <div className="flex-1">
+            <Label htmlFor="ms-campaign-end">Campaign End Time <span className="text-[10px] font-normal text-gray-400">(Bangladesh Time)</span></Label>
+            <input
+              id="ms-campaign-end"
+              type="datetime-local"
+              className="mt-1 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              value={localCampaignEnd}
+              onChange={(e) => { setLocalCampaignEnd(e.target.value); setSettingsDirty(true); }}
+            />
+            <p className="mt-1 text-[11px] text-gray-400">Global countdown banner. Products without individual timers use this.</p>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSaveSettings}
+            disabled={!settingsDirty || updateSettings.isPending}
+            className="h-11 px-5"
+          >
+            {updateSettings.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power size={14} />}
+            Save Settings
+          </Button>
+        </div>
+      </div>
+
+      {/* Products Section */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
+        {/* Tab bar + Search */}
+        <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="inline-flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800">
+              {(["enrolled", "all"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setProductTab(t); setPage(0); }}
+                  className={cn(
+                    "rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                    productTab === t
+                      ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
+                      : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+                  )}
+                >
+                  {t === "enrolled" ? `Enrolled (${enrolledCount})` : "All Products"}
+                </button>
+              ))}
+            </div>
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+                placeholder="Search products…"
+                className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Products table */}
+        <div className="overflow-x-auto" style={{ maxHeight: "calc(100vh - 420px)" }}>
+          <table className="w-full min-w-[900px] text-sm">
+            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+              <tr className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                <th className="px-3 py-3 w-8" />
+                <th className="px-3 py-3 text-left min-w-[240px]">Product</th>
+                <th className="px-3 py-3 text-left min-w-[120px]">Price</th>
+                <th className="px-3 py-3 text-left min-w-[80px]">Stock</th>
+                <th className="px-3 py-3 text-left min-w-[100px]">Mega Sale</th>
+                <th className="px-3 py-3 text-left min-w-[160px]">Timer</th>
+                <th className="px-3 py-3 text-right min-w-[180px]">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productsQuery.isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={`skel-${i}`} className="border-b border-gray-100 dark:border-gray-800">
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <td key={j} className="px-3 py-3"><div className="h-4 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700" /></td>
+                    ))}
+                  </tr>
+                ))
+              ) : !productsQuery.data?.products?.length ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-16 text-center">
+                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">No products found</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      {productTab === "enrolled" ? "No products enrolled in Mega Sale yet." : "Try adjusting your search."}
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                productsQuery.data.products.map((p) => (
+                  <ProductRow
+                    key={p.id}
+                    product={p}
+                    campaignEndAt={campaignEndAt}
+                    onAdd={(productId) => addProduct.mutate({ product_id: productId })}
+                    onRemove={(entryId) => {
+                      const name = productsQuery.data?.products?.find((x) => x.mega_sale?.entry_id === entryId)?.name ?? "";
+                      setDeleteConfirm({ open: true, entryId, name });
+                    }}
+                    onUpdate={(entryId, body) => updateProduct.mutate({ id: entryId, ...body })}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {productsQuery.data?.pagination && productsQuery.data.pagination.total > PAGE_SIZE && (
+          <div className="border-t border-gray-200 dark:border-gray-700 p-3">
+            <Pagination
+              total={productsQuery.data.pagination.total}
+              limit={PAGE_SIZE}
+              offset={page}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Delete confirmation */}
+      <ConfirmModal
+        open={deleteConfirm.open}
+        onClose={() => { if (deleteProduct.isPending) return; setDeleteConfirm({ open: false, entryId: null, name: "" }); }}
+        onConfirm={() => {
+          if (deleteConfirm.entryId) {
+            deleteProduct.mutate(deleteConfirm.entryId, {
+              onSuccess: () => setDeleteConfirm({ open: false, entryId: null, name: "" }),
+            });
+          }
+        }}
+        loading={deleteProduct.isPending}
+        title="Remove from Mega Sale?"
+        subtitle="This will remove the product and all its variations from the Mega Sale."
+        message={deleteConfirm.name ? `"${deleteConfirm.name}"` : undefined}
+        consequenceLines={[
+          "All variations of this product will be removed from Mega Sale",
+          "Any SKU-level overrides will be deleted",
+          "The product itself won't be affected",
+        ]}
+        confirmLabel="Remove"
+      />
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const TAB_OPTIONS: { label: string; value: "bulk" | "combo"; icon: React.ReactNode }[] = [
+const TAB_OPTIONS: { label: string; value: "bulk" | "combo" | "megasale"; icon: React.ReactNode }[] = [
   { label: "Bulk Rules", value: "bulk", icon: <Layers size={14} /> },
   { label: "Combo Rules", value: "combo", icon: <PackagePlus size={14} /> },
+  { label: "Mega Sale", value: "megasale", icon: <Flame size={14} /> },
 ];
 
 export default function DiscountRulesPage() {
-  const [tab, setTab] = useState<"bulk" | "combo">("bulk");
-
-  // ── Sliding indicator ──
+  const [tab, setTab] = useState<"bulk" | "combo" | "megasale">("bulk");
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
@@ -1079,64 +1645,29 @@ export default function DiscountRulesPage() {
     const btn = buttonRefs.current[activeIndex];
     const container = containerRef.current;
     if (!btn || !container) return;
-
     const btnRect = btn.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-
-    setPillStyle({
-      left: btnRect.left - containerRect.left,
-      width: btnRect.width,
-    });
+    setPillStyle({ left: btnRect.left - containerRect.left, width: btnRect.width });
   }, [tab]);
 
   return (
     <>
       <div className="space-y-1 mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Discount Rules</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Manage bulk and combo discount rules for your store.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Manage bulk, combo discount rules and mega sale campaigns.</p>
       </div>
-
-      {/* ── Sliding tab indicator ── */}
       <div className="mb-6">
-        <div
-          ref={containerRef}
-          className="relative inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800"
-        >
-          {/* Sliding pill */}
-          <span
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none absolute top-1 bottom-1 rounded-lg",
-              "bg-white shadow-sm ring-1 ring-gray-200",
-              "dark:bg-gray-700 dark:ring-white/10",
-              "transition-[left,width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
-            )}
-            style={{ left: pillStyle.left, width: pillStyle.width }}
-          />
-
+        <div ref={containerRef} className="relative inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+          <span aria-hidden="true" className={cn("pointer-events-none absolute top-1 bottom-1 rounded-lg", "bg-white shadow-sm ring-1 ring-gray-200", "dark:bg-gray-700 dark:ring-white/10", "transition-[left,width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]")} style={{ left: pillStyle.left, width: pillStyle.width }} />
           {TAB_OPTIONS.map((opt, i) => (
-            <button
-              key={opt.value}
-              ref={(el) => { buttonRefs.current[i] = el; }}
-              type="button"
-              onClick={() => setTab(opt.value)}
-              className={cn(
-                "relative z-10 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold",
-                "transition-colors duration-200",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40",
-                tab === opt.value
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
-              )}
-            >
-              {opt.icon}
-              {opt.label}
-            </button>
+            <button key={opt.value} ref={(el) => { buttonRefs.current[i] = el; }} type="button" onClick={() => setTab(opt.value)} className={cn("relative z-10 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold", "transition-colors duration-200", "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40", tab === opt.value ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white")}>{opt.icon}{opt.label}</button>
           ))}
         </div>
       </div>
-
-      {tab === "bulk" ? <BulkRulesManager /> : <ComboRulesManager />}
+      {tab === "bulk" && <BulkRulesManager />}
+      {tab === "combo" && <ComboRulesManager />}
+      {tab === "megasale" && <MegaSaleManager />}
     </>
   );
 }
+

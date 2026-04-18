@@ -748,7 +748,7 @@ function SystemPermissionsPanel({
   const currentVal = (r: FlatRow) => eKey(r) in edits ? edits[eKey(r)] : r.value;
 
   // Sections locked behind a "Coming Soon" overlay
-  const COMING_SOON_SECTIONS = new Set(["storefront_visibility", "announcement"]);
+  const COMING_SOON_SECTIONS = new Set<string>([]);
   const isComingSoon = (section: string, scope: string) =>
     COMING_SOON_SECTIONS.has(section) || (section === "order_place_permission" && scope === "single_page");
 
