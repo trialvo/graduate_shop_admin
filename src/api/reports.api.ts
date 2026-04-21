@@ -47,10 +47,12 @@ export type ReportReply = {
   reply_via: string;
   created_at: string;
   admin_name?: string | null;
+  images?: string[];
 };
 
 export type ReportDetail = Report & {
   replies: ReportReply[];
+  images?: string[];
   user_name?: string | null;
   user_avatar?: string | null;
   user_email?: string | null;
@@ -185,9 +187,20 @@ export async function adminGetReport(id: number): Promise<{ success: boolean; da
   return data;
 }
 
-// Admin: reply
-export async function adminReplyReport(id: number, body: { reply_text: string; via?: string }): Promise<{ success: boolean; message: string }> {
-  const { data } = await api.post(`/admin/reports/${id}/reply`, body);
+// Admin: reply (supports image attachments via FormData)
+export async function adminReplyReport(
+  id: number,
+  body: { reply_text: string; via?: string; images?: File[] }
+): Promise<{ success: boolean; message: string }> {
+  const fd = new FormData();
+  fd.append("reply_text", body.reply_text);
+  if (body.via) fd.append("via", body.via);
+  if (body.images) {
+    body.images.forEach(file => fd.append("report_images", file));
+  }
+  const { data } = await api.post(`/admin/reports/${id}/reply`, fd, {
+    headers: { "Content-Type": undefined },
+  });
   return data;
 }
 

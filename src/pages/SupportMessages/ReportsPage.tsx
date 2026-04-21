@@ -8,7 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, Archive, CheckCircle2, Clock, FileText,
-  Filter, Inbox, Loader2, Mail, MessageSquare, RefreshCw,
+  Filter, ImagePlus, Inbox, Loader2, Mail, MessageSquare, RefreshCw,
   Search, SlidersHorizontal, Trash2, UserCheck, X, XCircle, Zap,
 } from "lucide-react";
 import PageMeta from "@/components/common/PageMeta";
@@ -262,6 +262,7 @@ function DetailPanel({
   const [replyChannels, setReplyChannels] = useState<Set<"email" | "sms">>(new Set(["email"]));
   const [showReply, setShowReply]     = useState(false);
   const [assignId, setAssignId]       = useState<number | "">("");
+  const [replyImages, setReplyImages] = useState<File[]>([]);
 
   const toggleChannel = (ch: "email" | "sms") => {
     setReplyChannels(prev => {
@@ -272,7 +273,7 @@ function DetailPanel({
     });
   };
 
-  useEffect(() => { setReplyText(""); setShowReply(false); setAssignId(""); setReplyChannels(new Set(["email"])); }, [reportId]);
+  useEffect(() => { setReplyText(""); setShowReply(false); setAssignId(""); setReplyChannels(new Set(["email"])); setReplyImages([]); }, [reportId]);
 
   if (isLoading) return (
     <div className="flex h-full items-center justify-center py-20">
@@ -283,9 +284,9 @@ function DetailPanel({
 
   const handleReply = async () => {
     if (!replyText.trim()) return;
-    await reply.mutateAsync({ id: report.id, body: { reply_text: replyText, via: [...replyChannels].join(",") } });
+    await reply.mutateAsync({ id: report.id, body: { reply_text: replyText, via: [...replyChannels].join(","), images: replyImages.length > 0 ? replyImages : undefined } });
     toast.success("Reply sent");
-    setReplyText(""); setShowReply(false);
+    setReplyText(""); setShowReply(false); setReplyImages([]);
   };
 
   const handleAssign = async () => {
@@ -338,6 +339,17 @@ function DetailPanel({
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">Description</p>
           <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{report.description}</p>
+          {/* Report-level images */}
+          {report.images && report.images.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {report.images.map((src, i) => (
+                <a key={i} href={toPublicUrl(src)} target="_blank" rel="noopener noreferrer"
+                  className="block h-16 w-16 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 transition-shadow hover:shadow-md">
+                  <img src={toPublicUrl(src)} alt={`Attachment ${i + 1}`} className="h-full w-full object-cover" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Replies thread */}
@@ -352,6 +364,17 @@ function DetailPanel({
                   <span className="ml-auto text-[10px] text-gray-400 uppercase">{r.reply_via}</span>
                 </div>
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{r.reply_text}</p>
+                {/* Reply images */}
+                {r.images && r.images.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {r.images.map((src, i) => (
+                      <a key={i} href={toPublicUrl(src)} target="_blank" rel="noopener noreferrer"
+                        className="block h-14 w-14 overflow-hidden rounded-lg border border-brand-200/50 dark:border-brand-500/20 transition-shadow hover:shadow-md">
+                        <img src={toPublicUrl(src)} alt={`Reply image ${i + 1}`} className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -405,6 +428,25 @@ function DetailPanel({
               onChange={e => setReplyText(e.target.value)}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300 resize-none"
             />
+            {/* Reply image attachment row */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {replyImages.map((file, i) => (
+                <div key={i} className="group relative h-12 w-12 rounded-lg border border-brand-200/50 bg-white overflow-hidden">
+                  <img src={URL.createObjectURL(file)} alt={`att-${i + 1}`} className="h-full w-full object-cover" />
+                  <button type="button" onClick={() => setReplyImages(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition group-hover:opacity-100">
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+              {replyImages.length < 4 && (
+                <label className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-lg border border-dashed border-brand-300 bg-white/60 text-brand-400 transition hover:border-brand-500 hover:bg-brand-50">
+                  <ImagePlus size={16} />
+                  <input type="file" accept="image/*" multiple className="hidden"
+                    onChange={e => { const files = Array.from(e.target.files || []); e.target.value = ''; setReplyImages(prev => [...prev, ...files].slice(0, 4)); }} />
+                </label>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Via:</label>
               {(["email", "sms"] as const).map(v => {
@@ -437,7 +479,7 @@ function DetailPanel({
                 {reply.isPending ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
                 Send
               </button>
-              <button type="button" onClick={() => setShowReply(false)}>
+              <button type="button" onClick={() => { setShowReply(false); setReplyImages([]); }}>
                 <X size={16} className="text-gray-400 hover:text-gray-600" />
               </button>
             </div>
