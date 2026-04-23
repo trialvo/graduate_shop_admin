@@ -277,6 +277,17 @@ function getErrMessage(err: any, fallback: string) {
   );
 }
 
+/** Lightweight polling gate — returns a monotonic version counter. */
+export async function getOrderEventVersion(): Promise<number> {
+  try {
+    const res = await api.get<{ version: number }>("/admin/orders/event-version");
+    return res.data.version;
+  } catch {
+    // On any error, return -1 to force a full refresh next cycle
+    return -1;
+  }
+}
+
 export async function getAdminOrders(params: OrdersListParams) {
   try {
     const res = await api.get<OrdersListResponse>("/admin/orders", {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { keepPreviousData, useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -22,7 +22,7 @@ import {
   STATUS_OPTIONS,
 } from "./orderData";
 
-import { getAdminOrders, ordersKeys, bulkSyncCourierStatus, type ApiOrder } from "@/api/orders.api";
+import { getAdminOrders, getOrderEventVersion, ordersKeys, bulkSyncCourierStatus, type ApiOrder } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 
 function nowLabel() {
@@ -313,12 +313,42 @@ export default function AllOrdersView() {
     offset,
   ]);
 
+  // ── Version-gated polling ──────────────────────────────────────────────────
+  // Instead of 13+ heavy queries every 30s, we poll a single lightweight
+  // counter endpoint every 10s and only invalidate when something changes.
+  const lastVersionRef = useRef<number | null>(null);
+
+  const versionQuery = useQuery({
+    queryKey: ["order-event-version"],
+    queryFn: getOrderEventVersion,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+    staleTime: 5_000,
+  });
+
+  useEffect(() => {
+    const v = versionQuery.data;
+    if (v === undefined) return; // still loading
+
+    // First load — just store the version, don't invalidate
+    if (lastVersionRef.current === null) {
+      lastVersionRef.current = v;
+      return;
+    }
+
+    // Version changed — invalidate all order queries
+    if (v !== lastVersionRef.current) {
+      lastVersionRef.current = v;
+      queryClient.invalidateQueries({ queryKey: ordersKeys.all });
+      setRefreshedAt(nowLabel());
+    }
+  }, [versionQuery.data, queryClient]);
+  // ────────────────────────────────────────────────────────────────────────────
+
   const ordersQuery = useQuery({
     queryKey: ordersKeys.list(listParams),
     queryFn: () => getAdminOrders(listParams),
     placeholderData: keepPreviousData,
-    refetchInterval: 30_000,
-    refetchIntervalInBackground: true,
     retry: 1,
   });
 
@@ -326,8 +356,6 @@ export default function AllOrdersView() {
   const summaryQuery = useQuery({
     queryKey: ordersKeys.list({ limit: 1, offset: 0 }),
     queryFn: () => getAdminOrders({ limit: 1, offset: 0 }),
-    refetchInterval: 30_000,
-    refetchIntervalInBackground: true,
     retry: 1,
     staleTime: 30_000,
   });
@@ -347,8 +375,6 @@ export default function AllOrdersView() {
           offset: 0,
         }),
       enabled: true,
-      refetchInterval: 30_000,
-      refetchIntervalInBackground: true,
       retry: 1,
       staleTime: 30_000,
     })),
