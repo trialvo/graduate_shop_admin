@@ -50,6 +50,9 @@ export type ProductEntity = {
   created_at: string;
   updated_at: string;
 
+  avg_rating?: number;
+  review_count?: number;
+
   images: ProductImage[];
   product_images?: ProductImage[];
   variations: ProductVariation[];

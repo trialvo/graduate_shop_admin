@@ -65,6 +65,7 @@ import UserAuditLogsPage from "./pages/Admins/UserAuditLogsPage";
 import AnnouncementsListPage from "./pages/Announcements/AnnouncementsListPage";
 import CreateAnnouncementPage from "./pages/Announcements/CreateAnnouncementPage";
 import ReportsPage from "./pages/SupportMessages/ReportsPage";
+import ReviewsPage from "./pages/Products/ReviewsPage";
 
 export default function App() {
   return (
@@ -178,6 +179,9 @@ export default function App() {
 
               {/* ✅ V2-036: Support Reports */}
               <Route path="/support-reports" element={<ReportsPage />} />
+
+              {/* ✅ V2-050: Product Reviews */}
+              <Route path="/product-reviews" element={<ReviewsPage />} />
             </Route>
           </Route>
 

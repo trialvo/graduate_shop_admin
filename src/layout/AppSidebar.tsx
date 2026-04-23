@@ -74,6 +74,7 @@ const navItems: NavItem[] = [
       { nameKey: "productCategory", path: "/product-category", pro: false },
       { nameKey: "productAttributes", path: "/product-attributes", pro: false },
       { nameKey: "discountRules", path: "/discount-rules", pro: false },
+      { nameKey: "productReviews", path: "/product-reviews", pro: false, new: true },
     ],
   },
   {

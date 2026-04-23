@@ -96,6 +96,10 @@ export function toUiProduct(
     salePrice,
 
     status: entity.status ? "active" : "inactive",
+
+    avgRating: Number(entity.avg_rating) || 0,
+    reviewCount: entity.review_count || 0,
+
     sku: firstSku(variations),
     createdAt: new Date(entity.created_at).toLocaleString(),
   };

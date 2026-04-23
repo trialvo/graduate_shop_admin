@@ -25,6 +25,9 @@ export type Product = {
 
   status: ProductStatus;
 
+  avgRating: number;
+  reviewCount: number;
+
   sku: string;
   createdAt: string;
 };

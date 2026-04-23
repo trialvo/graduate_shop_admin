@@ -1,7 +1,7 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { PackageSearch, Pencil, Plus, Trash2 } from "lucide-react";
+import { PackageSearch, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -133,6 +133,9 @@ function TableHeadRow({ t }: Readonly<TranslationProps>) {
       </TableCell>
       <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[200px]")}>
         {t("products.table.price")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[120px]")}>
+        Rating
       </TableCell>
       <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[120px]")}>
         {t("products.table.status")}
@@ -397,6 +400,23 @@ function ProductDataRow({
       <StockInfoCell product={product} t={t} onStockPlus={onStockPlus} />
       <PriceInfoCell product={product} t={t} />
 
+      {/* Rating */}
+      <TableCell className="px-4 py-3.5">
+        {product.reviewCount > 0 ? (
+          <div className="flex items-center gap-1.5">
+            <Star size={14} className="text-amber-400 fill-amber-400" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+              {product.avgRating.toFixed(1)}
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-gray-500">
+              ({product.reviewCount})
+            </span>
+          </div>
+        ) : (
+          <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+        )}
+      </TableCell>
+
       {/* Status toggle */}
       <TableCell className="px-4 py-3.5">
         <StatusToggle
@@ -413,7 +433,7 @@ function ProductDataRow({
 function EmptyStateRow({ t }: Readonly<TranslationProps>) {
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={8} className="px-4 py-20">
+      <TableCell colSpan={9} className="px-4 py-20">
         <div className="flex flex-col items-center gap-3 text-center">
           {/* Illustration circle */}
           <div className={cn(
