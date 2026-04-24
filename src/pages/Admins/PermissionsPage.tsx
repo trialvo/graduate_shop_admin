@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, Bell, BellRing, KeyRound, Lock,
-  Mail, MessageSquare, Package, Percent, Plus, Save, Settings2,
-  ShoppingCart, Smartphone, Trash2, X, Zap,
+  Mail, MessageSquare, Percent, Save, Settings2,
+  ShoppingCart, Smartphone, X, Zap,
 } from "lucide-react";
 import PageMeta from "@/components/common/PageMeta";
 import { usePermissionConfig, usePatchPermissionConfig } from "@/hooks/usePermissions";
@@ -18,12 +18,10 @@ import { toPublicUrl } from "@/config/env";
 import type { AdminNotificationPermission, SetNotificationPermissionsPayload } from "@/api/notification-permissions.api";
 import Switch from "@/components/form/switch/Switch";
 import Select from "@/components/form/Select";
-import DatePicker from "@/components/form/date-picker";
-import TimeSelect from "@/components/form/time-select/TimeSelect";
-import { getProducts } from "@/api/products.api";
+
 import { cn } from "@/lib/utils";
 
-// ─── helpers ─────────────────────────────────────────────────────────────── //
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
 type PermRow = AdminNotificationPermission & { dirty: boolean };
 
 function initials(name: string | null | undefined) {
@@ -31,7 +29,7 @@ function initials(name: string | null | undefined) {
   return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "A";
 }
 
-// ─── Rich metadata derived from PermissionSettingsDB.js ──────────────────── //
+// â”€â”€â”€ Rich metadata derived from PermissionSettingsDB.js â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
 
 /** Section keys displayed in the System Settings tab */
 const SECTION_ORDER = [
@@ -40,7 +38,6 @@ const SECTION_ORDER = [
   "order_place_permission",
   "order_status_notification_user",
   "overall_cart_discount",
-  "storefront_visibility",
   "announcement",
 ];
 
@@ -103,11 +100,6 @@ const SECTION_META: Record<string, SectionMeta> = {
     description: "Automatic discount applied to the entire cart based on configurable rules.",
     icon: <Percent size={15} />,
   },
-  storefront_visibility: {
-    label: "Storefront Visibility",
-    description: "Control whether optional storefront pages are visible to users.",
-    icon: <Settings2 size={15} />,
-  },
   announcement: {
     label: "Announcements",
     description: "System behaviour for scheduled and automated announcements.",
@@ -131,15 +123,6 @@ const KEY_META: Record<string, KeyMeta> = {
   discount_value: { label: "Discount Value", description: "The discount amount — flat (৳) or percentage (%) depending on Discount Type." },
   basis: { label: "Apply Based On", description: "Which threshold triggers the discount — item count or cart total price." },
   apply_with_bulk_combo: { label: "Stack With Bulk / Combo Offers", description: "When enabled, this discount applies on top of existing bulk or combo deals." },
-  show_megasale: { label: "Show Mega Sale Page", description: "Display the Mega Sale page and promotional banners on the storefront. When disabled, all Mega Sale content is hidden from customers." },
-  megasale_campaign_end_at: { label: "Campaign End Date & Time", description: "When the main Mega Sale countdown ends. This controls the global timer displayed on the storefront banner." },
-  megasale_product_end_at: { label: "Default Product Timer", description: "A default countdown shown on each product card during the sale. Products with individual timers (below) will use their own end time instead." },
-  megasale_product_timers: {
-    label: "Product-wise Timers",
-    description: "Set individual countdown timers for specific products. Search and select a product, then choose when its sale ends.",
-  },
-  megasale_product_ids: { label: "Featured Mega Sale Products", description: "Choose which products appear in the Mega Sale section. Enter product IDs separated by commas (e.g. 12, 45, 78)." },
-  megasale_product_limit: { label: "Maximum Products Shown", description: "Limit how many products are visible on the Mega Sale page. Must be at least 1." },
   auto_send_scheduled_announcement: { label: "Auto-Send Scheduled Announcements", description: "When enabled, the system automatically sends scheduled announcements at their configured time without manual admin action." },
 };
 
@@ -173,84 +156,8 @@ const KEY_ICON: Record<string, React.ReactNode> = {
   firebase_push_notification: <Bell size={13} />,
 };
 
-const MEGASALE_DATE_KEYS = new Set(["megasale_campaign_end_at", "megasale_product_end_at"]);
-const MEGASALE_IDS_KEY = "megasale_product_ids";
-const MEGASALE_LIMIT_KEY = "megasale_product_limit";
-const MEGASALE_TIMERS_KEY = "megasale_product_timers";
 
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
 
-function toDateTimeLocalValue(raw: unknown): string {
-  if (typeof raw !== "string" || !raw.trim()) return "";
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return "";
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
-function toIsoWithOffset(localValue: string): string {
-  const trimmed = localValue.trim();
-  if (!trimmed) return "";
-  const date = new Date(trimmed);
-  if (Number.isNaN(date.getTime())) return "";
-
-  const offsetMinutes = -date.getTimezoneOffset();
-  const sign = offsetMinutes >= 0 ? "+" : "-";
-  const abs = Math.abs(offsetMinutes);
-  const offsetHours = pad2(Math.floor(abs / 60));
-  const offsetMins = pad2(abs % 60);
-
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}:00${sign}${offsetHours}:${offsetMins}`;
-}
-
-function normalizeMegaSaleIds(value: string): string {
-  const ids = value
-    .split(",")
-    .map((part) => Number.parseInt(part.trim(), 10))
-    .filter((id) => Number.isFinite(id) && id > 0);
-  return Array.from(new Set(ids)).join(",");
-}
-
-function normalizeMegaSaleProductTimers(value: string): string {
-  const timerMap = new Map<number, string>();
-  const entries = value
-    .split(/[\n,;]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  for (const entry of entries) {
-    let pair = entry.split("=");
-    if (pair.length < 2) pair = entry.split("|");
-    if (pair.length < 2) continue;
-
-    const productId = Number.parseInt((pair[0] || "").trim(), 10);
-    if (!Number.isFinite(productId) || productId <= 0) continue;
-
-    const dateRaw = pair.slice(1).join("=").trim();
-    const date = new Date(dateRaw);
-    if (Number.isNaN(date.getTime())) continue;
-
-    const localValue = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-    const isoValue = toIsoWithOffset(localValue);
-    if (!isoValue) continue;
-
-    timerMap.set(productId, isoValue);
-  }
-
-  return Array.from(timerMap.entries())
-    .map(([productId, isoValue]) => `${productId}=${isoValue}`)
-    .join(",");
-}
-
-function toMegaSaleTimersTextAreaValue(value: string): string {
-  if (!value.trim()) return "";
-  return value
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join("\n");
-}
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (typeof error !== "object" || error === null) return fallback;
@@ -266,337 +173,8 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+// â”€â”€â”€ SystemPermissionsPanel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
 
-
-// ─── DateTimeInput ────────────────────────────────────────────────────────── //
-
-function DateTimeInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const localValue = toDateTimeLocalValue(value);
-  const datePart = localValue.slice(0, 10);
-  const timePart = localValue.slice(11, 16) || "00:00";
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-[140px]">
-        <DatePicker
-          value={datePart}
-          onChange={(d) => {
-            if (!d) { onChange(""); return; }
-            onChange(toIsoWithOffset(`${d}T${timePart}`));
-          }}
-          placeholder="Select date"
-          showToday
-          showClear={false}
-        />
-      </div>
-      <TimeSelect
-        value={timePart}
-        onChange={(t) => {
-          if (!datePart) return;
-          onChange(toIsoWithOffset(`${datePart}T${t}`));
-        }}
-      />
-    </div>
-  );
-}
-
-// ─── ProductTimerEditor ───────────────────────────────────────────────────── //
-
-function ProductTimerEditor({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const entries = useMemo(() => {
-    if (!value.trim()) return [] as { productId: number; dateTime: string }[];
-    return value
-      .split(",")
-      .map((part) => {
-        const [idStr, ...rest] = part.trim().split("=");
-        return { productId: parseInt(idStr, 10), dateTime: rest.join("=") };
-      })
-      .filter((e) => !isNaN(e.productId) && e.dateTime);
-  }, [value]);
-
-  const [newProductId, setNewProductId] = useState<number | null>(null);
-  const [newDate, setNewDate] = useState("");
-  const [newTime, setNewTime] = useState("23:59");
-
-  const [productOptions, setProductOptions] = useState<{ value: string; label: string }[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingProducts(true);
-    getProducts({ limit: 200 })
-      .then((res) => {
-        if (cancelled) return;
-        setProductOptions(
-          res.products.map((p) => ({ value: String(p.id), label: `#${p.id} — ${p.name}` })),
-        );
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoadingProducts(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const serialize = (arr: { productId: number; dateTime: string }[]) =>
-    arr.map((e) => `${e.productId}=${e.dateTime}`).join(",");
-
-  const getDate = (dt: string) => {
-    const d = new Date(dt);
-    if (isNaN(d.getTime())) return "";
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  };
-
-  const getTime = (dt: string) => {
-    const d = new Date(dt);
-    if (isNaN(d.getTime())) return "23:59";
-    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  };
-
-  const productNameMap = useMemo(() => {
-    const map = new Map<number, string>();
-    productOptions.forEach((o) => map.set(Number(o.value), o.label));
-    return map;
-  }, [productOptions]);
-
-  const removeEntry = (pid: number) => {
-    onChange(serialize(entries.filter((e) => e.productId !== pid)));
-  };
-
-  const updateDate = (pid: number, newD: string) => {
-    const updated = entries.map((e) => {
-      if (e.productId !== pid) return e;
-      const t = getTime(e.dateTime);
-      return { ...e, dateTime: toIsoWithOffset(`${newD}T${t}`) };
-    });
-    onChange(serialize(updated));
-  };
-
-  const updateTime = (pid: number, newT: string) => {
-    const updated = entries.map((e) => {
-      if (e.productId !== pid) return e;
-      const d = getDate(e.dateTime);
-      if (!d) return e;
-      return { ...e, dateTime: toIsoWithOffset(`${d}T${newT}`) };
-    });
-    onChange(serialize(updated));
-  };
-
-  const addEntry = () => {
-    if (!newProductId || !newDate) return;
-    if (entries.some((e) => e.productId === newProductId)) {
-      toast.error("This product already has a timer.");
-      return;
-    }
-    const iso = toIsoWithOffset(`${newDate}T${newTime || "23:59"}`);
-    onChange(serialize([...entries, { productId: newProductId, dateTime: iso }]));
-    setNewProductId(null);
-    setNewDate("");
-    setNewTime("23:59");
-  };
-
-  return (
-    <div className="w-full space-y-2.5">
-      {entries.map((entry) => (
-        <div
-          key={entry.productId}
-          className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2.5 dark:border-gray-800 dark:bg-gray-800/30"
-        >
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 shrink-0">
-            <Package size={12} />
-            {productNameMap.get(entry.productId) ?? `Product #${entry.productId}`}
-          </span>
-
-          <div className="ml-auto flex items-center gap-2">
-            <div className="w-[130px]">
-              <DatePicker
-                value={getDate(entry.dateTime)}
-                onChange={(v) => updateDate(entry.productId, v)}
-                placeholder="Date"
-                showToday={false}
-                showClear={false}
-              />
-            </div>
-            <TimeSelect
-              value={getTime(entry.dateTime)}
-              onChange={(t) => updateTime(entry.productId, t)}
-              size="sm"
-            />
-            <button
-              type="button"
-              onClick={() => removeEntry(entry.productId)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 dark:hover:bg-error-500/10"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-          Add Product Timer
-        </p>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="min-w-[220px] flex-1">
-            <Select
-              options={productOptions}
-              value={newProductId ? String(newProductId) : ""}
-              onChange={(v) => setNewProductId(v ? Number(v) : null)}
-              placeholder="Search product..."
-              searchable
-              isLoading={loadingProducts}
-            />
-          </div>
-          <div className="w-[130px]">
-            <DatePicker
-              value={newDate}
-              onChange={setNewDate}
-              placeholder="End date"
-              showToday
-              showClear={false}
-            />
-          </div>
-          <TimeSelect
-            value={newTime}
-            onChange={setNewTime}
-          />
-          <button
-            type="button"
-            onClick={addEntry}
-            disabled={!newProductId || !newDate}
-            className={cn(
-              "inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition-colors",
-              newProductId && newDate
-                ? "bg-brand-500 text-white hover:bg-brand-600"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600",
-            )}
-          >
-            <Plus size={14} />
-            Add
-          </button>
-        </div>
-      </div>
-
-      {entries.length === 0 && (
-        <p className="text-center text-xs text-gray-400 py-2 italic">
-          No product timers set. Use the form above to add one.
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── ProductIdsEditor ─────────────────────────────────────────────────────── //
-
-function ProductIdsEditor({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const ids = useMemo(() => {
-    if (!value.trim()) return [] as number[];
-    return value
-      .split(",")
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n) && n > 0);
-  }, [value]);
-
-  const [productOptions, setProductOptions] = useState<{ value: string; label: string }[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingProducts(true);
-    getProducts({ limit: 200 })
-      .then((res) => {
-        if (cancelled) return;
-        setProductOptions(
-          res.products.map((p) => ({ value: String(p.id), label: `#${p.id} — ${p.name}` })),
-        );
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoadingProducts(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const productNameMap = useMemo(() => {
-    const map = new Map<number, string>();
-    productOptions.forEach((o) => map.set(Number(o.value), o.label));
-    return map;
-  }, [productOptions]);
-
-  const removeId = (id: number) => {
-    onChange(ids.filter((i) => i !== id).join(","));
-  };
-
-  const addId = (idStr: string) => {
-    const id = parseInt(idStr, 10);
-    if (!id || ids.includes(id)) return;
-    onChange([...ids, id].join(","));
-  };
-
-  const availableOptions = useMemo(
-    () => productOptions.filter((o) => !ids.includes(Number(o.value))),
-    [productOptions, ids],
-  );
-
-  return (
-    <div className="w-full space-y-2.5">
-      {ids.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {ids.map((id) => (
-            <span
-              key={id}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 pl-2.5 pr-1 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
-            >
-              <Package size={11} />
-              {productNameMap.get(id) ?? `Product #${id}`}
-              <button
-                type="button"
-                onClick={() => removeId(id)}
-                className="ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md text-brand-400 transition-colors hover:bg-brand-100 hover:text-brand-600 dark:hover:bg-brand-500/20"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="max-w-sm">
-        <Select
-          options={availableOptions}
-          value=""
-          onChange={addId}
-          placeholder="Search and add a product..."
-          searchable
-          isLoading={loadingProducts}
-        />
-      </div>
-
-      {ids.length === 0 && (
-        <p className="text-xs text-gray-400 italic">
-          No products selected. Use the dropdown above to add products.
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── SystemPermissionsPanel ───────────────────────────────────────────────── //
 
 // Flatten the nested data object into a renderable list of { section, scope, key, value, valueType, enumValues }
 type FlatRow = {
@@ -721,7 +299,7 @@ function SystemPermissionsPanel({
     if (saveRef) saveRef.current = handleSave;
   }, [saveRef, handleSave]);
 
-  // ── Early returns AFTER all hooks ──────────────────────────────────────── //
+  // â”€â”€ Early returns AFTER all hooks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
   if (isLoading)
     return <p className="text-sm text-gray-500 p-4">Loading system permissions…</p>;
   if (isError || !data?.data)
@@ -743,7 +321,7 @@ function SystemPermissionsPanel({
 
   const flat = flattenPermissionData(data.data);
   // Skip the 4 admin notification sections — they live in the Admin Notifications tab
-  const groups = groupFlatRows(flat).filter(g => !ADMIN_NOTIF_SECTIONS.has(g.section));
+  const groups = groupFlatRows(flat).filter(g => !ADMIN_NOTIF_SECTIONS.has(g.section) && g.section !== "storefront_visibility");
   const hasChanges = Object.keys(edits).length > 0;
   const currentVal = (r: FlatRow) => eKey(r) in edits ? edits[eKey(r)] : r.value;
 
@@ -813,10 +391,7 @@ function SystemPermissionsPanel({
               const keyMeta = KEY_META[row.key];
               const channelIcon = KEY_ICON[row.key];
 
-              const isMegaSaleDateKey = MEGASALE_DATE_KEYS.has(row.key);
-              const isMegaSaleIdsKey = row.key === MEGASALE_IDS_KEY;
-              const isMegaSaleTimersKey = row.key === MEGASALE_TIMERS_KEY;
-              const isFullWidth = isMegaSaleTimersKey || isMegaSaleIdsKey;
+
 
               const KNOWN_ENUMS: Record<string, string[]> = {
                 phone_verified_mode: ["address_phone_verified", "default_phone_verified", "both", "no_phone_verification_needed"],
@@ -846,25 +421,7 @@ function SystemPermissionsPanel({
                 </div>
               );
 
-              if (isFullWidth) {
-                return (
-                  <div key={row.key} className={cn("px-5 py-4 transition-colors", isDirty && "bg-amber-50/40 dark:bg-amber-500/5")}>
-                    <div className="mb-3">{labelBlock}</div>
-                    {isMegaSaleTimersKey && (
-                      <ProductTimerEditor
-                        value={typeof val === "string" ? val : String(val ?? "")}
-                        onChange={(v) => handleChange(row, v)}
-                      />
-                    )}
-                    {isMegaSaleIdsKey && (
-                      <ProductIdsEditor
-                        value={typeof val === "string" ? val : String(val ?? "")}
-                        onChange={(v) => handleChange(row, v)}
-                      />
-                    )}
-                  </div>
-                );
-              }
+
 
               return (
                 <div key={row.key} className={cn(
@@ -885,8 +442,8 @@ function SystemPermissionsPanel({
                   {valType === "number" && (
                     <input
                       type="number"
-                      min={row.key === MEGASALE_LIMIT_KEY ? 1 : 0}
-                      max={row.key === MEGASALE_LIMIT_KEY ? 24 : undefined}
+                      min={0}
+                      max={undefined}
                       value={String(val)}
                       onChange={(e) => handleChange(row, Number(e.target.value))}
                       className="w-28 shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-right outline-none transition-colors focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -910,15 +467,7 @@ function SystemPermissionsPanel({
                       );
                     }
 
-                    if (isMegaSaleDateKey) {
-                      const inputValue = typeof val === "string" ? val : String(val ?? "");
-                      return (
-                        <DateTimeInput
-                          value={inputValue}
-                          onChange={(v) => handleChange(row, v)}
-                        />
-                      );
-                    }
+
 
                     const inputValue = typeof val === "string" ? val : String(val ?? "");
                     return (
@@ -953,7 +502,7 @@ function SystemPermissionsPanel({
   );
 }
 
-// ─── GlobalChannelSettingsBlock ─────────────────────────────────────────────
+// â”€â”€â”€ GlobalChannelSettingsBlock â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Renders the 4 admin-notification sections from SystemPermissions inside the
 // Admin Notifications tab so Super Admins can edit global channel flags there.
 
@@ -1111,7 +660,7 @@ function GlobalChannelSettingsBlock() {
   );
 }
 
-// ─── AdminNotifPermissionsPanel ───────────────────────────────────────────── //
+// â”€â”€â”€ AdminNotifPermissionsPanel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
 function AdminNotifPermissionsPanel() {
   const { data, isLoading, isError } = useAllAdminNotificationPermissions();
   const setPermsMutation = useSetAdminNotificationPermissions();
@@ -1541,7 +1090,7 @@ function AdminNotifPermissionsPanel() {
   );
 }
 
-// ─── Unsaved Changes Modal ────────────────────────────────────────────────── //
+// â”€â”€â”€ Unsaved Changes Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
 function UnsavedChangesModal({
   onSave, onDiscard, onCancel,
 }: {
@@ -1583,7 +1132,7 @@ function UnsavedChangesModal({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────── //
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ //
 type Tab = "system" | "admins";
 
 /**
