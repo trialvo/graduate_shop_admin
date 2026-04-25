@@ -42,7 +42,7 @@ function getTone(type: string): Tone {
         badgeBg: "bg-error-500",
         badgeRing: "ring-error-500/30",
         badgeIcon: <X className="h-4 w-4 text-gray-900" />,
-        title: "Something went wrong",
+        title: "Error",
       };
     case "loading":
       return {

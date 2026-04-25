@@ -21,7 +21,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   requestAndGetToken,
   onForegroundMessage,
-  VAPID_KEY,
+  getFirebaseConfig,
+  consumeConfigVersionChanged,
+  clearFirebaseConfigCache,
+  forceDeleteExistingToken,
 } from '@/lib/firebase';
 import { registerPushToken, unregisterPushToken } from '@/api/admin-push.api';
 import { useAuth } from '@/context/AuthProvider';
@@ -163,16 +166,28 @@ export default function PushNotificationProvider() {
 
   // ── Login handler ──────────────────────────────────────────────────────────
   function onLogin() {
-    if (!VAPID_KEY) return;
     if (!('Notification' in window)) return;
     if (Notification.permission === 'denied') return;
 
-    if (Notification.permission === 'granted') {
-      void registerToken();
-    } else {
-      const alreadyDismissed = sessionStorage.getItem(BANNER_DISMISSED_KEY) === '1';
-      if (!alreadyDismissed) setShowBanner(true);
-    }
+    // Check if Firebase config is available from the API
+    getFirebaseConfig().then(async (cfg) => {
+      if (!cfg?.firebase_config?.apiKey || !cfg?.vapid_key) return;
+
+      if (Notification.permission === 'granted') {
+        // If config_version changed since last session, force re-registration
+        if (consumeConfigVersionChanged()) {
+          console.info('[Push] Config version changed — forcing token re-registration.');
+          await forceDeleteExistingToken();
+          clearFirebaseConfigCache();
+          localStorage.removeItem(STORAGE_KEY);
+          tokenRef.current = null;
+        }
+        void registerToken();
+      } else {
+        const alreadyDismissed = sessionStorage.getItem(BANNER_DISMISSED_KEY) === '1';
+        if (!alreadyDismissed) setShowBanner(true);
+      }
+    }).catch(() => { /* config not available, skip push */ });
   }
 
 

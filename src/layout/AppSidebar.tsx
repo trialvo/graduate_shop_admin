@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import { useSidebar } from "../context/SidebarContext";
+import { useAuth } from "../context/AuthProvider";
 import { HorizontaLDots } from "../icons";
 import BrandLogo from "../components/common/BrandLogo";
 
@@ -36,11 +37,13 @@ type NavItem = {
   nameKey: string;
   icon: React.ReactNode;
   path?: string;
+  superAdminOnly?: boolean;
   subItems?: {
     nameKey: string;
     path: string;
     pro?: boolean;
     new?: boolean;
+    superAdminOnly?: boolean;
   }[];
 };
 
@@ -117,13 +120,13 @@ const othersItems: NavItem[] = [
     icon: <Settings />,
     nameKey: "businessSetting",
     subItems: [
-      { nameKey: "payment", path: "/payment-settings", pro: false },
+      { nameKey: "payment", path: "/payment-settings", pro: false, superAdminOnly: true },
       { nameKey: "delivery", path: "/delivery-settings", pro: false },
-      { nameKey: "currier", path: "/currier-settings", pro: false },
+      { nameKey: "currier", path: "/currier-settings", pro: false, superAdminOnly: true },
       { nameKey: "couponCode", path: "/coupon-code", pro: false },
-      { nameKey: "serviceSettings", path: "/service-settings", pro: false },
+      { nameKey: "serviceSettings", path: "/service-settings", pro: false, superAdminOnly: true },
       { nameKey: "analyticsSettings", path: "/analytics-settings", pro: false },
-      { nameKey: "firebaseCredential", path: "/firebase-credential", pro: false },
+      { nameKey: "firebaseCredential", path: "/firebase-credential", pro: false, superAdminOnly: true },
       { nameKey: "notificationHistory", path: "/notification-history", pro: false },
     ],
   },
@@ -170,6 +173,8 @@ const othersItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { t } = useTranslation();
+  const { hasAnyRole } = useAuth();
+  const isSuperAdmin = hasAnyRole(["SUPER_ADMIN"]);
   const {
     isExpanded,
     isMobileOpen,
@@ -264,9 +269,21 @@ const AppSidebar: React.FC = () => {
     }
   }, [isMobileOpen, toggleMobileSidebar]);
 
-  const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
+  const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => {
+    // Filter out superAdminOnly items for non-super-admins
+    const filtered = items.map(nav => {
+      if (nav.superAdminOnly && !isSuperAdmin) return null;
+      if (nav.subItems) {
+        const filteredSubs = nav.subItems.filter(sub => !sub.superAdminOnly || isSuperAdmin);
+        if (filteredSubs.length === 0 && !nav.path) return null;
+        return { ...nav, subItems: filteredSubs };
+      }
+      return nav;
+    }).filter(Boolean) as NavItem[];
+
+    return (
     <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => (
+      {filtered.map((nav, index) => (
         <li key={nav.nameKey}>
           {nav.subItems ? (
             <button
@@ -378,7 +395,8 @@ const AppSidebar: React.FC = () => {
         </li>
       ))}
     </ul>
-  );
+    );
+  };
 
   return (
     <aside

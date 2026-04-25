@@ -1,26 +1,152 @@
 /**
- * src/lib/firebase.ts  — V2-034
+ * src/lib/firebase.ts  — V2-050
  * Firebase app + FCM messaging singleton for the Graduate Fashion Admin Panel.
+ *
+ * Config is fetched from the API at runtime (GET /config/firebase-client-config)
+ * and cached in localStorage. No hardcoded Firebase config in the codebase.
  */
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
-import { FIREBASE_CONFIG, FIREBASE_VAPID_KEY } from '@/config/env';
+import { initializeApp, getApps, getApp, deleteApp, type FirebaseApp } from 'firebase/app';
+import { getMessaging, getToken, deleteToken, onMessage, type Messaging } from 'firebase/messaging';
+import { API_BASE_URL } from '@/config/env';
 
-// Singleton app — config comes from env.ts → VITE_FIREBASE_* env vars
-const firebaseApp = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApp();
+// ── Types ────────────────────────────────────────────────────────────────────
+type FirebaseConfig = {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId?: string;
+};
 
-// Re-export so callers only need to import from this module
-export const VAPID_KEY = FIREBASE_VAPID_KEY;
+type CachedFirebaseConfig = {
+  firebase_config: FirebaseConfig;
+  vapid_key: string | null;
+  config_version?: number;
+};
 
+// ── Cache key ────────────────────────────────────────────────────────────────
+const CACHE_KEY = 'gf_firebase_client_config';
+
+// ── In-memory singleton ──────────────────────────────────────────────────────
+let _configPromise: Promise<CachedFirebaseConfig | null> | null = null;
+let _firebaseApp: FirebaseApp | null = null;
+let _configVersionChanged = false;
 
 /**
- * Returns the messaging instance. May throw in non-browser or insecure contexts.
+ * Fetch Firebase client config from the API with localStorage caching.
+ * Returns null if no config is configured in the DB.
  */
-export function getFirebaseMessaging(): Messaging | null {
+export async function getFirebaseConfig(): Promise<CachedFirebaseConfig | null> {
+  // Return in-flight or resolved promise (singleton)
+  if (_configPromise) return _configPromise;
+
+  _configPromise = (async () => {
+    // 1. Check localStorage cache
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as CachedFirebaseConfig;
+        if (parsed?.firebase_config?.apiKey) {
+          // Trigger a background refresh (non-blocking)
+          _refreshConfigInBackground();
+          return parsed;
+        }
+      }
+    } catch { /* ignore corrupt cache */ }
+
+    // 2. Fetch from API
+    return _fetchAndCacheConfig();
+  })();
+
+  return _configPromise;
+}
+
+async function _fetchAndCacheConfig(): Promise<CachedFirebaseConfig | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/config/firebase-client-config`);
+    const json = await res.json();
+    if (json?.success && json?.data?.firebase_config) {
+      const config: CachedFirebaseConfig = json.data;
+      localStorage.setItem(CACHE_KEY, JSON.stringify(config));
+      return config;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[FCM] Failed to fetch firebase client config:', err);
+    return null;
+  }
+}
+
+function _refreshConfigInBackground(): void {
+  const oldCached = localStorage.getItem(CACHE_KEY);
+  const oldVersion = oldCached ? (JSON.parse(oldCached) as CachedFirebaseConfig).config_version : undefined;
+  _fetchAndCacheConfig().then((cfg) => {
+    if (cfg && oldVersion !== undefined && cfg.config_version !== oldVersion) {
+      console.info(`[FCM] Config version changed (${oldVersion} → ${cfg.config_version}). Will re-register token.`);
+      _configVersionChanged = true;
+    }
+  }).catch(() => { /* silent */ });
+}
+
+/** Check if config_version changed since last token registration. */
+export function consumeConfigVersionChanged(): boolean {
+  if (_configVersionChanged) {
+    _configVersionChanged = false;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Force-delete the existing FCM token and push subscription.
+ * Call this before requestAndGetToken() when config version changes,
+ * so Firebase SDK creates a fresh token with the new VAPID key.
+ */
+export async function forceDeleteExistingToken(): Promise<void> {
+  try {
+    // Delete the Firebase app so a new one is created with fresh config
+    if (_firebaseApp) {
+      try { await deleteApp(_firebaseApp); } catch { /* ignore */ }
+      _firebaseApp = null;
+    }
+    // Also unsubscribe the browser's push subscription directly
+    const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+    if (reg) {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await sub.unsubscribe();
+        console.info('[FCM] Old push subscription unsubscribed.');
+      }
+    }
+  } catch (err) {
+    console.warn('[FCM] forceDeleteExistingToken error:', err);
+  }
+}
+
+/**
+ * Clear the cached config (call after admin saves new config).
+ */
+export function clearFirebaseConfigCache(): void {
+  localStorage.removeItem(CACHE_KEY);
+  _configPromise = null;
+}
+
+// ── Firebase App + Messaging ─────────────────────────────────────────────────
+
+function getFirebaseApp(config: FirebaseConfig): FirebaseApp {
+  if (!_firebaseApp) {
+    _firebaseApp = getApps().length === 0 ? initializeApp(config) : getApp();
+  }
+  return _firebaseApp;
+}
+
+function getFirebaseMessaging(config: FirebaseConfig): Messaging | null {
   try {
     if (typeof window === 'undefined') return null;
-    return getMessaging(firebaseApp);
+    return getMessaging(getFirebaseApp(config));
   } catch {
     return null;
   }
@@ -28,42 +154,45 @@ export function getFirebaseMessaging(): Messaging | null {
 
 /**
  * Request notification permission and return the FCM token.
- * Returns null if denied or any error occurs.
+ * Returns null if denied, not configured, or any error occurs.
  */
 export async function requestAndGetToken(): Promise<string | null> {
   try {
+    const cfg = await getFirebaseConfig();
+    if (!cfg?.firebase_config?.apiKey) {
+      console.info('[FCM] No Firebase client config available. Push disabled.');
+      return null;
+    }
+
+    if (!cfg.vapid_key) {
+      console.warn('[FCM] VAPID_KEY is not set. Push token cannot be fetched.');
+      return null;
+    }
+
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       console.info('[FCM] Notification permission denied.');
       return null;
     }
 
-    const messaging = getFirebaseMessaging();
+    const messaging = getFirebaseMessaging(cfg.firebase_config);
     if (!messaging) return null;
 
-    if (!VAPID_KEY) {
-      console.warn('[FCM] VAPID_KEY is not set. Push token cannot be fetched.');
-      return null;
-    }
-
     // Register the SW and send it the Firebase config via postMessage.
-    // The SW cannot use import.meta.env (it's not bundled by Vite),
-    // so the main thread is responsible for passing the config.
     let swReg: ServiceWorkerRegistration | undefined;
     try {
       swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      await navigator.serviceWorker.ready; // ensure SW is active before messaging
+      await navigator.serviceWorker.ready;
       const sw = swReg.active ?? swReg.installing ?? swReg.waiting;
-      sw?.postMessage({ type: 'FIREBASE_CONFIG', config: FIREBASE_CONFIG });
+      sw?.postMessage({ type: 'FIREBASE_CONFIG', config: cfg.firebase_config });
     } catch {
       swReg = undefined;
     }
 
     const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
+      vapidKey: cfg.vapid_key,
       serviceWorkerRegistration: swReg,
     });
-
 
     if (token) {
       console.info('[FCM] Token obtained:', token.slice(0, 20) + '…');
@@ -83,9 +212,12 @@ export async function requestAndGetToken(): Promise<string | null> {
  * while the page is focused. Returns an unsubscribe function.
  */
 export function onForegroundMessage(handler: (payload: { notification?: { title?: string; body?: string }; data?: Record<string, string> }) => void): () => void {
-  const messaging = getFirebaseMessaging();
-  if (!messaging) return () => {};
-  return onMessage(messaging, handler);
+  // We need a synchronous check — if no app initialized yet, skip
+  if (!_firebaseApp) return () => {};
+  try {
+    const messaging = getMessaging(_firebaseApp);
+    return onMessage(messaging, handler);
+  } catch {
+    return () => {};
+  }
 }
-
-export { firebaseApp };

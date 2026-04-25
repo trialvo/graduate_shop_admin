@@ -3,6 +3,7 @@ import {
   getFirebaseCredential,
   saveFirebaseCredential,
   toggleFirebaseCredential,
+  clearFirebaseCredential,
 } from "@/api/firebase-config.api";
 
 export const firebaseConfigKeys = {
@@ -31,3 +32,12 @@ export function useToggleFirebaseCredential() {
     onSuccess: () => qc.invalidateQueries({ queryKey: firebaseConfigKeys.credential }),
   });
 }
+
+export function useClearFirebaseCredential() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: clearFirebaseCredential,
+    onSuccess: () => qc.invalidateQueries({ queryKey: firebaseConfigKeys.credential }),
+  });
+}
+

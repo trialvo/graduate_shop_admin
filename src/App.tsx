@@ -147,17 +147,38 @@ export default function App() {
 
               {/* Business Settings (keep protected; you can add more permissions later) */}
               <Route path="/delivery-settings" element={<DeliverySettings />} />
-              <Route path="/currier-settings" element={<CurrierSettings />} />
-              <Route path="/coupon-code" element={<CouponCode />} />
-              <Route path="/payment-settings" element={<PaymentSettings />} />
               <Route
-                path="/analytics-settings"
-                element={<AnalyticsSettings />}
-              />
-              <Route path="/service-settings" element={<BusinessServicePage />} />
+                element={
+                  <ProtectedRoute
+                    roles={["SUPER_ADMIN"]}
+                    inPageDenied
+                    deniedTitle="Access Restricted"
+                    deniedDescription="Only Super Admins can manage this setting."
+                    deniedHint="Contact your Super Admin for access."
+                  />
+                }
+              >
+                <Route path="/currier-settings" element={<CurrierSettings />} />
+                <Route path="/service-settings" element={<BusinessServicePage />} />
+                <Route path="/payment-settings" element={<PaymentSettings />} />
+              </Route>
+              <Route path="/coupon-code" element={<CouponCode />} />
+              <Route path="/analytics-settings" element={<AnalyticsSettings />} />
 
-              {/* ✅ V2: Business Settings */}
-              <Route path="/firebase-credential" element={<FirebaseCredentialPage />} />
+              {/* ✅ V2: Firebase — SUPER_ADMIN only */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    roles={["SUPER_ADMIN"]}
+                    inPageDenied
+                    deniedTitle="Firebase Configuration Restricted"
+                    deniedDescription="Only Super Admins can manage Firebase push notification credentials."
+                    deniedHint="Contact your Super Admin if you need to update Firebase settings."
+                  />
+                }
+              >
+                <Route path="/firebase-credential" element={<FirebaseCredentialPage />} />
+              </Route>
               <Route path="/discount-rules" element={<DiscountRulesPage />} />
               <Route path="/order-distribution" element={<OrderDistributionPage />} />
               <Route path="/notification-history" element={<NotificationHistoryPage />} />
