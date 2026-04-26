@@ -72,6 +72,7 @@ export type GetContactMessagesParams = {
   search?: string;
   is_read?: ContactMessageBoolFilter;
   is_replied?: ContactMessageBoolFilter;
+  assigned_to_me?: boolean; // bell dropdown filter
 };
 
 export type GetContactMessagesResponse = {
@@ -112,7 +113,7 @@ export async function getContactMessages(
     params.subject && params.subject.trim().length > 0 ? params.subject.trim() : undefined;
   const search =
     params.search && params.search.trim().length > 0 ? params.search.trim() : undefined;
-  const queryParams: Record<string, string | number | undefined> = {
+  const queryParams: Record<string, string | number | boolean | undefined> = {
     status: normalizeStatusParam(params.status),
     offset: params.offset,
     limit: params.limit,
@@ -120,6 +121,7 @@ export async function getContactMessages(
     search,
     is_read: normalizeBoolFilterParam(params.is_read),
     is_replied: normalizeBoolFilterParam(params.is_replied),
+    assigned_to_me: params.assigned_to_me || undefined,
   };
   const res = await api.get("/admin/contact-messages", {
     params: queryParams,
@@ -170,5 +172,11 @@ export async function assignContactMessage(
   admin_id: number
 ): Promise<{ success: boolean; message: string }> {
   const res = await api.patch(`/admin/contact-message/${id}/assign`, { admin_id });
+  return res.data;
+}
+
+// V2: Mark all contact messages as read (bell clear button)
+export async function markAllContactMessagesRead(): Promise<{ success: boolean; message: string }> {
+  const res = await api.post("/admin/contact-messages/mark-all-read");
   return res.data;
 }

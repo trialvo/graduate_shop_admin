@@ -16,6 +16,7 @@ import {
   getContactMessages,
   replyContactMessage,
   toggleContactMessageStatus,
+  markAllContactMessagesRead as markAllContactMessagesReadApi,
   type ContactMessageCounts,
   type GetContactMessagesParams,
   type GetContactMessagesResponse,
@@ -122,6 +123,24 @@ export function useReplyContactMessage() {
     },
     onError: (e: any) => {
       toast.error(e?.message || "Failed to send reply");
+    },
+  });
+}
+
+// V2: Mark all contact messages as read (bell clear button)
+export function useMarkAllContactMessagesRead() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => markAllContactMessagesReadApi(),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: contactMessageKeys.counts() }),
+        qc.invalidateQueries({ queryKey: contactMessageKeys.all() }),
+      ]);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "Failed to mark messages as read");
     },
   });
 }

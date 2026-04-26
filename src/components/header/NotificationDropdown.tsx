@@ -3,14 +3,14 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bell, FileText, MessageSquareText, Package, X } from "lucide-react";
+import { Bell, CheckCheck, FileText, MessageSquareText, Package, Trash2, X } from "lucide-react";
 
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { cn } from "@/lib/utils";
-import { useContactMessageCounts, useContactMessages } from "../website-settings/contact-messages/useContactMessages";
+import { useContactMessageCounts, useContactMessages, useMarkAllContactMessagesRead } from "../website-settings/contact-messages/useContactMessages";
 import { formatDateTime, formatName } from "../website-settings/contact-messages/utils";
-import { useAdminNotificationStore, markAllAdminNotificationsRead } from "@/hooks/useAdminNotificationStore";
+import { useAdminNotificationStore, markAllAdminNotificationsRead, clearAdminNotifications } from "@/hooks/useAdminNotificationStore";
 
 
 export default function NotificationDropdown() {
@@ -30,6 +30,8 @@ export default function NotificationDropdown() {
     if (!isOpen && pushUnread > 0) markAllAdminNotificationsRead();
   }
 
+  const markAllReadMutation = useMarkAllContactMessagesRead();
+
   const unreadListQuery = useContactMessages(
     {
       status: "active",
@@ -39,11 +41,21 @@ export default function NotificationDropdown() {
       search: "",
       is_read: "false",
       is_replied: "all",
+      assigned_to_me: true, // bell only shows messages assigned to the current admin
     },
     { enabled: isOpen, refetchIntervalMs: 5_000 }
   );
 
   const items = unreadListQuery.data?.data ?? [];
+
+  const hasAnyNotifications = pushItems.length > 0 || items.length > 0 || contactUnread > 0;
+
+  function handleClearAll() {
+    // Clear push notifications from localStorage
+    clearAdminNotifications();
+    // Mark all contact messages as read on the server
+    markAllReadMutation.mutate();
+  }
 
   function toggleDropdown() {
     handleOpen();
@@ -90,13 +102,35 @@ export default function NotificationDropdown() {
             </p>
           </div>
 
-          <button
-            onClick={toggleDropdown}
-            className="text-gray-500 transition dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            aria-label="Close notifications"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-1">
+            {hasAnyNotifications && (
+              <>
+                <button
+                  onClick={() => { markAllAdminNotificationsRead(); markAllReadMutation.mutate(); }}
+                  title="Mark all read"
+                  className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                  aria-label="Mark all notifications read"
+                >
+                  <CheckCheck size={16} />
+                </button>
+                <button
+                  onClick={handleClearAll}
+                  title="Clear all"
+                  className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:text-gray-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                  aria-label="Clear all notifications"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </>
+            )}
+            <button
+              onClick={toggleDropdown}
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+              aria-label="Close notifications"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
