@@ -26,6 +26,7 @@ export type ContactMessageFilters = {
   is_replied: ContactMessageBoolFilter;
   search: string;
   subject: string;
+  assigned_to_me: boolean;
 };
 
 export type ContactMessagePageState = {

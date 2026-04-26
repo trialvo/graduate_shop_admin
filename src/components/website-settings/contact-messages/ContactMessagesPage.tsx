@@ -3,11 +3,12 @@
 
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Archive, Inbox, Mail, MessageSquare, MessageSquareText,
-  RefreshCw, Search, Shuffle, SlidersHorizontal, Users,
+  RefreshCw, Search, Shuffle, SlidersHorizontal, Users, UserCheck,
+  Reply, ReplyAll,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
@@ -87,9 +88,27 @@ function tabToFilters(tab: ContactTabKey): Partial<ContactMessageFilters> {
 // ── Defaults ─────────────────────────────────────────────────────────────── //
 
 const DEFAULT_FILTERS: ContactMessageFilters = {
-  tab: "all", status: "active", is_read: "all", is_replied: "all", search: "", subject: "",
+  tab: "all", status: "active", is_read: "all", is_replied: "all", search: "", subject: "", assigned_to_me: false,
 };
 const DEFAULT_STATE: ContactMessagePageState = { page: 1, pageSize: 20, selectedId: null };
+
+// ── Debounce hook ─────────────────────────────────────────────────────────── //
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+// ── Reply filter options ──────────────────────────────────────────────────── //
+type ReplyFilterValue = "all" | "replied" | "unreplied";
+const REPLY_FILTERS: { value: ReplyFilterValue; label: string; icon: React.ReactNode; color: string; activeClass: string }[] = [
+  { value: "all",       label: "All",       icon: <ReplyAll size={13} />, color: "text-gray-600 dark:text-gray-400",  activeClass: "border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800" },
+  { value: "replied",   label: "Replied",   icon: <Reply size={13} />,    color: "text-green-600 dark:text-green-400", activeClass: "border-green-200 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10" },
+  { value: "unreplied", label: "Unreplied", icon: <MessageSquare size={13} />, color: "text-amber-600 dark:text-amber-400", activeClass: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10" },
+];
 
 type PageTab = "inbox" | "pool" | "assign";
 
@@ -108,6 +127,17 @@ export default function ContactMessagesPage() {
   const [filters, setFilters]   = React.useState<ContactMessageFilters>(DEFAULT_FILTERS);
   const [state, setState]       = React.useState<ContactMessagePageState>(DEFAULT_STATE);
   const [showSearch, setShowSearch] = React.useState(false);
+  const [searchInput, setSearchInput] = React.useState("");
+  const [replyFilter, setReplyFilter] = React.useState<ReplyFilterValue>("all");
+
+  // Debounce search to avoid firing API on every keystroke
+  const debouncedSearch = useDebouncedValue(searchInput, 400);
+
+  // Sync debounced search into filters
+  React.useEffect(() => {
+    setFilters(f => f.search === debouncedSearch ? f : { ...f, search: debouncedSearch });
+    setState(s => s.page === 1 ? s : { ...s, page: 1 });
+  }, [debouncedSearch]);
 
   // ── Deep-link: auto-select contact message from ?messageId=X ────────────
   const [searchParams, setSearchParams] = useSearchParams();
@@ -121,7 +151,12 @@ export default function ContactMessagesPage() {
   const counts  = countsQ.data?.data;
 
   const listQ = useContactMessages(
-    { status: filters.status, offset, limit: state.pageSize, subject: filters.subject, search: filters.search, is_read: filters.is_read, is_replied: filters.is_replied },
+    {
+      status: filters.status, offset, limit: state.pageSize,
+      subject: filters.subject, search: filters.search,
+      is_read: filters.is_read, is_replied: filters.is_replied,
+      assigned_to_me: filters.assigned_to_me || undefined,
+    },
     { enabled: true }
   );
   const rows  = listQ.data?.data ?? [];
@@ -140,7 +175,6 @@ export default function ContactMessagesPage() {
   // Auto-select deep-link message when rows arrive
   React.useEffect(() => {
     if (!deepLinkMsgId || deepLinkConsumedRef.current || rows.length === 0) return;
-    // Select directly by ID — the detail panel will fetch it individually
     deepLinkConsumedRef.current = true;
     setState(s => ({ ...s, selectedId: deepLinkMsgId }));
     setSearchParams((prev) => { prev.delete("messageId"); return prev; }, { replace: true });
@@ -157,12 +191,24 @@ export default function ContactMessagesPage() {
 
   const applyTab = (tab: ContactTabKey) => {
     const tf = tabToFilters(tab);
-    setFilters(f => ({ ...f, tab, search: "", ...tf }));
+    setFilters(f => ({ ...f, tab, ...tf }));
+    setSearchInput("");
+    setReplyFilter("all");
     setState(s => ({ ...s, page: 1 }));
   };
 
-  const applySearch = (search: string) => {
-    setFilters(f => ({ ...f, search }));
+  const applyReplyFilter = (val: ReplyFilterValue) => {
+    setReplyFilter(val);
+    setFilters(f => ({
+      ...f,
+      tab: "all",
+      is_replied: val === "all" ? "all" : val === "replied" ? "true" : "false",
+    }));
+    setState(s => ({ ...s, page: 1 }));
+  };
+
+  const toggleAssignedToMe = () => {
+    setFilters(f => ({ ...f, assigned_to_me: !f.assigned_to_me }));
     setState(s => ({ ...s, page: 1 }));
   };
 
@@ -262,8 +308,22 @@ export default function ContactMessagesPage() {
               })}
             </div>
 
-            {/* Search + Refresh */}
+            {/* Filters + Search + Refresh */}
             <div className="flex items-center gap-2">
+              {/* Assigned to me toggle */}
+              {(isAdmin || isOrderManager) && (
+                <button
+                  type="button"
+                  onClick={toggleAssignedToMe}
+                  className={cn("flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all",
+                    filters.assigned_to_me
+                      ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400"
+                      : "border-gray-200 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 hover:border-gray-300")}
+                >
+                  <UserCheck size={13} />
+                  <span className="hidden sm:inline">Assigned to me</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowSearch(v => !v)}
@@ -273,7 +333,7 @@ export default function ContactMessagesPage() {
                     : "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800")}
               >
                 <SlidersHorizontal size={13} />
-                <span className="hidden sm:inline">Search</span>
+                <span className="hidden sm:inline">Filters</span>
               </button>
               <button
                 type="button"
@@ -287,18 +347,45 @@ export default function ContactMessagesPage() {
             </div>
           </div>
 
-          {/* Search bar */}
+          {/* Expandable filters: search + reply status */}
           {showSearch && (
-            <div className="mb-4 relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search name, email, phone, subject…"
-                value={filters.search}
-                onChange={e => applySearch(e.target.value)}
-                autoFocus
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
-              />
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              {/* Search input */}
+              <div className="relative flex-1 min-w-[200px]">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search name, email, phone, subject…"
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
+                  autoFocus
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-300"
+                />
+              </div>
+              {/* Reply status pills */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-1">Reply:</span>
+                {REPLY_FILTERS.map(rf => {
+                  const active = replyFilter === rf.value;
+                  return (
+                    <button
+                      key={rf.value}
+                      type="button"
+                      onClick={() => applyReplyFilter(rf.value)}
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all",
+                        rf.color,
+                        active
+                          ? rf.activeClass + " border"
+                          : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/60 hover:border-gray-300"
+                      )}
+                    >
+                      {rf.icon}
+                      <span>{rf.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
