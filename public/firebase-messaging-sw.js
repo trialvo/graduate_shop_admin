@@ -2,24 +2,18 @@
  * public/firebase-messaging-sw.js  — V2-056
  * Firebase background push service worker for Graduate Fashion Admin Panel.
  *
- * KEY DESIGN: Chrome aggressively kills idle service workers (~30s).
- * When a push arrives, Chrome restarts the SW. We MUST initialize Firebase
- * BEFORE the push event fires, or the push is silently lost.
- *
- * Strategy:
- *   1. Listen for raw 'push' events ourselves (not via onBackgroundMessage)
- *   2. On push, synchronously check if Firebase is initialized
- *   3. If not, load config from IndexedDB and init before processing
- *   4. This guarantees we never miss a push, even after SW restart
+ * DUAL-PATH STRATEGY (prevents duplicate notifications):
+ *   PATH A: Firebase IS initialized → onBackgroundMessage handles it
+ *   PATH B: Firebase NOT initialized (SW was killed/restarted) → raw 'push' fallback
+ *   Only ONE path fires per push event, so exactly one notification is shown.
  */
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-// ── Force new SW to take over immediately on update ───────────────────────────
 self.addEventListener('install',  () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
-// ── IndexedDB helpers for persisting Firebase config across SW restarts ────────
+// ── IndexedDB helpers ─────────────────────────────────────────────────────────
 const IDB_NAME = 'gf_admin_sw_config';
 const IDB_STORE = 'config';
 
@@ -53,7 +47,43 @@ async function loadConfigFromIDB() {
   } catch { return null; }
 }
 
-// ── Firebase init state ───────────────────────────────────────────────────────
+// ── Shared notification logic (used by BOTH paths) ────────────────────────────
+async function handleIncomingPush(payload) {
+  const notification = payload.notification || {};
+  const data = payload.data || {};
+  const title = notification.title || data.title || 'Graduate Fashion';
+  const body  = notification.body  || data.body  || 'You have a new notification.';
+
+  const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const hasFocused = clientList.some((c) => c.visibilityState === 'visible');
+
+  // Show OS notification only when no tab is visible
+  if (!hasFocused) {
+    await self.registration.showNotification(title, {
+      body,
+      icon:  '/favicon.ico',
+      badge: '/favicon.ico',
+      tag:   data.order_id   ? `order-${data.order_id}`
+           : data.report_id  ? `report-${data.report_id}`
+           : data.message_id ? `message-${data.message_id}`
+           : 'gf-admin',
+      data,
+    });
+  }
+
+  // Always update bell badge via postMessage; toast only when tab is visible
+  clientList.forEach((client) => {
+    client.postMessage({
+      type:  'GF_PUSH_NOTIFICATION',
+      title,
+      body,
+      data,
+      showToast: hasFocused,
+    });
+  });
+}
+
+// ── Firebase init ─────────────────────────────────────────────────────────────
 let firebaseInitialized = false;
 
 function initFirebase(config) {
@@ -61,9 +91,15 @@ function initFirebase(config) {
   if (!config || !config.apiKey) return false;
   try {
     firebase.initializeApp(config);
-    // We call firebase.messaging() to register the SDK internally,
-    // but we handle push events ourselves via the 'push' listener below.
-    firebase.messaging();
+    const messaging = firebase.messaging();
+
+    // PATH A: Firebase is ready — handle pushes here.
+    // This suppresses Firebase's auto-display AND routes through our shared logic.
+    messaging.onBackgroundMessage((payload) => {
+      console.log('[SW] PATH A: onBackgroundMessage');
+      return handleIncomingPush(payload);
+    });
+
     firebaseInitialized = true;
     console.log('[SW] Firebase initialized.');
     return true;
@@ -71,22 +107,6 @@ function initFirebase(config) {
     console.error('[SW] Firebase init failed:', err);
     return false;
   }
-}
-
-// ── Ensure Firebase is initialized (from IDB if needed) ──────────────────────
-// Returns a promise that resolves to true if Firebase is ready.
-let _initPromise = null;
-function ensureFirebaseReady() {
-  if (firebaseInitialized) return Promise.resolve(true);
-  if (_initPromise) return _initPromise;
-  _initPromise = loadConfigFromIDB().then((config) => {
-    if (config) {
-      console.log('[SW] Restoring Firebase config from IndexedDB...');
-      return initFirebase(config);
-    }
-    return false;
-  }).catch(() => false);
-  return _initPromise;
 }
 
 // ── Receive config from main thread ──────────────────────────────────────────
@@ -97,74 +117,26 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// ── Start loading config immediately on SW start ─────────────────────────────
-ensureFirebaseReady();
+// Start loading config immediately on SW start
+if (!firebaseInitialized) {
+  loadConfigFromIDB().then((config) => {
+    if (config) initFirebase(config);
+  }).catch(() => {});
+}
 
-// ══════════════════════════════════════════════════════════════════════════════
-// RAW PUSH EVENT HANDLER
-// This is the critical fix: we handle the 'push' event OURSELVES instead of
-// relying on firebase.messaging().onBackgroundMessage().
-// This way, even if Firebase SDK hasn't fully initialized, we still process
-// the push and show a notification.
-// ══════════════════════════════════════════════════════════════════════════════
+// ── PATH B: Raw push fallback (only when Firebase hasn't initialized) ─────────
 self.addEventListener('push', (event) => {
-  // Firebase SDK also listens for 'push'. We need to call event.waitUntil()
-  // to keep the SW alive while we process. Firebase SDK will see this event
-  // too, but since we handle notification display ourselves, we suppress
-  // Firebase's auto-display by NOT registering onBackgroundMessage.
+  if (firebaseInitialized) return; // PATH A handles it — skip to avoid duplicates
 
+  console.log('[SW] PATH B: raw push fallback (Firebase not initialized)');
   const handlePush = async () => {
     let payload;
-    try {
-      payload = event.data?.json();
-    } catch {
-      // Not a JSON payload — possibly a plain text push
-      console.warn('[SW] Non-JSON push received, ignoring.');
-      return;
-    }
-
-    console.log('[SW] Push event received:', JSON.stringify(payload).slice(0, 200));
-
-    // FCM wraps the payload differently depending on how it was sent.
-    // Extract title, body, and data from the FCM envelope.
-    const notification = payload.notification || {};
-    const data = payload.data || {};
-    // FCM sometimes nests the notification inside a 'fcmOptions' wrapper
-    const title = notification.title || data.title || 'Graduate Fashion';
-    const body  = notification.body  || data.body  || 'You have a new notification.';
-
-    // ── Notify all open clients via postMessage ──────────────────────────────
-    const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const hasFocused = clientList.some((c) => c.visibilityState === 'visible');
-
-    // Always tell all clients about the push (for bell badge, in-app toast, etc.)
-    clientList.forEach((client) => {
-      client.postMessage({
-        type:  'GF_PUSH_NOTIFICATION',
-        title,
-        body,
-        data,
-      });
-    });
-
-    // Show OS notification only when no tab is visible
-    if (!hasFocused) {
-      await self.registration.showNotification(title, {
-        body,
-        icon:  '/favicon.ico',
-        badge: '/favicon.ico',
-        tag:   data.order_id   ? `order-${data.order_id}`
-             : data.report_id  ? `report-${data.report_id}`
-             : data.message_id ? `message-${data.message_id}`
-             : 'gf-admin',
-        data,
-      });
-    }
+    try { payload = event.data?.json(); } catch { return; }
+    await handleIncomingPush(payload);
   };
 
   event.waitUntil(handlePush());
 });
-
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function buildTargetPath(data) {
@@ -174,10 +146,8 @@ function buildTargetPath(data) {
   return '/dashboard';
 }
 
-// ── notificationclick — navigate to entity-specific page ──────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
   const data       = event.notification.data || {};
   const targetPath = buildTargetPath(data);
   const targetUrl  = new URL(targetPath, self.location.origin).href;
@@ -187,16 +157,11 @@ self.addEventListener('notificationclick', (event) => {
       const adminClient = clientList.find((c) =>
         c.url.includes('localhost:5173') || c.url.includes('/admin')
       );
-
       if (adminClient) {
         return adminClient.focus().then((wc) => {
-          const target = wc || adminClient;
-          target.postMessage({ type: 'GF_NAVIGATE', path: targetPath });
-        }).catch(() => {
-          return clients.openWindow(targetUrl);
-        });
+          (wc || adminClient).postMessage({ type: 'GF_NAVIGATE', path: targetPath });
+        }).catch(() => clients.openWindow(targetUrl));
       }
-
       return clients.openWindow(targetUrl);
     })
   );

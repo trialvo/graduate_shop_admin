@@ -1,17 +1,16 @@
 /**
- * src/providers/PushNotificationProvider.tsx  — V2-035 (fix: single-mount pattern)
+ * src/providers/PushNotificationProvider.tsx  — V2-056
  *
  * Manages FCM push notification permission + token lifecycle for the admin panel:
  *  1. On first render after login, checks permission state and prompts user.
  *  2. If granted, acquires token and registers it with the backend.
- *  3. Sets up foreground message handler (shows rich toast) — kept alive globally.
+ *  3. SW postMessage listener (mount-only useEffect) handles ALL incoming pushes
+ *     — both foreground and background — and shows rich toasts + bell badge updates.
  *  4. On logout, unregisters token from backend.
  *
- * ARCHITECTURE NOTE:
- *  Previously used a useEffect([authToken]) whose cleanup tore down _fgUnsub on
- *  every React re-render / StrictMode double-invoke, killing the foreground listener.
- *  Now mirrors the shop's PushNotificationManager: single mount-only useEffect with
- *  an isRegisteringRef guard, watching auth state changes imperatively.
+ * NOTE: We do NOT use Firebase's onForegroundMessage(). The raw 'push' event
+ * handler in the service worker sends postMessage for every push. Using both
+ * onForegroundMessage AND the SW postMessage would cause duplicate toasts.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -20,7 +19,6 @@ import { Bell, BellOff, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   requestAndGetToken,
-  onForegroundMessage,
   getFirebaseConfig,
   consumeConfigVersionChanged,
   clearFirebaseConfigCache,
@@ -42,12 +40,8 @@ const STORAGE_KEY          = 'gf_admin_fcm_token';
 // Persists banner-dismissed state for the tab session (resets on tab close).
 const BANNER_DISMISSED_KEY = 'gf_admin_push_banner_dismissed';
 
-/**
- * Module-level foreground listener — survives component remounts.
- * Prevents the React StrictMode double-invoke race where two concurrent
- * registerToken() calls both attach a separate onForegroundMessage listener.
- */
-let _fgUnsub: (() => void) | null = null;
+// Foreground message handling is done via the SW postMessage listener
+// (mount-only useEffect below) — no separate onForegroundMessage needed.
 
 export default function PushNotificationProvider() {
   const { token: authToken } = useAuth();
@@ -68,7 +62,7 @@ export default function PushNotificationProvider() {
   useEffect(() => {
     function handleSWMessage(event: MessageEvent) {
       if (event.data?.type === 'GF_PUSH_NOTIFICATION') {
-        const { title, body, data } = event.data;
+        const { title, body, data, showToast: shouldToast } = event.data;
 
         // Update bell badge — returns false if this is a duplicate (dedup guard)
         const wasNew = pushAdminNotification(
@@ -77,10 +71,10 @@ export default function PushNotificationProvider() {
           (data || {}) as Record<string, string>
         );
 
-        // Also show an in-app toast so the notification is visible even when
-        // the tab is open but not focused (OS notifications may not appear in
-        // that state depending on the browser's visibilityState check in the SW).
-        if (wasNew) {
+        // Show in-app toast only when:
+        // 1. It's a new notification (not duplicate)
+        // 2. SW says showToast=true (no OS notification was shown)
+        if (wasNew && shouldToast !== false) {
           const deepPath = buildDeepLinkPath((data || {}) as Record<string, string>);
           toast.custom(
             (t) => (
@@ -138,10 +132,6 @@ export default function PushNotificationProvider() {
 
     return () => {
       navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
-      // Tear down foreground listener on true unmount (e.g. user navigates away
-      // from the entire admin app, which never happens in normal usage).
-      _fgUnsub?.();
-      _fgUnsub = null;
       isRegisteringRef.current = false;
     };
   }, []); // ← empty deps: run once on mount, cleanup on unmount only
@@ -195,10 +185,6 @@ export default function PushNotificationProvider() {
   function onLogout() {
     setShowBanner(false);
 
-    // Tear down foreground listener
-    const unsub = _fgUnsub as (() => void) | null;
-    if (unsub) unsub();
-    _fgUnsub = null;
     isRegisteringRef.current = false;
 
     const savedToken = localStorage.getItem(STORAGE_KEY);
@@ -209,16 +195,11 @@ export default function PushNotificationProvider() {
     }
   }
 
-  // ── Register FCM token + attach foreground listener ────────────────────────
+  // ── Register FCM token ─────────────────────────────────────────────────────
   async function registerToken() {
     // Guard against concurrent calls (StrictMode double-invoke, etc.)
     if (isRegisteringRef.current) return;
     isRegisteringRef.current = true;
-
-    // Synchronously remove any stale foreground listener BEFORE the first await
-    const staleUnsub = _fgUnsub as (() => void) | null;
-    if (staleUnsub) staleUnsub();
-    _fgUnsub = null;
 
     try {
       const fcmToken = await requestAndGetToken();
@@ -229,66 +210,6 @@ export default function PushNotificationProvider() {
 
       await registerPushToken(fcmToken);
       console.info('[Push] Token registered.');
-
-      // Remove any listener a concurrent async call may have registered
-      const prevUnsub = _fgUnsub as (() => void) | null;
-      if (prevUnsub) prevUnsub();
-
-      _fgUnsub = onForegroundMessage((payload) => {
-        const title = payload.notification?.title || 'Graduate Fashion';
-        const body  = payload.notification?.body  || 'You have a new notification.';
-        const data  = payload.data || {};
-
-        // Update bell badge — returns false if this is a duplicate (dedup guard)
-        const wasNew = pushAdminNotification(title, body, data as Record<string, string>);
-        if (wasNew === false) return;
-
-        // Show a rich in-app toast — clicking it navigates to the entity page
-        const deepPath = buildDeepLinkPath(data as Record<string, string>);
-        toast.custom(
-          (t) => (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => { navigate(deepPath); toast.dismiss(t.id); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { navigate(deepPath); toast.dismiss(t.id); } }}
-              className={`flex items-start gap-3 rounded-xl border border-brand-200 bg-white px-4 py-3 shadow-lg dark:border-brand-700 dark:bg-gray-900 transition-all cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-500/5 ${t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
-              style={{ maxWidth: 360 }}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-                <Bell size={16} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{title}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{body}</p>
-                {/* Context label per notification type */}
-                {data.order_id && (
-                  <p className="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">
-                    🛒 Order #{data.order_id}
-                  </p>
-                )}
-                {data.report_id && (
-                  <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mt-1">
-                    🚩 Report #{data.report_id}
-                  </p>
-                )}
-                {data.message_id && (
-                  <p className="text-xs font-medium text-sky-600 dark:text-sky-400 mt-1">
-                    💬 Contact Message #{data.message_id}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ),
-          { duration: 8000, position: 'top-right' }
-        );
-      });
     } catch (err) {
       console.error('[Push] Token registration failed:', err);
     } finally {
