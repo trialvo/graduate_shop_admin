@@ -114,6 +114,7 @@ const KEY_META: Record<string, KeyMeta> = {
   firebase_push_notification: { label: "Firebase Push", description: "Use Firebase Cloud Messaging for push notifications." },
   email_verified: { label: "Require Email Verified", description: "Customer must have a verified email address before placing an order." },
   phone_verified_mode: { label: "Phone Verification Mode", description: "Which phone number(s) must be verified to complete an order." },
+  phone_verified: { label: "Require Phone Verified", description: "Customer must verify their phone number before placing an order." },
   is_email_required: { label: "Email Required", description: "Guest must provide an email address at checkout." },
   is_phone_verification_required: { label: "Phone Verification Required", description: "Guest must verify their phone number before placing an order." },
   is_enabled: { label: "Enable Discount", description: "Turn the cart-wide discount on or off globally." },
@@ -327,8 +328,8 @@ function SystemPermissionsPanel({
 
   // Sections locked behind a "Coming Soon" overlay
   const COMING_SOON_SECTIONS = new Set<string>([]);
-  const isComingSoon = (section: string, scope: string) =>
-    COMING_SOON_SECTIONS.has(section) || (section === "order_place_permission" && scope === "single_page");
+  const isComingSoon = (section: string, _scope: string) =>
+    COMING_SOON_SECTIONS.has(section);
 
 
   return (
