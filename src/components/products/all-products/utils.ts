@@ -101,6 +101,8 @@ export function toUiProduct(
     reviewCount: entity.review_count || 0,
 
     sku: firstSku(variations),
+    slug: entity.slug ?? '',
     createdAt: new Date(entity.created_at).toLocaleString(),
+    hasSingleProductPage: !!entity.has_single_product_page,
   };
 }

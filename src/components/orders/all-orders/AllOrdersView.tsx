@@ -204,7 +204,11 @@ function mapApiItemsToRowItems(items: any[]): OrderItemRow[] {
   });
 }
 
-export default function AllOrdersView() {
+type AllOrdersViewProps = {
+  defaultOrderType?: "all" | "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
+};
+
+export default function AllOrdersView({ defaultOrderType = "all" }: AllOrdersViewProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -217,7 +221,7 @@ export default function AllOrdersView() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
 
-  const [orderType, setOrderType] = useState<"all" | "regular">("all");
+  const [orderType, setOrderType] = useState<"all" | "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page">(defaultOrderType);
 
   const [paymentStatus, setPaymentStatus] = useState<"all" | "unpaid" | "partial_paid" | "paid">(
     "all"
@@ -457,6 +461,7 @@ export default function AllOrdersView() {
         paymentStatus: o.payment_status,
 
         status: o.order_status,
+        orderType: o.order_type ?? undefined,
 
         itemsAmount: itemsCount,
         totalItems: qtyCount,

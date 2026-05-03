@@ -351,6 +351,18 @@ export default function OrdersTable({ rows, selectedIds, onSelect, onSelectAll, 
                           <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">#{r.id}</p>
                           <p className="truncate text-xs text-gray-500 dark:text-gray-400">{r.orderDateLabel} · {r.orderTimeLabel}</p>
                           <p className="truncate text-xs font-medium text-gray-400 dark:text-gray-500">{r.relativeTimeLabel}</p>
+                          {r.orderType && (
+                            <span className={cn(
+                              "mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                              r.orderType === "regular"         && "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+                              r.orderType === "guest"           && "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+                              r.orderType === "admin_regular"   && "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+                              r.orderType === "admin_stranger"  && "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300",
+                              r.orderType === "single_page"     && "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
+                            )}>
+                              {r.orderType === "admin_regular" ? "Admin" : r.orderType === "admin_stranger" ? "Admin-S" : r.orderType === "single_page" ? "Single" : r.orderType === "guest" ? "Guest" : "Regular"}
+                            </span>
+                          )}
                           <div className="mt-2 flex items-center gap-1.5">
                             <button
                               type="button"

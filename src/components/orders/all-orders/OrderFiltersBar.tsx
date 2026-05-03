@@ -20,8 +20,8 @@ type Props = {
   search: string;
   setSearch: (v: string) => void;
 
-  orderType: "all" | "regular";
-  setOrderType: (v: "all" | "regular") => void;
+  orderType: "all" | "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
+  setOrderType: (v: "all" | "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page") => void;
 
   paymentStatus: PaymentStatusValue;
   setPaymentStatus: (v: PaymentStatusValue) => void;

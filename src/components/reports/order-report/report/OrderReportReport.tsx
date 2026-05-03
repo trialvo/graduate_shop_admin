@@ -18,7 +18,7 @@ import OrderReportTable from "./OrderReportTable";
 
 type Props = { period: TimePeriodKey };
 
-type OrderTypeFilter = "all" | "regular" | "guest";
+type OrderTypeFilter = "all" | "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
 type OrderStatusFilter =
   | "all"
   | "new"
@@ -187,6 +187,9 @@ const OrderReportReport: React.FC<Props> = ({ period }) => {
               <option value="all">{t("reports.common.allOrderType")}</option>
               <option value="regular">{t("reports.common.regular")}</option>
               <option value="guest">{t("reports.common.guest")}</option>
+              <option value="admin_regular">Admin (Registered)</option>
+              <option value="admin_stranger">Admin (Stranger)</option>
+              <option value="single_page">Single Page</option>
             </select>
 
             <select

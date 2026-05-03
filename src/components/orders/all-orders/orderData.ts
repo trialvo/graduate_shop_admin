@@ -49,4 +49,8 @@ export const FRAUD_OPTIONS = [
 export const ORDER_TYPE_OPTIONS = [
   { id: "all", label: "All" },
   { id: "regular", label: "Regular" },
+  { id: "guest", label: "Guest" },
+  { id: "admin_regular", label: "Admin (Registered)" },
+  { id: "admin_stranger", label: "Admin (Stranger)" },
+  { id: "single_page", label: "Single Page" },
 ] as const;

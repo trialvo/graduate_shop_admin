@@ -32,6 +32,7 @@ export type ProductEntity = {
   status: boolean;
   featured: boolean;
   best_deal: boolean;
+  has_single_product_page?: boolean;
 
   free_delivery?: boolean;
   attribute_id?: number;
@@ -150,6 +151,7 @@ export type ProductSingleResponseEntity = {
   featured: boolean;
   free_delivery: boolean;
   best_deal: boolean;
+  has_single_product_page?: boolean;
 
   view_count?: number;
   sell_count?: number;
@@ -447,5 +449,16 @@ export async function assignImageSku(
   sku_id: number | null,
 ): Promise<{ success: true; image_id: number; sku_id: number | null }> {
   const res = await api.patch(`/admin/product/image/${imageId}/sku`, { sku_id });
+  return res.data;
+}
+
+/**
+ * PATCH /api/v1/admin/product/:id/toggle-single-page
+ * Toggles the has_single_product_page flag on a product.
+ */
+export async function toggleSingleProductPage(
+  productId: number,
+): Promise<{ success: true; has_single_product_page: boolean }> {
+  const res = await api.patch(`/admin/product/${productId}/toggle-single-page`);
   return res.data;
 }

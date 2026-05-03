@@ -23,6 +23,7 @@ import { toUiProduct } from "./utils";
 import {
   deleteProduct,
   getProducts,
+  toggleSingleProductPage,
   updateProductStatus,
   type ProductsListParams,
   type ProductsListResponse,
@@ -286,6 +287,39 @@ const AllProductsPage: React.FC = () => {
     statusMutation.mutate({ id: pid, status: nextBool });
   };
 
+  // -----------------------
+  // ✅ Single Page toggle API
+  // -----------------------
+  const singlePageMutation = useMutation({
+    mutationFn: (id: number) => toggleSingleProductPage(id),
+    onSuccess: () => {
+      toast.success("Single page toggle updated");
+      qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
+    },
+    onError: (err) => {
+      toast.error(getApiErrorMessage(err, "Failed to toggle single page"));
+      qc.invalidateQueries({ queryKey: ["products"] }).catch(() => undefined);
+    },
+  });
+
+  const onToggleSinglePage = (productId: string) => {
+    const pid = parseProductId(productId);
+    if (pid === null) return;
+
+    // optimistic cache update
+    qc.setQueriesData<ProductsListResponse>({ queryKey: ["products"] }, (old) => {
+      if (!old?.products) return old;
+      return {
+        ...old,
+        products: old.products.map((p) =>
+          p.id === pid ? { ...p, has_single_product_page: !p.has_single_product_page } : p
+        ),
+      };
+    });
+
+    singlePageMutation.mutate(pid);
+  };
+
   const lowStockCount = uiProducts.filter((p) => p.stockQty <= 10).length;
 
   const total = productsQuery.data?.total ?? 0;
@@ -404,6 +438,7 @@ const AllProductsPage: React.FC = () => {
           products={uiProducts}
           onStockPlus={onStockPlus}
           onToggleStatus={onToggleStatus}
+          onToggleSinglePage={onToggleSinglePage}
           onEdit={onEdit}
           onDelete={onDelete}
         />

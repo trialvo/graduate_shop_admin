@@ -50,7 +50,7 @@ export type OrderMatricsYearlyComparisonResponse = {
 
 export type OrderMatricsReportRow = {
   order_id: number;
-  order_type: "regular" | "guest";
+  order_type: "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
   customer_name: string;
   customer_phone: string;
   customer_email: string;
@@ -87,7 +87,7 @@ export type OrderMatricsReportResponse = {
 export type OrderMatricsReportParams = {
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
-  order_type?: "all" | "regular" | "guest";
+  order_type?: "all" | "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
   order_status?: "all" | OrderStatusKey;
   payment_status?: "all" | PaymentStatusKey;
   payment_type?: "all" | PaymentTypeKey;

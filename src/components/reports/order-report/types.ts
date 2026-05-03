@@ -37,7 +37,7 @@ export type DeliveryFlowItem = {
 
 export type OrderReportRow = {
   orderId: string;
-  orderType: "regular" | "guest";
+  orderType: "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
   customerName: string;
   phone: string;
   email?: string;

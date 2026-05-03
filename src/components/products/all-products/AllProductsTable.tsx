@@ -1,8 +1,9 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { PackageSearch, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { Copy, PackageSearch, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import React from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 
 import type { Product } from "./types";
@@ -19,11 +20,12 @@ type Props = {
   products: Product[];
   onStockPlus: (productId: string) => void;
   onToggleStatus: (productId: string, next: Product["status"]) => void;
+  onToggleSinglePage: (productId: string) => void;
   onEdit: (productId: string) => void;
   onDelete: (productId: string) => void;
 };
 
-type RowActionHandlers = Pick<Props, "onStockPlus" | "onToggleStatus" | "onEdit" | "onDelete">;
+type RowActionHandlers = Pick<Props, "onStockPlus" | "onToggleStatus" | "onToggleSinglePage" | "onEdit" | "onDelete">;
 type TranslationProps = { t: TFunction };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -139,6 +141,9 @@ function TableHeadRow({ t }: Readonly<TranslationProps>) {
       </TableCell>
       <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[120px]")}>
         {t("products.table.status")}
+      </TableCell>
+      <TableCell isHeader className={cn(headerCellBaseClass, "min-w-[140px]")}>
+        Single Page
       </TableCell>
       <TableCell
         isHeader
@@ -354,6 +359,7 @@ function ProductDataRow({
   t,
   onStockPlus,
   onToggleStatus,
+  onToggleSinglePage,
   onEdit,
   onDelete,
 }: ProductDataRowProps) {
@@ -425,6 +431,57 @@ function ProductDataRow({
         />
       </TableCell>
 
+      {/* Single Page toggle */}
+      <TableCell className="px-4 py-3.5">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onToggleSinglePage(product.id)}
+            aria-label="Toggle single product page"
+            className={cn(
+              "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full",
+              "border-2 border-transparent transition-colors duration-200 ease-in-out",
+              product.hasSingleProductPage
+                ? "bg-purple-500"
+                : "bg-gray-200 dark:bg-gray-700",
+            )}
+          >
+            <span
+              className={cn(
+                "pointer-events-none inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm",
+                "transform transition-transform duration-200 ease-in-out",
+                product.hasSingleProductPage ? "translate-x-4" : "translate-x-0.5",
+              )}
+            />
+          </button>
+          {product.hasSingleProductPage && (
+            <button
+              type="button"
+              onClick={() => {
+                const shopUrl = import.meta.env.VITE_SHOP_URL || 'http://localhost:3000';
+                const url = `${shopUrl}/single-order-page/${product.slug}/${product.id}`;
+                navigator.clipboard.writeText(url).then(() => {
+                  toast.success('Page URL copied!');
+                }).catch(() => {
+                  toast.error('Failed to copy URL');
+                });
+              }}
+              aria-label="Copy single page URL"
+              className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-md",
+                "border border-purple-200 bg-purple-50 text-purple-600",
+                "hover:bg-purple-100 hover:border-purple-300",
+                "transition-all duration-150",
+                "dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-400",
+                "dark:hover:bg-purple-500/20",
+              )}
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </TableCell>
+
       <RowActionCell product={product} onEdit={onEdit} onDelete={onDelete} />
     </TableRow>
   );
@@ -433,7 +490,7 @@ function ProductDataRow({
 function EmptyStateRow({ t }: Readonly<TranslationProps>) {
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={9} className="px-4 py-20">
+      <TableCell colSpan={10} className="px-4 py-20">
         <div className="flex flex-col items-center gap-3 text-center">
           {/* Illustration circle */}
           <div className={cn(
@@ -463,6 +520,7 @@ const AllProductsTable: React.FC<Props> = ({
   products,
   onStockPlus,
   onToggleStatus,
+  onToggleSinglePage,
   onEdit,
   onDelete,
 }) => {
@@ -493,6 +551,7 @@ const AllProductsTable: React.FC<Props> = ({
                   t={t}
                   onStockPlus={onStockPlus}
                   onToggleStatus={onToggleStatus}
+                  onToggleSinglePage={onToggleSinglePage}
                   onEdit={onEdit}
                   onDelete={onDelete}
                 />

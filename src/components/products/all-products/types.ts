@@ -29,7 +29,9 @@ export type Product = {
   reviewCount: number;
 
   sku: string;
+  slug: string;
   createdAt: string;
+  hasSingleProductPage: boolean;
 };
 
 export type ProductListFilters = {

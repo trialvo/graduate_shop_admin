@@ -13,6 +13,7 @@ import NewSale from "./pages/Sales/NewSale";
 
 import AllOrders from "./pages/Orders/AllOrders";
 import GuestOrders from "./pages/Orders/GuestOrders";
+import SinglePageOrders from "./pages/Orders/SinglePageOrders";
 import OrderEditor from "./pages/Orders/OrderEditor";
 
 import AllProducts from "./pages/Products/AllProducts";
@@ -95,6 +96,7 @@ export default function App() {
               <Route path="/all-orders" element={<AllOrders />} />
               <Route path="/order-editor" element={<OrderEditor />} />
               <Route path="/guest-orders" element={<GuestOrders />} />
+              <Route path="/single-page-orders" element={<SinglePageOrders />} />
 
               {/* Products */}
               <Route path="/all-products" element={<AllProducts />} />

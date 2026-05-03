@@ -65,6 +65,7 @@ const navItems: NavItem[] = [
       { nameKey: "allOrders", path: "/all-orders", pro: false },
       { nameKey: "editOrder", path: "/order-editor", pro: false },
       { nameKey: "guestOrders", path: "/guest-orders", pro: false },
+      { nameKey: "singlePageOrders", path: "/single-page-orders", pro: false, new: true },
       { nameKey: "orderDistribution", path: "/order-distribution", pro: false },
     ],
   },

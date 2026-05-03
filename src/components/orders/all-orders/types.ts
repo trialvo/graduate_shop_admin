@@ -87,6 +87,8 @@ export type OrderRow = {
 
   status: Exclude<OrderStatus, "all">;
 
+  orderType?: "regular" | "guest" | "admin_regular" | "admin_stranger" | "single_page";
+
   itemsAmount: number; // number of line items
   totalItems: number; // total qty across items
   total: number;
