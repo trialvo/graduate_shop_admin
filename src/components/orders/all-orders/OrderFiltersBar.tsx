@@ -93,6 +93,9 @@ export default function OrderFiltersBar({
   dateTo,
   setDateTo,
 
+  orderType,
+  setOrderType,
+
   onClear,
   uiOptions,
   loading,
@@ -129,6 +132,15 @@ export default function OrderFiltersBar({
         label: `${t("orders.filters.fraudPrefix")}: ${x.label}`,
       })),
     [uiOptions.fraud, t]
+  );
+
+  const orderTypeOptions = useMemo(
+    () =>
+      uiOptions.orderType.map((x) => ({
+        value: x.id,
+        label: `${t("orders.filters.typePrefix", "Type")}: ${x.label}`,
+      })),
+    [uiOptions.orderType, t]
   );
 
   return (
@@ -265,6 +277,13 @@ export default function OrderFiltersBar({
               options={fraudOptions}
               value={fraud}
               onChange={(val) => setFraud(val as FraudValue)}
+              searchable={false}
+            />
+
+            <Select
+              options={orderTypeOptions}
+              value={orderType}
+              onChange={(val) => setOrderType(val as any)}
               searchable={false}
             />
           </div>
