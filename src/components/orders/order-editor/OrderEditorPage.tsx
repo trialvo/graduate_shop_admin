@@ -1,6 +1,6 @@
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { ArrowLeft, AlertCircle, RefreshCw, Hash } from "lucide-react";
 
@@ -26,8 +26,10 @@ import {
   dispatchOrderCourier,
   manualDispatchOrder,
   syncCourierStatus,
+  getCourierBalance,
   type ApiOrder,
   type UpdateOrderItemsPayload,
+  type DispatchCourierProvider,
 } from "@/api/orders.api";
 import { toPublicUrl } from "@/utils/toPublicUrl";
 import Button from "@/components/ui/button/Button";
@@ -507,6 +509,14 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     });
   };
 
+  // ── Dispatch result state for courier banner ──
+  const [dispatchResult, setDispatchResult] = useState<{
+    success: boolean;
+    message: string;
+    detail?: string;
+    tracking?: string;
+  } | null>(null);
+
   const courierDispatchMutation = useMutation({
     mutationFn: async (payload: { method: string; data: any }) => {
       if (!orderId) throw new Error("No order ID");
@@ -515,40 +525,60 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       }
       return dispatchOrderCourier(orderId, payload.data);
     },
-    onSuccess: async () => {
-      toast.success(t("orders.orderEditor.orderUpdated"));
+    onSuccess: async (res) => {
+      setDispatchResult({
+        success: true,
+        message: res?.message || "Order dispatched successfully!",
+        tracking: res?.tracking_number,
+      });
+      toast.success(res?.message || "Order dispatched successfully!");
+      hydratedRef.current = false;
       await queryClient.invalidateQueries({ queryKey: ordersKeys.details() });
       await queryClient.invalidateQueries({ queryKey: ordersKeys.lists() });
     },
     onError: (err: any) => {
-      toast.error(err?.message ?? t("orders.orderEditor.failedOrderStatus"));
+      const detail = err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? "Failed to dispatch order";
+      setDispatchResult({ success: false, message: "Dispatch Failed", detail });
+      toast.error(detail);
     },
   });
 
-  const handleCourierSend = async () => {
+  const handleCourierSendAuto = async (provider: string, weight: number) => {
     if (!data) return;
-    const method = data.courier.method;
-    if (method === "manual") {
-      await courierDispatchMutation.mutateAsync({
-        method: "manual",
-        data: {
-          courier_provider: "manual",
-          tracking_number: data.courier.consignmentId,
-          memo: data.courier.consignmentId,
-        },
-      });
-    } else {
-      await courierDispatchMutation.mutateAsync({
-        method: "auto",
-        data: { courier_provider: method as any },
-      });
-    }
+    await courierDispatchMutation.mutateAsync({
+      method: "auto",
+      data: {
+        courier_provider: provider as DispatchCourierProvider,
+        weight: weight || undefined,
+      },
+    });
   };
 
-  const handleCourierComplete = () =>
-    toast(t("orders.orderEditor.noCourierCompleteApi"));
-  const handleCourierInvoice = () =>
-    toast(t("orders.orderEditor.noCourierInvoiceApi"));
+  const handleCourierSendManual = async (payload: {
+    courier_provider: string;
+    tracking_number?: string;
+    reference_id?: string;
+    memo?: string;
+    weight?: number;
+  }) => {
+    if (!data) return;
+    await courierDispatchMutation.mutateAsync({
+      method: "manual",
+      data: payload,
+    });
+  };
+
+  const handleCourierComplete = async () => {
+    if (!orderId) return;
+    try {
+      await statusMutation.mutateAsync({ orderId, new_status: "delivered" });
+    } catch { /* handled by mutation onError */ }
+  };
+
+  const handleCourierInvoice = () => {
+    if (!orderId) return;
+    window.open(`/order-invoice/${orderId}`, "_blank");
+  };
   const handleInvoiceDownload = () => toast(t("orders.orderEditor.noInvoiceApi"));
   const handleOpenStickerGenerator = () =>
     toast(t("orders.orderEditor.noStickerApi"));
@@ -572,6 +602,38 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
       setSyncingStatus(false);
     }
   };
+
+  // ─── Derived (unconditional — hooks MUST come before conditional returns) ──
+  const apiOrder = detailQuery.data?.data;
+  const paymentLabel = apiOrder ? paymentLabelFromOrder(apiOrder) : "Payment";
+  const courierOption = detailQuery.data?.courierOption;
+
+  // ── Courier balance queries (parallel fetch for all auto-connected providers) ──
+  const autoConnectedList = useMemo(() => {
+    return (courierOption?.available_providers ?? []).filter((p: any) => p.is_auto_available);
+  }, [courierOption?.available_providers]);
+
+  const balanceQueries = useQueries({
+    queries: autoConnectedList.map((c: any) => ({
+      queryKey: ["courier-balance", c.provider],
+      queryFn: () => getCourierBalance(String(c.provider)),
+      enabled: Boolean(orderId) && !detailQuery.isLoading,
+      staleTime: 60_000,
+      retry: 1,
+    })),
+  });
+
+  const balanceByProvider = useMemo(() => {
+    const map: Record<string, { balance: number | null; loading: boolean }> = {};
+    autoConnectedList.forEach((c: any, i: number) => {
+      const q = balanceQueries[i];
+      map[String(c.provider)] = {
+        balance: (q?.data as any)?.balance ?? null,
+        loading: q?.isFetching ?? false,
+      };
+    });
+    return map;
+  }, [balanceQueries, autoConnectedList]);
 
   // ─── No order ID ───────────────────────────────────────────
   if (!orderId) {
@@ -668,10 +730,6 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
     );
   }
 
-  const apiOrder = detailQuery.data?.data;
-  const paymentLabel = apiOrder ? paymentLabelFromOrder(apiOrder) : "Payment";
-
-  const courierOption = detailQuery.data?.courierOption;
 
   // ─── Main Layout ───────────────────────────────────────────
   return (
@@ -803,12 +861,17 @@ const OrderEditorPage: React.FC<Props> = ({ orderId, onBack }) => {
               )}
               anyAutoAvailable={courierOption?.any_auto_available}
               providers={courierOption?.available_providers}
+              balanceByProvider={balanceByProvider}
+              weightKg={data.weightKgTotal || 1}
               onChange={handleCourierChange}
-              onSend={handleCourierSend}
+              onSendAuto={handleCourierSendAuto}
+              onSendManual={handleCourierSendManual}
               onComplete={handleCourierComplete}
               onDownloadInvoice={handleCourierInvoice}
               onSyncStatus={handleSyncStatus}
               syncingStatus={syncingStatus}
+              dispatchResult={dispatchResult}
+              onClearResult={() => setDispatchResult(null)}
             />
 
             <SidebarCustomerHistoryCard
