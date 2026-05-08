@@ -115,6 +115,13 @@ export const PAYMENT_PROVIDER_DEFS: ProviderDef[] = [
         placeholder: "https://yourdomain.com/payment/cancel",
         readFromConfigKey: "SSL_CANCEL_URL",
       },
+      {
+        key: "ipn_url",
+        label: "IPN URL",
+        type: "url",
+        placeholder: "https://yourdomain.com/api/v1/payment/ipn",
+        readFromConfigKey: "SSL_IPN_URL",
+      },
     ],
   },
 
