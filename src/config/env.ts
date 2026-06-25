@@ -11,9 +11,9 @@
 
 // ── Dev Environment ──────────────────────────────────────────────────────────
 const dev = {
-  API_ORIGIN: "http://localhost:9000",
-  PUBLIC_ORIGIN: "http://localhost:9000",
-  IMAGE_URL: "http://localhost:9000",
+  API_ORIGIN: "http://localhost:7010",
+  PUBLIC_ORIGIN: "http://localhost:7010",
+  IMAGE_URL: "http://localhost:7010",
   API_PREFIX: "/api/v1",
 };
 

@@ -13,7 +13,9 @@ export type ReviewReplyItem = {
   id: number;
   reply_text: string;
   admin_name: string;
+  admin_id: number;
   created_at: string;
+  images: ReviewImage[];
 };
 
 export type AdminReviewListItem = {
@@ -28,6 +30,11 @@ export type AdminReviewListItem = {
   mentions_seller: boolean;
   is_verified_buyer: boolean;
   reply_count: number;
+  report_id: number | null;
+  status: string;
+  purchased_color: string | null;
+  purchased_variant: string | null;
+  images: ReviewImage[];
   created_at: string;
   updated_at: string;
   user_name: string;
@@ -89,16 +96,18 @@ export type GetReviewsResponse = {
   reviews: AdminReviewListItem[];
 };
 
+export type ProductReviewSummaryItem = {
+  id: number;
+  name: string;
+  slug: string;
+  avg_rating: number;
+  review_count: number;
+  thumbnail: string | null;
+};
+
 export type ReviewSummaryResponse = {
   success: boolean;
-  product_id: number;
-  avg_rating: number;
-  total_reviews: number;
-  visible_reviews: number;
-  hidden_reviews: number;
-  pinned_reviews: number;
-  seller_mentions: number;
-  star_breakdown: Record<string, number>;
+  summaries: ProductReviewSummaryItem[];
 };
 
 // ─── API Functions ────────────────────────────────────────────────────────── //
@@ -148,7 +157,10 @@ export async function adminDeleteReview(id: number): Promise<{ success: boolean;
   return data;
 }
 
-export async function adminProductReviewSummary(productId: number): Promise<ReviewSummaryResponse> {
-  const { data } = await api.get(`/admin/reviews/product/${productId}/summary`);
+export async function adminProductReviewSummary(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<ReviewSummaryResponse> {
+  const { data } = await api.get("/admin/reviews/product-summary", { params });
   return data;
 }

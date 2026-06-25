@@ -349,6 +349,21 @@ function DetailPanel({ reviewId, isSuperAdmin }: { reviewId: number; isSuperAdmi
                   <span className="text-[10px] text-gray-400">{fmtDate(r.created_at)}</span>
                 </div>
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{r.reply_text}</p>
+                {r.images && r.images.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {r.images.map((img, i) => (
+                      <a
+                        key={i}
+                        href={toPublicUrl(img.image_path)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block h-14 w-14 overflow-hidden rounded-lg border border-brand-200 dark:border-brand-500/30 transition-shadow hover:shadow-md"
+                      >
+                        <img src={toPublicUrl(img.image_path)} alt={`Reply image ${i + 1}`} className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -400,21 +415,19 @@ function DetailPanel({ reviewId, isSuperAdmin }: { reviewId: number; isSuperAdmi
             {review.is_hidden ? "Show" : "Hide"}
           </button>
 
-          {isSuperAdmin && (
-            <button
-              type="button"
-              disabled={del.isPending}
-              onClick={async () => {
-                if (confirm("Permanently delete this review?")) {
-                  await del.mutateAsync(review.id);
-                  toast.success("Review deleted");
-                }
-              }}
-              className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 transition"
-            >
-              <Trash2 size={13} /> Delete
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={del.isPending}
+            onClick={async () => {
+              if (confirm("Permanently delete this review?")) {
+                await del.mutateAsync(review.id);
+                toast.success("Review deleted");
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 transition"
+          >
+            <Trash2 size={13} /> Delete
+          </button>
         </div>
 
         {/* Reply form */}

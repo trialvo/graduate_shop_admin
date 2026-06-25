@@ -38,11 +38,10 @@ export function useAdminReview(id: number | null) {
   });
 }
 
-export function useAdminReviewSummary(productId: number | null) {
+export function useAdminReviewSummary(params?: { limit?: number; offset?: number }) {
   return useQuery({
-    queryKey: productId ? reviewKeys.summary(productId) : ["reviews", "summary", null],
-    queryFn:  () => adminProductReviewSummary(productId!),
-    enabled:  productId !== null,
+    queryKey: ["reviews", "product-summary", params],
+    queryFn:  () => adminProductReviewSummary(params),
   });
 }
 

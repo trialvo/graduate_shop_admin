@@ -35,6 +35,8 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
   const [port, setPort] = useState("");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
+  const [fromName, setFromName] = useState("");
+  const [fromAddress, setFromAddress] = useState("");
   const [armWipe, setArmWipe] = useState(false);
   const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
@@ -45,11 +47,13 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
     setPort(safeString(initial?.port));
     setUser(safeString(initial?.user));
     setPass(safeString(initial?.pass));
+    setFromName(safeString(initial?.fromName));
+    setFromAddress(safeString(initial?.fromAddress));
     setArmWipe(false);
   }, [open, initial]);
 
   const mutation = useMutation({
-    mutationFn: (payload: { MAIL_HOST?: string; MAIL_PORT?: string; MAIL_USER?: string; MAIL_PASS?: string; setNull?: boolean }) =>
+    mutationFn: (payload: { MAIL_HOST?: string; MAIL_PORT?: string; MAIL_USER?: string; MAIL_PASS?: string; MAIL_FROM?: string; MAIL_FROM_NAME?: string; setNull?: boolean }) =>
       updateEmailConfig(payload),
     onSuccess: (res: any) => {
       if (res?.success === true || res?.status === true) {
@@ -84,6 +88,8 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
       MAIL_PORT: port.trim(),
       MAIL_USER: user.trim(),
       MAIL_PASS: pass.trim(),
+      MAIL_FROM: fromAddress.trim() || undefined,
+      MAIL_FROM_NAME: fromName.trim() || undefined,
       setNull: false,
     });
   };
@@ -174,6 +180,30 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
                 placeholder="••••••••"
+                disabled={mutation.isPending || armWipe}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                MAIL_FROM_NAME
+              </p>
+              <Input
+                value={fromName}
+                onChange={(e) => setFromName(e.target.value)}
+                placeholder="Graduate Fashion"
+                disabled={mutation.isPending || armWipe}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                MAIL_FROM
+              </p>
+              <Input
+                value={fromAddress}
+                onChange={(e) => setFromAddress(e.target.value)}
+                placeholder="noreply@example.com"
                 disabled={mutation.isPending || armWipe}
               />
             </div>

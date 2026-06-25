@@ -234,7 +234,7 @@ export default function ServiceSettingsPage() {
 
   const emailCard: EmailCard | null = useMemo(() => {
     const email = emailQuery.data?.email ?? {};
-    const node = email?.custom_smtp ?? null;
+    const node = email?.custom_smtp ?? email?.brevo ?? null;
     if (!node) return null;
 
     const cfg = node?.config ?? {};
@@ -245,6 +245,8 @@ export default function ServiceSettingsPage() {
       port: safeString(cfg?.MAIL_PORT),
       user: safeString(cfg?.MAIL_USER),
       pass: safeString(cfg?.MAIL_PASS),
+      fromAddress: safeString(cfg?.MAIL_FROM),
+      fromName: safeString(cfg?.MAIL_FROM_NAME),
     };
   }, [emailQuery.data]);
 
@@ -585,6 +587,20 @@ export default function ServiceSettingsPage() {
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_USER</p>
                     <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
                       {emailCard.user || "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_FROM_NAME</p>
+                    <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
+                      {emailCard.fromName || "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">MAIL_FROM</p>
+                    <p className="mt-1 break-all text-sm font-semibold text-gray-900 dark:text-white">
+                      {emailCard.fromAddress || "—"}
                     </p>
                   </div>
                 </>

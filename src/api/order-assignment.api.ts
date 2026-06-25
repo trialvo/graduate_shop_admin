@@ -3,7 +3,7 @@ import { api } from "./client";
 export type AssignmentLog = {
   id: number;
   order_id: number;
-  action_type: "auto_assign" | "manual" | "redistribute" | "unassign";
+  action_type: "auto_assign" | "manual" | "manual_assign" | "redistribute" | "unassign";
   from_admin_id: number | null;
   to_admin_id: number | null;
   changed_by_admin_id: number | null;
