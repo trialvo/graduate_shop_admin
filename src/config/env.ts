@@ -11,9 +11,9 @@
 
 // ── Dev Environment ──────────────────────────────────────────────────────────
 const dev = {
-  API_ORIGIN: "http://localhost:9000",
-  PUBLIC_ORIGIN: "http://localhost:9000",
-  IMAGE_URL: "http://localhost:9000",
+  API_ORIGIN: "http://localhost:7010",
+  PUBLIC_ORIGIN: "http://localhost:7010",
+  IMAGE_URL: "http://localhost:7010",
   API_PREFIX: "/api/v1",
 };
 
@@ -29,12 +29,23 @@ const production = {
   API_ORIGIN: "https://graduatefashion-api-641431966702.asia-south1.run.app",
   // Images served directly from public GCS bucket — no Cloud Run hop
   PUBLIC_ORIGIN: "https://storage.googleapis.com/graduate-ecom-mumbai-641431966702",
+  IMAGE_URL: "https://storage.googleapis.com/graduate-ecom-mumbai-641431966702",
+  API_PREFIX: "/api/v1",
+};
+
+// ── VPS IP deploy ────────────────────────────────────────────────────────────
+const vps = {
+  API_ORIGIN: "http://46.250.224.125",
+  PUBLIC_ORIGIN: "http://46.250.224.125",
+  IMAGE_URL: "http://46.250.224.125",
   API_PREFIX: "/api/v1",
 };
 
 // ── Auto-select ──────────────────────────────────────────────────────────────
-// Vite sets import.meta.env.DEV=true during `vite dev`, false during `vite build`.
-const env = dev;
+// VITE_DEPLOY_TARGET=vps during `vite build` selects the VPS profile.
+const deployTarget = import.meta.env.VITE_DEPLOY_TARGET || "";
+const env =
+  deployTarget === "vps" ? vps : import.meta.env.DEV ? dev : production;
 
 export const API_ORIGIN = env.API_ORIGIN;
 export const IMAGE_URL = env.IMAGE_URL;

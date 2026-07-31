@@ -1,5 +1,14 @@
 export type ThemeMode = "light" | "dark";
 
+/** Vite base path (`/` locally, `/admin/` on VPS). Always ends with `/`. */
+const BASE = import.meta.env.BASE_URL || "/";
+
+/** Join a public asset path with Vite base (works under /admin/). */
+export const publicAsset = (path: string): string => {
+  const cleaned = path.replace(/^\//, "");
+  return `${BASE}${cleaned}`;
+};
+
 export type SiteConfig = {
   /** Shown in page titles, sidebar header etc. */
   appName: string;
@@ -44,19 +53,19 @@ export const siteConfig: SiteConfig = {
   // public/images/logo/logo.svg
   // public/images/logo/logo-dark.svg
   // ✅ Light theme → dark logo (better contrast on white)
-  logoLightUrl: "/images/logo/my_dark_logo.svg",
+  logoLightUrl: publicAsset("images/logo/my_dark_logo.svg"),
   // ✅ Dark theme → light logo (better contrast on dark)
-  logoDarkUrl: "/images/logo/my_light_logo.svg",
-  logoIconUrl: "/images/logo/my_dark_logo.svg",
-  authLogoUrl: "/images/logo/my_dark_logo.svg",
+  logoDarkUrl: publicAsset("images/logo/my_light_logo.svg"),
+  logoIconUrl: publicAsset("images/logo/my_dark_logo.svg"),
+  authLogoUrl: publicAsset("images/logo/my_dark_logo.svg"),
 
   // public/favicon.png
-  faviconUrl: "/favicon.ico",
+  faviconUrl: publicAsset("favicon.ico"),
   // Optional dark-theme favicon (e.g. white icon on dark bg).
-  faviconDarkUrl: "/favicon-dark.ico",
+  faviconDarkUrl: publicAsset("favicon-dark.ico"),
 
-  // appleTouchIconUrl: "/apple-touch-icon.png",
-  // defaultOgImageUrl: "/og-image.png",
+  // appleTouchIconUrl: publicAsset("apple-touch-icon.png"),
+  // defaultOgImageUrl: publicAsset("og-image.png"),
 
   titleSeparator: "|",
 

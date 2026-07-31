@@ -1270,7 +1270,7 @@ function ProductRow({ product, campaignEndAt, onAdd, onRemove, onUpdate }: {
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-gray-200/80 bg-gray-100 dark:border-gray-700/60 dark:bg-gray-800">
               <img
-                src={product.thumbnail ? toPublicUrl(product.thumbnail) : fallback}
+                src={(product.thumbnail ? toPublicUrl(product.thumbnail) : null) || fallback}
                 alt={product.name}
                 className="h-full w-full object-cover"
                 loading="lazy"

@@ -4,6 +4,8 @@ import svgr from "vite-plugin-svgr";
 import path from "path";
 
 export default defineConfig({
+  // VPS serves admin under http://IP/admin/ — set VITE_BASE_PATH=/admin/ at build time
+  base: process.env.VITE_BASE_PATH || "/",
   plugins: [
     react(),
     svgr({

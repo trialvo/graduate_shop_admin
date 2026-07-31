@@ -8,7 +8,12 @@ import {
   useState,
 } from "react";
 
-import { siteConfig, storageKeys, type SiteConfig } from "../config/siteConfig";
+import {
+  publicAsset,
+  siteConfig,
+  storageKeys,
+  type SiteConfig,
+} from "../config/siteConfig";
 
 export type AppBranding = Pick<
   SiteConfig,
@@ -42,12 +47,45 @@ const AppBrandingContext = createContext<AppBrandingContextType | undefined>(
   undefined,
 );
 
+const ASSET_KEYS = [
+  "logoLightUrl",
+  "logoDarkUrl",
+  "logoIconUrl",
+  "authLogoUrl",
+  "faviconUrl",
+  "faviconDarkUrl",
+  "appleTouchIconUrl",
+  "defaultOgImageUrl",
+] as const;
+
+/** Fix root-absolute asset paths so they work under Vite base `/admin/`. */
+const normalizeAssetUrl = (url: string | undefined): string | undefined => {
+  if (!url) return url;
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const base = import.meta.env.BASE_URL || "/";
+  if (base !== "/" && url.startsWith(base)) return url;
+  return publicAsset(url);
+};
+
+const normalizeBrandingAssets = (
+  partial: Partial<AppBranding>,
+): Partial<AppBranding> => {
+  const next = { ...partial };
+  for (const key of ASSET_KEYS) {
+    const value = next[key];
+    if (typeof value === "string") {
+      next[key] = normalizeAssetUrl(value);
+    }
+  }
+  return next;
+};
+
 const safeParse = (raw: string | null): Partial<AppBranding> | null => {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (typeof parsed !== "object" || parsed === null) return null;
-    return parsed as Partial<AppBranding>;
+    return normalizeBrandingAssets(parsed as Partial<AppBranding>);
   } catch {
     return null;
   }

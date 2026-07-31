@@ -70,7 +70,7 @@ import ReviewsPage from "./pages/Products/ReviewsPage";
 
 export default function App() {
   return (
-    <Router>
+    <Router basename={(import.meta.env.BASE_URL || "/").replace(/\/$/, "") || "/"}>
       <AuthProvider>
         <ScrollToTop />
         <PushNotificationProvider />
